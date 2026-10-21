@@ -220,12 +220,109 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			if e != nil {
 				return nil, e
 			}
-			if e := add(command, transport, 10, operationalReadinessError(readiness, "Task cannot be acquired")); e != nil {
+			condition := taskVerificationProtocolCondition(protocol, command)
+			if condition == nil {
+				condition = operationalReadinessError(readiness, "Task cannot be acquired")
+			}
+			if e := add(command, transport, 10, condition); e != nil {
 				return nil, e
 			}
 		}
-		if record.PendingReviewCaseID != nil {
-			if e := add("AcquireSignedReviewContract", "signed_host", 5, nil); e != nil {
+		if work != nil {
+			if candidate, correction := taskVerificationCorrectionCandidate(record, work.Verification); correction {
+				condition := taskVerificationProtocolCondition(protocol, "AcquireSignedWorkContract")
+				if condition == nil {
+					readiness, e := evaluateTaskAcquisition(ctx, f.u, candidate, f.at)
+					if e != nil {
+						return nil, e
+					}
+					condition = operationalReadinessError(readiness, "Task correction cannot be acquired")
+				}
+				if e := add("AcquireSignedWorkContract", "signed_host", 10, condition); e != nil {
+					return nil, e
+				}
+			}
+		}
+		if work != nil && work.Verification != nil && work.Verification.Pending {
+			verification := work.Verification
+			if verification.SourceKind == "task_delivery" {
+				canAccept, e := allow("AcceptTaskDelivery")
+				if e != nil {
+					return nil, e
+				}
+				canChange, e := allow("RequestTaskDeliveryChanges")
+				if e != nil {
+					return nil, e
+				}
+				canWithdraw, e := allow("WithdrawTaskDelivery")
+				if e != nil {
+					return nil, e
+				}
+				accept := taskVerificationProtocolCondition(protocol, "AcceptTaskDelivery")
+				changes := taskVerificationProtocolCondition(protocol, "RequestTaskDeliveryChanges")
+				withdraw := taskVerificationProtocolCondition(protocol, "WithdrawTaskDelivery")
+				checkAccept, checkChange, checkWithdraw := canAccept && accept == nil, canChange && changes == nil, canWithdraw && withdraw == nil
+				if checkAccept || checkChange || checkWithdraw {
+					a, c, w := s.nativeTaskVerificationConditions(ctx, f.u, record, verification, f.at, checkAccept, checkChange, checkWithdraw)
+					if checkAccept {
+						accept = a
+					}
+					if checkChange {
+						changes = c
+					}
+					if checkWithdraw {
+						withdraw = w
+					}
+				}
+				for _, action := range []struct {
+					command   string
+					condition error
+				}{{"AcceptTaskDelivery", accept}, {"RequestTaskDeliveryChanges", changes}, {"WithdrawTaskDelivery", withdraw}} {
+					if e := add(action.command, "browser_command", 5, action.condition); e != nil {
+						return nil, e
+					}
+				}
+			} else if verification.SourceKind == "signed_review_case" {
+				condition := taskVerificationProtocolCondition(protocol, "AcquireSignedReviewContract")
+				if condition == nil {
+					condition = open()
+				}
+				if condition == nil && verification.signedReview != nil {
+					condition = verification.signedReview.RequireIndependent(identity.PrincipalID, "")
+				}
+				if condition == nil && verification.ReviewerAuthority == "active" {
+					condition = d.NewError(d.ErrorCodePreconditionFailed, "current signed reviewer authority must finish or expire before reacquisition")
+				}
+				if e := add("AcquireSignedReviewContract", "signed_host", 5, condition); e != nil {
+					return nil, e
+				}
+				if verification.ReviewerAuthority == "active" {
+					condition = taskVerificationProtocolCondition(protocol, "ReturnSignedReview")
+					if condition == nil {
+						condition = open()
+					}
+					if condition == nil && (verification.Reviewer == nil || verification.Reviewer.PrincipalID != identity.PrincipalID) {
+						condition = d.NewError(d.ErrorCodeForbidden, "current review authority belongs to a different Principal")
+					}
+					if e := add("ReturnSignedReview", "signed_host", 5, condition); e != nil {
+						return nil, e
+					}
+				}
+			}
+		}
+		if record.Lifecycle == d.WorkItemLifecycleInProgress && record.CurrentContractID != nil && work != nil && work.Contract != nil && (work.Verification == nil || !work.Verification.Pending) {
+			command := "SubmitTaskForReview"
+			if work.Contract.Contract.SignedBinding != nil {
+				command = "ReturnSignedWork"
+			}
+			condition := taskVerificationProtocolCondition(protocol, command)
+			if condition == nil {
+				condition = open()
+			}
+			if condition == nil && !work.Contract.ExecutionAllowed {
+				condition = d.NewError(d.ErrorCodePreconditionFailed, "current execution authority is expired or blocked")
+			}
+			if e := add(command, "signed_host", 10, condition); e != nil {
 				return nil, e
 			}
 		}
@@ -319,6 +416,16 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			}
 			if condition == nil {
 				condition = requireHardDependenciesSatisfied(ctx, f.u, record.Ref())
+			}
+			submitCondition := condition
+			if submitCondition == nil && authority == nil {
+				submitCondition = leaseCredentialBindingUnavailable()
+			}
+			if e := add("SubmitTaskForReview", "browser_command", 5, submitCondition); e != nil {
+				return nil, e
+			}
+			if condition == nil {
+				condition = requireTaskDeliveryReviewForCompletion(ctx, f.u, record.Scope, record.ID)
 			}
 			if condition == nil && record.Criteria.HasRequiredActive() {
 				_, condition = record.Criteria.RequiredSatisfied()
@@ -435,7 +542,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if record.Lifecycle == d.ObjectiveLifecyclePlanned || record.Lifecycle == d.ObjectiveLifecycleInProgress {
 			condition := requireActiveOutcome(ctx, f.u, record.Scope)
 			if condition == nil {
-				condition = s.checkObjectiveAchievementWithIssueReport(ctx, f.u, record, identity.PrincipalID, f.objectiveIssues)
+				condition = s.checkObjectiveAchievementInFrame(ctx, f, record, identity.PrincipalID, f.objectiveIssues)
 			}
 			if e := add("AchieveObjective", "browser_command", 15, condition); e != nil {
 				return nil, e

@@ -14,6 +14,9 @@ import (
 func validateReturnDraftV2(profile ProfileV2, file ContractFileV2, view ContractViewV2) error {
 	var assessments []a.SignedAssessmentInput
 	if file.Execution != nil {
+		if file.Execution.CompletionIntent == "direct" && view.Authority.AcceptanceMode != string(d.AcceptanceDirect) {
+			return fmt.Errorf("issued authority requires independent review; direct completion cannot be signed")
+		}
 		assessments = file.Execution.Material.Assessments
 		if strings.TrimSpace(file.Execution.Material.Result.Summary) == "" {
 			return fmt.Errorf("result summary is required before signing")

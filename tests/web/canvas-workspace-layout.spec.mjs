@@ -437,6 +437,12 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await openCanvas(page, wos, data);
     await expect(canvas(page).getByRole("button", { name: "List view", exact: true })).toHaveAttribute("aria-pressed", "true");
     const list = canvas(page).locator(".canvas-list");
+    // Large projections intentionally collapse Objective groups so the list
+    // does not open as an unbounded wall of child records. Expand the group
+    // containing the target Task before asserting nested scroll and selection.
+    await list.locator(`[data-canvas-list-node="objective:${data.objective.id}"]`)
+      .getByRole("button", { name: `Expand ${data.objective.title}`, exact: true })
+      .click();
     await fullyVisible(list);
     const before = await list.evaluate((element) => ({ top: element.scrollTop, overflow: element.scrollHeight - element.clientHeight }));
     expect(before.overflow).toBeGreaterThan(0);

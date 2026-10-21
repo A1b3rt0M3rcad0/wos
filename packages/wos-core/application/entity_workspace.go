@@ -116,6 +116,10 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 		v.EntityVersion = w.Version
 		attention := projectWorkAttention(c)
 		v.Attention = &attention
+		v.Verification = c.Verification
+		if c.Verification != nil {
+			v.Coverage["verification"] = WorkspaceCoverage{Status: "complete"}
+		}
 		v.Header = WorkspaceHeader{Title: w.Title, Kind: ref.Kind.String(), Lifecycle: string(w.Lifecycle), DisplayState: attention.Status, Description: workspaceText(w.Description, 1024)}
 		v.Work = workspaceExecutionPreview(w.ExecutionSpec)
 		v.Coverage["work"] = WorkspaceCoverage{Status: "complete"}
@@ -153,23 +157,20 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 			at := w.CurrentLease.AcquiredAt
 			v.People = append(v.People, WorkspacePerson{Role: "executor", Actor: &actor, PrincipalID: w.CurrentLease.PrincipalID, Source: "legacy_work_lease", AuthorityState: state, At: &at})
 		}
-		if w.PendingReviewCaseID != nil {
-			if v.Delivery == nil {
-				v.Delivery = &WorkspaceDelivery{Current: true}
+		if verification := c.Verification; verification != nil && verification.SourceID != nil {
+			v.Delivery = &WorkspaceDelivery{ContractID: verification.WorkContractID, SubmissionID: verification.SubmissionID, SubmissionDigest: verification.SubmissionDigest, Status: verification.Status, Summary: verification.Material.Summary, Current: verification.Current}
+			if verification.SourceKind == "signed_review_case" {
+				v.Delivery.ReviewCaseID = verification.SourceID
 			}
-			v.Delivery.ReviewCaseID = w.PendingReviewCaseID
-			v.Delivery.Status = "awaiting_review"
-			if signed, ok := frame.u.(ports.SignedContractUnitOfWork); ok {
-				review, e := signed.SignedContracts().Case(ctx, scope, *w.PendingReviewCaseID)
-				if e != nil {
-					return zero, e
-				}
-				v.Delivery.SubmissionID = &review.SubmissionID
-				v.Delivery.SubmissionDigest = review.SubmissionDigest
-				v.Delivery.ContractID = &review.WorkContractID
+			if c.Contract == nil && w.CurrentLease == nil && verification.Executor != nil {
+				v.People = append(v.People, *verification.Executor)
 			}
+			if verification.Reviewer != nil {
+				v.People = append(v.People, *verification.Reviewer)
+			}
+			v.Coverage["delivery"] = verification.Coverage["material"]
 		}
-		if c.Contract == nil && w.CurrentLease == nil {
+		if c.Contract == nil && w.CurrentLease == nil && (c.Verification == nil || c.Verification.Executor == nil) {
 			last, e := repo.WorkspaceLastExecution(ctx, scope, w.ID)
 			if e != nil {
 				return zero, e
@@ -180,7 +181,7 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 				v.People = append(v.People, WorkspacePerson{Role: "last_executor", Actor: &actor, PrincipalID: last.HolderPrincipalID, Source: "work_contract_history", AuthorityState: "historical", ContractID: &last.ID, At: &at})
 			}
 		}
-		if v.Delivery != nil {
+		if v.Delivery != nil && (c.Verification == nil || c.Verification.SourceID == nil) {
 			v.Coverage["delivery"] = WorkspaceCoverage{Status: "complete"}
 		}
 	case d.EntityKindRoadmap:
@@ -387,6 +388,14 @@ func (s *Service) GetEntityWorkspaceView(ctx context.Context, scope d.Scope, q W
 		return zero, e
 	}
 	v.Coverage["capabilities"] = WorkspaceCoverage{Status: "complete", ReturnedCount: workspaceCount(len(v.Capabilities))}
+	if v.Verification != nil {
+		for _, action := range v.Capabilities {
+			if taskVerificationAction(action.ActionID) {
+				v.Verification.Actions = append(v.Verification.Actions, action)
+			}
+		}
+		v.Verification.Coverage["actions"] = WorkspaceCoverage{Status: "complete"}
+	}
 	if q.PlacementPreview != nil {
 		v.PlacementPreview, e = s.workspacePlacementPreview(ctx, frame, &v, q.PlacementPreview)
 		if e != nil {

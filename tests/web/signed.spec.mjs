@@ -102,7 +102,10 @@ for (const decision of ["approved", "changes_requested"])
             "json",
           ],
           {
-            env: { ...process.env, ...environment },
+            // Runtime locks are intentionally kept under the OS cache. Give
+            // child CLIs a private writable cache instead of relying on the
+            // harness user's home directory being writable.
+            env: { ...process.env, ...environment, XDG_CACHE_HOME: join(workspace, ".cache") },
             encoding: "utf8",
             timeout: 20000,
           },
@@ -165,20 +168,22 @@ for (const decision of ["approved", "changes_requested"])
         priority: "normal",
       });
       let identity = await api("/security/signing-identity", token);
+      assert.ok(identity.credential_policy?.revision,
+        "new credentials expose their initial policy revision for compare-and-swap updates");
       const adminOperations = [
         "state:read",
+        "permissions:manage",
+        "credentials:issue",
+        "policy:manage",
         "namespace:admin",
-        "work:write",
-        "outcome:write",
-        "planning:write",
-        "assessment:write",
-        "identity.signing_key.enroll",
+        "task:create",
         "actor:delegate",
       ];
       await signing({
         namespace_id: namespace,
         expected_namespace_version: identity.namespace_version,
         operation: "set_credential_policy",
+        expected_version: identity.credential_policy.revision,
         credential_policy: {
           namespace_id: namespace,
           credential_id: identity.credential_id,
@@ -248,10 +253,13 @@ for (const decision of ["approved", "changes_requested"])
         });
         const self = await api("/security/signing-identity", issued.token),
           admin = await api("/security/signing-identity", token);
+        assert.ok(self.credential_policy?.revision,
+          "newly issued credentials expose their initial policy revision");
         const configured = await signing({
           namespace_id: namespace,
           expected_namespace_version: admin.namespace_version,
           operation: "set_credential_policy",
+          expected_version: self.credential_policy.revision,
           credential_policy: {
             namespace_id: namespace,
             credential_id: self.credential_id,
@@ -262,6 +270,14 @@ for (const decision of ["approved", "changes_requested"])
             permitted_operations: permissions,
           },
         });
+        // The CLI must authenticate the target credential itself for identity
+        // discovery and proof submission. Verify the persisted policy on that
+        // same credential before treating profile setup as a CLI failure.
+        const effectiveIdentity = await api("/security/signing-identity", issued.token);
+        const effectiveOperations = new Set(effectiveIdentity.credential_policy?.permitted_operations || []);
+        for (const operation of ["state:read", "identity.signing_key.enroll"])
+          assert.ok(effectiveOperations.has(operation),
+            `${name} credential policy must retain ${operation} for profile enrollment`);
         const seed = randomBytes(32),
           privateKey = createPrivateKey({
             key: Buffer.concat([
@@ -365,17 +381,22 @@ for (const decision of ["approved", "changes_requested"])
       const executor = await provision("executor", [
         "state:read",
         "identity.signing_key.enroll",
+        // Signed acquisition/return use the granular command permissions in
+        // addition to their signed-contract protocol permissions.
+        "task:claim",
         "work.contract.acquire",
+        "task:deliver",
         "work.contract.return",
-        "work:write",
-        "assessment:write",
-        "conclusion:write",
       ]);
       const reviewer = await provision("reviewer", [
         "state:read",
         "identity.signing_key.enroll",
+        "task:review",
         "work.review.acquire",
         "work.review.decide",
+        "task:accept",
+        "task:request_changes",
+        "criterion:assess",
         "assessment:write",
         "conclusion:write",
       ]);

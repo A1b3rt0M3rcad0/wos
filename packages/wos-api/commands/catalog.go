@@ -14,8 +14,11 @@ import (
 const MaxPayloadBytes = 256 << 10
 
 type Descriptor struct {
-	Name   string         `json:"name"`
-	Schema map[string]any `json:"schema"`
+	Name          string                                      `json:"name"`
+	Schema        map[string]any                              `json:"schema"`
+	Description   string                                      `json:"description"`
+	Authorization application.CommandAuthorizationDescription `json:"authorization"`
+	Transport     TransportDescription                        `json:"transport"`
 }
 type Catalog struct {
 	validators  map[string]func(json.RawMessage) (json.RawMessage, error)
@@ -42,7 +45,7 @@ func register[C any](c *Catalog, name string, run func(context.Context, domain.C
 		}
 		return Encode(cmd)
 	}
-	c.descriptors[name] = Descriptor{Name: name, Schema: Schema(reflect.TypeFor[C]())}
+	c.descriptors[name] = commandDescriptor(name, commandType)
 	c.handlers[name] = func(ctx context.Context, cc domain.CommandContext, raw json.RawMessage) (any, error) {
 		normalized, err := Normalize(raw, reflect.TypeFor[C]())
 		if err != nil {

@@ -189,7 +189,8 @@ export async function intent(page, label) {
     await quick.click();
   else {
     await outcomeActions(page);
-    const target = page.locator("#action-options").getByRole("button", { name: label, exact: true, includeHidden: true });
+    const menuLabel = label === "New task" ? "New task · Backlog" : label;
+    const target = page.locator("#action-options").getByRole("button", { name: menuLabel, exact: true, includeHidden: true });
     await revealMenuAction(target);
     await target.click();
   }

@@ -7,10 +7,21 @@ import (
 )
 
 type MutationResult[T any] struct {
-	Value            T                      `json:"value"`
-	OutcomeRevision  domain.OutcomeRevision `json:"outcome_revision"`
-	CommandID        domain.ID              `json:"command_id"`
-	IdempotentReplay bool                   `json:"idempotent_replay"`
+	Value                        T                             `json:"value"`
+	OutcomeRevision              domain.OutcomeRevision        `json:"outcome_revision"`
+	CommandID                    domain.ID                     `json:"command_id"`
+	IdempotentReplay             bool                          `json:"idempotent_replay"`
+	DerivedObjectiveAchievements []DerivedObjectiveAchievement `json:"derived_objective_achievements,omitempty"`
+}
+
+// DerivedObjectiveAchievement identifies an Objective concluded by the
+// deterministic completion policy as part of this mutation.
+type DerivedObjectiveAchievement struct {
+	Objective       domain.EntityRef `json:"objective"`
+	Version         domain.Version   `json:"version,string"`
+	AuthorityID     domain.ID        `json:"authority_id"`
+	PolicyVersion   uint64           `json:"policy_version,string"`
+	CompletionCycle uint64           `json:"completion_cycle,string"`
 }
 
 type CreateOutcomeCommand struct {
@@ -44,7 +55,8 @@ type ReviseCriterionCommand struct {
 }
 
 type RecordCriterionAssessmentCommand struct {
-	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
+	SubmissionID      *domain.ID                        `wos:"optional" json:",omitempty"`
+	TaskDeliveryRef   *domain.TaskDeliveryAssessmentRef `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -56,7 +68,8 @@ type RecordCriterionAssessmentCommand struct {
 }
 
 type AttestCriterionCommand struct {
-	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
+	SubmissionID      *domain.ID                        `wos:"optional" json:",omitempty"`
+	TaskDeliveryRef   *domain.TaskDeliveryAssessmentRef `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision

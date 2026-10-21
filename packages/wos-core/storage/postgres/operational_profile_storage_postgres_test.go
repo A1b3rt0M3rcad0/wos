@@ -78,7 +78,7 @@ func TestPostgresOperationalPolicyRoundTripUint64AndExpectedVersion(t *testing.T
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	restarted, err := openTestPostgres(path, Options{MigrateOnOpen: true})
+	restarted, err := openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,6 +184,11 @@ func TestPostgresOperationalProfileMigrationDefaultsExistingRows(t *testing.T) {
 	}
 	if version, err := store.SchemaVersion(ctx); err != nil || version != 37 {
 		t.Fatalf("schema version after migration = %d, err=%v; want 37", version, err)
+	}
+	// Repository reads use the current schema, so first finish the upgrade chain
+	// after recording the legacy defaults written by migration 37.
+	if err := store.Migrate(ctx); err != nil {
+		t.Fatalf("apply migrations after the schema-37 defaults: %v", err)
 	}
 	uow, err := store.Begin(ctx)
 	if err != nil {

@@ -309,6 +309,10 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 			}
 			disposition = "review_approved"
 		case "changes_requested":
+			// A reviewer must be able to close an active review with a valid
+			// correction decision even if execution is temporarily blocked. The
+			// correction cannot acquire new signed authority until the normal
+			// Objective/readiness/blocker gates pass in signed acquisition.
 			if err = review.Decide(contract, d.ReviewChangesRequested, identity.PrincipalID, reason, now); err != nil {
 				return zero, 0, err
 			}

@@ -108,6 +108,10 @@ type AuthorizationRequest struct {
 	OutcomeID   domain.ID
 	PrincipalID string
 	Permission  Permission
+	// ResourceRef optionally narrows authorization to the entity whose authority
+	// is being exercised. Outcome-level permissions remain in Permission and
+	// OutcomeID; callers must not substitute authority over another endpoint.
+	ResourceRef *domain.EntityRef
 	// LegacyPermission is populated only by the exact, versioned application
 	// command compatibility map. Storage accepts it only for migrated grants and
 	// credential policies; transports must never accept it from callers.
@@ -126,6 +130,14 @@ func (r AuthorizationRequest) Validate() error {
 	}
 	if r.LegacyPermission != "" && !r.LegacyPermission.Valid() {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "authorization compatibility permission is invalid")
+	}
+	if r.ResourceRef != nil {
+		if err := r.ResourceRef.Validate(); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidArgument, "authorization resource reference is invalid", err)
+		}
+		if r.ResourceRef.Scope.NamespaceID != r.NamespaceID || (r.OutcomeID != "" && r.ResourceRef.Scope.OutcomeID != r.OutcomeID) {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "authorization resource reference is outside the requested scope")
+		}
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
+import { expandWorkspaceDetails, revealMenuAction } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome } from "./ux-fixture.mjs";
 
 const outcomePath = (scope) => `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}`;
@@ -14,22 +14,41 @@ async function inspect(page, title, area) {
   await expect(page.locator("#detail-title")).toHaveText(title);
 }
 
-async function openAction(page, name) {
-  const direct = page.locator(`#detail-actions [data-action-id="${name}"], #detail-content [data-action-id="${name}"]`).filter({ visible: true });
-  if (await direct.count()) await direct.first().click();
-  else {
+async function openAction(page, name, { targetLifecycle } = {}) {
+  const lifecycleLabel = targetLifecycle === "todo" ? "To do" : "Backlog";
+  const selectLifecycle = (locator) => targetLifecycle
+    ? locator.filter({ hasText: lifecycleLabel })
+    : locator;
+  const contextual = selectLifecycle(page.locator(`#canvas-details:visible [data-action-id="${name}"]`));
+  const direct = selectLifecycle(page.locator(`#detail-actions [data-action-id="${name}"], #detail-content [data-action-id="${name}"]`).filter({ visible: true }));
+  if (await contextual.count() && await contextual.first().isVisible()) {
+    await contextual.first().click();
+  } else if (await direct.count()) {
+    await direct.first().click();
+  } else {
+    // Board actions live in the contextual inspector. Advanced actions are
+    // intentionally inside its disclosure; opening the legacy global menu
+    // leaves a hidden duplicate in #action-options and makes the click flaky.
     await page.locator("#entity-actions").click();
-    const target = page.locator(`#action-options [data-action-id="${name}"]`);
-    if (!(await target.isVisible())) {
-      const advanced = page.locator("#action-options details").filter({
-        has: page.locator(`[data-action-id="${name}"]`),
-      });
-      if (await advanced.count() && !(await advanced.evaluate((element) => element.open))) {
-        await advanced.locator(":scope > summary").click();
-        await expect(advanced).toHaveAttribute("open", "");
+    // The inspector keeps detail, action, and form surfaces mounted in sibling
+    // slots. Scope this lookup to the active action surface so a collapsed
+    // detail disclosure cannot win the locator while the action surface is open.
+    const target = selectLifecycle(page.locator(`#canvas-details [data-surface="actions"] [data-action-id="${name}"]`));
+    if (await target.count()) {
+      await revealMenuAction(target.first());
+      await target.first().click();
+    } else {
+      // Retain support for the legacy non-Canvas inspector in the Work view.
+      const legacyTarget = selectLifecycle(page.locator(`#action-options [data-action-id="${name}"]`));
+      if (!(await legacyTarget.first().isVisible())) {
+        const advanced = page.locator("#action-options details").filter({ has: legacyTarget });
+        if (await advanced.count() && !(await advanced.evaluate((element) => element.open))) {
+          await advanced.locator(":scope > summary").click();
+          await expect(advanced).toHaveAttribute("open", "");
+        }
       }
+      await legacyTarget.first().click();
     }
-    await target.click();
   }
   await expect(page.locator("#command-form")).toBeVisible();
 }
@@ -52,11 +71,12 @@ for (const area of ["canvas", "work"]) {
       expected_version: outcome.version, title: "An agreed Outcome condition", required: true, verification_mode: "attestation" });
     const current = (await wos.api(outcomePath(scope))).value;
     await wos.command("activate_outcome", { scope, expected_version: current.version });
+    const objective = await wos.command("create_objective", { scope, title: `${area} operational Objective`, priority: "normal" });
     const tasks = [];
     for (const operation of ["complete_work_item", "release_work_item"]) {
       tasks.push({ operation, value: await wos.command("create_work_item", { scope,
         title: `${area} ${operation} Task`, description: "Operate using the actual persisted reservation",
-        priority: "normal", lifecycle: "todo" }) });
+        priority: "normal", lifecycle: "todo", objective_id: objective.id }) });
     }
     const writes = [];
     page.on("request", (request) => {
@@ -99,11 +119,12 @@ for (const area of ["canvas", "work"]) {
 test("editing Issue, Blocker and Criterion preserves descriptions beyond their inspector preview", async ({ page, wos }) => {
   const { value: outcome, scope } = await wos.outcome("Preserve full authored definitions");
   const long = "Retain this authored definition in full. ".repeat(180).trim();
+  const objective = await wos.command("create_objective", { scope, title: "Long definitions Objective", priority: "normal" });
   const task = await wos.command("create_work_item", { scope, title: "Owner of the long criterion",
-    priority: "normal", lifecycle: "backlog" });
+    priority: "normal", lifecycle: "backlog", objective_id: objective.id });
   const taskRef = { ...scope, kind: "work_item", id: task.id };
   const issue = await wos.command("create_issue", { scope, title: "Long authored Issue", description: long,
-    severity: "minor", affected_refs: [taskRef] });
+    objective_id: objective.id, severity: "minor", affected_refs: [taskRef] });
   const blocker = await wos.command("create_blocker", { scope, blocked_ref: taskRef,
     cause_ref: { ...scope, kind: "issue", id: issue.id }, description: long, propagation: "direct" });
   const criterion = await wos.command("add_criterion", { owner: taskRef, expected_version: task.version,
@@ -140,18 +161,18 @@ test("editing Issue, Blocker and Criterion preserves descriptions beyond their i
 });
 
 test("criterion preparation targets a required definition beyond the first inspector page", async ({ page, wos }) => {
-  const outcome = await wos.command("create_outcome", { namespace_id: wos.namespace,
-    title: "Prepare the exact paginated criterion", desired_state: "Every agreed criterion is independently assessed",
-    priority: "normal", initial_criteria: Array.from({ length: 21 }, (_, index) => ({
-      title: `Agreed condition ${index + 1}`, required: true, verification_mode: "attestation",
-    })) });
-  const scope = { namespace_id: wos.namespace, outcome_id: outcome.id };
+  const { value: outcome, scope } = await wos.outcome("Prepare the exact paginated criterion");
   const owner = { ...scope, kind: "outcome", id: outcome.id };
-  const firstPage = await wos.api(`${outcomePath(scope)}/workspace-view`, { subject: { kind: "entity", ref: owner } });
-  const omitted = outcome.criteria.items.find((criterion) => !firstPage.criteria.some((item) => item.definition.id === criterion.id));
-  expect(omitted).toBeTruthy();
+  const criteria = [];
   let version = outcome.version;
-  for (const criterion of outcome.criteria.items) {
+  for (let index = 0; index < 21; index++) {
+    criteria.push(await wos.command("add_criterion", { owner, expected_version: version++,
+      title: `Agreed condition ${index + 1}`, required: true, verification_mode: "attestation" }));
+  }
+  const firstPage = await wos.api(`${outcomePath(scope)}/workspace-view`, { subject: { kind: "entity", ref: owner } });
+  const omitted = criteria.find((criterion) => !firstPage.criteria.some((item) => item.definition.id === criterion.id));
+  expect(omitted).toBeTruthy();
+  for (const criterion of criteria) {
     await wos.command("record_criterion_assessment", { owner, expected_version: version++,
       criterion_id: criterion.id, criterion_revision: criterion.criterion_revision,
       result: "met", rationale: "Explicitly reviewed this agreed condition" });
@@ -220,7 +241,7 @@ test("a delayed preparation lookup cannot replace a newer form after the origina
     await page.locator("#close-command").click();
     await expect(page.locator("#command-form")).not.toBeVisible();
     await inspect(page, outcome.title, "canvas");
-    await openAction(page, "create_work_item");
+    await openAction(page, "create_work_item", { targetLifecycle: "backlog" });
     const draft = "Keep this newer Task draft";
     await page.getByLabel("Task title", { exact: true }).fill(draft);
     release();
@@ -238,14 +259,17 @@ test("privileged v1 revocation hydrates the actual contract without requiring th
     expected_version: outcome.version, title: "An agreed condition", required: true, verification_mode: "attestation" });
   const current = (await wos.api(outcomePath(scope))).value;
   await wos.command("activate_outcome", { scope, expected_version: current.version });
+  const objective = await wos.command("create_objective", { scope, title: "Reserved contract Objective", priority: "normal" });
   await wos.command("set_namespace_work_protocol", { scope, expected_protocol_version: 1,
     phase: "draining", reason: "Stop legacy acquisition for the explicit migration" });
   await wos.command("set_namespace_work_protocol", { scope, expected_protocol_version: 2,
     phase: "contracts_v1", writers_drained: true, reason: "The external writers have been drained" });
   const task = await wos.command("create_work_item", { scope, title: "An externally reserved contract Task",
-    priority: "normal", lifecycle: "todo", execution_spec: { instructions: ["Stay within the acquired definition"] } });
+    priority: "normal", lifecycle: "todo", objective_id: objective.id,
+    execution_spec: { instructions: ["Stay within the acquired definition"] } });
   const acquired = await wos.command("acquire_work_contract", { scope, work_item_id: task.id,
     expected_work_item_version: task.version, ttl_seconds: 900 });
+  expect(acquired.work_item.lifecycle).toBe("in_progress");
   await wos.login(page);
   await openOutcome(page, outcome.title, { area: null });
   await inspect(page, task.title, "canvas");
@@ -261,8 +285,8 @@ test("privileged v1 revocation hydrates the actual contract without requiring th
   expect(String(payload.expected_contract_version)).toBe(String(acquired.contract.version));
   expect(record.value.contract.status).toBe("revoked");
   expect(record.value.work_item.current_contract_id).toBeUndefined();
-  // Revocation ends authority while preserving recorded execution progress.
-  expect(record.value.work_item.lifecycle).toBe(acquired.work_item.lifecycle);
-  expect(record.value.work_item.lifecycle).toBe("in_progress");
+  // Revocation returns the Task to the acquisition queue after ending the
+  // current execution authority.
+  expect(record.value.work_item.lifecycle).toBe("todo");
   expect(record.value.work_item.conclusion).toBeUndefined();
 });

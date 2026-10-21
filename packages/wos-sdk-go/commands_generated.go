@@ -13,6 +13,9 @@ func (c *Client) AbandonOutcome(ctx context.Context, key string, cmd application
 func (c *Client) AcceptDecision(ctx context.Context, key string, cmd application.AcceptDecisionCommand) (CommandResult[domain.Decision], error) {
 	return command[domain.Decision](ctx, c, "accept_decision", key, cmd)
 }
+func (c *Client) AcceptTaskDelivery(ctx context.Context, key string, cmd application.AcceptTaskDeliveryCommand) (CommandResult[application.TaskDeliveryReviewResult], error) {
+	return command[application.TaskDeliveryReviewResult](ctx, c, "accept_task_delivery", key, cmd)
+}
 func (c *Client) AchieveObjective(ctx context.Context, key string, cmd application.AchieveObjectiveCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "achieve_objective", key, cmd)
 }
@@ -247,6 +250,9 @@ func (c *Client) ReportIssueWithBlocker(ctx context.Context, key string, cmd app
 func (c *Client) ReportIssueWithBlockers(ctx context.Context, key string, cmd application.ReportIssueWithBlockersCommand) (CommandResult[application.ReportIssueWithBlockersResult], error) {
 	return command[application.ReportIssueWithBlockersResult](ctx, c, "report_issue_with_blockers", key, cmd)
 }
+func (c *Client) RequestTaskDeliveryChanges(ctx context.Context, key string, cmd application.RequestTaskDeliveryChangesCommand) (CommandResult[application.TaskDeliveryReviewResult], error) {
+	return command[application.TaskDeliveryReviewResult](ctx, c, "request_task_delivery_changes", key, cmd)
+}
 func (c *Client) ResolveBlocker(ctx context.Context, key string, cmd application.ResolveBlockerCommand) (CommandResult[domain.Blocker], error) {
 	return command[domain.Blocker](ctx, c, "resolve_blocker", key, cmd)
 }
@@ -295,6 +301,9 @@ func (c *Client) RevokeWorkContract(ctx context.Context, key string, cmd applica
 func (c *Client) SetNamespaceWorkProtocol(ctx context.Context, key string, cmd application.SetNamespaceWorkProtocolCommand) (CommandResult[application.NamespaceWorkProtocolResult], error) {
 	return command[application.NamespaceWorkProtocolResult](ctx, c, "set_namespace_work_protocol", key, cmd)
 }
+func (c *Client) SetObjectiveCompletionMode(ctx context.Context, key string, cmd application.SetObjectiveCompletionModeCommand) (CommandResult[application.ObjectiveCompletionModeChange], error) {
+	return command[application.ObjectiveCompletionModeChange](ctx, c, "set_objective_completion_mode", key, cmd)
+}
 func (c *Client) SetObjectiveOwners(ctx context.Context, key string, cmd application.SetObjectiveOwnersCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "set_objective_owners", key, cmd)
 }
@@ -324,6 +333,9 @@ func (c *Client) StartIssueInvestigation(ctx context.Context, key string, cmd ap
 }
 func (c *Client) StartObjective(ctx context.Context, key string, cmd application.StartObjectiveCommand) (CommandResult[domain.Objective], error) {
 	return command[domain.Objective](ctx, c, "start_objective", key, cmd)
+}
+func (c *Client) SubmitTaskForReview(ctx context.Context, key string, cmd application.SubmitTaskForReviewCommand) (CommandResult[application.TaskDeliveryResult], error) {
+	return command[application.TaskDeliveryResult](ctx, c, "submit_task_for_review", key, cmd)
 }
 func (c *Client) SubmitWorkResult(ctx context.Context, key string, cmd application.SubmitWorkResultCommand) (CommandResult[application.WorkContractResult], error) {
 	return command[application.WorkContractResult](ctx, c, "submit_work_result", key, cmd)
@@ -363,4 +375,7 @@ func (c *Client) UpdateWorkItem(ctx context.Context, key string, cmd application
 }
 func (c *Client) WithdrawArtifact(ctx context.Context, key string, cmd application.WithdrawArtifactCommand) (CommandResult[domain.Artifact], error) {
 	return command[domain.Artifact](ctx, c, "withdraw_artifact", key, cmd)
+}
+func (c *Client) WithdrawTaskDelivery(ctx context.Context, key string, cmd application.WithdrawTaskDeliveryCommand) (CommandResult[application.TaskDeliveryWithdrawalResult], error) {
+	return command[application.TaskDeliveryWithdrawalResult](ctx, c, "withdraw_task_delivery", key, cmd)
 }

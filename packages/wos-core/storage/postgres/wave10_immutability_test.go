@@ -13,7 +13,7 @@ import (
 func TestWave10SQLiteRejectsHistoricalAssessmentRewrite(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
-	store, err := openTestPostgres(
+	store, err := openTestPostgres(t,
 		filepath.Join(t.TempDir(), "wos.db"),
 		Options{BusyTimeout: time.Second, MigrateOnOpen: true},
 	)

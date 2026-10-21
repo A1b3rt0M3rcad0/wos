@@ -26,7 +26,7 @@ func BenchmarkWorkspaceF08(b *testing.B) {
 	}
 	ctx := context.Background()
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	store, e := openTestPostgres(filepath.Join(b.TempDir(), "f08.db"), Options{MigrateOnOpen: true})
+	store, e := openTestPostgres(b, filepath.Join(b.TempDir(), "f08.db"), Options{MigrateOnOpen: true})
 	if e != nil {
 		b.Fatal(e)
 	}

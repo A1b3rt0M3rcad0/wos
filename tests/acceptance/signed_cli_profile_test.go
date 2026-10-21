@@ -36,19 +36,26 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 			t.Fatalf("%s:%d: %v", file, line, e)
 		}
 	}
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", Permissions: permissions}))
+	applyAcceptanceGrant(t, security, adminCtx, "signed-cli-profile-worker-grant", ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", Permissions: permissions})
 	credential, token, e := security.IssueCredential(adminCtx, scope.NamespaceID, "cli-worker", d.ActorRef{Kind: d.ActorKindAgent, Provider: "cli-harness", ID: "cli-worker"}, time.Now().Add(time.Hour))
 	must(e)
+	workerIdentity, e := security.Authenticate(ctx, token)
+	must(e)
+	issuedPolicy, e := security.SigningIdentity(a.WithIdentity(ctx, workerIdentity), nil)
+	must(e)
+	if issuedPolicy.Policy == nil || issuedPolicy.Policy.Version != 1 {
+		t.Fatalf("credential issuance policy version = %v, want an explicit version-1 policy", issuedPolicy.Policy)
+	}
 	identity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
 	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: credential.ID, PrincipalID: "cli-worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, p := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 	}
-	configured, e := operator.SigningMutation(ctx, "cli-profile-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := operator.SigningMutation(ctx, "cli-profile-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: identity.NamespaceVersion, ExpectedVersion: issuedPolicy.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
-	if configured.CredentialPolicy == nil {
-		t.Fatal("CLI executor policy was not persisted before compatibility migration")
+	if configured.CredentialPolicy == nil || configured.CredentialPolicy.Version != issuedPolicy.Policy.Version+1 {
+		t.Fatalf("CLI executor policy version = %v, want issuance version %d advanced once before compatibility migration", configured.CredentialPolicy, issuedPolicy.Policy.Version+1)
 	}
 	migrated, e := security.ApplyPermissionMigration(adminCtx, "cli-profile-permission-migration", a.PermissionMigrationApplyRequest{
 		NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", CredentialID: credential.ID,
@@ -383,31 +390,33 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	if renewalCalls.Load() != renewBefore+2 {
 		t.Fatal("keepalive failed to renew both independent live contracts")
 	}
-	// Administrative revocation leaves one local contract inert. Keepalive must
-	// continue renewing the other contract and preserve both local drafts.
-	adminIdentity, e := operator.SigningIdentity(ctx, nil)
+	// Deliver one acquired Task through the signed CLI path. Its execution lease
+	// becomes a pending independent review, so keepalive renews only the other
+	// still-active execution contract; the successful send consumes its draft.
+	firstRaw, e = workspace.ReadV2(firstPath)
 	must(e)
-	adminPolicyVersion := d.Version(0)
-	if adminIdentity.Policy != nil {
-		adminPolicyVersion = adminIdentity.Policy.Version
-	}
-	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: adminPolicyVersion, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate), string(ports.PermissionSigningKeyRevoke)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	must(cli.DecodeV2Document(firstRaw, &firstFile))
+	firstView, e := firstFile.VerifyIssued(currentProfile)
 	must(e)
-	activeState, e := operator.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "execution", ID: d.ID(view.Authority.ContractID)})
-	must(e)
-	_, e = operator.RevokeSignedContract(ctx, "cli-revoke-one-lease", a.RevokeSignedContractCommand{Scope: batchScope, ContractKind: "execution", ContractID: d.ID(view.Authority.ContractID), ExpectedContractVersion: d.Version(activeState.Contract.Version), Reason: "keepalive must continue the other local contract"})
-	must(e)
+	firstFile.Execution.CompletionIntent = "auto"
+	firstFile.Execution.Material = a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{
+		ContractID: d.ID(firstView.Authority.ContractID), WorkItemID: d.ID(firstView.Authority.WorkItemID),
+		SpecDigest: firstView.Authority.SpecDigest, Summary: "Prepared a signed delivery for independent review",
+	})}
+	must(workspace.WriteV2(firstPath, firstFile, signing.Digest(firstRaw)))
+	execute(0, "--profile", "executor_cli", "work", "sign", firstView.Authority.ContractID)
+	execute(0, "--profile", "executor_cli", "work", "send", firstView.Authority.ContractID)
 	execute(0, "--profile", "executor_cli", "work", "keepalive", "--all-active", "--once")
 	if renewalCalls.Load() != renewBefore+3 {
-		t.Fatal("one revoked lease stopped another contract keepalive")
+		t.Fatal("delivery to independent review stopped another contract keepalive")
 	}
 	currentProfile, e = workspace.LoadProfileV2("executor_cli")
 	must(e)
 	if len(currentProfile.Local.PendingOperations) != 0 {
 		t.Fatal("successful lease maintenance retained uncertain intentions")
 	}
-	if _, e = workspace.ReadV2(firstPath); e != nil {
-		t.Fatal("keepalive deleted revoked unsubmitted draft")
+	if _, e = workspace.ReadV2(firstPath); !os.IsNotExist(e) {
+		t.Fatal("successful send retained the submitted contract draft")
 	}
 
 	// A separate approved checkout root demonstrates receipt-bound cleanup
@@ -449,8 +458,9 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	// Rotate after local signing, before the original return is sent. Trust
 	// approval must preserve the exact prepared signature and issued documents.
 	newServer := rotateIssuer()
+	returnCallsBeforeUntrustedIssuer := returnCalls.Load()
 	runReturn(6, "work", "send", acceptedContract.ID.String())
-	if returnCalls.Load() != 0 {
+	if returnCalls.Load() != returnCallsBeforeUntrustedIssuer {
 		t.Fatal("untrusted issuer caused a return mutation")
 	}
 	runReturn(0, "profile", "trust", "--issuer-fingerprint", newServer.Fingerprint)
@@ -467,7 +477,7 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	originalDraft := liveFile.Execution.Progress
 	runReturn(0, "work", "recover")
-	if returnCalls.Load() != 0 {
+	if returnCalls.Load() != returnCallsBeforeUntrustedIssuer {
 		t.Fatal("recover sent an unsent prepared signature")
 	}
 	dropReturn.Store(true)

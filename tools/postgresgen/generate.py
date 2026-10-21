@@ -9,7 +9,7 @@ import re
 import subprocess
 source=Path('packages/wos-core/storage/sqlite')
 target=Path('packages/wos-core/storage/postgres')
-for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go','workspace_read.go','work_activity.go','graph_read.go','focal_current.go','focal_records.go','continuity_projection.go','continuity_read.go','delivery_health.go','signed_return_resolutions.go','signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','credential_management.go','permission_compatibility.go','context_index.go','access.go','queries.go','references.go','external_context.go','integration.go','codec.go','migrations.go']:
+for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go','workspace_read.go','work_activity.go','graph_read.go','focal_current.go','focal_records.go','continuity_projection.go','continuity_read.go','delivery_health.go','signed_return_resolutions.go','signed_operations.go','signed_participants.go','server_identity.go','signed_contracts.go','signed_work_contracts.go','signing_identity.go','work_protocol.go','work_contracts.go','task_deliveries.go','task_verification.go','objective_completion.go','repositories.go','owned_scope.go','nested.go','relations.go','issues_blockers.go','documentary.go','roadmaps.go','events.go','security.go','security_admin.go','credential_management.go','permission_compatibility.go','context_index.go','access.go','queries.go','references.go','external_context.go','integration.go','codec.go','migrations.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqlite migration','postgres migration')
  def transform_sql(m):
   q=m[1]
@@ -48,7 +48,7 @@ for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go',
   s=s.replace(readonly_tx,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
   s=s.replace(readonly_tx_reversed,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
  # Query fragments with placeholders need runtime rebinding after composition.
- if name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go','workspace_read.go','work_activity.go','queries.go','references.go','delivery_health.go','continuity_projection.go','focal_current.go','focal_records.go','graph_read.go','credential_management.go']:
+ if name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go','workspace_read.go','work_activity.go','task_deliveries.go','task_verification.go','queries.go','references.go','delivery_health.go','continuity_projection.go','focal_current.go','focal_records.go','graph_read.go','credential_management.go']:
   original=(source/name).read_text().replace('package sqlite','package postgres',1)
   s=original.replace('instr(lower(t."+title+"),lower(?))>0',"strpos(translate(t.\"+title+\",'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),translate(?,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'))>0").replace('instr(lower(title),lower(?))>0','strpos(lower(title),lower(?))>0').replace('instr(lower(description),lower(?))>0','strpos(lower(description),lower(?))>0').replace('QueryContext(ctx, q, args...)','QueryContext(ctx, rebind(q), args...)').replace('QueryContext(ctx,q,args...)','QueryContext(ctx,rebind(q),args...)').replace('QueryContext(ctx, query, args...)','QueryContext(ctx, rebind(query), args...)').replace('QueryRowContext(ctx, q, args...)','QueryRowContext(ctx, rebind(q), args...)').replace('QueryRowContext(ctx, query,','QueryRowContext(ctx, rebind(query),')
   if name=='credential_management.go':
@@ -63,14 +63,25 @@ for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go',
      return '$'+str(counter)
     return match[1]+'`'+re.sub(r'\?',placeholder,query)+'`'
    s=re.sub(r'((?:QueryRowContext|QueryContext|ExecContext)\(ctx,\s*)`([^`]*)`',transform_direct_query,s)
+  if name=='task_deliveries.go':
+   # Delivery storage includes fixed SQL statements as well as dynamically
+   # composed queries. Rebind every fixed statement passed directly to the
+   # driver; otherwise PostgreSQL receives SQLite's `?` placeholders.
+   def rebind_delivery_query(match):
+    return match[1]+'rebind(`'+match[2]+'`)'
+   s=re.sub(r'((?:QueryRowContext|QueryContext|ExecContext)\(ctx,\s*)`([^`]*\?[^`]*)`',rebind_delivery_query,s)
+  if name=='task_verification.go':
+   # This adapter composes bounded IN lists at runtime, so bind the completed
+   # query after fixed scope placeholders and generated ID markers are joined.
+   s=s.replace('QueryContext(ctx, query, args...)','QueryContext(ctx, rebind(query), args...)')
   if name=='credential_management.go':
    # The query-fragment branch above reloads this file from the SQLite source,
    # so apply PostgreSQL's locking transaction capability after that rewrite.
    readonly_tx = 'BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelSerializable})'
    assert s.count(readonly_tx)==3
    s=s.replace(readonly_tx,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
- if name in ['work_activity.go','entity_notes.go']:
-  s=s.replace('ExecContext(ctx, query,','ExecContext(ctx, rebind(query),').replace('ExecContext(ctx, q,','ExecContext(ctx, rebind(q),').replace('ExecContext(ctx,q,','ExecContext(ctx,rebind(q),').replace('QueryRowContext(ctx,q,','QueryRowContext(ctx,rebind(q),').replace('QueryRowContext(ctx, q,','QueryRowContext(ctx, rebind(q),')
+  if name in ['work_activity.go','entity_notes.go']:
+   s=s.replace('ExecContext(ctx, query,','ExecContext(ctx, rebind(query),').replace('ExecContext(ctx, q,','ExecContext(ctx, rebind(q),').replace('ExecContext(ctx,q,','ExecContext(ctx,rebind(q),').replace('QueryRowContext(ctx,q,','QueryRowContext(ctx,rebind(q),').replace('QueryRowContext(ctx, q,','QueryRowContext(ctx, rebind(q),')
  if name=='workspace_read.go':
   # PostgreSQL index expressions use immutable calendar arithmetic rather than
   # timezone-dependent text-to-timestamptz casts, preserving nanoseconds.
@@ -145,15 +156,255 @@ for p in (source/'migrations').glob('*.sql'):
   assert sql.count('CHECK (json_valid(after_json))')==1
   sql=sql.replace('CHECK (json_valid(before_json))','CHECK (jsonb_typeof(before_json::jsonb) IS NOT NULL)')
   sql=sql.replace('CHECK (json_valid(after_json))','CHECK (jsonb_typeof(after_json::jsonb) IS NOT NULL)')
+ if p.name=='0045_task_deliveries.sql':
+  sql=sql.replace(" NOT GLOB '*[^0-9]*'", " !~ '[^0-9]'")
+  sql=sql.replace("CHECK (json_valid(payload_json))", "CHECK (jsonb_typeof(payload_json::jsonb) IS NOT NULL)")
+  trigger_start = '-- POSTGRESGEN_APPEND_ONLY_TRIGGERS_BEGIN'
+  trigger_end = '-- POSTGRESGEN_APPEND_ONLY_TRIGGERS_END'
+  start = sql.index(trigger_start)
+  end = sql.index(trigger_end, start) + len(trigger_end)
+  immutable_tables = ['task_deliveries','task_delivery_decisions','task_delivery_criteria','task_delivery_artifacts','task_delivery_evidence','task_delivery_criterion_evidence']
+  postgres_triggers = """CREATE FUNCTION reject_immutable_task_delivery_fact() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'TaskDelivery facts are immutable';
+END;
+$$;
+"""
+  for table in immutable_tables:
+   postgres_triggers += f"CREATE TRIGGER {table}_immutable BEFORE UPDATE OR DELETE ON {table} FOR EACH ROW EXECUTE FUNCTION reject_immutable_task_delivery_fact();\n"
+  postgres_triggers += """CREATE FUNCTION guard_task_delivery_pending_pointer() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.pending_delivery_id IS NOT NULL AND NEW.pending_delivery_id IS NOT NULL AND OLD.pending_delivery_id IS DISTINCT FROM NEW.pending_delivery_id THEN
+        RAISE EXCEPTION 'Task already has a pending TaskDelivery';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER task_delivery_work_state_single_pending BEFORE UPDATE OF pending_delivery_id ON task_delivery_work_state FOR EACH ROW EXECUTE FUNCTION guard_task_delivery_pending_pointer();"""
+  sql = sql[:start] + postgres_triggers + sql[end:]
+ if p.name=='0048_task_delivery_assessment_binding.sql':
+  trigger_start = 'CREATE TRIGGER criterion_assessment_task_delivery_binding_insert'
+  start = sql.index(trigger_start)
+  postgres_triggers = """CREATE FUNCTION guard_criterion_assessment_task_delivery_binding() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        IF NEW.task_delivery_id IS DISTINCT FROM OLD.task_delivery_id
+           OR NEW.task_delivery_digest IS DISTINCT FROM OLD.task_delivery_digest
+           OR NEW.task_delivery_round IS DISTINCT FROM OLD.task_delivery_round THEN
+            RAISE EXCEPTION 'criterion assessment TaskDelivery binding is immutable';
+        END IF;
+    END IF;
+
+    IF NEW.task_delivery_id IS NULL THEN
+        IF NEW.task_delivery_digest <> '' OR NEW.task_delivery_round <> '0' THEN
+            RAISE EXCEPTION 'criterion assessment TaskDelivery binding is incomplete';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    IF NEW.task_delivery_digest !~ '^sha256:[0-9a-f]{64}$'
+       OR NEW.task_delivery_round !~ '^[1-9][0-9]{0,19}$'
+       OR (length(NEW.task_delivery_round) = 20 AND NEW.task_delivery_round > '18446744073709551615') THEN
+        RAISE EXCEPTION 'criterion assessment TaskDelivery binding is malformed';
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM task_deliveries d
+        JOIN success_criteria c
+          ON c.namespace_id = d.namespace_id
+         AND c.outcome_id = d.outcome_id
+         AND c.id = NEW.criterion_id
+         AND c.owner_kind = 'work_item'
+         AND c.owner_id = d.work_item_id
+        JOIN task_delivery_criteria dc
+          ON dc.namespace_id = d.namespace_id
+         AND dc.outcome_id = d.outcome_id
+         AND dc.delivery_id = d.id
+         AND dc.criterion_id = NEW.criterion_id
+         AND dc.criterion_revision = NEW.criterion_revision
+        WHERE d.namespace_id = NEW.namespace_id
+          AND d.outcome_id = NEW.outcome_id
+          AND d.id = NEW.task_delivery_id
+          AND d.delivery_digest = NEW.task_delivery_digest
+          AND d.delivery_round = NEW.task_delivery_round
+    ) THEN
+        RAISE EXCEPTION 'criterion assessment TaskDelivery binding is invalid';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER criterion_assessment_task_delivery_binding
+BEFORE INSERT OR UPDATE ON criterion_assessments
+FOR EACH ROW EXECUTE FUNCTION guard_criterion_assessment_task_delivery_binding();
+"""
+  sql = sql[:start] + postgres_triggers
+ if p.name=='0049_task_delivery_withdrawals.sql':
+  sql=sql.replace(" NOT GLOB '*[^0-9]*'", " !~ '[^0-9]'")
+  sql=sql.replace("CHECK (json_valid(payload_json))", "CHECK (jsonb_typeof(payload_json::jsonb) IS NOT NULL)")
+  sql=re.sub(r"json_extract\((\w+)\.payload_json,'\$\.supersedes_delivery_id'\)", r"(\1.payload_json::jsonb ->> 'supersedes_delivery_id')", sql)
+  trigger_start = '-- POSTGRESGEN_WITHDRAWAL_TRIGGERS_BEGIN'
+  trigger_end = '-- POSTGRESGEN_WITHDRAWAL_TRIGGERS_END'
+  start = sql.index(trigger_start)
+  end = sql.index(trigger_end, start) + len(trigger_end)
+  postgres_triggers = """CREATE FUNCTION reject_task_delivery_withdrawal() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'TaskDeliveryWithdrawal is immutable';
+END;
+$$;
+CREATE TRIGGER task_delivery_withdrawals_immutable BEFORE UPDATE OR DELETE ON task_delivery_withdrawals FOR EACH ROW EXECUTE FUNCTION reject_task_delivery_withdrawal();
+
+CREATE FUNCTION reject_task_delivery_predecessor() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'TaskDelivery predecessor is immutable';
+END;
+$$;
+CREATE TRIGGER task_delivery_predecessors_immutable BEFORE UPDATE OR DELETE ON task_delivery_predecessors FOR EACH ROW EXECUTE FUNCTION reject_task_delivery_predecessor();
+
+CREATE FUNCTION bind_task_delivery_predecessor() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    predecessor_id TEXT;
+    predecessor_round TEXT;
+    predecessor_digest TEXT;
+    affected_rows BIGINT;
+BEGIN
+    predecessor_id := NEW.payload_json::jsonb ->> 'supersedes_delivery_id';
+    IF NEW.delivery_round = '1' THEN
+        IF predecessor_id IS NOT NULL THEN
+            RAISE EXCEPTION 'first TaskDelivery round cannot have a predecessor';
+        END IF;
+        UPDATE task_delivery_work_state
+           SET pending_delivery_id=pending_delivery_id
+         WHERE namespace_id=NEW.namespace_id AND outcome_id=NEW.outcome_id
+           AND work_item_id=NEW.work_item_id AND delivery_round='0'
+           AND pending_delivery_id IS NULL AND latest_delivery_id IS NULL
+           AND latest_decision_id IS NULL AND latest_withdrawal_id IS NULL;
+        GET DIAGNOSTICS affected_rows = ROW_COUNT;
+        IF affected_rows <> 1 THEN
+            RAISE EXCEPTION 'first TaskDelivery round requires empty history';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    IF predecessor_id IS NULL THEN
+        RAISE EXCEPTION 'correction TaskDelivery must name its predecessor';
+    END IF;
+    SELECT delivery_round,delivery_digest
+      INTO predecessor_round,predecessor_digest
+      FROM task_deliveries
+     WHERE namespace_id=NEW.namespace_id AND outcome_id=NEW.outcome_id
+       AND work_item_id=NEW.work_item_id AND id=predecessor_id
+     FOR UPDATE;
+    IF NOT FOUND OR predecessor_round::numeric + 1 <> NEW.delivery_round::numeric THEN
+        RAISE EXCEPTION 'TaskDelivery predecessor must be the exact prior round';
+    END IF;
+    UPDATE task_delivery_work_state
+       SET pending_delivery_id=pending_delivery_id
+     WHERE namespace_id=NEW.namespace_id AND outcome_id=NEW.outcome_id
+       AND work_item_id=NEW.work_item_id AND latest_delivery_id=predecessor_id
+       AND delivery_round=predecessor_round AND pending_delivery_id IS NULL
+       AND (latest_decision_id IS NOT NULL OR latest_withdrawal_id IS NOT NULL);
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+    IF affected_rows <> 1 THEN
+        RAISE EXCEPTION 'TaskDelivery correction must supersede the latest resolved delivery';
+    END IF;
+    INSERT INTO task_delivery_predecessors(namespace_id,outcome_id,work_item_id,delivery_id,delivery_round,delivery_digest,predecessor_delivery_id,predecessor_round,predecessor_digest)
+    VALUES(NEW.namespace_id,NEW.outcome_id,NEW.work_item_id,NEW.id,NEW.delivery_round,NEW.delivery_digest,predecessor_id,predecessor_round,predecessor_digest);
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER task_delivery_predecessor_chain AFTER INSERT ON task_deliveries FOR EACH ROW EXECUTE FUNCTION bind_task_delivery_predecessor();
+
+CREATE FUNCTION guard_task_delivery_decision_resolution() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    locked_delivery TEXT;
+BEGIN
+    SELECT id INTO locked_delivery FROM task_deliveries
+     WHERE namespace_id=NEW.namespace_id AND outcome_id=NEW.outcome_id
+       AND work_item_id=NEW.work_item_id AND id=NEW.delivery_id
+     FOR UPDATE;
+    IF locked_delivery IS NULL OR EXISTS (
+        SELECT 1 FROM task_delivery_withdrawals w
+        WHERE w.namespace_id=NEW.namespace_id AND w.outcome_id=NEW.outcome_id
+          AND w.work_item_id=NEW.work_item_id AND w.delivery_id=NEW.delivery_id
+    ) OR NOT EXISTS (
+        SELECT 1 FROM task_delivery_work_state s
+        WHERE s.namespace_id=NEW.namespace_id AND s.outcome_id=NEW.outcome_id
+          AND s.work_item_id=NEW.work_item_id AND s.pending_delivery_id=NEW.delivery_id
+          AND s.latest_delivery_id=NEW.delivery_id AND s.latest_withdrawal_id IS NULL
+    ) THEN
+        RAISE EXCEPTION 'TaskDelivery already resolved or is not pending';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER task_delivery_decision_resolution_guard BEFORE INSERT ON task_delivery_decisions FOR EACH ROW EXECUTE FUNCTION guard_task_delivery_decision_resolution();
+
+CREATE FUNCTION guard_task_delivery_withdrawal_resolution() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    locked_delivery TEXT;
+BEGIN
+    SELECT id INTO locked_delivery FROM task_deliveries
+     WHERE namespace_id=NEW.namespace_id AND outcome_id=NEW.outcome_id
+       AND work_item_id=NEW.work_item_id AND id=NEW.delivery_id
+     FOR UPDATE;
+    IF locked_delivery IS NULL OR EXISTS (
+        SELECT 1 FROM task_delivery_decisions d
+        WHERE d.namespace_id=NEW.namespace_id AND d.outcome_id=NEW.outcome_id
+          AND d.work_item_id=NEW.work_item_id AND d.delivery_id=NEW.delivery_id
+    ) OR NOT EXISTS (
+        SELECT 1 FROM task_delivery_work_state s
+        WHERE s.namespace_id=NEW.namespace_id AND s.outcome_id=NEW.outcome_id
+          AND s.work_item_id=NEW.work_item_id AND s.pending_delivery_id=NEW.delivery_id
+          AND s.latest_delivery_id=NEW.delivery_id AND s.latest_decision_id IS NULL
+    ) THEN
+        RAISE EXCEPTION 'TaskDelivery already resolved or is not pending';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE TRIGGER task_delivery_withdrawal_resolution_guard BEFORE INSERT ON task_delivery_withdrawals FOR EACH ROW EXECUTE FUNCTION guard_task_delivery_withdrawal_resolution();
+
+CREATE TRIGGER task_delivery_work_state_single_pending BEFORE UPDATE OF pending_delivery_id ON task_delivery_work_state FOR EACH ROW EXECUTE FUNCTION guard_task_delivery_pending_pointer();"""
+  sql = sql[:start] + postgres_triggers + sql[end:]
+ if p.name=='0050_objective_completion_authority.sql':
+  sql=sql.replace(" NOT GLOB '*[^0-9]*'", " !~ '[^0-9]'")
+  sql=re.sub(r'json_valid\((\w+)\)', r'(jsonb_typeof(\1::jsonb) IS NOT NULL)', sql)
+  trigger_start = 'CREATE TRIGGER objective_completion_authority_immutable_update'
+  start = sql.index(trigger_start)
+  postgres_triggers = """CREATE FUNCTION reject_objective_completion_authority_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    RAISE EXCEPTION 'Objective completion authority history is immutable';
+    RETURN OLD;
+END;
+$$;
+CREATE TRIGGER objective_completion_authority_immutable_update
+BEFORE UPDATE ON objective_completion_authority_history
+FOR EACH ROW EXECUTE FUNCTION reject_objective_completion_authority_mutation();
+CREATE TRIGGER objective_completion_authority_immutable_delete
+BEFORE DELETE ON objective_completion_authority_history
+FOR EACH ROW EXECUTE FUNCTION reject_objective_completion_authority_mutation();
+"""
+  sql = sql[:start] + postgres_triggers
  # PostgreSQL stores booleans as integer in this shared schema, matching existing
  # relational DTO codecs and preserving all checks. Credential code adapts its bool.
  (target/'migrations'/p.name).write_text(sql)
 
 # Execute the same durability and authorization contracts against a real database.
-for name in ['completion_policy_test.go','workspace_scope_preview_test.go','workspace_conclusion_test.go','workspace_lease_test.go','workspace_observation_test.go','workspace_execution_time_test.go','workspace_proof_test.go','workspace_editing_test.go','workspace_read_test.go','workspace_compound_test.go','entity_notes_test.go','workspace_timeline_test.go','work_activity_application_test.go','work_activity_test.go','assessment_plan_fixture_test.go','principal_review_quota_test.go','principal_quota_test.go','focal_graph_read_test.go','continuity_projection_test.go','continuity_cursor_test.go','continuity_read_test.go','delivery_health_test.go','signed_return_resolution_test.go','signed_load_test.go','migration_compatibility_test.go','issue_assignment_migration_test.go','issue_objective_owner_migration_test.go','work_item_objective_migration_test.go','issuer_recovery_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','restart_test.go','dependencies_test.go','leases_test.go','lease_recovery_race_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','credential_management_test.go','permission_migration_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go','legacy_migration_fixture_test.go']:
+for name in ['completion_policy_test.go','workspace_scope_preview_test.go','workspace_conclusion_test.go','workspace_lease_test.go','workspace_observation_test.go','workspace_execution_time_test.go','workspace_proof_test.go','workspace_editing_test.go','workspace_read_test.go','workspace_compound_test.go','entity_notes_test.go','workspace_timeline_test.go','work_activity_application_test.go','work_activity_test.go','assessment_plan_fixture_test.go','principal_review_quota_test.go','principal_quota_test.go','focal_graph_read_test.go','continuity_projection_test.go','continuity_cursor_test.go','continuity_read_test.go','delivery_health_test.go','signed_return_resolution_test.go','signed_load_test.go','migration_compatibility_test.go','issue_assignment_migration_test.go','issue_objective_owner_migration_test.go','work_item_objective_migration_test.go','issuer_recovery_test.go','signed_next_test.go','signed_no_cache_test.go','signed_historical_source_test.go','signed_cutover_test.go','signed_query_scope_test.go','signed_review_journey_test.go','signed_return_test.go','signed_acquisition_test.go','signed_contracts_test.go','signing_identity_test.go','work_protocol_test.go','work_contract_test.go','work_contract_credential_binding_test.go','task_deliveries_test.go','restart_test.go','dependencies_test.go','leases_test.go','lease_recovery_race_test.go','migration_version_test.go','documentary_test.go','issues_blockers_test.go','wave10_assessment_test.go','wave10_conclusion_test.go','wave10_immutability_test.go','wave11_roadmap_restart_test.go','security_contract_test.go','security_admin_test.go','credential_management_test.go','permission_migration_test.go','context_contract_test.go','external_context_test.go','integration_contract_test.go','continuity_contract_test.go','administrative_override_test.go','release_concurrency_test.go','bulk_history_test.go','legacy_migration_fixture_test.go']:
  s=(source/name).read_text().replace('package sqlite','package postgres',1).replace('sqliteObjectiveForWorkFixture','postgresObjectiveForWorkFixture')
  s=s.replace('TestSQLite','TestPostgres')
- s=re.sub(r'\bOpen\(', 'openTestPostgres(', s)
+ s=re.sub(r'\bOpen\(', 'openTestPostgres(t, ', s)
  s=re.sub(r'(func Test\w+\(t \*testing.T\) \{)',r'\1\n requirePostgres(t)',s)
  s=re.sub(r'`([^`]*)`',transform_sql,s,flags=re.S)
  (target/name).write_text('// Code generated by tools/postgresgen/generate.py; DO NOT EDIT.\n'+s)
@@ -176,7 +427,7 @@ if sqlite_drop not in admin_test:
 admin_test = admin_test.replace(sqlite_drop, postgres_drop, 1)
 admin_test_path.write_text(admin_test)
 
-benchmark=(source/'continuity_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(',1).replace('sqliteObjectiveForWorkFixture','postgresObjectiveForWorkFixture')
+benchmark=(source/'continuity_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(b, ',1).replace('sqliteObjectiveForWorkFixture','postgresObjectiveForWorkFixture')
 benchmark=benchmark.replace('sqlite3 "github.com/ncruces/go-sqlite3"','').replace('"github.com/ncruces/go-sqlite3/driver"','')
 start=benchmark.index('var sqlCount atomic.Uint64')
 end=benchmark.index('for _, name := range',start)
@@ -187,7 +438,7 @@ benchmark=benchmark.replace('b.ReportMetric(float64(sqlCount.Load()-before)/floa
 (target/'continuity_benchmark_test.go').write_text('// Code generated by tools/postgresgen/generate.py; DO NOT EDIT.\n'+benchmark)
 
 # Identical domain-validated operational read harness for before/after fixtures.
-operational=(source/'operational_read_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(',1)
+operational=(source/'operational_read_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(b, ',1)
 (target/'operational_read_benchmark_test.go').write_text('// Code generated by tools/postgresgen/generate.py; DO NOT EDIT.\n'+operational)
 
 # Opt-in contract load fixture shares the workload; SQLite tracing does not
@@ -201,7 +452,7 @@ load=load[:start]+'var sqlCount atomic.Uint64; sqlMeasured:=false'+load[end:]
 
 # The F08 workload and timing boundaries are identical across adapters. Each
 # adapter uses its own real statement tracer, never an estimated query count.
-workspace_f08=(source/'workspace_f08_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(',1).replace('adapter=SQLite','adapter=PostgreSQL')
+workspace_f08=(source/'workspace_f08_benchmark_test.go').read_text().replace('package sqlite','package postgres',1).replace('Open(', 'openTestPostgres(b, ',1).replace('adapter=SQLite','adapter=PostgreSQL')
 workspace_f08=workspace_f08.replace('"path/filepath"','"path/filepath"\n"os"')
 workspace_f08=workspace_f08.replace('func BenchmarkWorkspaceF08(b *testing.B) {','func BenchmarkWorkspaceF08(b *testing.B) {\n if os.Getenv("WOS_TEST_POSTGRES_DSN")=="" {b.Skip("real PostgreSQL required")}')
 (target/'workspace_f08_benchmark_test.go').write_text('// Code generated by tools/postgresgen/generate.py; DO NOT EDIT.\n'+workspace_f08)

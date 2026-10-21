@@ -6,6 +6,16 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 
 const panel = (page) => page.locator("#canvas-details");
+async function serveSourceKanban(page) {
+  if (process.env.WOS_SOURCE_KANBAN !== "1") return;
+  const source = await readFile(
+    resolve("../../packages/wos-api/web/assets/workspace-kanban.js"),
+    "utf8",
+  );
+  await page.route("**/workspace-kanban.js", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: source }),
+  );
+}
 async function select(page, title) {
   const search = page.getByRole("combobox", {
     name: "Search Outcome Board",
@@ -321,10 +331,10 @@ test("criteria verification is separate from acceptance and cancelled work remai
   await panel(page)
     .getByText("Details and management", { exact: true })
     .click();
-  await select(page, typeof data === 'undefined' ? objective.title : data.objective.title);
-  await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
-  await page.locator('#workspace-kanban .workspace-kanban-card').filter({hasText:typeof data === 'undefined' ? task.title : data.task.title}).click();
-  await page.locator('#workspace-kanban [data-operational-group=criteria] > summary').click();
+  await select(page, objective.title);
+  await panel(page).getByRole("button", { name: "Open Tasks Kanban", exact: true }).click();
+  await page.locator("#workspace-kanban .workspace-kanban-card").filter({ hasText: task.title }).click();
+  await page.locator("#workspace-kanban [data-operational-group=criteria] > summary").click();
   const modal = page.locator("#workspace-kanban");
   await expect(
     modal.locator("[data-operational-group=criteria] > summary"),
@@ -347,6 +357,7 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
   wos,
 }) => {
   const data = await setup(wos);
+  await serveSourceKanban(page);
   await wos.login(page);
   await openOutcome(page, data.outcome.title, { area: null });
   await select(page, data.objective.title);
@@ -354,7 +365,14 @@ test("creation in Objective Kanban preserves parent and returns to the same cont
     .getByRole("button", { name: "Open Tasks Kanban", exact: true })
     .click();
   const modal = page.locator("#workspace-kanban");
-  await modal.getByRole("button", { name: "Add Task", exact: true }).click();
+  // Both server-authorized creation targets are explicit and remain scoped to
+  // the selected Objective. The Backlog action is the default planning path.
+  const addBacklogTask = modal.locator('button[data-target-lifecycle="backlog"]');
+  await expect(addBacklogTask).toBeVisible();
+  await expect(modal.getByRole("button", { name: "Add Objective", exact: true })).toHaveCount(0);
+  await expect(modal.getByRole("button", { name: "Add subobjective", exact: true })).toHaveCount(0);
+  await expect(modal.locator(".workspace-kanban-card-shell select")).toHaveCount(0);
+  await addBacklogTask.click();
   await expect(modal).not.toBeVisible();
   await expect(page.locator("#workspace-kanban-operation #command-form")).toBeVisible();
   await expect(page.locator("#fields")).toContainText(data.objective.title);
@@ -476,7 +494,7 @@ test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200%
         0,
       );
       if (factor === 4) {
-        await modal.getByRole("button", { name: "Add Task", exact: true }).click();
+        await modal.locator('button[data-target-lifecycle="backlog"]').click();
         const operation = page.locator("#workspace-kanban-operation");
         await expect(operation).toBeVisible();
         await expect(page.locator("dialog[open]")).toHaveCount(1);
@@ -505,6 +523,39 @@ test("an authorized waiver is an explicit exception and never completes the Task
   wos,
 }) => {
   const data = await setup(wos);
+  // Criterion assessments are unavailable while a Task is still in Backlog.
+  // Make the Task available and acquire it before authenticating as the
+  // independent reviewer, so this test exercises waiver policy without
+  // bypassing the work protocol.
+  await wos.command("add_criterion", {
+    owner: { ...data.scope, kind: "outcome", id: data.outcome.id },
+    expected_version: data.outcome.version,
+    title: "The waiver journey is explicitly authorized",
+    required: true,
+    verification_mode: "attestation",
+  });
+  const currentOutcome = (await wos.api(
+    `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}`,
+  )).value;
+  await wos.command("activate_outcome", {
+    scope: data.scope, expected_version: currentOutcome.version,
+  });
+  let plannedObjective = (await wos.api(
+    `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/objectives/${data.objective.id}`,
+  )).value;
+  await wos.command("add_criterion", {
+    owner: { ...data.scope, kind: "objective", id: data.objective.id },
+    expected_version: plannedObjective.version,
+    title: "The exception review has a verifiable success condition",
+    required: true,
+    verification_mode: "attestation",
+  });
+  plannedObjective = (await wos.api(
+    `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/objectives/${data.objective.id}`,
+  )).value;
+  await wos.command("start_objective", {
+    scope: data.scope, objective_id: data.objective.id, expected_version: plannedObjective.version,
+  });
   await wos.command("add_criterion", {
     owner: { ...data.scope, kind: "work_item", id: data.task.id },
     expected_version: data.task.version,
@@ -512,13 +563,22 @@ test("an authorized waiver is an explicit exception and never completes the Task
     required: true,
     verification_mode: "attestation",
   });
+  const plannedTask = (await wos.api(
+    `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${data.task.id}`,
+  )).value;
+  const activeTask = await wos.command("activate_work_item", {
+    scope: data.scope, work_item_id: data.task.id, expected_version: plannedTask.version,
+  });
+  await wos.command("claim_work_item", {
+    scope: data.scope, work_item_id: data.task.id, expected_version: activeTask.version,
+  });
   const snapshot = await wos.api(`/namespaces/${wos.namespace}/administration`);
   const grant = await wos.api("/security/commands", {
     namespace_id: wos.namespace,
     expected_namespace_version: snapshot.namespace_version,
     operation: "set_grant",
     principal_id: "waiver-reviewer",
-    permissions: ["state:read", "assessment:write", "assessment:waive"],
+    permissions: ["state:read", "criterion:assess", "criterion:waive", "assessment:waive"],
   });
   const issued = await wos.api("/security/commands", {
     namespace_id: wos.namespace,
@@ -530,25 +590,14 @@ test("an authorized waiver is an explicit exception and never completes the Task
   });
   await wos.login(page, issued.token);
   await openOutcome(page, data.outcome.title, { area: null });
-  await select(page, data.task.title);
-  await panel(page)
-    .getByText("Details and management", { exact: true })
-    .click();
-  await select(page, typeof data === 'undefined' ? objective.title : data.objective.title);
-  await panel(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
-  await page.locator('#workspace-kanban .workspace-kanban-card').filter({hasText:typeof data === 'undefined' ? task.title : data.task.title}).click();
-  await page.locator('#workspace-kanban [data-operational-group=criteria] > summary').click();
+  await select(page, data.objective.title);
+  await panel(page).getByRole("button", { name: "Open Tasks Kanban", exact: true }).click();
   const modal = page.locator("#workspace-kanban");
-  await modal
-    .getByRole("button", { name: "The exception requires an explicit decision", exact: true })
-    .click();
-  await modal
-    .locator(
-      '.workspace-kanban-inspection [data-action-id="record_criterion_assessment"], .workspace-kanban-inspection [data-action-id="attest_criterion"]',
-    )
-    .filter({ visible: true })
-    .first()
-    .click();
+  const taskCard = modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title });
+  await taskCard.dragTo(modal.locator('[data-column="verification"]'));
+  const operation = page.locator("#workspace-kanban-operation");
+  await expect(operation.getByRole("heading", { name: "Review proof", exact: true })).toBeVisible();
+  await operation.getByRole("checkbox", { name: /The exception requires an explicit decision/ }).click();
   await expect(page.locator("#command-form")).toBeVisible();
   const result = page.getByLabel("Assessment result", { exact: true });
   await expect(result.locator("option")).toHaveText([
@@ -583,7 +632,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
       `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${data.task.id}`,
     )
   ).value;
-  expect(work.lifecycle).toBe("backlog");
+  expect(work.lifecycle).toBe("in_progress");
   expect(
     work.criteria.assessments.some(
       (assessment) => assessment.result === "waived",

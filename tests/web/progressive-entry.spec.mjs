@@ -12,7 +12,7 @@ async function select(page, title) {
 }
 
 async function taskForm(page) {
-  await clickRecordAction(page, "New task");
+  await clickRecordAction(page, "New task · Backlog");
   await expect(page.locator("#command-form")).toBeVisible();
   return page.getByLabel("Task title", { exact: true });
 }
@@ -78,7 +78,8 @@ test("quick Task Enter repeats the same placement, Save inspects the result, and
 
 test("a criterion deep link reloads the typed subject and retains its real Task owner", async ({ page, wos }) => {
   const { scope, value: outcome } = await wos.outcome("Restore the precise review context");
-  const task = await wos.command("create_work_item", { scope, title: "Review the documented startup", lifecycle: "backlog", priority: "normal" });
+  const objective = await wos.command("create_objective", { scope, title: "Startup review Objective", priority: "normal" });
+  const task = await wos.command("create_work_item", { scope, title: "Review the documented startup", lifecycle: "backlog", priority: "normal", objective_id: objective.id });
   const owner = { ...scope, kind: "work_item", id: task.id };
   const criterion = await wos.command("add_criterion", { owner, expected_version: task.version,
     title: "The documented command starts a usable workspace", required: true, verification_mode: "evidence_review" });

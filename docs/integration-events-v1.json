@@ -89,6 +89,9 @@
       "event_type": "objective.cancelled"
     },
     {
+      "event_type": "objective.completion_policy_authorized"
+    },
+    {
       "event_type": "objective.conclusion_recorded"
     },
     {

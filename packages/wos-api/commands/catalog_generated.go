@@ -16,6 +16,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.AcceptDecisionCommand](c, "accept_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.AcceptDecisionCommand) (any, error) {
 		return service.AcceptDecision(ctx, cc, cmd)
 	})
+	register[application.AcceptTaskDeliveryCommand](c, "accept_task_delivery", func(ctx context.Context, cc domain.CommandContext, cmd application.AcceptTaskDeliveryCommand) (any, error) {
+		return service.AcceptTaskDelivery(ctx, cc, cmd)
+	})
 	register[application.AchieveObjectiveCommand](c, "achieve_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveObjectiveCommand) (any, error) {
 		return service.AchieveObjective(ctx, cc, cmd)
 	})
@@ -250,6 +253,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.ReportIssueWithBlockersCommand](c, "report_issue_with_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockersCommand) (any, error) {
 		return service.ReportIssueWithBlockers(ctx, cc, cmd)
 	})
+	register[application.RequestTaskDeliveryChangesCommand](c, "request_task_delivery_changes", func(ctx context.Context, cc domain.CommandContext, cmd application.RequestTaskDeliveryChangesCommand) (any, error) {
+		return service.RequestTaskDeliveryChanges(ctx, cc, cmd)
+	})
 	register[application.ResolveBlockerCommand](c, "resolve_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveBlockerCommand) (any, error) {
 		return service.ResolveBlocker(ctx, cc, cmd)
 	})
@@ -298,6 +304,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.SetNamespaceWorkProtocolCommand](c, "set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
 		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
 	})
+	register[application.SetObjectiveCompletionModeCommand](c, "set_objective_completion_mode", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveCompletionModeCommand) (any, error) {
+		return service.SetObjectiveCompletionMode(ctx, cc, cmd)
+	})
 	register[application.SetObjectiveOwnersCommand](c, "set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)
 	})
@@ -327,6 +336,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.StartObjectiveCommand](c, "start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
+	})
+	register[application.SubmitTaskForReviewCommand](c, "submit_task_for_review", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitTaskForReviewCommand) (any, error) {
+		return service.SubmitTaskForReview(ctx, cc, cmd)
 	})
 	register[application.SubmitWorkResultCommand](c, "submit_work_result", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitWorkResultCommand) (any, error) {
 		return service.SubmitWorkResult(ctx, cc, cmd)
@@ -366,6 +378,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.WithdrawArtifactCommand](c, "withdraw_artifact", func(ctx context.Context, cc domain.CommandContext, cmd application.WithdrawArtifactCommand) (any, error) {
 		return service.WithdrawArtifact(ctx, cc, cmd)
+	})
+	register[application.WithdrawTaskDeliveryCommand](c, "withdraw_task_delivery", func(ctx context.Context, cc domain.CommandContext, cmd application.WithdrawTaskDeliveryCommand) (any, error) {
+		return service.WithdrawTaskDelivery(ctx, cc, cmd)
 	})
 	return c
 }

@@ -167,13 +167,14 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		PrincipalID:       commandContext.PrincipalID,
 		Actor:             commandContext.Actor,
 		AssessedAt:        now,
+		TaskDeliveryRef:   cloneTaskDeliveryAssessmentRef(cmd.TaskDeliveryRef),
 	}
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
-		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, cmd.TaskDeliveryRef, &assessment); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
@@ -208,13 +209,14 @@ func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.Com
 		PrincipalID:       commandContext.PrincipalID,
 		Actor:             commandContext.Actor,
 		AssessedAt:        now,
+		TaskDeliveryRef:   cloneTaskDeliveryAssessmentRef(cmd.TaskDeliveryRef),
 	}
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
-		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, cmd.TaskDeliveryRef, &assessment); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
@@ -383,10 +385,7 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 			return domain.Objective{}, 0, err
 		}
 		conclusion.Obligations.AcknowledgedCancelledWork = append([]domain.EntityRef(nil), cmd.AcknowledgedCancelledWork...)
-		if err := objective.Achieve(conclusion, now); err != nil {
-			return domain.Objective{}, 0, err
-		}
-		if err := uow.Objectives().Save(ctx, objective, cmd.ExpectedVersion); err != nil {
+		if err := achieveObjectiveInUnit(ctx, uow, &objective, cmd.ExpectedVersion, conclusion, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -532,6 +531,9 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
 		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "CompleteWorkItem", now)
 		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := requireTaskDeliveryReviewForCompletion(ctx, uow, cmd.Scope, item.ID); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if authority != nil {
@@ -748,6 +750,14 @@ func recordCriterionAssessment(
 }
 
 func cloneEvaluatorRef(value *domain.EvaluatorRef) *domain.EvaluatorRef {
+	if value == nil {
+		return nil
+	}
+	copyValue := *value
+	return &copyValue
+}
+
+func cloneTaskDeliveryAssessmentRef(value *domain.TaskDeliveryAssessmentRef) *domain.TaskDeliveryAssessmentRef {
 	if value == nil {
 		return nil
 	}

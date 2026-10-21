@@ -24,7 +24,7 @@ test("axe checks login, six-area overview, common Task form and server combobox"
   wos,
 }) => {
   const { scope } = await wos.outcome();
-  await wos.command("create_objective", {
+  const objective = await wos.command("create_objective", {
     scope,
     title: "Accessible condition",
     priority: "normal",
@@ -37,10 +37,10 @@ test("axe checks login, six-area overview, common Task form and server combobox"
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Accessible Task");
   await audit(page);
-  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
   await page
     .getByRole("combobox", { name: "New placement", exact: true })
-    .fill("Accessible");
+    .fill(objective.title);
   await expect(page.locator("[role=option]")).toHaveCount(1);
   await audit(page);
   await page.keyboard.press("ArrowDown");
@@ -66,7 +66,7 @@ test("390px mobile creates Outcome and Task with a usable searched reference", a
   await save(page);
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Mobile Task");
-  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
   await pick(page, "New placement", "Mobile condition");
   expect(
     await page.evaluate(
@@ -84,11 +84,14 @@ for (const scale of [2, 4])
       width: Math.floor(1280 / scale),
       height: Math.floor(900 / scale),
     });
-    await wos.outcome();
+    const { scope } = await wos.outcome();
+    await wos.command("create_objective", { scope, title: "Reflow condition", priority: "normal" });
     await wos.login(page);
     await openOutcome(page);
     await intent(page, "New task");
     await page.getByLabel("Task title", { exact: true }).fill("Reflow Task");
+    await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+    await pick(page, "New placement", "Reflow condition");
     await page.keyboard.press("Tab");
     expect(
       await page.evaluate(() => document.activeElement === document.body),
@@ -121,11 +124,11 @@ test("keyboard opens, searches, selects, confirms and restores focus without a p
   await expect(page.locator("#action-dialog")).toBeVisible();
   await page
     .locator("#action-options")
-    .getByRole("button", { name: "New task", exact: true })
+    .getByRole("button", { name: "New task · Backlog", exact: true })
     .focus();
   await page.keyboard.press("Enter");
   await page.getByLabel("Task title", { exact: true }).fill("Keyboard Task");
-  await page.getByRole("button", { name: "Change placement", exact: true }).focus();
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).focus();
   await page.keyboard.press("Enter");
   const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
@@ -142,13 +145,16 @@ test("compound Issue resolution explicitly releases selected impacts atomically"
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Issue impact Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope,
     title: "Affected Task",
     priority: "normal",
+    objective_id: objective.id,
   });
   await wos.command("report_issue_with_blocker", {
     scope,
+    objective_id: objective.id,
     title: "Compound problem",
     severity: "major",
     blocked_ref: { ...scope, kind: "work_item", id: task.id },
@@ -208,10 +214,12 @@ test("typed participants are documentary and never acquire execution authority",
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Participant Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope,
     title: "Participant Task",
     priority: "normal",
+    objective_id: objective.id,
   });
   await wos.login(page);
   await openOutcome(page);

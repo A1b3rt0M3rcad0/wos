@@ -74,13 +74,16 @@ export function humanForm(
   }
   function id(k = kind) {
     if (k !== "outcome") fixed[`${k}_id`] = entity.id;
-    fixed.expected_version = entity.version;
+    fixed.expected_version = exactVersion(entity.version);
   }
-  function exactObservedVersion() {
-    const value = workspaceView?.entity_version ?? entity.version;
+  function exactVersion(value) {
     if (typeof value === "string" && /^[1-9][0-9]*$/.test(value)) return value;
     if (Number.isSafeInteger(value) && value > 0) return String(value);
     throw Error(copy.text.formReviewTargets);
+  }
+  function exactObservedVersion() {
+    const value = workspaceView?.entity_version ?? entity.version;
+    return exactVersion(value);
   }
   function title(label = copy.text.title, value) {
     f("title", label, { required: true, value });
@@ -103,12 +106,12 @@ export function humanForm(
       return value.length ? value : undefined;
     };
   }
-  function placement(key, parent, label, parentRequired = false) {
+  function placement(key, parent, label, parentRequired = false, parentTitle) {
     const creating = name === "create_objective" || name === "create_work_item";
     const editor = placementField({
       scope, request, parent, label, outcomeTitle,
-      title: creating && kind === "objective" ? entity.title
-        : workspaceView?.placement?.parent?.title || workspaceView?.placement?.objective?.title,
+      title: parentTitle || (creating && kind === "objective" ? entity.title
+        : workspaceView?.placement?.parent?.title || workspaceView?.placement?.objective?.title),
       allowChange: mode !== "quick" || (parentRequired && !parent), parentRequired,
     });
     node.append(editor.node);
@@ -564,6 +567,15 @@ export function humanForm(
     case "report_issue_with_blocker": {
       title(copy.text.issueTitle);
       description();
+      const placementObjectiveID = kind === "work_item" && workspaceView?.placement?.parent?.ref?.kind === "objective"
+        ? workspaceView.placement.parent.ref.id : null;
+      const owningObjectiveID = kind === "objective" ? entity.id
+        : kind === "work_item" ? entity.objective_id || placementObjectiveID : null;
+      const owningObjectiveTitle = kind === "objective" ? entity.title
+        : kind === "work_item" && workspaceView?.placement?.parent?.ref?.kind === "objective"
+          && workspaceView.placement.parent.ref.id === owningObjectiveID
+          ? workspaceView.placement.parent.title : undefined;
+      placement("objective_id", owningObjectiveID, copy.text.formIssueOwnerObjective, true, owningObjectiveTitle);
       f("severity", copy.text.severity, {
         options: ["major", "critical", "minor", "informational"].map((x) => [
           x,
@@ -907,6 +919,50 @@ export function humanForm(
       reason();
       help.textContent =
         "Remove this dependency with an explicit reason. Its source and target remain unchanged. The server checks the relation version and source lifecycle.";
+      break;
+    case "relate_issue_to_work_item": {
+      if (kind !== "issue" && kind !== "work_item")
+        throw Error(copy.text.issueTaskLinkNeedsIssueOrTask);
+      const issueContext = kind === "issue";
+      const selectedVersion = exactObservedVersion();
+      const targetKind = issueContext ? "work_item" : "issue";
+      const targetLabel = issueContext ? copy.text.correctiveTask : copy.text.relatedIssue;
+      const picker = p("related_ref", targetLabel, [targetKind], { required: true });
+      fixed.issue_id = issueContext ? entity.id : undefined;
+      fixed.expected_issue_version = issueContext ? selectedVersion : undefined;
+      fixed.work_item_id = issueContext ? undefined : entity.id;
+      fixed.expected_work_item_version = issueContext ? undefined : selectedVersion;
+      getters._editor = async () => {
+        const targetRef = picker.get();
+        const path = targetKind === "issue"
+          ? `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/issues/${targetRef.id}`
+          : `/namespaces/${scope.namespace_id}/outcomes/${scope.outcome_id}/work-items/${targetRef.id}`;
+        const response = await request(path);
+        const target = response.value || response;
+        if (target.id !== targetRef.id || target.scope?.namespace_id !== scope.namespace_id
+          || target.scope?.outcome_id !== scope.outcome_id || !target.version)
+          throw Error(copy.text.issueTaskLinkTargetChanged);
+        if (issueContext) return {
+          work_item_id: target.id,
+          expected_work_item_version: String(target.version),
+        };
+        return {
+          issue_id: target.id,
+          expected_issue_version: String(target.version),
+        };
+      };
+      help.textContent = copy.text.issueTaskLinkMeaning;
+      break;
+    }
+    case "remove_issue_work_item_relation":
+      if (kind !== "relation" || entity.relation_type !== "relates_to"
+        || entity.lifecycle !== "active"
+        || !((entity.source_ref?.kind === "issue" && entity.target_ref?.kind === "work_item")
+          || (entity.source_ref?.kind === "work_item" && entity.target_ref?.kind === "issue")))
+        throw Error(copy.text.issueTaskLinkCannotBeRemoved);
+      id("relation");
+      reason();
+      help.textContent = copy.text.issueTaskRemoveMeaning;
       break;
     case "propose_decision":
     case "propose_decision_in_context":

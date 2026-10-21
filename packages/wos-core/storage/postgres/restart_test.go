@@ -41,11 +41,11 @@ func sqliteCommandContext(commandID, key string) domain.CommandContext {
 	}
 }
 
-func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
+func TestPostgresWave02ScenarioSurvivesRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +252,7 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -316,11 +316,11 @@ func TestSQLiteWave02ScenarioSurvivesRestart(t *testing.T) {
 	}
 }
 
-func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
+func TestPostgresIdempotentReplaySurvivesRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -367,7 +367,7 @@ func TestSQLiteIdempotentReplaySurvivesRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

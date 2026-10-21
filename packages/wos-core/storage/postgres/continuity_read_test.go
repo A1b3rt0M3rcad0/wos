@@ -141,7 +141,7 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
-	store, e := openTestPostgres(filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
+	store, e := openTestPostgres(t, filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
 	if e != nil {
 		t.Fatal(e)
 	}

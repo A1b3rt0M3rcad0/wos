@@ -80,7 +80,12 @@ func renderWorkContractView(ctx context.Context, uow ports.UnitOfWork, scope d.S
 	}
 
 	live := w.CurrentContractID != nil && *w.CurrentContractID == c.ID
-	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: live && c.ValidAt(now) && ready.Ready, Recoverable: (live || w.CurrentContractID == nil) && w.Lifecycle == d.WorkItemLifecycleInProgress && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
+	canReacquire := w.Lifecycle == d.WorkItemLifecycleTodo && w.CurrentContractID == nil
+	canReconcile := live && w.Lifecycle == d.WorkItemLifecycleInProgress
+	pendingVerification := w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil
+	// Delivery permanently ends this signed authority. A changes-requested Case
+	// acquires a new correction contract; it cannot resume the delivered one.
+	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: !pendingVerification && live && c.ValidAt(now) && ready.Ready, Recoverable: c.Status != d.ContractDelivered && !pendingVerification && (canReacquire || canReconcile) && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
 	if c.LatestCheckpointID != nil {
 		p, err := repo.GetCheckpoint(ctx, scope, *c.LatestCheckpointID)
 		if err != nil {

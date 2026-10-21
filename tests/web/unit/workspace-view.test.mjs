@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workspaceActions, workspaceCommandName } from "../../../packages/wos-api/web/assets/workspace-view.js";
+import { workspaceActions, workspaceCommandName, workspaceHeaderTitle } from "../../../packages/wos-api/web/assets/workspace-view.js";
 
 const ref = { namespace_id: "workspace", outcome_id: "outcome", kind: "work_item", id: "task" };
 const subject = { kind: "entity", ref };
@@ -52,4 +52,16 @@ test("Task creation capabilities retain separate Backlog and To do targets", () 
   assert.deepEqual(actions.map((entry) => [entry.target_lifecycle, entry.availability]), [
     ["backlog", "available"], ["todo", "unknown"],
   ]);
+});
+
+test("Blocker workspace headings use the entity name while preserving the recorded description", () => {
+  const view = {
+    subject: { kind: "entity", ref: { ...ref, kind: "blocker", id: "blocker" } },
+    header: { kind: "blocker", title: "Wait for verified environment access", description: "Wait for verified environment access" },
+  };
+  assert.equal(workspaceHeaderTitle(view), "Blocker");
+  assert.equal(view.header.description, "Wait for verified environment access");
+  assert.equal(workspaceHeaderTitle({
+    subject: { kind: "entity", ref }, header: { kind: "work_item", title: "Install the package" },
+  }), "Install the package");
 });

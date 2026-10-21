@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strconv"
 	"strings"
 )
 
@@ -551,20 +552,23 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 	// Read only the current contract header (Spec is stored separately), then
 	// resolve exact current submission IDs in one batch. No signed bytes escape.
 	type binding struct {
-		contracted bool
-		submission *d.ID
-		digest     string
+		contracted   bool
+		submission   *d.ID
+		digest       string
+		nativeID     string
+		nativeDigest string
+		nativeRound  string
 	}
 	bindings := map[d.ID]binding{}
 	latest := map[d.ID]d.ID{}
-	rows, e = r.rows(ctx, "SELECT w.id,w.contracts_enabled,COALESCE(sc.state_json,lc.state_json,''),COALESCE(c.submission_id,''),COALESCE(c.submission_digest,'') FROM work_items w LEFT JOIN signed_work_contracts sc ON sc.namespace_id=w.namespace_id AND sc.outcome_id=w.outcome_id AND sc.id=w.current_contract_id LEFT JOIN work_contracts lc ON lc.namespace_id=w.namespace_id AND lc.outcome_id=w.outcome_id AND lc.id=w.current_contract_id LEFT JOIN aggregate_current_conclusions p ON p.namespace_id=w.namespace_id AND p.outcome_id=w.outcome_id AND p.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id WHERE w.namespace_id=? AND w.outcome_id=? AND w.id IN "+in, ids...)
+	rows, e = r.rows(ctx, "SELECT w.id,w.contracts_enabled,COALESCE(sc.state_json,lc.state_json,''),COALESCE(c.submission_id,''),COALESCE(c.submission_digest,''),COALESCE(td.id,''),COALESCE(td.delivery_digest,''),COALESCE(td.delivery_round,'0') FROM work_items w LEFT JOIN signed_work_contracts sc ON sc.namespace_id=w.namespace_id AND sc.outcome_id=w.outcome_id AND sc.id=w.current_contract_id LEFT JOIN work_contracts lc ON lc.namespace_id=w.namespace_id AND lc.outcome_id=w.outcome_id AND lc.id=w.current_contract_id LEFT JOIN aggregate_current_conclusions p ON p.namespace_id=w.namespace_id AND p.outcome_id=w.outcome_id AND p.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id LEFT JOIN task_delivery_work_state ds ON ds.namespace_id=w.namespace_id AND ds.outcome_id=w.outcome_id AND ds.work_item_id=w.id LEFT JOIN task_deliveries td ON td.namespace_id=ds.namespace_id AND td.outcome_id=ds.outcome_id AND td.work_item_id=ds.work_item_id AND td.id=ds.latest_delivery_id WHERE w.namespace_id=? AND w.outcome_id=? AND w.id IN "+in, ids...)
 	if e != nil {
 		return nil, e
 	}
 	for rows.Next() {
-		var id, state, submission, digest string
+		var id, state, submission, digest, nativeID, nativeDigest, nativeRound string
 		var enabled int
-		if e = rows.Scan(&id, &enabled, &state, &submission, &digest); e != nil {
+		if e = rows.Scan(&id, &enabled, &state, &submission, &digest, &nativeID, &nativeDigest, &nativeRound); e != nil {
 			rows.Close()
 			return nil, e
 		}
@@ -573,7 +577,7 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 			rows.Close()
 			return nil, e
 		}
-		b := binding{contracted: enabled == 1}
+		b := binding{contracted: enabled == 1, nativeID: nativeID, nativeDigest: nativeDigest, nativeRound: nativeRound}
 		if state != "" {
 			var c d.WorkContract
 			if e = unmarshalJSON(state, &c); e != nil {
@@ -635,7 +639,7 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 			}
 		}
 	}
-	query := `SELECT c.owner_id,c.owner_kind,c.id,c.criterion_revision,c.status,r.required,COALESCE(a.result,''),COALESCE(a.criterion_revision,0),COALESCE(a.submission_id,''),COALESCE(a.submission_digest,''),CASE WHEN a.id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM criterion_assessment_evidence x LEFT JOIN evidence e ON e.namespace_id=x.namespace_id AND e.outcome_id=x.outcome_id AND e.id=x.evidence_id WHERE x.namespace_id=a.namespace_id AND x.outcome_id=a.outcome_id AND x.assessment_id=a.id AND (e.id IS NULL OR e.lifecycle!='registered')) THEN 1 ELSE 0 END,CASE WHEN EXISTS(SELECT 1 FROM evidence_links el WHERE el.namespace_id=c.namespace_id AND el.outcome_id=c.outcome_id AND el.target_kind=c.owner_kind AND el.target_id=c.owner_id AND el.criterion_id=c.id AND el.lifecycle='active') THEN 1 ELSE 0 END
+	query := `SELECT c.owner_id,c.owner_kind,c.id,c.criterion_revision,c.status,r.required,COALESCE(a.result,''),COALESCE(a.criterion_revision,0),COALESCE(a.submission_id,''),COALESCE(a.submission_digest,''),COALESCE(a.task_delivery_id,''),COALESCE(a.task_delivery_digest,''),COALESCE(a.task_delivery_round,'0'),CASE WHEN a.id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM criterion_assessment_evidence x LEFT JOIN evidence e ON e.namespace_id=x.namespace_id AND e.outcome_id=x.outcome_id AND e.id=x.evidence_id WHERE x.namespace_id=a.namespace_id AND x.outcome_id=a.outcome_id AND x.assessment_id=a.id AND (e.id IS NULL OR e.lifecycle!='registered')) THEN 1 ELSE 0 END,CASE WHEN EXISTS(SELECT 1 FROM evidence_links el WHERE el.namespace_id=c.namespace_id AND el.outcome_id=c.outcome_id AND el.target_kind=c.owner_kind AND el.target_id=c.owner_id AND el.criterion_id=c.id AND el.lifecycle='active') THEN 1 ELSE 0 END
 FROM success_criteria c JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision
 LEFT JOIN criterion_current_assessments p ON p.namespace_id=c.namespace_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id LEFT JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id
 WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id IN ` + in + ` ORDER BY c.owner_id,c.id`
@@ -645,10 +649,10 @@ WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id IN ` + in + ` ORDER BY 
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var owner, kind, id, status, assessmentResult, submission, digest string
+		var owner, kind, id, status, assessmentResult, submission, digest, taskDeliveryID, taskDeliveryDigest, taskDeliveryRound string
 		var revision, assessmentRevision d.CriterionRevision
 		var required, valid, linked int
-		if e = rows.Scan(&owner, &kind, &id, &revision, &status, &required, &assessmentResult, &assessmentRevision, &submission, &digest, &valid, &linked); e != nil {
+		if e = rows.Scan(&owner, &kind, &id, &revision, &status, &required, &assessmentResult, &assessmentRevision, &submission, &digest, &taskDeliveryID, &taskDeliveryDigest, &taskDeliveryRound, &valid, &linked); e != nil {
 			return nil, e
 		}
 		oid, e := d.ParseID(owner)
@@ -664,7 +668,18 @@ WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id IN ` + in + ` ORDER BY 
 			return nil, e
 		}
 		applies := valid == 1 && assessmentRevision == revision
-		if b, ok := bindings[oid]; ok && b.contracted {
+		if result[i].Ref.Kind == d.EntityKindWorkItem {
+			if taskDeliveryID != "" {
+				round, parseErr := strconv.ParseUint(taskDeliveryRound, 10, 64)
+				b := bindings[oid]
+				nativeRound, nativeParseErr := strconv.ParseUint(b.nativeRound, 10, 64)
+				applies = applies && b.nativeID != "" && parseErr == nil && nativeParseErr == nil && taskDeliveryRound == strconv.FormatUint(round, 10) && b.nativeRound == strconv.FormatUint(nativeRound, 10) && b.nativeID == taskDeliveryID && b.nativeDigest == taskDeliveryDigest && round == nativeRound
+			} else if b, ok := bindings[oid]; ok && b.nativeID != "" {
+				applies = false
+			} else if b, ok := bindings[oid]; ok && b.contracted {
+				applies = applies && b.submission != nil && submission == b.submission.String() && digest != "" && digest == b.digest
+			}
+		} else if b, ok := bindings[oid]; ok && b.contracted {
 			applies = applies && b.submission != nil && submission == b.submission.String() && digest != "" && digest == b.digest
 		}
 		result[i].Criteria = append(result[i].Criteria, ports.WorkspaceCriterionFact{ID: cid, Revision: revision, Required: required == 1, Status: d.CriterionStatus(status), AssessmentResult: d.AssessmentResult(assessmentResult), AssessmentApplicable: applies, EvidenceLinked: linked == 1})

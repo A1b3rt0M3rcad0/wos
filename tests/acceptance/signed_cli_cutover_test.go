@@ -37,19 +37,26 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionAuditRead, ports.PermissionNamespaceAdmin, ports.PermissionPermissionsManage, ports.PermissionPolicyManage, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
 	operatorPrincipal := "cutover-operator"
 	operatorActor := d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: operatorPrincipal}
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: operatorPrincipal, Permissions: permissions}))
+	applyAcceptanceGrant(t, security, adminCtx, "signed-cli-cutover-operator-grant", ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: operatorPrincipal, Permissions: permissions})
 	operatorCredential, operatorToken, e := security.IssueCredential(adminCtx, scope.NamespaceID, operatorPrincipal, operatorActor, time.Now().UTC().Add(time.Hour))
 	must(e)
+	operatorIdentity, e := security.Authenticate(ctx, operatorToken)
+	must(e)
+	issuedPolicy, e := security.SigningIdentity(a.WithIdentity(ctx, operatorIdentity), nil)
+	must(e)
+	if issuedPolicy.Policy == nil || issuedPolicy.Policy.Version != 1 {
+		t.Fatalf("credential issuance policy version = %v, want an explicit version-1 policy", issuedPolicy.Policy)
+	}
 	adminIdentity, e := adminOperator.SigningIdentity(ctx, nil)
 	must(e)
 	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: operatorCredential.ID, PrincipalID: operatorPrincipal, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, permission := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(permission))
 	}
-	configured, e := adminOperator.SigningMutation(ctx, "cutover-cli-operator-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := adminOperator.SigningMutation(ctx, "cutover-cli-operator-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: issuedPolicy.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
-	if configured.CredentialPolicy == nil {
-		t.Fatal("target operator policy was not persisted before compatibility migration")
+	if configured.CredentialPolicy == nil || configured.CredentialPolicy.Version != issuedPolicy.Policy.Version+1 {
+		t.Fatalf("target operator policy version = %v, want issuance version %d advanced once before compatibility migration", configured.CredentialPolicy, issuedPolicy.Policy.Version+1)
 	}
 	migrated, e := security.ApplyPermissionMigration(adminCtx, "cutover-cli-operator-permission-migration", a.PermissionMigrationApplyRequest{
 		NamespaceID: scope.NamespaceID, PrincipalID: operatorPrincipal, CredentialID: operatorCredential.ID,

@@ -85,18 +85,19 @@ func (o ConclusionObligations) Validate() error {
 }
 
 type Conclusion struct {
-	SubmissionID     *ID                      `json:"submission_id,omitempty"`
-	SubmissionDigest string                   `json:"submission_digest,omitempty"`
-	ID               ID                       `json:"id,omitempty"`
-	PrincipalID      string                   `json:"principal_id"`
-	Actor            ActorRef                 `json:"actor_ref"`
-	Reason           string                   `json:"reason"`
-	ConcludedAt      time.Time                `json:"concluded_at"`
-	Assessments      []CriterionAssessmentRef `json:"assessments,omitempty"`
-	OwnerRef         *EntityRef               `json:"owner_ref,omitempty"`
-	OwnerVersion     *Version                 `json:"owner_version,omitempty"`
-	LifecycleResult  string                   `json:"lifecycle_result,omitempty"`
-	Obligations      ConclusionObligations    `json:"obligations"`
+	SubmissionID      *ID                            `json:"submission_id,omitempty"`
+	SubmissionDigest  string                         `json:"submission_digest,omitempty"`
+	ID                ID                             `json:"id,omitempty"`
+	PrincipalID       string                         `json:"principal_id"`
+	Actor             ActorRef                       `json:"actor_ref"`
+	Reason            string                         `json:"reason"`
+	ConcludedAt       time.Time                      `json:"concluded_at"`
+	Assessments       []CriterionAssessmentRef       `json:"assessments,omitempty"`
+	OwnerRef          *EntityRef                     `json:"owner_ref,omitempty"`
+	OwnerVersion      *Version                       `json:"owner_version,omitempty"`
+	LifecycleResult   string                         `json:"lifecycle_result,omitempty"`
+	Obligations       ConclusionObligations          `json:"obligations"`
+	DerivedCompletion *ObjectiveCompletionDerivation `json:"derived_completion,omitempty"`
 }
 
 func (c Conclusion) Validate() error {
@@ -136,6 +137,15 @@ func (c Conclusion) Validate() error {
 	}
 	if err := c.Obligations.Validate(); err != nil {
 		return err
+	}
+	if c.DerivedCompletion != nil {
+		if err := c.DerivedCompletion.Validate(); err != nil {
+			return err
+		}
+		if c.OwnerRef == nil || c.OwnerRef.Kind != EntityKindObjective || c.DerivedCompletion.Scope != c.OwnerRef.Scope ||
+			c.PrincipalID != ObjectiveCompletionAutomationPrincipalID || c.Actor != ObjectiveCompletionAutomationActor() {
+			return NewError(ErrorCodeInvalidArgument, "derived Objective conclusion provenance differs from its owner or automation identity")
+		}
 	}
 	bound := c.OwnerRef != nil || c.OwnerVersion != nil || strings.TrimSpace(c.LifecycleResult) != ""
 	if bound {

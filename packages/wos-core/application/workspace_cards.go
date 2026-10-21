@@ -131,6 +131,16 @@ func (s *Service) GetWorkspaceCards(ctx context.Context, scope d.Scope, q Worksp
 		for _, f := range facts {
 			byRef[f.Ref] = f
 		}
+		workIDs := []d.ID{}
+		for _, head := range summaries {
+			if head.Ref.Kind == d.EntityKindWorkItem {
+				workIDs = append(workIDs, head.Ref.ID)
+			}
+		}
+		verificationFacts, e := loadTaskVerificationFacts(ctx, frame.u, scope, workIDs)
+		if e != nil {
+			return zero, e
+		}
 		for _, head := range summaries {
 			f := byRef[head.Ref]
 			v := WorkspaceCardSummary{Ref: head.Ref, Version: head.Version, Title: head.Title, Lifecycle: head.Lifecycle, DisplayState: head.Lifecycle, Priority: head.Priority, Description: workspaceText(f.Description, 240), ParentRef: f.ParentRef, RequiredForOutcome: f.RequiredForOutcome, Participants: []WorkspacePerson{}, AuthorityState: "not_applicable"}
@@ -165,14 +175,32 @@ func (s *Service) GetWorkspaceCards(ctx context.Context, scope d.Scope, q Worksp
 				}
 				v.Criteria = &counts
 			}
-			if f.PendingReview && head.Lifecycle != "done" && head.Lifecycle != "cancelled" {
-				v.DisplayState = "awaiting_review"
-				v.AttentionReason = "awaiting_independent_review"
-			} else if f.CorrectionRequired && head.Lifecycle != "done" && head.Lifecycle != "cancelled" {
-				v.DisplayState = "corrections_requested"
-				v.AttentionReason = "corrections_requested"
+			if head.Ref.Kind == d.EntityKindWorkItem {
+				facts := verificationFacts[head.Ref.ID]
+				if facts.Version != head.Version || string(facts.Lifecycle) != head.Lifecycle {
+					return zero, taskVerificationSourceError(scope, head.Ref.ID, "card and verification source are from different snapshots")
+				}
+				verification, e := projectTaskVerification(scope, facts, frame.revision, frame.at)
+				if e != nil {
+					return zero, e
+				}
+				verification.Requirements = v.Criteria
+				verification.Coverage["criteria"] = WorkspaceCoverage{Status: "complete"}
+				v.Verification = &verification
+				v.AuthorityState = verification.ExecutorAuthority
+				v.DisplayState = verificationDisplayState(verification)
+				if verification.Pending {
+					v.AttentionReason = "awaiting_independent_review"
+				} else if verification.CorrectionRequired {
+					v.AttentionReason = "corrections_requested"
+				} else if len(verification.ReasonCodes) > 0 {
+					v.AttentionReason = verification.ReasonCodes[0]
+				}
 			}
 			v.Stage = workspaceKanbanStage(v.Lifecycle, v.DisplayState)
+			if v.Verification != nil {
+				v.Stage = v.Verification.Stage
+			}
 			page.Items = append(page.Items, v)
 		}
 	}

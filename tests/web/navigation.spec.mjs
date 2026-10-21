@@ -62,11 +62,13 @@ test("all Task search and priority filter find an off-page item in 1,001 records
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Searchable Task collection", priority: "normal" });
   for (let i = 0; i < 1001; i++)
     await wos.command("create_work_item", {
       scope,
       title: i === 1000 ? "Unique remote high-priority Task" : "Other Task",
       priority: i === 1000 ? "high" : "normal",
+      objective_id: objective.id,
     });
   await wos.login(page);
   await openOutcome(page);
@@ -86,11 +88,13 @@ test("queued search cannot discard a page after explicit status navigation", asy
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Paginated Task collection", priority: "normal" });
   for (let i = 0; i < 32; i++)
     await wos.command("create_work_item", {
       scope,
       title: `Pagination task ${String(i).padStart(2, "0")}`,
       priority: "normal",
+      objective_id: objective.id,
     });
   await wos.login(page);
   await openOutcome(page);

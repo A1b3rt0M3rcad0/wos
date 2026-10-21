@@ -21,7 +21,9 @@ import (
 func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
-			floor := d.AcceptanceIndependentReview
+			// Credential/deployment policy intentionally permits direct completion;
+			// the operational_v2 Outcome profile must freeze an independent floor.
+			floor := d.AcceptanceDirect
 			hasCriteria := true
 			var store interface {
 				ports.SecurityStore
@@ -77,10 +79,16 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
 			outcome.Lifecycle = d.OutcomeLifecycleActive
+			outcome.OperationalProfile = d.OperationalProfileOperationalV2
+			outcome.CompletionPolicy = d.CompletionPolicyStrictWork
 			must(uow.Outcomes().Insert(ctx, outcome))
+			objective, err := d.NewObjective(testID("0199a555-0000-7000-8000-000000000006"), scope, "Operational signed objective", "", d.PriorityNormal, false, now)
+			must(err)
+			objective.Lifecycle = d.ObjectiveLifecycleInProgress
+			must(uow.Objectives().Insert(ctx, objective))
 			works := []d.WorkItem{}
 			for i := 0; i < 4; i++ {
-				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				w, e := d.NewWorkItemForObjective(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, &objective.ID, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(e)
 				w.ContractsEnabled = true
 				criterion, e := d.NewSuccessCriterion(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 100+i)), w.Ref(), "verified result", "", true, d.VerificationModeEvidenceReview)
@@ -111,8 +119,25 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 300})
 			must(e)
 			c := acquired.Value.Contract
+			if c.SignedBinding == nil || c.SignedBinding.AcceptanceFloor != d.AcceptanceIndependentReview {
+				t.Fatal("operational_v2 Task did not freeze independent review despite direct credential/deployment defaults")
+			}
+			if acquired.Value.IssuedSpecification == nil {
+				t.Fatal("signed acquisition omitted its frozen specification")
+			}
+			specificationEnvelope, e := acquired.Value.IssuedSpecification.Envelope()
+			must(e)
+			specificationPayload, e := signing.Verify(specificationEnvelope, signing.ContractSpec, server.IssuerKeyID.String(), pub)
+			must(e)
+			var issuedSpec signing.SpecPayload[d.SignedWorkSpec]
+			must(signing.DecodeStrict(specificationPayload, &issuedSpec, 128*1024))
+			if issuedSpec.Spec.AcceptanceFloor != d.AcceptanceIndependentReview {
+				t.Fatal("independent-review floor was not included in the exact issued Task specification")
+			}
+			frozenSpecificationBytes, e := signing.Canonical(specificationEnvelope)
+			must(e)
 			work := acquired.Value.WorkItem
-			restorePending := func(stage, kind string, contractID d.ID, readerContext context.Context) {
+			restorePending := func(stage, kind string, contractID d.ID, readerContext context.Context, expectedSpecification []byte) {
 				t.Helper()
 				sqlStore, ok := store.(*Store)
 				if !ok {
@@ -120,6 +145,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				} // Memory has no database backup/restore contract.
 				query := a.SignedStateQuery{Scope: scope, Resource: kind, ID: contractID}
 				before, e := service.ReadSignedState(readerContext, query)
+				must(e)
+				beforeSpecification, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "specification", ContractKind: kind, ID: contractID})
 				must(e)
 				beforeAuthority, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "authority", ContractKind: kind, ID: contractID})
 				must(e)
@@ -130,17 +157,27 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
 				after, e := service.ReadSignedState(readerContext, query)
 				must(e)
+				afterSpecification, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "specification", ContractKind: kind, ID: contractID})
+				must(e)
 				afterAuthority, e := service.ReadSignedState(readerContext, a.SignedStateQuery{Scope: scope, Resource: "authority", ContractKind: kind, ID: contractID})
 				must(e)
-				if !reflect.DeepEqual(before.Contract, after.Contract) || beforeAuthority.PayloadDigest != afterAuthority.PayloadDigest || !reflect.DeepEqual(beforeAuthority.Envelope, afterAuthority.Envelope) {
+				if !reflect.DeepEqual(before.Contract, after.Contract) || beforeSpecification.PayloadDigest != afterSpecification.PayloadDigest || !reflect.DeepEqual(beforeSpecification.Envelope, afterSpecification.Envelope) || beforeAuthority.PayloadDigest != afterAuthority.PayloadDigest || !reflect.DeepEqual(beforeAuthority.Envelope, afterAuthority.Envelope) {
 					t.Fatalf("%s restore changed pending authority, version/fence or exact signed bytes", stage)
+				}
+				if beforeSpecification.Envelope == nil {
+					t.Fatalf("%s restore lost issued specification proof", stage)
+				}
+				restoredSpecificationBytes, e := signing.Canonical(*beforeSpecification.Envelope)
+				must(e)
+				if string(restoredSpecificationBytes) != string(expectedSpecification) {
+					t.Fatalf("%s restore rewrote the frozen acceptance policy signature", stage)
 				}
 				t.Logf("clean database restore preserved %s authority; continuing the same authenticated journey", stage)
 			}
-			restorePending("execution", "execution", c.ID, agentCtx)
+			restorePending("execution", "execution", c.ID, agentCtx, frozenSpecificationBytes)
 			rid, e := ids.NewID()
 			must(e)
-			request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "verified direct result"}}
+			request := signing.WorkReturnPayload[a.SignedReturnMaterial]{RequestBinding: signing.RequestBinding{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), OutcomeID: scope.OutcomeID.String(), PrincipalID: identity.PrincipalID, SignerKeyID: agentKey.String()}, OperationKind: "work_return", RequestID: rid.String(), IdempotencyKey: "atomic-signed-return", ContractID: c.ID.String(), WorkItemID: work.ID.String(), ExecutionID: c.ExecutionID.String(), FencingToken: signing.Decimal(c.FencingToken), SpecDigest: c.SignedBinding.SpecificationDigest, AuthorityDigest: signing.Digest(acquired.Value.IssuedAuthority.Payload), ExpectedContractVersion: signing.Decimal(c.Version), ExpectedLeaseVersion: signing.Decimal(c.LeaseVersion), ExpectedWorkItemVersion: signing.Decimal(work.Version), PolicyRevision: signing.Decimal(policy.Version)}, CompletionIntent: "auto", Material: a.SignedReturnMaterial{Result: d.NewSignedResultMaterial(d.WorkResultMaterial{ContractID: c.ID, WorkItemID: work.ID, SpecDigest: c.SignedBinding.SpecificationDigest, Summary: "bounded implementation verified"}), Reason: "ready for independent verification"}}
 			criterion := d.SuccessCriterion{}
 			if hasCriteria {
 				criterion = work.Criteria.Items[0]
@@ -152,8 +189,22 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			if hasCriteria {
 				request.Material.CriterionLocalEvidence = []a.SignedLocalCriterionEvidence{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), EvidenceLocalKeys: []string{"test"}}}
 			}
-			if floor == d.AcceptanceDirect && hasCriteria {
+			if c.SignedBinding.AcceptanceFloor == d.AcceptanceDirect && hasCriteria {
 				request.Material.Assessments = []a.SignedAssessmentInput{{CriterionID: criterion.ID, CriterionRevision: signing.Decimal(criterion.Revision), Result: d.AssessmentResultMet, Rationale: "the exact submitted test passed", EvidenceLocalKeys: []string{"test"}}}
+			}
+			direct := request
+			direct.RequestID = testID("0199a555-0000-7000-8000-000000000099").String()
+			direct.IdempotencyKey = "operational-v2-direct-return-denied"
+			direct.CompletionIntent = "direct"
+			directEnvelope, e := signing.Sign(signing.WorkReturn, direct, agentKey.String(), agentPrivate)
+			must(e)
+			directCC := cc
+			directCC.CommandID = d.ID(direct.RequestID)
+			directCC.IdempotencyKey = direct.IdempotencyKey
+			if _, e = service.ReturnSignedWork(agentCtx, directCC, a.ReturnSignedWorkCommand{Envelope: directEnvelope}); e == nil {
+				t.Fatal("operational_v2 signed Task allowed direct completion below its frozen independent-review floor")
+			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
+				t.Fatalf("direct completion returned wrong denial: %v", e)
 			}
 			envelope, e := signing.Sign(signing.WorkReturn, request, agentKey.String(), agentPrivate)
 			must(e)
@@ -164,6 +215,19 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			returned, e := service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
 			must(e)
 			delivery := decodeReceipt(t, returned.Value.Receipt, server, pub)
+			if delivery.Disposition != "delivered_for_review" || delivery.ReviewCaseID == "" || delivery.WorkItemLifecycle != string(d.WorkItemLifecycleInProgress) {
+				t.Fatalf("auto completion on operational_v2 must create a real independent ReviewCase, got %#v", delivery)
+			}
+			storedSpecification, e := service.ReadSignedState(agentCtx, a.SignedStateQuery{Scope: scope, Resource: "specification", ContractKind: "execution", ID: c.ID})
+			must(e)
+			if storedSpecification.Envelope == nil || storedSpecification.PayloadDigest != signing.Digest(specificationPayload) {
+				t.Fatal("signed delivery rewrote the frozen specification digest")
+			}
+			storedSpecificationBytes, e := signing.Canonical(*storedSpecification.Envelope)
+			must(e)
+			if string(storedSpecificationBytes) != string(frozenSpecificationBytes) {
+				t.Fatal("signed delivery rewrote the frozen acceptance-floor signature")
+			}
 			read := func(readCtx context.Context, query a.SignedStateQuery) a.SignedStateResult {
 				t.Helper()
 				value, e := service.ReadSignedState(readCtx, query)
@@ -294,6 +358,19 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			}
 			reviewer, reviewCtx, reviewKey, reviewPrivate, reviewPolicy := participant("reviewer", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionTaskAccept, ports.PermissionTaskRequestChanges, ports.PermissionWorkReviewDecide, ports.PermissionRecordsWrite, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite})
 			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskIntervene, ports.PermissionWorkContractRevoke})
+			ungrantedPub, _, e := ed25519.GenerateKey(rand.Reader)
+			must(e)
+			ungrantedFingerprint, e := signing.Fingerprint(ungrantedPub)
+			must(e)
+			ungrantedKey, e := ids.NewID()
+			must(e)
+			keyUnit, e := store.Begin(ctx)
+			must(e)
+			must(keyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveKey(ctx, d.SigningKey{ID: ungrantedKey, NamespaceID: ns, PrincipalID: reviewer.PrincipalID, Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(ungrantedPub), Fingerprint: ungrantedFingerprint, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
+			must(keyUnit.Commit())
+			if _, e = service.AcquireSignedReviewContract(reviewCtx, nextCC(reviewer, "review-ungranted-key"), a.AcquireSignedReviewContractCommand{Scope: scope, ReviewCaseID: review.ID, ExpectedReviewCaseVersion: review.Version, SignerKeyID: ungrantedKey}); e == nil {
+				t.Fatal("independent reviewer acquired authority with an active key outside its credential grant")
+			}
 			searchCC := nextCC(reviewer, "review-round-one-acquisition")
 			searchCmd := a.AcquireNextSignedReviewContractCommand{Scope: scope, SignerKeyID: reviewKey, TTLSeconds: 300, Limit: 1}
 			searched, e := service.AcquireNextSignedReviewContract(reviewCtx, searchCC, searchCmd)
@@ -302,7 +379,14 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				t.Fatal("independent next review search failed")
 			}
 			acquiredReview := a.MutationResult[a.SignedReviewContractResult]{Value: *searched.Value.Result, CommandID: searched.CommandID, OutcomeRevision: searched.OutcomeRevision}
-			restorePending("review", "review", acquiredReview.Value.Contract.ID, reviewCtx)
+			if acquiredReview.Value.IssuedSpecification == nil {
+				t.Fatal("signed review acquisition omitted its frozen specification")
+			}
+			reviewSpecEnvelope, e := acquiredReview.Value.IssuedSpecification.Envelope()
+			must(e)
+			reviewSpecBytes, e := signing.Canonical(reviewSpecEnvelope)
+			must(e)
+			restorePending("review", "review", acquiredReview.Value.Contract.ID, reviewCtx, reviewSpecBytes)
 			blockedCC := nextCC(reviewer, "review-active-search-is-empty")
 			blocked, e := service.AcquireNextSignedReviewContract(reviewCtx, blockedCC, searchCmd)
 			must(e)
@@ -430,10 +514,31 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			if currentWork.PendingReviewCaseID != nil || currentWork.CorrectionReviewCaseID == nil {
 				t.Fatal("correction navigation did not replace pending review")
 			}
+			correctionBlocker, e := service.CreateBlocker(interventionCtx, nextCC(administrator, "block-correction-before-reacquisition"), a.CreateBlockerCommand{Scope: scope, BlockedRef: work.Ref(), ExternalCause: &d.ExternalCause{Provider: "test", ID: "correction-hold", Description: "correction is not ready yet"}, Description: "hold correction until prerequisite is resolved", Propagation: d.BlockerPropagationDirect})
+			must(e)
+			if _, e = service.AcquireSignedWorkContract(executorCtx, nextCC(executor, "blocked-correction-acquisition"), a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: currentWork.Version, SignerKeyID: executorKey, PreviousReviewCaseID: &review.ID}); e == nil {
+				t.Fatal("signed correction reacquisition bypassed the live readiness/blocker gate")
+			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodePreconditionFailed {
+				t.Fatalf("correction reacquisition failed for a reason other than its readiness gate: %v", e)
+			}
+			_, e = service.ResolveBlocker(interventionCtx, nextCC(administrator, "resolve-correction-hold"), a.ResolveBlockerCommand{Scope: scope, BlockerID: correctionBlocker.Value.ID, ExpectedVersion: correctionBlocker.Value.Version, ResolutionSummary: "correction prerequisite cleared"})
+			must(e)
+			u, e = store.Begin(ctx)
+			must(e)
+			currentWork, e = u.WorkItems().Get(ctx, scope, work.ID)
+			must(e)
+			must(u.Rollback())
 			correction, e := service.AcquireSignedWorkContract(executorCtx, nextCC(executor, "correction-acquisition"), a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: work.ID, ExpectedWorkItemVersion: currentWork.Version, SignerKeyID: executorKey, PreviousReviewCaseID: &review.ID})
 			must(e)
 			correctedContract := correction.Value.Contract
-			restorePending("correction", "execution", correctedContract.ID, executorCtx)
+			if correction.Value.IssuedSpecification == nil {
+				t.Fatal("signed correction acquisition omitted its frozen specification")
+			}
+			correctedSpecEnvelope, e := correction.Value.IssuedSpecification.Envelope()
+			must(e)
+			correctedSpecBytes, e := signing.Canonical(correctedSpecEnvelope)
+			must(e)
+			restorePending("correction", "execution", correctedContract.ID, executorCtx, correctedSpecBytes)
 			if correctedContract.FencingToken <= c.FencingToken || correctedContract.ID == c.ID || correctedContract.SignedBinding.PreviousSubmissionID == nil || len(correctedContract.SignedBinding.CorrectionFindings) != 1 {
 				t.Fatal("correction did not get a new fenced authority and immutable targets")
 			}

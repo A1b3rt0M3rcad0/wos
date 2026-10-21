@@ -40,30 +40,36 @@ func (l WorkLease) ValidAt(now time.Time) bool {
 }
 
 type WorkItem struct {
-	PendingReviewCaseID    *ID               `json:"pending_review_case_id,omitempty"`
-	LatestReviewCaseID     *ID               `json:"latest_review_case_id,omitempty"`
-	CorrectionReviewCaseID *ID               `json:"correction_review_case_id,omitempty"`
-	ContractsEnabled       bool              `json:"contracts_enabled,omitempty"`
-	CurrentContractID      *ID               `json:"current_contract_id,omitempty"`
-	ExecutionSpec          *ExecutionSpec    `json:"execution_spec,omitempty"`
-	ID                     ID                `json:"id"`
-	Scope                  Scope             `json:"scope"`
-	Version                Version           `json:"version"`
-	Title                  string            `json:"title"`
-	Description            string            `json:"description,omitempty"`
-	ObjectiveID            *ID               `json:"objective_id,omitempty"`
-	Lifecycle              WorkItemLifecycle `json:"lifecycle"`
-	Priority               Priority          `json:"priority"`
-	NotBefore              *time.Time        `json:"not_before,omitempty"`
-	AssigneeRefs           []ActorRef        `json:"assignee_refs,omitempty"`
-	ResultSummary          string            `json:"result_summary,omitempty"`
-	CurrentLease           *WorkLease        `json:"current_lease,omitempty"`
-	LastFencingToken       uint64            `json:"last_fencing_token"`
-	Criteria               CriterionSet      `json:"criteria"`
-	CurrentConclusion      *Conclusion       `json:"conclusion,omitempty"`
-	ConclusionHistory      []Conclusion      `json:"conclusion_history,omitempty"`
-	CreatedAt              time.Time         `json:"created_at"`
-	UpdatedAt              time.Time         `json:"updated_at"`
+	PendingDeliveryID            *ID               `json:"pending_delivery_id,omitempty"`
+	LatestDeliveryID             *ID               `json:"latest_delivery_id,omitempty"`
+	LatestDeliveryDecisionID     *ID               `json:"latest_delivery_decision_id,omitempty"`
+	LatestDeliveryWithdrawalID   *ID               `json:"latest_delivery_withdrawal_id,omitempty"`
+	TaskDeliveryReplanAuthorized bool              `json:"task_delivery_replan_authorized,omitempty"`
+	DeliveryRound                uint64            `json:"delivery_round,string,omitempty"`
+	PendingReviewCaseID          *ID               `json:"pending_review_case_id,omitempty"`
+	LatestReviewCaseID           *ID               `json:"latest_review_case_id,omitempty"`
+	CorrectionReviewCaseID       *ID               `json:"correction_review_case_id,omitempty"`
+	ContractsEnabled             bool              `json:"contracts_enabled,omitempty"`
+	CurrentContractID            *ID               `json:"current_contract_id,omitempty"`
+	ExecutionSpec                *ExecutionSpec    `json:"execution_spec,omitempty"`
+	ID                           ID                `json:"id"`
+	Scope                        Scope             `json:"scope"`
+	Version                      Version           `json:"version"`
+	Title                        string            `json:"title"`
+	Description                  string            `json:"description,omitempty"`
+	ObjectiveID                  *ID               `json:"objective_id,omitempty"`
+	Lifecycle                    WorkItemLifecycle `json:"lifecycle"`
+	Priority                     Priority          `json:"priority"`
+	NotBefore                    *time.Time        `json:"not_before,omitempty"`
+	AssigneeRefs                 []ActorRef        `json:"assignee_refs,omitempty"`
+	ResultSummary                string            `json:"result_summary,omitempty"`
+	CurrentLease                 *WorkLease        `json:"current_lease,omitempty"`
+	LastFencingToken             uint64            `json:"last_fencing_token"`
+	Criteria                     CriterionSet      `json:"criteria"`
+	CurrentConclusion            *Conclusion       `json:"conclusion,omitempty"`
+	ConclusionHistory            []Conclusion      `json:"conclusion_history,omitempty"`
+	CreatedAt                    time.Time         `json:"created_at"`
+	UpdatedAt                    time.Time         `json:"updated_at"`
 }
 
 // NewWorkItem is retained while storage and callers are migrated away from
@@ -123,6 +129,46 @@ func (w WorkItem) Ref() EntityRef {
 }
 
 func (w WorkItem) Validate() error {
+	for _, id := range []*ID{w.PendingDeliveryID, w.LatestDeliveryID, w.LatestDeliveryDecisionID, w.LatestDeliveryWithdrawalID} {
+		if id != nil && id.Validate() != nil {
+			return NewError(ErrorCodeInvalidArgument, "invalid TaskDelivery navigation")
+		}
+	}
+	resolutionCount := 0
+	if w.PendingDeliveryID != nil {
+		resolutionCount++
+	}
+	if w.LatestDeliveryDecisionID != nil {
+		resolutionCount++
+	}
+	if w.LatestDeliveryWithdrawalID != nil {
+		resolutionCount++
+	}
+	if (w.DeliveryRound == 0) != (w.LatestDeliveryID == nil) ||
+		(w.LatestDeliveryID == nil && resolutionCount != 0) ||
+		(w.LatestDeliveryID != nil && resolutionCount != 1) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery round and history references are inconsistent")
+	}
+	if w.PendingDeliveryID != nil && (w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingReviewCaseID != nil || w.LatestDeliveryID == nil || *w.PendingDeliveryID != *w.LatestDeliveryID) {
+		return NewError(ErrorCodeInvalidTransition, "pending TaskDelivery requires in-progress work without execution or signed-review authority")
+	}
+	if w.TaskDeliveryReplanAuthorized && (w.LatestDeliveryWithdrawalID == nil || w.LatestDeliveryID == nil || w.PendingDeliveryID != nil || w.LatestDeliveryDecisionID != nil) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery replan authorization requires an unresolved withdrawn delivery history")
+	}
+	if w.LatestDeliveryWithdrawalID != nil {
+		if w.Lifecycle != WorkItemLifecycleBacklog && w.Lifecycle != WorkItemLifecycleTodo && w.Lifecycle != WorkItemLifecycleInProgress {
+			return NewError(ErrorCodeInvalidTransition, "withdrawn TaskDelivery cannot be terminal")
+		}
+		if !w.TaskDeliveryReplanAuthorized {
+			if w.Lifecycle == WorkItemLifecycleInProgress || w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingDeliveryID != nil {
+				return NewError(ErrorCodeInvalidTransition, "withdrawn TaskDelivery requires an explicit Backlog replan before execution authority")
+			}
+		} else if w.Lifecycle != WorkItemLifecycleInProgress && (w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil) {
+			return NewError(ErrorCodeInvalidTransition, "replanned withdrawn Task can hold execution authority only while in progress")
+		} else if w.Lifecycle == WorkItemLifecycleInProgress && (w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil) {
+			return NewError(ErrorCodeInvalidTransition, "replanned withdrawn Task cannot have a pending review while executing")
+		}
+	}
 	for _, id := range []*ID{w.PendingReviewCaseID, w.LatestReviewCaseID, w.CorrectionReviewCaseID} {
 		if id != nil && (id.Validate() != nil || !w.ContractsEnabled) {
 			return NewError(ErrorCodeInvalidArgument, "invalid signed review navigation")
@@ -179,8 +225,8 @@ func (w WorkItem) Validate() error {
 		return err
 	}
 	if w.Lifecycle == WorkItemLifecycleInProgress {
-		if w.CurrentLease == nil && !w.ContractsEnabled {
-			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires a lease")
+		if w.CurrentLease == nil && w.CurrentContractID == nil && w.PendingReviewCaseID == nil && w.PendingDeliveryID == nil {
+			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires active execution authority, an identifiable pending review, or a pending delivery")
 		}
 		if w.CurrentLease != nil {
 			if err := w.CurrentLease.Validate(); err != nil {
@@ -268,6 +314,9 @@ func (w *WorkItem) Activate(now time.Time) error {
 	if w.Lifecycle != WorkItemLifecycleBacklog {
 		return NewError(ErrorCodeInvalidTransition, "only backlog work item can be activated")
 	}
+	if w.LatestDeliveryWithdrawalID != nil && !w.TaskDeliveryReplanAuthorized {
+		return NewError(ErrorCodeInvalidTransition, "withdrawn Task must be explicitly deferred before it can be reactivated")
+	}
 	w.Lifecycle = WorkItemLifecycleTodo
 	return w.touch(now)
 }
@@ -277,6 +326,9 @@ func (w *WorkItem) Defer(now time.Time) error {
 		return NewError(ErrorCodeInvalidTransition, "only todo work item can be deferred")
 	}
 	w.Lifecycle = WorkItemLifecycleBacklog
+	if w.LatestDeliveryWithdrawalID != nil {
+		w.TaskDeliveryReplanAuthorized = true
+	}
 	return w.touch(now)
 }
 
@@ -305,6 +357,9 @@ func (w *WorkItem) claim(claimID ID, principalID string, actor ActorRef, ttl tim
 	}
 	if w.Lifecycle != WorkItemLifecycleTodo {
 		return NewError(ErrorCodeInvalidTransition, "only todo work item can be claimed")
+	}
+	if w.LatestDeliveryWithdrawalID != nil && !w.TaskDeliveryReplanAuthorized {
+		return NewError(ErrorCodeInvalidTransition, "withdrawn Task must be explicitly deferred before it can be claimed again")
 	}
 	if err := claimID.Validate(); err != nil {
 		return WrapError(ErrorCodeLease, "claim id is invalid", err)

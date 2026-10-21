@@ -103,6 +103,9 @@ func TestDependencyImpactAdvisoryIsInformationalAndOrientationIsStable(t *testin
 	if dependentImpact.UnsatisfiedHardDependencyCount == nil || *dependentImpact.UnsatisfiedHardDependencyCount != 0 || dependentImpact.DirectBlocked {
 		t.Fatalf("advisory relation incorrectly changes readiness or blocking: %+v", dependentImpact)
 	}
+	if dependentImpact.AdvisoryDependencyCount == nil || *dependentImpact.AdvisoryDependencyCount != 1 || dependentImpact.SatisfiedAdvisoryDependencyCount == nil || *dependentImpact.SatisfiedAdvisoryDependencyCount != 0 || len(dependentImpact.Dependencies) != 1 || dependentImpact.Dependencies[0].Strength != domain.DependencyStrengthAdvisory || dependentImpact.Dependencies[0].Satisfied || dependentImpact.Dependencies[0].Gate != "" {
+		t.Fatalf("advisory relation should be visible without gaining a blocking gate: %+v", dependentImpact)
+	}
 	assertImpactEffect(t, dependentImpact, application.DependencyImpactAdvisoryRelated, application.DependencyImpactInformational)
 	if len(dependentImpact.Path) != 1 || dependentImpact.Path[0].Strength != domain.DependencyStrengthAdvisory {
 		t.Fatalf("advisory path lost its strength: %+v", dependentImpact.Path)
@@ -245,6 +248,9 @@ func TestDependencyImpactShowsSatisfiedHardRelationWithoutRetroactiveWaiting(t *
 	if impact.Summary.Lifecycle != string(domain.WorkItemLifecycleTodo) || impact.UnsatisfiedHardDependencyCount == nil || *impact.UnsatisfiedHardDependencyCount != 0 {
 		t.Fatalf("completed prerequisite should satisfy the relation without changing the dependent's lifecycle: %+v (completed=%s)", impact, completed.Value.Lifecycle)
 	}
+	if impact.SatisfiedHardDependencyCount == nil || *impact.SatisfiedHardDependencyCount != 1 || len(impact.Dependencies) != 1 || !impact.Dependencies[0].Satisfied {
+		t.Fatalf("completed prerequisite satisfaction was not returned on its direct relation: %+v", impact)
+	}
 	assertNoImpactEffect(t, impact, application.DependencyImpactHardWaiting)
 }
 
@@ -271,6 +277,9 @@ func TestDependencyImpactReportsBoundedCoverageAndRevisionBoundPagination(t *tes
 	}
 	if len(bounded.Items) != 1 || bounded.Items[0].Summary.Ref != b.Ref() {
 		t.Fatalf("depth 1 should include only the direct dependent: %+v", bounded.Items)
+	}
+	if !bounded.Items[0].DependencyCoverageComplete || bounded.Items[0].DependencyCount == nil || *bounded.Items[0].DependencyCount != 1 || bounded.Items[0].UnsatisfiedHardDependencyCount == nil || *bounded.Items[0].UnsatisfiedHardDependencyCount != 1 {
+		t.Fatalf("depth-limited reachability must not make a complete direct dependency count appear partial: %+v", bounded.Items[0])
 	}
 
 	first, err := service.GetDependencyImpact(ctx, outcome.Scope(), application.DependencyImpactQuery{

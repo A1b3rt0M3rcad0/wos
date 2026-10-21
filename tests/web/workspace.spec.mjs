@@ -179,9 +179,11 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Publicar ambiente de homologação",
       priority: "critical",
       lifecycle: "todo",
+      objective_id: objective.id,
     });
     const issue = await command("create_issue", {
       scope,
+      objective_id: objective.id,
       title: "Acesso à homologação pendente",
       description: "Aguardar credencial do ambiente antes de publicar.",
       severity: "major",
@@ -198,6 +200,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Validar contrato HTTP e MCP",
       priority: "normal",
       lifecycle: "todo",
+      objective_id: objective.id,
     });
     const claim = await command("claim_work_item", {
       scope,
@@ -219,6 +222,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Planejar acompanhamento pós-lançamento",
       priority: "low",
       lifecycle: "backlog",
+      objective_id: objective.id,
     });
     await command("register_evidence", {
       scope,

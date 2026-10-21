@@ -22,6 +22,12 @@ const (
 	DependencyImpactPotential     = "potential"
 	DependencyImpactInformational = "informational"
 
+	DependencyImpactGateTaskActivation         = "task_activation"
+	DependencyImpactGateTaskAcquisition        = "task_acquisition"
+	DependencyImpactGateTaskDeliveryCompletion = "task_delivery_or_completion"
+	DependencyImpactGateObjectiveStart         = "objective_start"
+	DependencyImpactGateObjectiveAcceptance    = "objective_acceptance"
+
 	dependencyImpactDefaultDepth = 4
 	dependencyImpactMaxDepth     = 8
 	dependencyImpactMaxNodes     = 500
@@ -45,27 +51,46 @@ type DependencyImpactStep struct {
 	Strength   domain.DependencyStrength `json:"strength"`
 }
 
+// DependencyImpactDependency is one direct, observed dependency of the node.
+// Dependencies is a bounded sample; its total and satisfaction counters are
+// separate fields and are omitted when the direct relation scan is incomplete.
+type DependencyImpactDependency struct {
+	RelationID domain.ID                 `json:"relation_id"`
+	TargetRef  domain.EntityRef          `json:"target_ref"`
+	Strength   domain.DependencyStrength `json:"strength"`
+	Satisfied  bool                      `json:"satisfied"`
+	Gate       string                    `json:"gate,omitempty"`
+}
+
 type DependencyImpactEffect struct {
 	Class  string `json:"class"`
 	Status string `json:"status"`
+	Gate   string `json:"gate,omitempty"`
 }
 
 // DependencyImpactNode is a bounded operational summary. Direct Blockers and
 // unsatisfied dependencies are reported independently; neither is inferred
 // from the other. Counts are nil when the relevant scan is incomplete.
 type DependencyImpactNode struct {
-	Summary                             EntitySummary            `json:"summary"`
-	Depth                               int                      `json:"depth"`
-	Path                                []DependencyImpactStep   `json:"path"`
-	Effects                             []DependencyImpactEffect `json:"effects"`
-	DirectBlocked                       bool                     `json:"direct_blocked"`
-	DirectBlockerCount                  *int                     `json:"direct_blocker_count,omitempty"`
-	DirectBlockerSample                 []domain.EntityRef       `json:"direct_blocker_sample"`
-	UnsatisfiedHardDependencyCount      *int                     `json:"unsatisfied_hard_dependency_count,omitempty"`
-	UnsatisfiedHardDependencySample     []domain.EntityRef       `json:"unsatisfied_hard_dependency_sample"`
-	UnsatisfiedAdvisoryDependencyCount  *int                     `json:"unsatisfied_advisory_dependency_count,omitempty"`
-	UnsatisfiedAdvisoryDependencySample []domain.EntityRef       `json:"unsatisfied_advisory_dependency_sample"`
-	StateCoverageComplete               bool                     `json:"state_coverage_complete"`
+	Summary                             EntitySummary                `json:"summary"`
+	Depth                               int                          `json:"depth"`
+	Path                                []DependencyImpactStep       `json:"path"`
+	Effects                             []DependencyImpactEffect     `json:"effects"`
+	Dependencies                        []DependencyImpactDependency `json:"dependencies"`
+	DependencyCount                     *int                         `json:"dependency_count,omitempty"`
+	HardDependencyCount                 *int                         `json:"hard_dependency_count,omitempty"`
+	AdvisoryDependencyCount             *int                         `json:"advisory_dependency_count,omitempty"`
+	SatisfiedHardDependencyCount        *int                         `json:"satisfied_hard_dependency_count,omitempty"`
+	SatisfiedAdvisoryDependencyCount    *int                         `json:"satisfied_advisory_dependency_count,omitempty"`
+	DependencyCoverageComplete          bool                         `json:"dependency_coverage_complete"`
+	DirectBlocked                       bool                         `json:"direct_blocked"`
+	DirectBlockerCount                  *int                         `json:"direct_blocker_count,omitempty"`
+	DirectBlockerSample                 []domain.EntityRef           `json:"direct_blocker_sample"`
+	UnsatisfiedHardDependencyCount      *int                         `json:"unsatisfied_hard_dependency_count,omitempty"`
+	UnsatisfiedHardDependencySample     []domain.EntityRef           `json:"unsatisfied_hard_dependency_sample"`
+	UnsatisfiedAdvisoryDependencyCount  *int                         `json:"unsatisfied_advisory_dependency_count,omitempty"`
+	UnsatisfiedAdvisoryDependencySample []domain.EntityRef           `json:"unsatisfied_advisory_dependency_sample"`
+	StateCoverageComplete               bool                         `json:"state_coverage_complete"`
 }
 
 type DependencyImpactCoverage struct {
@@ -283,23 +308,24 @@ func (s *Service) GetDependencyImpact(ctx context.Context, scope domain.Scope, q
 		allRefs = append(allRefs, ref)
 	}
 	sort.Slice(allRefs, func(i, j int) bool { return dependencyImpactRefKey(allRefs[i]) < dependencyImpactRefKey(allRefs[j]) })
-	if q.Direction == DependencyImpactDownstream {
-		outgoing, complete, err := dependencyImpactAdjacent(ctx, graph, scope, allRefs, "out", "depends_on", &usedEdges, dependencyImpactMaxEdges)
-		if err != nil {
+	// The traversal direction answers who is upstream/downstream. Gate facts
+	// always describe the complete direct dependency set of each visible node,
+	// so load outgoing relations in both directions within this same snapshot.
+	outgoing, complete, err := dependencyImpactAdjacent(ctx, graph, scope, allRefs, "out", "depends_on", &usedEdges, dependencyImpactMaxEdges)
+	if err != nil {
+		return zero, err
+	}
+	for _, edge := range outgoing {
+		if err := validateDependencyImpactEdge(scope, edge); err != nil {
 			return zero, err
 		}
-		for _, edge := range outgoing {
-			if err := validateDependencyImpactEdge(scope, edge); err != nil {
-				return zero, err
-			}
-			dependencyEdges[edge.ID] = edge
-		}
-		coverage.ScannedEdges += len(outgoing)
-		if !complete {
-			markPartial("edge_limit")
-			for _, ref := range allRefs {
-				dependencyComplete[ref] = false
-			}
+		dependencyEdges[edge.ID] = edge
+	}
+	coverage.ScannedEdges += len(outgoing)
+	if !complete {
+		markPartial("edge_limit")
+		for _, ref := range allRefs {
+			dependencyComplete[ref] = false
 		}
 	}
 	blockerEdges, blockersReadComplete, err := dependencyImpactAdjacent(ctx, graph, scope, allRefs, "both", "blocks", new(int), dependencyImpactMaxBlockers)
@@ -360,7 +386,8 @@ func (s *Service) GetDependencyImpact(ctx context.Context, scope domain.Scope, q
 	}
 	buildNode := func(ref domain.EntityRef) DependencyImpactNode {
 		value := walk[ref]
-		node := DependencyImpactNode{Summary: EntitySummary(summaries[ref]), Depth: value.depth, Path: append([]DependencyImpactStep(nil), value.path...), Effects: []DependencyImpactEffect{}, DirectBlockerSample: []domain.EntityRef{}, UnsatisfiedHardDependencySample: []domain.EntityRef{}, UnsatisfiedAdvisoryDependencySample: []domain.EntityRef{}, StateCoverageComplete: dependencyComplete[ref] && blockerComplete[ref]}
+		summary := summaries[ref]
+		node := DependencyImpactNode{Summary: EntitySummary(summary), Depth: value.depth, Path: append([]DependencyImpactStep(nil), value.path...), Effects: []DependencyImpactEffect{}, Dependencies: []DependencyImpactDependency{}, DirectBlockerSample: []domain.EntityRef{}, UnsatisfiedHardDependencySample: []domain.EntityRef{}, UnsatisfiedAdvisoryDependencySample: []domain.EntityRef{}, DependencyCoverageComplete: dependencyComplete[ref], StateCoverageComplete: dependencyComplete[ref] && blockerComplete[ref]}
 		blockerRefs := append([]domain.EntityRef(nil), blockersByTarget[ref]...)
 		sort.Slice(blockerRefs, func(i, j int) bool {
 			return dependencyImpactRefKey(blockerRefs[i]) < dependencyImpactRefKey(blockerRefs[j])
@@ -372,6 +399,25 @@ func (s *Service) GetDependencyImpact(ctx context.Context, scope domain.Scope, q
 			node.DirectBlockerSample = blockerRefs[:min(len(blockerRefs), dependencyImpactSampleSize)]
 		}
 		hardRefs, advisoryRefs := []domain.EntityRef{}, []domain.EntityRef{}
+		satisfiedHard, satisfiedAdvisory := 0, 0
+		directDependencies := dependenciesBySource[ref]
+		for _, edge := range directDependencies {
+			target := summaries[edge.Target]
+			completed := target.Lifecycle == string(domain.WorkItemLifecycleDone) || target.Lifecycle == string(domain.ObjectiveLifecycleAchieved)
+			dependency := DependencyImpactDependency{RelationID: domain.ID(edge.ID), TargetRef: edge.Target, Strength: edge.Strength, Satisfied: completed}
+			if edge.Strength == domain.DependencyStrengthHard {
+				dependency.Gate = dependencyImpactGate(summary, DependencyImpactHardWaiting)
+				if completed {
+					satisfiedHard++
+				}
+			} else if completed {
+				satisfiedAdvisory++
+			}
+			node.Dependencies = append(node.Dependencies, dependency)
+		}
+		if len(node.Dependencies) > dependencyImpactSampleSize {
+			node.Dependencies = node.Dependencies[:dependencyImpactSampleSize]
+		}
 		for _, edge := range dependenciesBySource[ref] {
 			target := summaries[edge.Target]
 			completed := target.Lifecycle == string(domain.WorkItemLifecycleDone) || target.Lifecycle == string(domain.ObjectiveLifecycleAchieved)
@@ -389,9 +435,23 @@ func (s *Service) GetDependencyImpact(ctx context.Context, scope domain.Scope, q
 			return dependencyImpactRefKey(advisoryRefs[i]) < dependencyImpactRefKey(advisoryRefs[j])
 		})
 		if dependencyComplete[ref] {
-			hardCount, advisoryCount := len(hardRefs), len(advisoryRefs)
-			node.UnsatisfiedHardDependencyCount = &hardCount
-			node.UnsatisfiedAdvisoryDependencyCount = &advisoryCount
+			hardCount, advisoryCount := 0, 0
+			for _, edge := range directDependencies {
+				if edge.Strength == domain.DependencyStrengthHard {
+					hardCount++
+				} else {
+					advisoryCount++
+				}
+			}
+			dependencyCount := len(directDependencies)
+			node.DependencyCount = &dependencyCount
+			node.HardDependencyCount = &hardCount
+			node.AdvisoryDependencyCount = &advisoryCount
+			node.SatisfiedHardDependencyCount = &satisfiedHard
+			node.SatisfiedAdvisoryDependencyCount = &satisfiedAdvisory
+			unsatisfiedHardCount, unsatisfiedAdvisoryCount := len(hardRefs), len(advisoryRefs)
+			node.UnsatisfiedHardDependencyCount = &unsatisfiedHardCount
+			node.UnsatisfiedAdvisoryDependencyCount = &unsatisfiedAdvisoryCount
 			node.UnsatisfiedHardDependencySample = hardRefs[:min(len(hardRefs), dependencyImpactSampleSize)]
 			node.UnsatisfiedAdvisoryDependencySample = advisoryRefs[:min(len(advisoryRefs), dependencyImpactSampleSize)]
 		}
@@ -401,14 +461,14 @@ func (s *Service) GetDependencyImpact(ctx context.Context, scope domain.Scope, q
 			if terminal {
 				status = DependencyImpactPotential
 			}
-			node.Effects = append(node.Effects, DependencyImpactEffect{Class: DependencyImpactDirectBlocked, Status: status})
+			node.Effects = append(node.Effects, DependencyImpactEffect{Class: DependencyImpactDirectBlocked, Status: status, Gate: dependencyImpactGate(summary, DependencyImpactDirectBlocked)})
 		}
 		if dependencyComplete[ref] && len(hardRefs) > 0 {
 			status := DependencyImpactPotential
 			if !terminal && dependencyImpactCanWait(summaries[ref]) {
 				status = DependencyImpactCurrent
 			}
-			node.Effects = append(node.Effects, DependencyImpactEffect{Class: DependencyImpactHardWaiting, Status: status})
+			node.Effects = append(node.Effects, DependencyImpactEffect{Class: DependencyImpactHardWaiting, Status: status, Gate: dependencyImpactGate(summary, DependencyImpactHardWaiting)})
 		}
 		if value.advisory || dependencyComplete[ref] && len(advisoryRefs) > 0 {
 			node.Effects = append(node.Effects, DependencyImpactEffect{Class: DependencyImpactAdvisoryRelated, Status: DependencyImpactInformational})
@@ -538,4 +598,32 @@ func dependencyImpactCanWait(summary ports.ContinuitySummary) bool {
 	default:
 		return false
 	}
+}
+
+// dependencyImpactGate mirrors the concrete operations whose existing guards
+// consume hard dependencies or active Blockers. Advisory relations never call
+// this helper because they do not participate in readiness or execution gates.
+func dependencyImpactGate(summary ports.ContinuitySummary, effect string) string {
+	switch domain.EntityKind(summary.Ref.Kind) {
+	case domain.EntityKindObjective:
+		switch summary.Lifecycle {
+		case string(domain.ObjectiveLifecyclePlanned):
+			return DependencyImpactGateObjectiveStart
+		case string(domain.ObjectiveLifecycleInProgress):
+			return DependencyImpactGateObjectiveAcceptance
+		}
+	case domain.EntityKindWorkItem:
+		switch summary.Lifecycle {
+		case string(domain.WorkItemLifecycleBacklog):
+			if effect == DependencyImpactDirectBlocked {
+				return DependencyImpactGateTaskActivation
+			}
+			return DependencyImpactGateTaskAcquisition
+		case string(domain.WorkItemLifecycleTodo):
+			return DependencyImpactGateTaskAcquisition
+		case string(domain.WorkItemLifecycleInProgress):
+			return DependencyImpactGateTaskDeliveryCompletion
+		}
+	}
+	return ""
 }

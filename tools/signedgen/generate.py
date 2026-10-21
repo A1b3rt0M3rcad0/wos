@@ -12,6 +12,23 @@ for backend in ['sqlite','memory']:
   start=source.index('func (r workItemRepository) ContractCandidates')
   tail=source[source.index('func (r signedWorkContractRepository) GetCheckpoint'):]
   source=(source[:start]+tail).replace('\n\t"time"','')
+  # Credential binding columns belong only to contracts_v1 (migration 0044).
+  # Signed-v2 authenticates its separate signed binding and keeps its existing
+  # schema; never copy the unsigned column codec into signed repositories.
+  binding_start=source.index('func validateContractCredentialColumns(')
+  binding_end=source.index('func (r signedWorkContractRepository) Current(',binding_start)
+  source=source[:binding_start]+source[binding_end:]
+  source=source.replace('\n\tvar bindingVersion int\n\tvar holderCredentialID, sessionCredentialID sql.NullString','')
+  source=source.replace('\n\t\tvar bindingVersion int\n\t\tvar holderCredentialID, sessionCredentialID sql.NullString','')
+  source=source.replace(',credential_binding_version,holder_credential_id,session_credential_id','')
+  source=source.replace(',credential_binding_version=?,holder_credential_id=?,session_credential_id=?','')
+  source=source.replace(', &bindingVersion, &holderCredentialID, &sessionCredentialID','')
+  source=re.sub(r'\n(\t+)if err := validateContractCredentialColumns\([^\n]+\); err != nil {\n\1\treturn (?:c|nil), err\n\1}', '', source)
+  source=source.replace('\n\tbindingVersion, holderCredentialID, sessionCredentialID := contractCredentialColumnValues(c)','')
+  source=source.replace(', bindingVersion, holderCredentialID, sessionCredentialID','')
+  source=source.replace('VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)','VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
+  assert 'credential_binding_version' not in source
+  assert 'ContractCredentialColumn' not in source
   source=source.replace('work_contract','signed_work_contract').replace('contractState','signedContractState')
   source=source.replace('work_item_id,holder_principal_id,status','work_item_id,credential_id,holder_principal_id,status').replace('VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)','VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)').replace('c.WorkItemID.String(), c.HolderPrincipalID','c.WorkItemID.String(), c.SignedBinding.CredentialID.String(), c.HolderPrincipalID')
   source=source.replace('int64(c.Version)','strconv.FormatUint(uint64(c.Version),10)').replace('int64(c.LeaseVersion)','strconv.FormatUint(uint64(c.LeaseVersion),10)').replace('int64(version)','strconv.FormatUint(uint64(version),10)').replace('int64(lease)','strconv.FormatUint(uint64(lease),10)')

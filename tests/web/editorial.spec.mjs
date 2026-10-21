@@ -80,6 +80,7 @@ async function seed(wos) {
   });
   const issue = await wos.command("create_issue", {
     scope,
+    objective_id: objective.id,
     title: "The release checklist needs an independent review",
     description:
       "Keep publication on hold until a reviewer confirms the checklist.",
@@ -313,7 +314,7 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
     exact: true,
   });
   await add.click();
-  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await page.locator("#command-dialog").getByRole("button", { name: "Choose Objective", exact: true }).click();
   const objective = page.getByRole("combobox", {
     name: "New placement",
     exact: true,
@@ -1058,7 +1059,7 @@ test("forms preserve whole controls and save actions through nested editors, com
     const instruction = page.getByLabel("Instructions item", { exact: true });
     await instruction.fill("Keep the selected values and attach scoped proof.");
     await expectWholeControl(instruction);
-    await page.getByRole("button", { name: "Change placement", exact: true }).click();
+    await dialog.getByRole("button", { name: "Choose Objective", exact: true }).click();
     const picker = page.getByRole("combobox", {
       name: "New placement",
       exact: true,

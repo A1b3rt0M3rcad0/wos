@@ -41,6 +41,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		"AbandonOutcome":                     {primary: ports.PermissionOutcomeWrite},
 		"AcceptDecision":                     {primary: ports.PermissionRecordsWrite},
 		"AchieveObjective":                   {primary: ports.PermissionObjectiveConclude},
+		"AcceptTaskDelivery":                 {primary: ports.PermissionWorkReviewDecide, additional: acceptTaskDeliveryAuthorizationPermissions},
 		"AchieveOutcome":                     {primary: ports.PermissionConclusionWrite},
 		"AcquireNextSignedReviewContract":    {primary: ports.PermissionTaskReview},
 		"AcquireNextSignedWorkContract":      {primary: ports.PermissionTaskClaim},
@@ -110,6 +111,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		"ReopenOutcome":                      {primary: ports.PermissionConclusionWrite},
 		"ReopenRoadmap":                      {primary: ports.PermissionPlanningWrite},
 		"ReopenWorkItem":                     {primary: ports.PermissionTaskReopen},
+		"RequestTaskDeliveryChanges":         {primary: ports.PermissionWorkReviewDecide, additional: requestTaskDeliveryChangesAuthorizationPermissions},
 		"ReplaceExternalContext":             {primary: ports.PermissionOutcomeWrite},
 		"ReplaceRoadmapDraft":                {primary: ports.PermissionPlanningWrite},
 		"ReportIssueWithBlocker":             {primary: ports.PermissionIssueCreate, additional: reportIssueWithBlockerPermissions},
@@ -129,6 +131,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		"RevokeWorkContract":                 {primary: ports.PermissionWorkContractRevoke},
 		"ReviseCriterion":                    {primary: ports.PermissionCriterionDefine},
 		"SetNamespaceWorkProtocol":           {primary: ports.PermissionPolicyManage},
+		"SetObjectiveCompletionMode":         {primary: ports.PermissionObjectiveConfigureCompletion},
 		"SetObjectiveOwners":                 {primary: ports.PermissionObjectiveUpdate},
 		"SetObjectiveParent":                 {primary: ports.PermissionObjectiveUpdate},
 		"SetOutcomeOwners":                   {primary: ports.PermissionOutcomeWrite},
@@ -138,6 +141,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		"SetWorkItemNotBefore":               {primary: ports.PermissionTaskUpdateDefinition},
 		"SetWorkItemObjective":               {primary: ports.PermissionTaskUpdateDefinition},
 		"StartObjective":                     {primary: ports.PermissionObjectiveStart},
+		"SubmitTaskForReview":                {primary: ports.PermissionTaskDeliver},
 		"SubmitWorkResult":                   {primary: ports.PermissionTaskDeliver},
 		"SupersedeDecision":                  {primary: ports.PermissionRecordsWrite},
 		"SyncWorkContract":                   {primary: ports.PermissionTaskDeliver, additional: syncWorkContractAuthorizationPermissions},
@@ -150,6 +154,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		"UpdateTrigger":                      {primary: ports.PermissionIntegrationWrite},
 		"UpdateWorkItem":                     {primary: ports.PermissionTaskUpdateDefinition},
 		"WithdrawArtifact":                   {primary: ports.PermissionRecordsWrite},
+		"WithdrawTaskDelivery":               {primary: ports.PermissionTaskWithdrawDelivery},
 
 		// Application commands not currently included in the HTTP command catalog
 		// retain the permissions previously inferred for their exact names.
@@ -441,6 +446,14 @@ func signedReviewDecisionAuthorizationPermissions(command any) []ports.Permissio
 		}
 	}
 	return permissions
+}
+
+func acceptTaskDeliveryAuthorizationPermissions(any) []ports.Permission {
+	return []ports.Permission{ports.PermissionTaskAccept, ports.PermissionConclusionWrite}
+}
+
+func requestTaskDeliveryChangesAuthorizationPermissions(any) []ports.Permission {
+	return []ports.Permission{ports.PermissionTaskRequestChanges}
 }
 
 type signedAuthorizationMaterial struct {

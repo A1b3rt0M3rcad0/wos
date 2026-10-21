@@ -136,7 +136,7 @@ func loadOwnedStates(ctx context.Context, tx *sql.Tx, scope domain.Scope) (map[d
 		return nil, err
 	}
 	assessments := map[domain.ID]domain.CriterionAssessment{}
-	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id,submission_id,submission_digest FROM criterion_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
+	if err := read(`SELECT id,criterion_id,criterion_revision,result,rationale,principal_id,actor_json,assessed_at,evaluator_ref_json,supersedes_assessment_id,submission_id,submission_digest,task_delivery_id,task_delivery_digest,task_delivery_round FROM criterion_assessments WHERE namespace_id=? AND outcome_id=? ORDER BY assessed_at,id`, func(rows *sql.Rows) error {
 		v, err := scanAssessment(rows)
 		if err != nil {
 			return err

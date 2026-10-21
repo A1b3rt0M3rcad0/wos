@@ -204,16 +204,76 @@ test("EvidenceLink search and blocking scope consume server-defined eligibility"
   await page.getByRole("combobox", { name: "Related item", exact: true }).focus();
   await expect.poll(() => page.evaluate(() => window.reads.length)).toBeGreaterThan(0);
   expect(await page.evaluate(() => new URL(window.reads[0], location.origin).searchParams.get("kind"))).toBe("outcome,objective,work_item,issue,decision");
-  await fixture(page, "create_issue", { entity: { _kind: "work_item", id: "task", title: "Check startup" } });
+  await fixture(page, "create_issue", { entity: { _kind: "work_item", id: "task", title: "Check startup", objective_id: "objective" } });
   await page.getByLabel("Issue title", { exact: true }).fill("Missing environment variable");
-  const unblocked = await page.evaluate(() => ({ name: window.editor.commandName(), value: window.editor.get() }));
+  const unblocked = await page.evaluate(async () => ({ name: window.editor.commandName(), value: await window.editor.get() }));
   expect(unblocked.name).toBe("create_issue");
-  expect(await page.evaluate(() => window.editor.get())).toMatchObject({ affected_refs: [ref("work_item", "task")] });
+  expect(unblocked.value).toMatchObject({ objective_id: "objective", affected_refs: [ref("work_item", "task")] });
   await page.getByLabel("Prevents continuing?", { exact: true }).check();
   await page.getByLabel("Blocking impact", { exact: true }).fill("The server cannot start");
   expect(await page.getByLabel("Propagation", { exact: true }).locator("option").evaluateAll((options) => options.map((option) => option.value))).toEqual(["direct"]);
   const blocked = await page.evaluate(async () => ({ name: window.editor.commandName(), value: await window.editor.get() }));
-  expect(blocked).toMatchObject({ name: "report_issue_with_blocker", value: { blocked_ref: ref("work_item", "task"), propagation: "direct" } });
+  expect(blocked).toMatchObject({ name: "report_issue_with_blocker", value: { objective_id: "objective", affected_refs: [ref("work_item", "task")], blocked_ref: ref("work_item", "task"), propagation: "direct" } });
+});
+
+test("Issue requires explicit Objective ownership when context has no owner", async ({ page }) => {
+  await fixture(page, "create_issue", {
+    entity: { _kind: "outcome", id: "outcome", title: "Ship a usable release" },
+    workspaceView: {
+      placement: {
+        parent: { ref: ref("objective", "nearby-objective"), title: "Nearby objective" },
+      },
+    },
+  });
+  await page.getByLabel("Issue title", { exact: true }).fill("A release dependency is unclear");
+  await expect(page.getByText("Owning Objective", { exact: true })).toBeVisible();
+  await expect(page.getByText("Choose an Objective", { exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.editor.get().catch((error) => error.message))).toContain("Choose an Objective");
+  await expect(page.getByLabel("Issue title", { exact: true })).toHaveValue("A release dependency is unclear");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  const objectivePicker = page.getByRole("combobox", { name: "New placement", exact: true });
+  await objectivePicker.fill("Installation");
+  const objectiveOption = page.getByRole("option").first();
+  await expect(objectiveOption).toContainText("Installation works");
+  await objectiveOption.click();
+  expect(await page.evaluate(() => window.editor.get())).toMatchObject({
+    objective_id: "objective",
+    affected_refs: [ref("outcome", "outcome")],
+  });
+});
+
+test("Issue opened on an Objective uses it as owner and keeps affected references distinct", async ({ page }) => {
+  await fixture(page, "create_issue", { entity: { _kind: "objective", id: "objective", title: "Installation works" } });
+  await page.getByLabel("Issue title", { exact: true }).fill("The installation environment is unavailable");
+  const value = await page.evaluate(() => window.editor.get());
+  expect(value).toMatchObject({ objective_id: "objective", affected_refs: [ref("objective", "objective")] });
+  expect(await page.evaluate(() => window.reads)).toEqual([]);
+});
+
+test("Issue opened from material requires explicit Objective ownership", async ({ page }) => {
+  await fixture(page, "create_issue", {
+    entity: { _kind: "artifact", id: "artifact", name: "Deployment report" },
+    workspaceView: {
+      placement: {
+        parent: { ref: ref("outcome", "outcome"), title: "Ship a usable release" },
+      },
+    },
+  });
+  await page.getByLabel("Issue title", { exact: true }).fill("The deployment report reveals a missing step");
+  await expect(page.getByText("Owning Objective", { exact: true })).toBeVisible();
+  await expect(page.getByText("Choose an Objective", { exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.editor.get().catch((error) => error.message))).toContain("Choose an Objective");
+
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  const objectivePicker = page.getByRole("combobox", { name: "New placement", exact: true });
+  await objectivePicker.fill("Installation");
+  const objectiveOption = page.getByRole("option").first();
+  await expect(objectiveOption).toContainText("Installation works");
+  await objectiveOption.click();
+
+  const value = await page.evaluate(() => window.editor.get());
+  expect(value).toMatchObject({ objective_id: "objective", affected_refs: [] });
+  expect(value.affected_refs).not.toContainEqual(ref("artifact", "artifact"));
 });
 
 test("contextual Artifact and Decision drafts carry canonical documentary relationships", async ({ page }) => {

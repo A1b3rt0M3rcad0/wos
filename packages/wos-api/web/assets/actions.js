@@ -156,6 +156,18 @@ export const humanActions = Object.freeze({
     label: copy.text.markWorkAsBlocked,
     contexts: ["outcome", "work_item"],
   },
+  relate_issue_to_work_item: {
+    label: copy.text.linkIssueAndTask,
+    contexts: ["issue", "work_item"],
+    requiresActiveOutcome: true,
+  },
+  remove_issue_work_item_relation: {
+    label: copy.text.removeIssueTaskLink,
+    contexts: ["relation"],
+    states: ["active"],
+    relationType: "relates_to",
+    requiresActiveOutcome: true,
+  },
   update_issue: { label: copy.text.editIssue, contexts: ["issue"] },
   investigate_issue: {
     label: copy.text.investigateIssue,
@@ -297,6 +309,7 @@ export function availableActions({
   permissions = [],
   principal,
   inventory,
+  outcome,
 }) {
   return Object.entries(humanActions)
     .filter(([name, a]) => {
@@ -307,6 +320,7 @@ export function availableActions({
         !a.contexts.includes(context)
       )
         return false;
+      if (a.requiresActiveOutcome && outcome?.lifecycle !== "active") return false;
       if (a.states && !a.states.includes(entity.lifecycle)) return false;
       if (
         a.relationType &&

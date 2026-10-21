@@ -216,6 +216,7 @@ type WorkContext struct {
 	// Current proof facts are read in the caller's transaction. They are not a
 	// second persisted obligation list and do not alter the public context wire.
 	workspaceCriterionFacts map[domain.ID]ports.WorkspaceCriterionFact
+	Verification            *TaskVerificationView           `json:"verification,omitempty"`
 	Contract                *WorkContractView               `json:"contract,omitempty"`
 	Work                    domain.WorkItem                 `json:"work_item"`
 	Outcome                 EntitySummary                   `json:"outcome"`
@@ -295,6 +296,12 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 	}
 	value.Blocking = &blocking
 	value.Operational = domain.ProjectWorkItemOperationalState(work, outcome, value.Objective, evaluations, blocking.IsBlocked, now)
+	value.Verification, err = s.optionalTaskVerificationAt(ctx, uow, work, coord.Revision, now)
+	if err != nil {
+		return WorkContext{}, err
+	}
+	value.Operational = applyTaskVerificationOperational(value.Operational, value.Verification)
+	annotateTaskVerificationReadiness(value.Verification, value.Operational)
 	for _, rel := range relations {
 		if rel.SourceRef == work.Ref() && rel.Lifecycle == domain.RelationLifecycleActive {
 			value.Dependencies = append(value.Dependencies, rel)
@@ -371,6 +378,10 @@ func (s *Service) GetWorkContext(ctx context.Context, scope domain.Scope, id dom
 		value.Objective.Criteria.Assessments = nil
 		value.Objective.Criteria.DefinitionRevisions = nil
 		value.Objective.ConclusionHistory = nil
+	}
+	if value.Verification != nil {
+		value.Verification.Requirements = verificationCriteriaSummary(value)
+		value.Verification.Coverage["criteria"] = WorkspaceCoverage{Status: "complete"}
 	}
 	raw, _ := json.Marshal(value)
 	if len(raw) > MaxSnapshotBytes {

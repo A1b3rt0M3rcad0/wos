@@ -148,7 +148,7 @@ test("contextual creation and editing reuse the real form and preserve Objective
   const data = await seedCanvas(wos);
   await openCanvas(page, wos, data);
   await choose(page, "objective", data.child);
-  await clickRecordAction(page, "New task");
+  await clickRecordAction(page, "New task · Backlog");
   await expect(panel(page).locator("#command-form")).toBeVisible();
   await expect(page.locator("#command-dialog")).not.toBeVisible();
   await page.getByLabel("Task title", { exact: true }).fill("Created in the review context");

@@ -33,6 +33,34 @@ test('frozen public wire schemas reject unreviewed drift while allowing product 
  assert.ok(Object.keys(frozen.files).length>=5);
  for(const [filename,expected] of Object.entries(frozen.files))assert.equal(digest(normalize(filename,await readFile(path.join(root,filename)))),expected,filename+' requires an explicit compatibility review');
 });
+test('E17 publishes only its reviewed command surface and keeps permission migration internal',async()=>{
+ const api=JSON.parse(await readFile(path.join(root,'packages/wos-api/commands.openapi.json'),'utf8'));
+ const reviewedCommands=[
+  'apply_dependency_changes',
+  'assign_issue',
+  'configure_outcome_operational_profile',
+  'relate_issue_to_work_item',
+  'remove_issue_work_item_relation',
+  'report_issue_with_blockers',
+  'start_issue_investigation',
+  'unassign_issue',
+ ];
+ for(const name of reviewedCommands){
+  const pathItem=api.paths[`/api/v1/commands/${name}`];
+  assert.ok(pathItem?.post,`E17 command ${name} is missing`);
+  assert.equal(pathItem.post.operationId,`command_${name}`);
+  const schemaName=`Catalog_${name}`;
+  assert.ok(api.components.schemas[schemaName],`E17 command schema ${schemaName} is missing`);
+  assert.equal(pathItem.post.requestBody.content['application/json'].schema.properties.command.$ref,`#/components/schemas/${schemaName}`);
+ }
+ for(const path of Object.keys(api.paths))assert.doesNotMatch(path,/permission[-_]migration/i,'permission migration is an internal operation');
+ for(const name of ['SigningIdentityViewV2','SigningSecurityIntentV2']){
+  const policy=api.components.schemas[name].properties.credential_policy;
+  const marker=policy?.properties?.permission_compatibility_version;
+  assert.deepEqual(marker,{type:'integer'},`${name} must expose the optional migration-managed policy marker as metadata`);
+  assert.ok(!policy.required?.includes('permission_compatibility_version'),`${name} must not require the migration-managed marker`);
+ }
+});
 
 // Reject a removed old field/enum or new required input even after an explicit
 // candidate fingerprint review. Byte/shape limits remain identical on old nodes.

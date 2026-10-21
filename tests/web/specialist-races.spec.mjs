@@ -174,6 +174,7 @@ test("a delayed Board page cannot append obsolete records after a same-Outcome r
     "Refresh preserves the Board's current page boundary",
   );
   const tasks = [];
+  const objective = await wos.command("create_objective", { scope, title: "Queued work Objective", priority: "normal" });
   for (let index = 0; index < 26; index++)
     tasks.push(
       await wos.command("create_work_item", {
@@ -181,6 +182,7 @@ test("a delayed Board page cannot append obsolete records after a same-Outcome r
         title: `Queued work ${String(index + 1).padStart(2, "0")}`,
         priority: "normal",
         lifecycle: "backlog",
+        objective_id: objective.id,
       }),
     );
   const writes = trackBrowserWrites(page);

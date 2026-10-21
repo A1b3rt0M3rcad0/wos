@@ -53,12 +53,13 @@ type criterionRequest struct {
 }
 
 type assessmentRequest struct {
-	ExpectedVersion   *uint64                  `json:"expected_version,omitempty"`
-	CriterionRevision domain.CriterionRevision `json:"criterion_revision"`
-	Result            domain.AssessmentResult  `json:"result"`
-	Rationale         string                   `json:"rationale"`
-	EvidenceIDs       []string                 `json:"evidence_ids,omitempty"`
-	EvaluatorRef      *domain.EvaluatorRef     `json:"evaluator_ref,omitempty"`
+	ExpectedVersion   *uint64                           `json:"expected_version,omitempty"`
+	TaskDeliveryRef   *domain.TaskDeliveryAssessmentRef `json:"task_delivery_ref,omitempty"`
+	CriterionRevision domain.CriterionRevision          `json:"criterion_revision"`
+	Result            domain.AssessmentResult           `json:"result"`
+	Rationale         string                            `json:"rationale"`
+	EvidenceIDs       []string                          `json:"evidence_ids,omitempty"`
+	EvaluatorRef      *domain.EvaluatorRef              `json:"evaluator_ref,omitempty"`
 }
 
 type updateOutcomeRequest struct {
@@ -91,6 +92,13 @@ type versionRequest struct {
 type reasonRequest struct {
 	ExpectedVersion *uint64 `json:"expected_version,omitempty"`
 	Reason          string  `json:"reason"`
+}
+
+type objectiveCompletionModeRequest struct {
+	ExpectedVersion         *uint64                        `json:"expected_version,omitempty"`
+	ExpectedOutcomeRevision *uint64                        `json:"expected_outcome_revision,omitempty"`
+	Mode                    domain.ObjectiveCompletionMode `json:"mode"`
+	Reason                  string                         `json:"reason"`
 }
 
 type claimRequest struct {

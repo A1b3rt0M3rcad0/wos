@@ -229,6 +229,11 @@ func transactCommand[T any, C any](
 					return MutationResult[T]{Value: zero}, err
 				}
 			}
+			if dependencyCommand, ok := dependencyChangesCommand(command); ok {
+				if err := service.authorizeDependencyChangesReplay(ctx, uow, commandContext, dependencyCommand, *reservation.Replay); err != nil {
+					return MutationResult[T]{Value: zero}, err
+				}
+			}
 			var replay MutationResult[T]
 			if err := json.Unmarshal(reservation.Replay.ResponseJSON, &replay); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "stored command result cannot be decoded", err)
@@ -270,8 +275,16 @@ func transactCommand[T any, C any](
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
+	objectiveEffects, err := service.deriveObjectiveCompletionEffects(ctx, uow, meta.Name, command, value, revision)
+	if err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
 
 	events, err := eventsForCommand(service, commandContext, meta, value, revision)
+	if err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
+	events, err = appendObjectiveCompletionEvents(service, commandContext, events, objectiveEffects, revision)
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
@@ -290,6 +303,16 @@ func transactCommand[T any, C any](
 		Value:            value,
 		OutcomeRevision:  revision,
 		CommandID:        commandContext.CommandID,
+	}
+	for _, effect := range objectiveEffects {
+		if effect.Objective.CurrentConclusion == nil || effect.Objective.CurrentConclusion.DerivedCompletion == nil {
+			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeInvalidEvent, "derived Objective result has no conclusion provenance")
+		}
+		provenance := effect.Objective.CurrentConclusion.DerivedCompletion
+		result.DerivedObjectiveAchievements = append(result.DerivedObjectiveAchievements, DerivedObjectiveAchievement{
+			Objective: effect.Objective.Ref(), Version: effect.Objective.Version, AuthorityID: provenance.AuthorityID,
+			PolicyVersion: provenance.PolicyVersion, CompletionCycle: provenance.CompletionCycle,
+		})
 	}
 	if commandContext.IdempotencyKey != "" {
 		response, err := json.Marshal(result)
@@ -426,6 +449,9 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if result, ok := any(value).(ObjectiveCompletionModeChange); ok {
+		return objectiveCompletionModeEvents(s, commandContext, meta, result, revision)
+	}
 	if result, ok := any(value).(issueAssignmentResult); ok {
 		return issueAssignmentEvents(s, commandContext, meta, result, revision)
 	}
@@ -459,6 +485,14 @@ func eventsForCommand[T any](
 	}
 	if events, handled, err := contractCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
+	}
+	if events, handled, err := taskDeliveryCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+	if result, ok := any(value).(TaskDeliveryReviewResult); ok {
+		if events, handled, err := taskDeliveryDecisionCommandEvents(s, commandContext, meta, result, revision); handled || err != nil {
+			return events, err
+		}
 	}
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
@@ -623,6 +657,8 @@ func issueAssignmentEvents(
 
 func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *domain.Version, *domain.Version, bool, error) {
 	switch result := any(value).(type) {
+	case ObjectiveCompletionModeChange:
+		return aggregateVersions(meta, result.Objective.Ref(), result.Objective.Version)
 	case issueAssignmentResult:
 		return aggregateVersions(meta, result.Issue.Ref(), result.Issue.Version)
 	case domain.Outcome:
@@ -747,6 +783,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"objective.cancelled", "objective.conclusion_recorded"}, nil
 	case "ReopenObjective":
 		return []string{"objective.reopened"}, nil
+	case "SetObjectiveCompletionMode":
+		return []string{"objective.completion_policy_authorized"}, nil
 	case "SetObjectiveOwners", "UpdateObjective":
 		return []string{"objective.updated"}, nil
 	case "SetObjectiveParent":

@@ -113,7 +113,7 @@ func TestContinuationFromDiscoverySnapshotAndCursors(t *testing.T) {
 func TestWave11UpgradeExistingVersionSevenDatabase(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
-	store, err := openTestPostgres(filepath.Join(t.TempDir(), "upgrade.db"), Options{})
+	store, err := openTestPostgres(t, filepath.Join(t.TempDir(), "upgrade.db"), Options{})
 	if err != nil {
 		t.Fatal(err)
 	}

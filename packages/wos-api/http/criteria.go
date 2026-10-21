@@ -291,6 +291,7 @@ func (h *Handler) assessCriterion(w http.ResponseWriter, r *http.Request, owner 
 	}
 	result, err := h.service.RecordCriterionAssessment(r.Context(), cc, application.RecordCriterionAssessmentCommand{
 		Owner:             owner,
+		TaskDeliveryRef:   request.TaskDeliveryRef,
 		CriterionID:       criterionID,
 		CriterionRevision: request.CriterionRevision,
 		ExpectedVersion:   expected,

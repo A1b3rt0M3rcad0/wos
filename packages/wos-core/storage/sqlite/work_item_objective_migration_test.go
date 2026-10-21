@@ -183,8 +183,8 @@ func TestWorkItemObjectiveContractMigrationRejectsOrphanAndCanRetry(t *testing.T
 		t.Fatalf("repaired Task was not preserved: title=%q err=%v scope=%+v", title, err, scope)
 	}
 	version, err = store.SchemaVersion(ctx)
-	if err != nil || version != 42 {
-		t.Fatalf("retry schema version = %d, err=%v; want 42", version, err)
+	if want := latestMigrationVersion(t); err != nil || version != want {
+		t.Fatalf("retry schema version = %d, err=%v; want %d", version, err, want)
 	}
 }
 
@@ -200,7 +200,7 @@ func TestFreshSchemaRequiresWorkItemObjective(t *testing.T) {
 		t.Fatal("fresh schema accepted a Task without Objective")
 	}
 	version, err := store.SchemaVersion(ctx)
-	if err != nil || version != 42 {
-		t.Fatalf("fresh schema version = %d, err=%v; want 42", version, err)
+	if want := latestMigrationVersion(t); err != nil || version != want {
+		t.Fatalf("fresh schema version = %d, err=%v; want %d", version, err, want)
 	}
 }

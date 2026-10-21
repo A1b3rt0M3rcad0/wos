@@ -73,8 +73,9 @@ func TestWorkspaceIssueReportReusesDuplicateTraversalForCapabilities(t *testing.
 	capabilities, err := f.s.workspaceCapabilities(f.ctx, frame, &view, owner, nil, outcome)
 	f.must(err)
 	view.Capabilities = capabilities
-	if workspaceIssueAchieveCapability(t, view).Availability != "available" || counted.pendingReads != 1 || counted.duplicateReads != 2 || counted.chainReads != 105 {
-		t.Fatalf("capability repeated an exhaustive Issue traversal: reads=%+v", counted)
+	capability := workspaceIssueAchieveCapability(t, view)
+	if capability.Availability != "available" || counted.pendingReads != 1 || counted.duplicateReads != 2 || counted.chainReads != 105 {
+		t.Fatalf("capability repeated an exhaustive Issue traversal or changed availability: capability=%+v reads=%+v", capability, counted)
 	}
 	// Other callers can evaluate capabilities without a conclusion report. They
 	// must run the same predicate rather than interpreting an absent cache as zero.

@@ -18,6 +18,42 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite"
 )
 
+func setReferenceSearchGrant(t *testing.T, security application.SecurityService, ctx context.Context, key string, grant ports.NamespaceGrant) {
+	t.Helper()
+	identity, err := security.SigningIdentity(ctx, nil)
+	if err != nil {
+		t.Fatalf("read namespace version before grant mutation: %v", err)
+	}
+	result, _, err := security.AdministrativeMutation(ctx, key, ports.SecurityAdminCommand{
+		NamespaceID: grant.NamespaceID, ExpectedVersion: identity.NamespaceVersion,
+		Operation: "set_grant", Grant: &grant, Reason: "Reference search fixture grant setup",
+	})
+	if err != nil {
+		t.Fatalf("apply reference search grant: %v", err)
+	}
+	if result.NamespaceVersion <= identity.NamespaceVersion {
+		t.Fatalf("grant mutation namespace version = %d, want greater than %d", result.NamespaceVersion, identity.NamespaceVersion)
+	}
+}
+
+func revokeReferenceSearchCredential(t *testing.T, security application.SecurityService, ctx context.Context, key string, namespaceID, credentialID domain.ID) {
+	t.Helper()
+	identity, err := security.SigningIdentity(ctx, nil)
+	if err != nil {
+		t.Fatalf("read namespace version before credential revocation: %v", err)
+	}
+	result, _, err := security.AdministrativeMutation(ctx, key, ports.SecurityAdminCommand{
+		NamespaceID: namespaceID, ExpectedVersion: identity.NamespaceVersion,
+		Operation: "revoke_credential", CredentialID: credentialID, Reason: "Reference search fixture credential revocation",
+	})
+	if err != nil {
+		t.Fatalf("revoke reference search credential: %v", err)
+	}
+	if result.NamespaceVersion <= identity.NamespaceVersion {
+		t.Fatalf("revocation namespace version = %d, want greater than %d", result.NamespaceVersion, identity.NamespaceVersion)
+	}
+}
+
 func TestAuthorizedReferenceSearchStores(t *testing.T) {
 	for _, name := range []string{"memory", "sqlite", "postgres"} {
 		t.Run(name, func(t *testing.T) {
@@ -254,9 +290,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			t.Fatalf("reference kind %s missing: %+v %v", kind, v, e)
 		}
 	}
-	if e = security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "viewer", Permissions: []ports.Permission{ports.PermissionStateRead}}); e != nil {
-		t.Fatal(e)
-	}
+	setReferenceSearchGrant(t, security, ctx, "reference-search-viewer-grant", ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "viewer", Permissions: []ports.Permission{ports.PermissionStateRead}})
 	cred, token, e := security.IssueCredential(ctx, ns, "viewer", domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "viewer"}, clock.Now().Add(time.Hour))
 	if e != nil {
 		t.Fatal(e)
@@ -270,9 +304,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 	if _, e = s.SearchReferences(viewerCtx, scope, q); e != nil {
 		t.Fatal(e)
 	}
-	if e = security.RevokeCredential(ctx, ns, cred.ID); e != nil {
-		t.Fatal(e)
-	}
+	revokeReferenceSearchCredential(t, security, ctx, "reference-search-viewer-revoke", ns, cred.ID)
 	if _, e = s.SearchReferences(viewerCtx, scope, q); e == nil {
 		t.Fatal("cached identity survived revocation")
 	}

@@ -108,7 +108,9 @@ func credentialBoundProtectedReceiptCommand(commandName string) bool {
 	switch commandName {
 	case "ClaimWorkItem", "RenewWorkItemLease", "ReclaimWorkItem", "ReleaseWorkItem", "CompleteWorkItem",
 		"AcquireWorkContract", "AcquireNextWorkContract", "RenewWorkContract", "ResumeWorkContract",
-		"SyncWorkContract", "SubmitWorkResult", "FinalizeWorkContract", "RevokeWorkContract":
+		"SyncWorkContract", "SubmitWorkResult", "SubmitTaskForReview", "AcceptTaskDelivery", "RequestTaskDeliveryChanges", "WithdrawTaskDelivery", "FinalizeWorkContract", "RevokeWorkContract":
+		return true
+	case "SetObjectiveCompletionMode":
 		return true
 	default:
 		return false

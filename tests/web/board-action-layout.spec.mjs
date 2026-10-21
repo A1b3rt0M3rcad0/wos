@@ -1,5 +1,5 @@
 import {
-  test, expect, openOutcome, outcomeActions, chooseArea, clickWorkspaceTool,
+  test, expect, openOutcome, outcomeActions, chooseArea, clickWorkspaceTool, pick,
 } from "./ux-fixture.mjs";
 import { seedCanvas } from "./canvas-fixture.mjs";
 
@@ -108,6 +108,8 @@ test("Dismissing global Outcome actions preserves the selected Evidence and its 
   const evidenceRoute = page.url();
   await page.locator("#actions").click();
   await expect(menu(page).locator(".action-context")).toContainText(`Outcome · ${data.outcome.title}`);
+  // The unselected Outcome action remains generic; the specific lifecycle is
+  // chosen when a work item is created from this context.
   await expect(menu(page).getByRole("button", { name: "New task", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(panel(page).locator(".canvas-inspector-detail")).toBeVisible();
@@ -125,7 +127,9 @@ test("Dismissing global Outcome actions preserves the selected Evidence and its 
   await menu(page).getByRole("button", { name: "New task", exact: true }).click();
   await expect(panel(page).locator(".canvas-inspector-form")).toBeVisible();
   await expect(panel(page).locator("#command-title")).toHaveText("New task");
-  await expect(panel(page).locator("#fields > .field-context")).toHaveText(`Outcome: ${data.outcome.title}`);
+  await expect(panel(page).locator(".workspace-placement-summary")).toContainText("Choose an Objective");
+  await panel(page).getByRole("button", { name: "Choose Objective", exact: true }).click();
+  await pick(page, "New placement", data.objective.title);
   const title = "A Task created from the global Outcome action";
   await panel(page).getByLabel("Task title", { exact: true }).fill(title);
   await panel(page).locator("#submit-command").click();
@@ -136,7 +140,7 @@ test("Dismissing global Outcome actions preserves the selected Evidence and its 
   const created = tasks.items.find((record) => record.title === title);
   expect(created).toBeTruthy();
   expect(created.scope).toEqual(data.scope);
-  expect(created.objective_id).toBeUndefined();
+  expect(created.objective_id).toBe(data.objective.id);
 });
 
 for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
@@ -156,7 +160,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 
     const context = await options.locator(".action-context").boundingBox();
     const firstGroup = await groups.first().boundingBox();
     expect(context.width).toBeGreaterThanOrEqual(firstGroup.width);
-    const action = options.getByRole("button", { name: "New task", exact: true });
+    const action = options.getByRole("button", { name: "New task · Backlog", exact: true });
     await wholeControl(action);
     expect(await action.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(150);
     await action.click();

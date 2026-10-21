@@ -53,12 +53,23 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
       priority: "normal", required_for_outcome: false });
     objective = await meetCriterion("objective", objective);
     objective = await wos.command("start_objective", { scope, objective_id: objective.id, expected_version: objective.version });
+    // Keep a separate open Objective available for the outcome-level race.
+    // The first pass concludes `objective`, so a later Task must not be added
+    // beneath that terminal parent.
+    const concurrentObjective = await wos.command("create_objective", {
+      scope, title: "Concurrent work remains in its own Objective",
+      priority: "normal", required_for_outcome: false,
+    });
     const child = await wos.command("create_objective", { scope, title: "Optional follow-up remains open",
       priority: "normal", parent_objective_id: objective.id, required_for_outcome: false });
     const originalTask = await wos.command("create_work_item", { scope, title: "Unfinished delivery keeps its own workflow",
       priority: "normal", lifecycle: "backlog", objective_id: objective.id,
       initial_criteria: [{ title: "The child delivery has its own unassessed criterion", required: true, verification_mode: "evidence_review" }] });
-    const unchangedChildren = [{ kind: "objective", record: child }, { kind: "work_item", record: originalTask }];
+    const unchangedChildren = [
+      { kind: "objective", record: child },
+      { kind: "objective", record: concurrentObjective },
+      { kind: "work_item", record: originalTask },
+    ];
     const errors = [], attempts = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("request", (request) => {
@@ -98,7 +109,8 @@ for (const viewport of [{ width: 2560, height: 1440 }, { width: 390, height: 844
       // the displayed snapshot. The owner's version alone cannot catch this.
       const lateTask = await wos.command("create_work_item", { scope,
         title: `${kind === "objective" ? "Objective" : "Outcome"} work added after impact review`,
-        lifecycle: "backlog", priority: "normal", ...(kind === "objective" ? { objective_id: objective.id } : {}) });
+        lifecycle: "backlog", priority: "normal",
+        objective_id: kind === "objective" ? objective.id : concurrentObjective.id });
       unchangedChildren.push({ kind: "work_item", record: lateTask });
       const changedView = await viewOf(owner);
       expect(changedView.entity_version).toBe(initialView.entity_version);
@@ -173,9 +185,10 @@ test("a late failed conclusion-impact review cannot report an obsolete error or 
   });
   current = (await wos.api(base)).value;
   await wos.command("activate_outcome", { scope, expected_version: current.version });
+  const objective = await wos.command("create_objective", { scope, title: "Separate Task inspection Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope, title: "Inspect this separate Task after closing the old conclusion",
-    lifecycle: "backlog", priority: "normal",
+    lifecycle: "backlog", priority: "normal", objective_id: objective.id,
   });
   const attempts = [], errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -192,7 +205,7 @@ test("a late failed conclusion-impact review cannot report an obsolete error or 
 
   await wos.command("create_work_item", {
     scope, title: "A different participant added this work after acknowledgement",
-    lifecycle: "backlog", priority: "normal",
+    lifecycle: "backlog", priority: "normal", objective_id: objective.id,
   });
   const rejected = page.waitForResponse((response) => response.request().method() === "POST"
     && response.url().endsWith("/commands/achieve_outcome"));

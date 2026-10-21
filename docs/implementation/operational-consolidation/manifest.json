@@ -4,10 +4,10 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "2d5adb6cee625ce0bd41cbeb232515895a3fc60b",
+  "execution_head_sha": "bec3f4f8556bb2eabc8f75876972f4ef0257d55d",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
-    "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
+    "sha256": "0d099556dd7fe1bbb06f6c219ec391bad810cded555d096162c0a463359a9ea5",
     "original_filename": "WOS_Plano_Completo_Implementacao_Operacional.md"
   },
   "pr_must_remain_draft": true,
@@ -460,70 +460,98 @@
     {
       "id": "E21",
       "title": "Endurecer revogação e trilha administrativa",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E19",
         "E20"
       ],
-      "responsible": "primary",
-      "commit_sha": null,
+      "responsible": "primary with subagent e21_security_review",
+      "commit_sha": "d65ce7c96013705dec2cc2bc69cef2a464d314ca",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E21.md",
-      "tests_run": [],
+      "tests_run": [
+        "Full domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP package suites with live PostgreSQL enabled — pass",
+        "go vet on domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP packages — pass",
+        "Focused security administration, revocation, audit and credential management tests across Memory, SQLite and PostgreSQL — pass",
+        "PostgreSQL generator and migration parity; git diff --check — pass"
+      ],
       "tests_not_run": []
     },
     {
       "id": "E22",
       "title": "Vincular o lease legado à credencial no domínio",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E07",
         "E21"
       ],
-      "responsible": "primary",
-      "commit_sha": null,
+      "responsible": "primary with subagent e22_lease_binding",
+      "commit_sha": "390a36922452959a9d4cb71851a3409f15743926",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E22.md",
-      "tests_run": [],
+      "tests_run": [
+        "go test ./packages/wos-core/domain -count=1 — pass",
+        "Credential-bound lease tests for same/different credential identity, fencing, expiry, overflow and legacy compatibility — pass",
+        "Full domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP package suites with live PostgreSQL enabled — pass"
+      ],
       "tests_not_run": []
     },
     {
       "id": "E23",
       "title": "Persistir binding e preparar migração de reservas",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E22"
       ],
-      "responsible": "primary",
-      "commit_sha": null,
+      "responsible": "primary with subagent e23_persistence_survey",
+      "commit_sha": "bb7ef9bffb5dc121107b2c3256b9143b21e9b7dc",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E23.md",
-      "tests_run": [],
+      "tests_run": [
+        "SQLite lease binding upgrade, restart, backup/restore, legacy ownership and protocol reset tests — pass",
+        "PostgreSQL lease binding/restart and historical migration tests against a live PostgreSQL service — pass",
+        "Memory session-provenance copy isolation test — pass",
+        "Full domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP package suites with live PostgreSQL enabled — pass",
+        "go vet on domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP packages — pass"
+      ],
       "tests_not_run": []
     },
     {
       "id": "E24",
       "title": "Resolver credencial canônica e aplicar em comandos",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E22",
         "E23"
       ],
-      "responsible": "primary",
-      "commit_sha": null,
+      "responsible": "primary with subagent e07_gate_survey",
+      "commit_sha": "d52585607693c9cf6822e1e5d8e71465b7c4994c",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E24.md",
-      "tests_run": [],
+      "tests_run": [
+        "Focused canonical credential authority tests in application and domain — pass",
+        "Full domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP package suites with live PostgreSQL enabled — pass",
+        "go vet on domain, application, Memory, SQLite, PostgreSQL, HTTP and MCP packages — pass"
+      ],
       "tests_not_run": []
     },
     {
       "id": "E25",
       "title": "Proteger recibos, recuperação e intervenção",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E24"
       ],
-      "responsible": "primary",
-      "commit_sha": null,
+      "responsible": "primary with subagent e21_security_review",
+      "commit_sha": "bec3f4f8556bb2eabc8f75876972f4ef0257d55d",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E25.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "Focused Application protected receipt replay tests — pass",
+        "Focused SQLite persisted receipt, reclaim fencing, and revocation race tests — pass",
+        "Focused live PostgreSQL persisted receipt, reclaim fencing, and revocation race tests — pass",
+        "PostgreSQL adjacent clock and migration retry regressions — pass",
+        "Migration 0043 SQLite/PostgreSQL parity and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Combined full PostgreSQL package did not complete: configured container restore helper exceeded the 8-minute test timeout.",
+        "Full repository Go suite and broader browser suite — pending."
+      ]
     },
     {
       "id": "E26",

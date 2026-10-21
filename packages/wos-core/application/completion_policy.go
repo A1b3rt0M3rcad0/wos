@@ -31,6 +31,11 @@ func strictCompletionWork(ctx context.Context, u ports.UnitOfWork, owner d.Entit
 	if err != nil {
 		return nil, nil, err
 	}
+	open, cancelled := strictCompletionWorkFromSnapshot(owner, tasks, objectives)
+	return open, cancelled, nil
+}
+
+func strictCompletionWorkFromSnapshot(owner d.EntityRef, tasks []d.WorkItem, objectives []d.Objective) ([]d.EntityRef, []d.EntityRef) {
 	applicable := map[d.ID]bool{}
 	if owner.Kind == d.EntityKindObjective {
 		applicable[owner.ID] = true
@@ -80,7 +85,7 @@ func strictCompletionWork(ctx context.Context, u ports.UnitOfWork, owner d.Entit
 			}
 		}
 	}
-	return open, cancelled, nil
+	return open, cancelled
 }
 func checkStrictCompletion(ctx context.Context, u ports.UnitOfWork, owner d.EntityRef, policy d.CompletionPolicy, ack []d.EntityRef) error {
 	if policy.Effective() != d.CompletionPolicyStrictWork {
@@ -92,6 +97,16 @@ func checkStrictCompletion(ctx context.Context, u ports.UnitOfWork, owner d.Enti
 	open, cancelled, err := strictCompletionWork(ctx, u, owner)
 	if err != nil {
 		return err
+	}
+	return checkStrictCompletionFacts(owner, policy, open, cancelled, ack)
+}
+
+func checkStrictCompletionFacts(owner d.EntityRef, policy d.CompletionPolicy, open, cancelled, ack []d.EntityRef) error {
+	if policy.Effective() != d.CompletionPolicyStrictWork {
+		if len(ack) > 0 {
+			return d.NewError(d.ErrorCodeInvalidArgument, "compatible completion does not acknowledge strict-work exclusions")
+		}
+		return nil
 	}
 	if len(open) > 0 {
 		return d.NewDetailedError(d.ErrorCodePreconditionFailed, "Required work is still open. Complete or explicitly cancel the listed work before accepting this result.", d.ErrorDetails{ReasonCode: "required_child_work_open", SubjectRef: &owner, RelatedRefs: open})

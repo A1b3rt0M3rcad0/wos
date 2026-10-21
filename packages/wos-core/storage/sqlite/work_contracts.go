@@ -16,7 +16,9 @@ type workContractRepository struct{ uow *unitOfWork }
 func (u *unitOfWork) WorkContracts() ports.WorkContractRepository { return workContractRepository{u} }
 func (r workContractRepository) Get(ctx context.Context, scope d.Scope, id d.ID) (d.WorkContract, error) {
 	var state, spec string
-	err := r.uow.tx.QueryRowContext(ctx, `SELECT state_json,spec_json FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&state, &spec)
+	var bindingVersion int
+	var holderCredentialID, sessionCredentialID sql.NullString
+	err := r.uow.tx.QueryRowContext(ctx, `SELECT state_json,spec_json,credential_binding_version,holder_credential_id,session_credential_id FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&state, &spec, &bindingVersion, &holderCredentialID, &sessionCredentialID)
 	if err != nil {
 		return d.WorkContract{}, mapSQLError("get contract", err)
 	}
@@ -30,7 +32,34 @@ func (r workContractRepository) Get(ctx context.Context, scope d.Scope, id d.ID)
 	if c.Scope != scope || c.ID != id {
 		return c, d.NewError(d.ErrorCodeInvalidScope, "persisted contract binding mismatch")
 	}
+	if err := validateContractCredentialColumns(c, bindingVersion, holderCredentialID, sessionCredentialID); err != nil {
+		return c, err
+	}
 	return c, c.Validate()
+}
+
+func validateContractCredentialColumns(c d.WorkContract, version int, holder, session sql.NullString) error {
+	if version != int(c.CredentialBindingVersion) || holder.Valid != !c.HolderCredentialID.IsZero() || session.Valid != (c.SessionCredentialID != nil) {
+		return d.NewError(d.ErrorCodeInvalidScope, "persisted contract credential columns differ from state")
+	}
+	if holder.Valid && holder.String != c.HolderCredentialID.String() {
+		return d.NewError(d.ErrorCodeInvalidScope, "persisted contract holder credential differs from state")
+	}
+	if session.Valid && session.String != c.SessionCredentialID.String() {
+		return d.NewError(d.ErrorCodeInvalidScope, "persisted contract session credential differs from state")
+	}
+	return nil
+}
+
+func contractCredentialColumnValues(c d.WorkContract) (int, any, any) {
+	if c.CredentialBindingVersion == 0 {
+		return 0, nil, nil
+	}
+	var session any
+	if c.SessionCredentialID != nil {
+		session = c.SessionCredentialID.String()
+	}
+	return int(c.CredentialBindingVersion), c.HolderCredentialID.String(), session
 }
 func (r workContractRepository) Current(ctx context.Context, scope d.Scope, work d.ID) (*d.WorkContract, error) {
 	var id string
@@ -52,7 +81,7 @@ func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports
 	if f.Limit < 1 || f.Limit > 101 {
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "contract limit outside 1..101")
 	}
-	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
+	rows, err := r.uow.tx.QueryContext(ctx, `SELECT state_json,credential_binding_version,holder_credential_id,session_credential_id FROM work_contracts WHERE namespace_id=? AND outcome_id=? AND (?='' OR work_item_id=?) AND (?='' OR holder_principal_id=?) AND (?='' OR status=?) AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), f.WorkItemID.String(), f.WorkItemID.String(), f.HolderPrincipalID, f.HolderPrincipalID, string(f.Status), string(f.Status), f.After.String(), f.Limit)
 	if err != nil {
 		return nil, mapSQLError("list contracts", err)
 	}
@@ -60,7 +89,9 @@ func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports
 	out := []d.WorkContract{}
 	for rows.Next() {
 		var state string
-		if err := rows.Scan(&state); err != nil {
+		var bindingVersion int
+		var holderCredentialID, sessionCredentialID sql.NullString
+		if err := rows.Scan(&state, &bindingVersion, &holderCredentialID, &sessionCredentialID); err != nil {
 			return nil, err
 		}
 		var c d.WorkContract
@@ -68,6 +99,9 @@ func (r workContractRepository) List(ctx context.Context, scope d.Scope, f ports
 			return nil, err
 		}
 		if err := c.ValidateHeader(); err != nil {
+			return nil, err
+		}
+		if err := validateContractCredentialColumns(c, bindingVersion, holderCredentialID, sessionCredentialID); err != nil {
 			return nil, err
 		}
 		out = append(out, c)
@@ -93,7 +127,8 @@ func (r workContractRepository) Insert(ctx context.Context, c d.WorkContract) er
 	if err != nil {
 		return err
 	}
-	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO work_contracts (id,namespace_id,outcome_id,work_item_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.HolderPrincipalID, string(c.Status), int64(c.Version), int64(c.LeaseVersion), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, spec, c.SpecDigest)
+	bindingVersion, holderCredentialID, sessionCredentialID := contractCredentialColumnValues(c)
+	_, err = r.uow.tx.ExecContext(ctx, `INSERT INTO work_contracts (id,namespace_id,outcome_id,work_item_id,holder_principal_id,status,version,lease_version,fencing_token,expires_at,state_json,spec_json,spec_digest,credential_binding_version,holder_credential_id,session_credential_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, c.ID.String(), c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.WorkItemID.String(), c.HolderPrincipalID, string(c.Status), int64(c.Version), int64(c.LeaseVersion), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, spec, c.SpecDigest, bindingVersion, holderCredentialID, sessionCredentialID)
 	return mapSQLError("insert contract", err)
 }
 func (r workContractRepository) Save(ctx context.Context, c d.WorkContract, version, lease d.Version) error {
@@ -111,7 +146,8 @@ func (r workContractRepository) Save(ctx context.Context, c d.WorkContract, vers
 	if err != nil {
 		return err
 	}
-	result, err := r.uow.tx.ExecContext(ctx, `UPDATE work_contracts SET status=?,version=?,lease_version=?,fencing_token=?,expires_at=?,state_json=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), int64(c.Version), int64(c.LeaseVersion), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.ID.String(), int64(version), int64(lease))
+	bindingVersion, holderCredentialID, sessionCredentialID := contractCredentialColumnValues(c)
+	result, err := r.uow.tx.ExecContext(ctx, `UPDATE work_contracts SET status=?,version=?,lease_version=?,fencing_token=?,expires_at=?,state_json=?,credential_binding_version=?,holder_credential_id=?,session_credential_id=? WHERE namespace_id=? AND outcome_id=? AND id=? AND version=? AND lease_version=?`, string(c.Status), int64(c.Version), int64(c.LeaseVersion), strconv.FormatUint(uint64(c.FencingToken), 10), encodeTime(c.ExpiresAt), state, bindingVersion, holderCredentialID, sessionCredentialID, c.Scope.NamespaceID.String(), c.Scope.OutcomeID.String(), c.ID.String(), int64(version), int64(lease))
 	if err != nil {
 		return mapSQLError("save contract", err)
 	}

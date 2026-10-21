@@ -16,6 +16,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.AcceptDecisionCommand](server, ids, options, "wos_accept_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.AcceptDecisionCommand) (any, error) {
 		return service.AcceptDecision(ctx, cc, cmd)
 	})
+	registerCommand[application.AcceptTaskDeliveryCommand](server, ids, options, "wos_accept_task_delivery", func(ctx context.Context, cc domain.CommandContext, cmd application.AcceptTaskDeliveryCommand) (any, error) {
+		return service.AcceptTaskDelivery(ctx, cc, cmd)
+	})
 	registerCommand[application.AchieveObjectiveCommand](server, ids, options, "wos_achieve_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.AchieveObjectiveCommand) (any, error) {
 		return service.AchieveObjective(ctx, cc, cmd)
 	})
@@ -250,6 +253,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.ReportIssueWithBlockersCommand](server, ids, options, "wos_report_issue_with_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockersCommand) (any, error) {
 		return service.ReportIssueWithBlockers(ctx, cc, cmd)
 	})
+	registerCommand[application.RequestTaskDeliveryChangesCommand](server, ids, options, "wos_request_task_delivery_changes", func(ctx context.Context, cc domain.CommandContext, cmd application.RequestTaskDeliveryChangesCommand) (any, error) {
+		return service.RequestTaskDeliveryChanges(ctx, cc, cmd)
+	})
 	registerCommand[application.ResolveBlockerCommand](server, ids, options, "wos_resolve_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveBlockerCommand) (any, error) {
 		return service.ResolveBlocker(ctx, cc, cmd)
 	})
@@ -298,6 +304,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.SetNamespaceWorkProtocolCommand](server, ids, options, "wos_set_namespace_work_protocol", func(ctx context.Context, cc domain.CommandContext, cmd application.SetNamespaceWorkProtocolCommand) (any, error) {
 		return service.SetNamespaceWorkProtocol(ctx, cc, cmd)
 	})
+	registerCommand[application.SetObjectiveCompletionModeCommand](server, ids, options, "wos_set_objective_completion_mode", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveCompletionModeCommand) (any, error) {
+		return service.SetObjectiveCompletionMode(ctx, cc, cmd)
+	})
 	registerCommand[application.SetObjectiveOwnersCommand](server, ids, options, "wos_set_objective_owners", func(ctx context.Context, cc domain.CommandContext, cmd application.SetObjectiveOwnersCommand) (any, error) {
 		return service.SetObjectiveOwners(ctx, cc, cmd)
 	})
@@ -327,6 +336,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.StartObjectiveCommand](server, ids, options, "wos_start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
+	})
+	registerCommand[application.SubmitTaskForReviewCommand](server, ids, options, "wos_submit_task_for_review", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitTaskForReviewCommand) (any, error) {
+		return service.SubmitTaskForReview(ctx, cc, cmd)
 	})
 	registerCommand[application.SubmitWorkResultCommand](server, ids, options, "wos_submit_work_result", func(ctx context.Context, cc domain.CommandContext, cmd application.SubmitWorkResultCommand) (any, error) {
 		return service.SubmitWorkResult(ctx, cc, cmd)
@@ -366,5 +378,8 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.WithdrawArtifactCommand](server, ids, options, "wos_withdraw_artifact", func(ctx context.Context, cc domain.CommandContext, cmd application.WithdrawArtifactCommand) (any, error) {
 		return service.WithdrawArtifact(ctx, cc, cmd)
+	})
+	registerCommand[application.WithdrawTaskDeliveryCommand](server, ids, options, "wos_withdraw_task_delivery", func(ctx context.Context, cc domain.CommandContext, cmd application.WithdrawTaskDeliveryCommand) (any, error) {
+		return service.WithdrawTaskDelivery(ctx, cc, cmd)
 	})
 }

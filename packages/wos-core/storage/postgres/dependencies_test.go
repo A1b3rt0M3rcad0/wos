@@ -18,7 +18,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	now := time.Date(2026, 10, 2, 15, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)
 
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

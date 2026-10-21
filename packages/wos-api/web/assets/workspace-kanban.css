@@ -47,7 +47,9 @@ html[data-kanban-active="true"] :is(#actions, #outcome-tools, #canvas-context) {
 .workspace-kanban-column[data-drop-intent] { border-color: var(--wos-copper); }
 .workspace-drop-meaning { position: absolute; inset: 0 0 auto; z-index: 2; margin: 0; pointer-events: none; font-size: 12px; padding: 8px; background: var(--wos-surface); border-left: 2px solid var(--wos-copper); }
 .workspace-kanban-inspection { z-index: 3; flex: 0 0 clamp(400px, 26vw, 480px); width: clamp(400px, 26vw, 480px); padding: 14px; border-left: 1px solid var(--wos-border); background: var(--wos-workspace); overflow-y: auto; min-width: 0; }
-.workspace-kanban-inspection > h3 { font-size: 24px; }
+.workspace-kanban-inspection-header { position: sticky; top: -14px; z-index: 4; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: -14px -14px 8px; padding: 10px 12px 8px; border-bottom: 1px solid var(--wos-border); background: var(--wos-workspace); }
+.workspace-kanban-inspection-header > h3 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: clamp(18px, 1.25vw, 22px); overflow-wrap: anywhere; }
+.workspace-kanban-inspection-header > button { flex: 0 0 auto; width: auto; white-space: nowrap; }
 .workspace-next-operation { padding: 12px; margin-block: 12px; border-left: 2px solid var(--wos-copper); background: var(--wos-surface); }
 .workspace-next-operation h4 { margin: 0 0 6px; }
 .workspace-next-operation p { margin: 0 0 8px; font-size: 13px; }

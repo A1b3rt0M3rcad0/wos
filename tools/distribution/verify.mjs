@@ -114,7 +114,12 @@ export async function verifyDistribution(output = path.join(root,'dist')) {
     const out=await mutate('create_outcome',{namespace_id:ns,title:'Offline package contract',desired_state:'Typed client and server agree',priority:'normal'}),scope={namespace_id:ns,outcome_id:out.id};
     await mutate('add_criterion',{owner:{...scope,kind:'outcome',id:out.id},expected_version:1,title:'Verified package',required:true,verification_mode:'attestation'});await mutate('activate_outcome',{scope,expected_version:2});
     await mutate('set_namespace_work_protocol',{scope,expected_protocol_version:1,phase:'draining',reason:'Fresh verification instance'});await mutate('set_namespace_work_protocol',{scope,expected_protocol_version:2,phase:'contracts_v1',writers_drained:true,reason:'No older writers in fixture'});
-    const work=await mutate('create_work_item',{scope,title:'Use packaged client',priority:'normal',lifecycle:'todo'});
+    const objective=await mutate('create_objective',{scope,title:'Use the packaged client',priority:'normal',required_for_outcome:false});
+    await mutate('add_criterion',{owner:{...scope,kind:'objective',id:objective.id},expected_version:objective.version,title:'The packaged client can claim scoped work',required:true,verification_mode:'attestation'});
+    const objectiveResponse=await fetch(`${base}/api/v1/namespaces/${ns}/outcomes/${out.id}/objectives/${objective.id}`,{headers});
+    const objectiveState=await objectiveResponse.json();assert.ok(objectiveResponse.ok,JSON.stringify(objectiveState));
+    const activeObjective=await mutate('start_objective',{scope,objective_id:objective.id,expected_version:objectiveState.value.version});
+    const work=await mutate('create_work_item',{scope,title:'Use packaged client',priority:'normal',lifecycle:'todo',objective_id:activeObjective.id});
     run(client,['init','--workspace',consumer,'--server',base,'--namespace',ns,'--outcome',out.id,'--credential-env','WOS_DIST_CREDENTIAL','--output','json'],{env:clientEnv});
     const checked=JSON.parse(run(client,['work','checkout',work.id,'--version','1','--workspace',consumer,'--output','json'],{env:clientEnv}));assert.equal(checked.committed,true);assert.equal(checked.work_item_id,work.id);
     run(client,['work','status',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});run(client,['work','recover',work.id,'--workspace',consumer,'--output','json'],{env:clientEnv});

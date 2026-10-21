@@ -6,6 +6,7 @@ import {
   renderWorkspaceView,
   workspaceActions,
   workspaceCommandName,
+  workspaceHeaderTitle,
 } from "./workspace-view.js";
 
 const key = (ref) => `${ref.kind}/${ref.id}`;
@@ -326,7 +327,7 @@ export function createContextualKanban({
     const heading = el('h2', title); heading.id = 'workspace-transition-title'; heading.tabIndex = -1;
     const exit = button('Back to item', dismissOperation, 'quiet'); exit.dataset.operationExit = '';
     header.append(heading, exit);
-    if (view) header.append(el('p', view.header.title));
+    if (view) header.append(el('p', workspaceHeaderTitle(view)));
     if (current()?.intent && view) {
       const lanes = kanbanLanes(view.subject.ref.kind);
       const origin = kanbanLane({ref:view.subject.ref,lifecycle:view.header.lifecycle,display_state:view.header.display_state});
@@ -807,9 +808,10 @@ export function createContextualKanban({
         aside = el("aside", undefined, "workspace-kanban-inspection");
       aside.setAttribute("aria-label", "Item inspector");
       aside.dataset.subject = JSON.stringify(selected.subject);
-      const heading = el("h3", selected.header.title);
+      const heading = el("h3", workspaceHeaderTitle(selected));
       heading.tabIndex = -1;
-      aside.append(
+      const inspectorHeader = el("div", undefined, "workspace-kanban-inspection-header");
+      inspectorHeader.append(
         heading,
         button(
           frame.selectionStack?.length ? "Back to previous item" : "Back to Kanban",
@@ -819,6 +821,7 @@ export function createContextualKanban({
           "quiet",
         ),
       );
+      aside.append(inspectorHeader);
       const available = workspaceActions(selected);
       const primaryNames = selected.subject.kind === 'criterion' ? ['record_criterion_assessment']
         : selected.subject.ref.kind === 'work_item'
@@ -974,22 +977,28 @@ export function createContextualKanban({
       const actions = el("div", undefined, "workspace-primary-actions");
       for (const capability of workspaceActions(frame.view)) {
         const name = workspaceCommandName(capability.action_id);
-        const labels = {
-          create_objective: frame.view.subject.ref.kind === "objective"
-            ? "Add subobjective" : "Add Objective",
-          create_work_item: "Add Task",
-        };
+        const label = name === "create_objective"
+          ? frame.view.subject.ref.kind === "objective" ? "Add subobjective" : "Add Objective"
+          : name === "create_work_item"
+            ? `Add Task · ${capability.target_lifecycle === "todo" ? "To do" : "Backlog"}`
+            : "";
         const allowedCommand = frame.content === "objectives"
           ? "create_objective"
           : frame.view.subject.ref.kind === "objective" ? "create_work_item" : "";
-        if (labels[name] && name === allowedCommand)
-          actions.append(
-            button(
-              labels[name],
-              () => act(capability.action_id, capability, frame.view),
-              "quiet",
-            ),
-          );
+        if (!label || name !== allowedCommand) continue;
+        const control = button(
+          label,
+          () => act(capability.action_id, capability, frame.view),
+          "quiet",
+        );
+        if (name === "create_work_item") {
+          const lifecycle = capability.target_lifecycle || "backlog";
+          control.dataset.targetLifecycle = lifecycle;
+          control.setAttribute("aria-description", lifecycle === "todo"
+            ? `Create a Task in To do under ${frame.view.header.title}. Its execution definition must meet readiness requirements.`
+            : `Create a Task in Backlog under ${frame.view.header.title}.`);
+        }
+        actions.append(control);
       }
       controls.append(actions);
     }

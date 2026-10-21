@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"strconv"
 )
 
 // CommitReceipt identifies committed material even when its full result exceeds
@@ -46,7 +47,58 @@ func CommitReceipt(value any) (map[string]any, error) {
 		out["entity_id"] = id
 	}
 	workspaceReceiptIdentities(out, result)
+	operationalReceiptIdentities(out, result)
 	return out, nil
+}
+
+// Retain the exact native review/recovery targets without copying result
+// material, reasons, policy records or any credential information. Integration
+// deliveries lack this typed Task binding and are deliberately not interpreted
+// as TaskDelivery records.
+func operationalReceiptIdentities(out map[string]any, result map[string]json.RawMessage) {
+	var delivery struct {
+		ID         domain.ID    `json:"id"`
+		Scope      domain.Scope `json:"scope"`
+		WorkItemID domain.ID    `json:"work_item_id"`
+		Digest     string       `json:"delivery_digest"`
+		Round      uint64       `json:"round,string"`
+	}
+	if json.Unmarshal(result["delivery"], &delivery) == nil && delivery.ID.Validate() == nil && delivery.Scope.Validate() == nil && delivery.WorkItemID.Validate() == nil && domain.ValidSignedDigest(delivery.Digest) && delivery.Round > 0 {
+		// Preserve the exact quoted decimal bytes, including values above 2^53.
+		var fields map[string]json.RawMessage
+		_ = json.Unmarshal(result["delivery"], &fields)
+		var round string
+		if json.Unmarshal(fields["round"], &round) != nil || round != strconv.FormatUint(delivery.Round, 10) {
+			return
+		}
+		out["delivery_id"], out["delivery_digest"] = delivery.ID, delivery.Digest
+		out["delivery_round"] = fields["round"]
+		out["work_item_id"], out["scope"] = delivery.WorkItemID, delivery.Scope
+		var withdrawal struct {
+			ID             domain.ID    `json:"id"`
+			Scope          domain.Scope `json:"scope"`
+			WorkItemID     domain.ID    `json:"work_item_id"`
+			DeliveryID     domain.ID    `json:"delivery_id"`
+			DeliveryDigest string       `json:"delivery_digest"`
+			Round          uint64       `json:"round,string"`
+		}
+		if json.Unmarshal(result["withdrawal"], &withdrawal) == nil && withdrawal.ID.Validate() == nil && withdrawal.Scope == delivery.Scope && withdrawal.WorkItemID == delivery.WorkItemID && withdrawal.DeliveryID == delivery.ID && withdrawal.DeliveryDigest == delivery.Digest && withdrawal.Round == delivery.Round {
+			out["withdrawal_id"] = withdrawal.ID
+		}
+	}
+	var authority struct {
+		ID          domain.ID    `json:"id"`
+		Scope       domain.Scope `json:"scope"`
+		ObjectiveID domain.ID    `json:"objective_id"`
+	}
+	var objective struct {
+		ID    domain.ID    `json:"id"`
+		Scope domain.Scope `json:"scope"`
+	}
+	if json.Unmarshal(result["authority"], &authority) == nil && authority.ID.Validate() == nil && authority.Scope.Validate() == nil && authority.ObjectiveID.Validate() == nil &&
+		json.Unmarshal(result["objective"], &objective) == nil && objective.ID == authority.ObjectiveID && objective.Scope == authority.Scope {
+		out["completion_authority_id"] = authority.ID
+	}
 }
 
 // Preserve identities from the bounded workspace compositions without copying

@@ -9,6 +9,7 @@ import (
 type WorkItemOperationalReadResult struct {
 	State           domain.WorkItemOperationalState `json:"state"`
 	OutcomeRevision domain.OutcomeRevision          `json:"outcome_revision"`
+	Verification    *TaskVerificationView           `json:"verification,omitempty"`
 }
 
 func (s *Service) GetWorkItemOperationalState(
@@ -105,9 +106,16 @@ func (s *Service) GetWorkItemOperationalState(
 		state.ReadinessReasons = append([]domain.ReadinessReason(nil), readiness.Reasons...)
 		state.DisplayState = workItemDisplayStateForReadiness(readiness)
 	}
+	verification, err := s.optionalTaskVerificationAt(ctx, uow, item, coordination.Revision, evaluatedAt)
+	if err != nil {
+		return WorkItemOperationalReadResult{}, err
+	}
+	state = applyTaskVerificationOperational(state, verification)
+	annotateTaskVerificationReadiness(verification, state)
 	return WorkItemOperationalReadResult{
 		State:           state,
 		OutcomeRevision: coordination.Revision,
+		Verification:    verification,
 	}, nil
 }
 

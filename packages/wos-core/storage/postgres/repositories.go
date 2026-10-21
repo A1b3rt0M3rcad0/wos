@@ -500,9 +500,12 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
        lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
-       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id,
+       delivery_state.pending_delivery_id, delivery_state.latest_delivery_id, delivery_state.latest_decision_id, delivery_state.latest_withdrawal_id, delivery_state.delivery_round, delivery_state.replan_authorized
 FROM work_items
-WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+LEFT JOIN task_delivery_work_state AS delivery_state
+  ON delivery_state.namespace_id=work_items.namespace_id AND delivery_state.outcome_id=work_items.outcome_id AND delivery_state.work_item_id=work_items.id
+WHERE work_items.namespace_id = $1 AND work_items.outcome_id = $2 AND work_items.id = $3`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
 	if err != nil {
 		return domain.WorkItem{}, err
@@ -518,25 +521,31 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`, scope.NamespaceID.Stri
 	if err := value.Validate(); err != nil {
 		return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
 	}
+	if err := r.uow.taskDeliveries.validateWorkItemNavigation(ctx, value); err != nil {
+		return domain.WorkItem{}, err
+	}
 	return value, nil
 }
 
 func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, error) {
 	var rawID string
 	var (
-		version                                       int64
-		title, description                            string
-		objectiveID                                   sql.NullString
-		lifecycle, priority, resultSummary            string
-		lastFencing                                   string
-		contractsEnabled                              int
-		contractID, executionSpec                     sql.NullString
-		pendingReview, latestReview, correctionReview sql.NullString
-		claimID, leasePrincipal, leaseActor           sql.NullString
-		holderCredentialID, sessionCredentialID       sql.NullString
-		credentialBindingVersion                      int64
-		notBefore, acquiredAt, expiresAt              sql.NullInt64
-		createdAt, updatedAt                          int64
+		version                                                           int64
+		title, description                                                string
+		objectiveID                                                       sql.NullString
+		lifecycle, priority, resultSummary                                string
+		lastFencing                                                       string
+		contractsEnabled                                                  int
+		contractID, executionSpec                                         sql.NullString
+		pendingReview, latestReview, correctionReview                     sql.NullString
+		pendingDelivery, latestDelivery, latestDecision, latestWithdrawal sql.NullString
+		deliveryRound                                                     sql.NullString
+		replanAuthorized                                                  sql.NullInt64
+		claimID, leasePrincipal, leaseActor                               sql.NullString
+		holderCredentialID, sessionCredentialID                           sql.NullString
+		credentialBindingVersion                                          int64
+		notBefore, acquiredAt, expiresAt                                  sql.NullInt64
+		createdAt, updatedAt                                              int64
 	)
 	err := scanner.Scan(
 		&rawID,
@@ -544,6 +553,7 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
 		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec, &pendingReview, &latestReview, &correctionReview,
 		&credentialBindingVersion, &holderCredentialID, &sessionCredentialID,
+		&pendingDelivery, &latestDelivery, &latestDecision, &latestWithdrawal, &deliveryRound, &replanAuthorized,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
@@ -584,6 +594,31 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 			}
 			*field.target = &id
 		}
+	}
+	for _, field := range []struct {
+		raw    sql.NullString
+		target **domain.ID
+	}{{pendingDelivery, &value.PendingDeliveryID}, {latestDelivery, &value.LatestDeliveryID}, {latestDecision, &value.LatestDeliveryDecisionID}, {latestWithdrawal, &value.LatestDeliveryWithdrawalID}} {
+		if field.raw.Valid {
+			parsed, parseErr := domain.ParseID(field.raw.String)
+			if parseErr != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery reference is invalid", parseErr)
+			}
+			*field.target = &parsed
+		}
+	}
+	if deliveryRound.Valid {
+		parsed, parseErr := strconv.ParseUint(deliveryRound.String, 10, 64)
+		if parseErr != nil || deliveryRound.String != strconv.FormatUint(parsed, 10) {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery round is invalid")
+		}
+		value.DeliveryRound = parsed
+	}
+	if replanAuthorized.Valid {
+		if replanAuthorized.Int64 != 0 && replanAuthorized.Int64 != 1 {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery replan authorization is invalid")
+		}
+		value.TaskDeliveryReplanAuthorized = replanAuthorized.Int64 == 1
 	}
 	if contractID.Valid {
 		parsed, err := domain.ParseID(contractID.String)
@@ -665,10 +700,13 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
        lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
-       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id,
+       delivery_state.pending_delivery_id, delivery_state.latest_delivery_id, delivery_state.latest_decision_id, delivery_state.latest_withdrawal_id, delivery_state.delivery_round, delivery_state.replan_authorized
 FROM work_items
-WHERE namespace_id = $1 AND outcome_id = $2
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+LEFT JOIN task_delivery_work_state AS delivery_state
+  ON delivery_state.namespace_id=work_items.namespace_id AND delivery_state.outcome_id=work_items.outcome_id AND delivery_state.work_item_id=work_items.id
+WHERE work_items.namespace_id = $1 AND work_items.outcome_id = $2
+ORDER BY work_items.id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list work item aggregates", err)
 	}
@@ -713,6 +751,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		}
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
+		}
+		if err := r.uow.taskDeliveries.validateWorkItemNavigation(ctx, values[i]); err != nil {
+			return nil, err
 		}
 	}
 	return values, nil
@@ -769,6 +810,9 @@ INSERT INTO work_items (
 	)
 	if err != nil {
 		return mapSQLError("insert work item", err)
+	}
+	if err := saveTaskDeliveryWorkState(ctx, r.uow.tx, item); err != nil {
+		return err
 	}
 	return syncOwnedState(
 		ctx, r.uow.tx, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
@@ -831,6 +875,9 @@ WHERE namespace_id = $26 AND outcome_id = $27 AND id = $28 AND version = $29`,
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "work_items",
 		item.Scope.NamespaceID, item.Scope.OutcomeID, item.ID, expected); err != nil {
+		return err
+	}
+	if err := saveTaskDeliveryWorkState(ctx, r.uow.tx, item); err != nil {
 		return err
 	}
 	return syncOwnedState(

@@ -18,6 +18,7 @@ func TestPermissionCompatibilityCrosswalkIsExactAndFinite(t *testing.T) {
 		{"CreatePlanItems", ports.PermissionTaskCreate, ports.PermissionWorkWrite},
 		{"CreatePlanItems", ports.PermissionCriterionDefine, ports.PermissionOutcomeWrite},
 		{"ReturnSignedWork", ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn},
+		{"SubmitTaskForReview", ports.PermissionTaskDeliver, ports.PermissionWorkWrite},
 		{"ReturnSignedReview", ports.PermissionTaskReview, ports.PermissionWorkReviewDecide},
 		{"SetNamespaceWorkProtocol", ports.PermissionPolicyManage, ports.PermissionNamespaceAdmin},
 		{"SetCredentialPolicy", ports.PermissionPolicyManage, ports.PermissionNamespaceAdmin},
@@ -61,6 +62,8 @@ func TestPermissionCompatibilityIntersectsGrantAndPolicyWithoutCrossMixing(t *te
 		t.Fatalf("effective compatibility set = %v, want grant/policy intersection %v", got, want)
 	}
 	for _, forbidden := range []ports.Permission{
+		ports.PermissionObjectiveConclude,
+		ports.PermissionObjectiveReopen,
 		ports.PermissionCredentialsIssue,
 		ports.PermissionSigningKeyEnroll,
 		ports.PermissionSigningKeyRotate,

@@ -182,7 +182,7 @@ func TestListDuplicateIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
 func TestListPendingIssuesByObjectiveUsesStableScopedPages(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
-	store, err := openTestPostgres(filepath.Join(t.TempDir(), "pending-issues.db"), Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, filepath.Join(t.TempDir(), "pending-issues.db"), Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,7 +323,7 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,7 +385,7 @@ func TestIssueBlockerStateSurvivesSQLiteRestart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -17,7 +17,7 @@ func TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "workspace.db")
-	store, err := openTestPostgres(path, Options{MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +81,7 @@ func TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites(t *testing.T) {
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := openTestPostgres(path, Options{MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -34,7 +34,7 @@ type ReportIssueWithBlockersCommand struct {
 	Severity                domain.IssueSeverity
 	AffectedRefs            []domain.EntityRef
 	Blockers                []IssueBlockerInput
-	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"required" wosnullable:"false" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type ReportIssueWithBlockersResult struct {

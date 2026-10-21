@@ -117,8 +117,8 @@ func TestLeaseCredentialBindingUpgradeRestartAndRestore(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = upgraded.Close() })
-	if version, err := upgraded.SchemaVersion(ctx); err != nil || version != 42 {
-		t.Fatalf("upgraded schema version=%d err=%v; want 42", version, err)
+	if version, err := upgraded.SchemaVersion(ctx); err != nil || version != latestMigrationVersion(t) {
+		t.Fatalf("upgraded schema version=%d err=%v; want %d", version, err, latestMigrationVersion(t))
 	}
 	legacyItem := getWorkItemForLeaseTest(t, upgraded, scope, workID)
 	assertUnboundHistoricalLease(t, legacyItem)
@@ -203,7 +203,7 @@ func TestLeaseCredentialBindingUpgradeRestartAndRestore(t *testing.T) {
 		t.Fatal(err)
 	}
 	cleared := getWorkItemForLeaseTest(t, restoredStore, scope, workID)
-	if !cleared.ContractsEnabled || cleared.CurrentLease != nil {
+	if !cleared.ContractsEnabled || cleared.CurrentLease != nil || cleared.Lifecycle != domain.WorkItemLifecycleTodo || cleared.Version != restoredItem.Version+1 {
 		t.Fatalf("protocol reset did not clear lease: contracts=%v lease=%#v", cleared.ContractsEnabled, cleared.CurrentLease)
 	}
 	if err := restoredStore.db.QueryRowContext(ctx, `SELECT lease_credential_binding_version,lease_holder_credential_id,lease_session_credential_id FROM work_items WHERE id=?`, workID.String()).Scan(&version, &rawHolder, &rawSession); err != nil {

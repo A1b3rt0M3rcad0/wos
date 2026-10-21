@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -314,6 +315,131 @@ func TestIssueAssignmentRejectsCommandIdentityDifferentFromAuthenticatedIdentity
 	}
 	if len(f.store.SnapshotDomainEvents(f.scope)) == 0 {
 		t.Fatal("test fixture should already contain its Issue creation event")
+	}
+}
+
+func TestIssueGranularPermissionDenialsAreAtomic(t *testing.T) {
+	tests := []struct {
+		name       string
+		permission ports.Permission
+		mutate     func(*testing.T, issueAssignmentFixture, *application.Service, context.Context, application.Identity) error
+	}{
+		{
+			name:       "assignment requires issue:assign",
+			permission: ports.PermissionIssueAssign,
+			mutate: func(t *testing.T, f issueAssignmentFixture, service *application.Service, ctx context.Context, identity application.Identity) error {
+				_, err := service.AssignIssue(ctx, issueAssignmentCommandContext(t, f.ids, identity, "denied-issue-assign"), application.AssignIssueCommand{
+					Scope: f.scope, IssueID: f.issue.ID, ExpectedVersion: f.issue.Version,
+					AssigneeRef: domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "agent-runtime", ID: "unauthorized-agent"},
+				})
+				return err
+			},
+		},
+		{
+			name:       "investigation start requires issue:investigate",
+			permission: ports.PermissionIssueInvestigate,
+			mutate: func(t *testing.T, f issueAssignmentFixture, service *application.Service, ctx context.Context, identity application.Identity) error {
+				_, err := service.StartIssueInvestigation(ctx, issueAssignmentCommandContext(t, f.ids, identity, "denied-issue-investigate"), application.StartIssueInvestigationCommand{
+					Scope: f.scope, IssueID: f.issue.ID, ExpectedVersion: f.issue.Version,
+				})
+				return err
+			},
+		},
+		{
+			name:       "legacy investigation command requires issue:investigate",
+			permission: ports.PermissionIssueInvestigate,
+			mutate: func(t *testing.T, f issueAssignmentFixture, service *application.Service, ctx context.Context, identity application.Identity) error {
+				_, err := service.InvestigateIssue(ctx, issueAssignmentCommandContext(t, f.ids, identity, "denied-legacy-issue-investigate"), application.InvestigateIssueCommand{
+					Scope: f.scope, IssueID: f.issue.ID, ExpectedVersion: f.issue.Version,
+				})
+				return err
+			},
+		},
+		{
+			name:       "resolution requires issue:resolve",
+			permission: ports.PermissionIssueResolve,
+			mutate: func(t *testing.T, f issueAssignmentFixture, service *application.Service, ctx context.Context, identity application.Identity) error {
+				_, err := service.ResolveIssue(ctx, issueAssignmentCommandContext(t, f.ids, identity, "denied-issue-resolve"), application.ResolveIssueCommand{
+					Scope: f.scope, IssueID: f.issue.ID, ExpectedVersion: f.issue.Version,
+					ResolutionSummary: "This unauthorized resolution must not be persisted.",
+				})
+				return err
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newIssueAssignmentFixture(t)
+			beforeState, err := f.service.GetOutcomeState(f.ctx, f.scope)
+			if err != nil {
+				t.Fatal(err)
+			}
+			beforeIssue, err := f.service.GetIssue(f.ctx, f.scope, f.issue.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			beforeEvents := f.store.SnapshotDomainEvents(f.scope)
+			beforeReceipts := f.store.IdempotencyRecordCount()
+
+			actor := issueAssignmentIdentity(f.scope.NamespaceID, "principal:restricted-issue-operator", "restricted-operator")
+			if err := f.store.PutNamespace(f.ctx, ports.Namespace{ID: f.scope.NamespaceID, Name: "Issue authorization"}); err != nil {
+				t.Fatal(err)
+			}
+			clock := fixedClock{now: time.Date(2026, 10, 20, 19, 0, 0, 0, time.UTC)}
+			credentialID := id("0199fa16-0000-7000-8000-0000000000ff")
+			credentialDigest := application.TokenDigest("issue-permission-qualification-credential")
+			if err := f.store.PutCredential(f.ctx, ports.Credential{
+				NamespaceID: f.scope.NamespaceID, ID: credentialID, PrincipalID: actor.PrincipalID,
+				Actor: actor.Actor, Digest: credentialDigest, ExpiresAt: clock.Now().Add(24 * time.Hour),
+			}); err != nil {
+				t.Fatal(err)
+			}
+			actor.CredentialID = credentialID
+			actor.CredentialDigest = credentialDigest
+			permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}
+			for _, permission := range []ports.Permission{ports.PermissionIssueAssign, ports.PermissionIssueInvestigate, ports.PermissionIssueResolve} {
+				if permission != tc.permission {
+					permissions = append(permissions, permission)
+				}
+			}
+			if err := f.store.PutGrant(f.ctx, ports.NamespaceGrant{NamespaceID: f.scope.NamespaceID, PrincipalID: actor.PrincipalID, Permissions: permissions}); err != nil {
+				t.Fatal(err)
+			}
+			security := application.SecurityService{Store: f.store, Clock: clock}
+			secured, err := application.NewAuthorizedService(f.store, clock, f.ids, security)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx := issueAssignmentContext(actor)
+			if err := tc.mutate(t, f, secured, ctx, actor); err == nil {
+				t.Fatal("Issue command succeeded without its explicit granular permission")
+			} else if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeForbidden {
+				t.Fatalf("Issue command error = %v (%s), want forbidden", err, code)
+			}
+
+			afterState, err := f.service.GetOutcomeState(f.ctx, f.scope)
+			if err != nil {
+				t.Fatal(err)
+			}
+			afterIssue, err := f.service.GetIssue(f.ctx, f.scope, f.issue.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			afterEvents := f.store.SnapshotDomainEvents(f.scope)
+			if !reflect.DeepEqual(beforeIssue.Value, afterIssue.Value) || !reflect.DeepEqual(beforeState.Issues, afterState.Issues) {
+				t.Fatal("denied Issue command changed the Issue version, lifecycle, assignment, or persisted assignment state")
+			}
+			if beforeState.OutcomeRevision != afterState.OutcomeRevision {
+				t.Fatalf("denied Issue command advanced Outcome revision from %d to %d", beforeState.OutcomeRevision, afterState.OutcomeRevision)
+			}
+			if !reflect.DeepEqual(beforeEvents, afterEvents) {
+				t.Fatalf("denied Issue command appended or altered assignment history/events: before=%d after=%d", len(beforeEvents), len(afterEvents))
+			}
+			if f.store.IdempotencyRecordCount() != beforeReceipts {
+				t.Fatal("denied Issue command persisted an idempotency receipt")
+			}
+		})
 	}
 }
 

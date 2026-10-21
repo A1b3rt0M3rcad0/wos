@@ -23,7 +23,7 @@ func BenchmarkOperationalReads(b *testing.B) {
 	if e != nil || n != 100 && n != 1000 && n != 10000 {
 		b.Fatal("size must be 100, 1000 or 10000")
 	}
-	store, e := openTestPostgres(filepath.Join(b.TempDir(), "operational.db"), Options{MigrateOnOpen: true})
+	store, e := openTestPostgres(b, filepath.Join(b.TempDir(), "operational.db"), Options{MigrateOnOpen: true})
 	if e != nil {
 		b.Fatal(e)
 	}

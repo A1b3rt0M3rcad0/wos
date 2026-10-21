@@ -120,6 +120,9 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					cc := d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: cid, IdempotencyKey: "atomic-return-acquisition"}
 					acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 300})
 					must(e)
+					if acquired.Value.Contract.SignedBinding == nil || acquired.Value.Contract.SignedBinding.AcceptanceFloor != floor {
+						t.Fatalf("compatibility_v1 acquisition changed the configured acceptance floor: got %v, want %v", acquired.Value.Contract.SignedBinding, floor)
+					}
 					c := acquired.Value.Contract
 					work := acquired.Value.WorkItem
 					rid, e := ids.NewID()

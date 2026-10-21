@@ -5,7 +5,7 @@
 # WOS — Plano completo de implementação operacional
 
 > **Documento de execução para desenvolvedores e agentes.**
-> **Status:** planejamento; nenhuma implementação ou aprovação de testes é declarada por este documento.
+> **Status:** implementação em andamento no Draft PR #116. E01–E24 e E25 estão verificados por etapa; E26 está em qualificação e E27 está em implementação. A conclusão do plano completo não é declarada.
 > **Baseline:** `A1b3rt0M3rcad0/wos`, PR **#116**, branch **`fix/workspace-operational-density`**, SHA **`2aab252129f548ab54ad4232095e1bc83d76d372`**.
 > **Referência temporal:** solicitação de 20/10/2026, fuso America/Sao_Paulo. O timestamp UTC do último update consultado do PR é `2026-10-21T01:20:08Z` — 20/10/2026 às 22:20:08 em São Paulo.
 > **Escopo:** lifecycle de Objectives/Tasks, verificação e conclusão, credenciais e permissões, reservas, criação contextual, dependências, Issues, Kanban e paridade HTTP/MCP/CLI/SDK.
@@ -815,7 +815,7 @@ IDs entre `<...>` são placeholders explicativos, não IDs válidos para enviar.
 
 ### 12.1 Alocação de migrações
 
-O baseline congelado contém migrações até `0037_operational_profile.sql`. E17 ocupa `0038_permission_compatibility.sql`; as etapas seguintes usam o mapa monotônico abaixo, reconciliado com a árvore real de migrações:
+O baseline original continha migrações até `0037_operational_profile.sql`. E17–E21 já ocupam as migrations `0038`–`0041`; as etapas seguintes usam o mapa monotônico abaixo, reconciliado com a árvore real de migrações do PR:
 
 | Arquivo SQLite fonte [N] | Conteúdo |
 |---|---|
@@ -823,12 +823,18 @@ O baseline congelado contém migrações até `0037_operational_profile.sql`. E1
 | `packages/wos-core/storage/sqlite/migrations/0038_permission_compatibility.sql` (E17; PostgreSQL generated counterpart) | Frozen legacy-permission markers and idempotent migration receipts. |
 | `packages/wos-core/storage/sqlite/migrations/0039_credential_management.sql` (E19) | Credential metadata, materialized template permissions, and constrained issuance records. |
 | `packages/wos-core/storage/sqlite/migrations/0040_credential_lifecycle.sql` (E20) | Coalesced usage/revocation observations, credential revisions, and rotation provenance. |
-| `packages/wos-core/storage/sqlite/migrations/0041_lease_credential_binding.sql` (E23) | Credential binding for leases and classification of reservations without provable attribution. |
-| `packages/wos-core/storage/sqlite/migrations/0042_task_deliveries.sql` (E28) | Unsigned deliveries/decisions, Task pending-delivery link, and queue indexes. |
-| `packages/wos-core/storage/sqlite/migrations/0043_objective_completion_authority.sql` (E36) | Delegation, completion provenance, and Objective completion cycles. |
-| `packages/wos-core/storage/sqlite/migrations/0044_objective_completion_reconciliation.sql` (E39) | Durable deterministic reconciliation requests for bounded completion cascades. |
+| `packages/wos-core/storage/sqlite/migrations/0041_security_audit_details.sql` (E21; PostgreSQL generated counterpart) | Credential and actor provenance plus safe before/after details for guarded security administration. |
+| `packages/wos-core/storage/sqlite/migrations/0042_lease_credential_binding.sql` (E23) | Credential binding for leases and classification of reservations without provable attribution. |
+| `packages/wos-core/storage/sqlite/migrations/0043_credential_bound_idempotency_receipts.sql` (E25; PostgreSQL generated counterpart) | Canonical root credential binding for protected lease-operation idempotency receipts. |
+| `packages/wos-core/storage/sqlite/migrations/0044_work_contract_credential_binding.sql` (E26; PostgreSQL generated counterpart) | Canonical credential binding for unsigned work contracts. |
+| `packages/wos-core/storage/sqlite/migrations/0045_task_deliveries.sql` (E28) | Unsigned deliveries/decisions, Task pending-delivery link, and queue indexes. |
+| `packages/wos-core/storage/sqlite/migrations/0048_task_delivery_assessment_binding.sql` (E30) | Exact TaskDelivery identity, digest, and correction-round binding for criterion assessments. |
+| `packages/wos-core/storage/sqlite/migrations/0049_task_delivery_withdrawals.sql` (E31) | Immutable delivery withdrawal records and explicit return to planning. |
+| `packages/wos-core/storage/sqlite/migrations/0050_objective_completion_authority.sql` (E36) | Versioned delegation, completion provenance, and Objective completion policy history. |
+| `packages/wos-core/storage/sqlite/migrations/0051_task_delivery_replan_authorization.sql` (E31 follow-up) | Durable explicit authorization to replan after a withdrawn delivery. |
+| `packages/wos-core/storage/sqlite/migrations/0052_objective_completion_reconciliation.sql` (E39) | Durable deterministic reconciliation requests for bounded completion cascades. |
 
-Se número já estiver ocupado, renumerar novas migrações e registrar o mapa. Não editar o conteúdo/checksum de migração já aplicada. PostgreSQL é gerado a partir de SQLite e transformações explícitas em `tools/postgresgen/generate.py`; atualizar esse gerador para SQL diferente por engine, em vez de editar o derivado manualmente.
+O baseline da branch já contém `0048` e `0049`. E36 usa `0050`, o ajuste de replanning de E31 acrescenta `0051`, e E39 usa `0052`, mantendo a ordem monotônica. Não editar o conteúdo/checksum de migração já aplicada. PostgreSQL é gerado a partir de SQLite e transformações explícitas em `tools/postgresgen/generate.py`; atualizar esse gerador para SQL diferente por engine, em vez de editar o derivado manualmente.
 
 ### 12.2 Constraints e índices
 
@@ -1470,12 +1476,12 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E22
 
-**Arquivos:** [N] `packages/wos-core/storage/sqlite/migrations/0041_lease_credential_binding.sql`; [A] `packages/wos-core/storage/sqlite/repositories.go`; [A] `packages/wos-core/storage/sqlite/codec.go`; [A] `packages/wos-core/storage/memory/repositories.go`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/lease_credential_migration_test.go`.
+**Arquivos:** [N] `packages/wos-core/storage/sqlite/migrations/0042_lease_credential_binding.sql`; [A] `packages/wos-core/storage/sqlite/repositories.go`, `focal_current.go` e `work_protocol.go`; [A] equivalentes gerados em `packages/wos-core/storage/postgres/`; [A] `packages/wos-core/storage/memory/adapter.go`; [N] `packages/wos-core/storage/sqlite/lease_credential_binding_test.go`, `packages/wos-core/storage/postgres/lease_credential_binding_test.go` e `packages/wos-core/storage/memory/adapter_lease_test.go`.
 
 **Implementação:**
 
 1. Mapear onde o lease é materializado em colunas/JSON e expandir sem perder os campos existentes.
-2. Persistir binding de credencial e sessão, bem como estado legível de proveniência ausente.
+2. Persistir binding de credencial e sessão; `credential_binding_version = 0` identifica leases históricos sem proveniência comprovável, sem inferir credenciais a partir de Principal ou Actor.
 3. Reutilizar audit read-only de E06 para classificar leases legados; preencher somente com prova explícita.
 4. Impedir ativação v2 com reserva incompatível viva, oferecendo drenar/expirar/intervir.
 5. Testar backup/restore sem alterar credenciais históricas revogadas ainda referenciadas.
@@ -1516,17 +1522,17 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E24
 
-**Arquivos:** [A] `packages/wos-core/application/pipeline.go`; [A] `packages/wos-core/domain/idempotency.go`; [A] `packages/wos-core/application/administrative_work.go`; [A] `packages/wos-core/storage/sqlite/repositories.go`; [N] `packages/wos-core/application/credential_receipt_replay_test.go`; [N] `packages/wos-core/storage/sqlite/lease_recovery_race_test.go`.
+**Arquivos:** [A] `packages/wos-core/application/pipeline.go`, `credential_authority.go`; [A] `packages/wos-core/domain/idempotency.go`; [A] `packages/wos-core/storage/sqlite/events.go` e equivalente PostgreSQL gerado; [N] `packages/wos-core/storage/sqlite/migrations/0043_credential_bound_idempotency_receipts.sql` e equivalente PostgreSQL gerado; [N] `packages/wos-core/application/credential_receipt_replay_test.go`; [N] `packages/wos-core/storage/sqlite/lease_recovery_race_test.go` e equivalente PostgreSQL gerado.
 
 **Implementação:**
 
-1. Associar operações protegidas v2 à credencial no receipt ou binding aditivo e validar antes de revelar o resultado.
-2. Preservar fingerprints históricos e semântica de idempotency keys; não fazer replay virar aquisição nova.
+1. Associar operações protegidas de leases e contratos `contracts_v1` ao root CredentialID no receipt, validando-o antes de revelar o resultado. Revoke registra a credencial raiz do administrador como issuer, sem compará-la ao titular do contrato; Signed-v2 mantém seus receipts próprios.
+2. Preservar fingerprints e chaves históricos; receipts antigos sem binding falham fechados para credenciais e mantêm compatibilidade apenas para chamadas embedded explicitamente confiáveis. Replay não vira aquisição nova.
 3. Reclaim após expiração cria claim novo e fence maior; nenhuma chave pode renew lease expirado.
 4. Intervenção administrativa exige permissão, motivo e versões; revogar e adquirir são atos rastreáveis.
 5. Documentar que alterar assignee não altera titular e que trocar token não transfere lease.
 
-**Testes/verificação:** Repetição de claim por outra chave mesmo Principal, resposta perdida, crash pós-commit, duas recuperações simultâneas e revogação durante renew.
+**Testes/verificação:** Repetição de claim/renew/reclaim/release/complete por outra credencial e por uma sessão sob o mesmo root; receipt histórico sem binding; resposta perdida, crash pós-commit, duas recuperações simultâneas e revogação durante renew.
 
 **Aceite:** Recuperação permanece exata e nenhuma credencial alternativa recebe autoridade por conhecer o recibo.
 
@@ -1587,7 +1593,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E27
 
-**Arquivos:** [N] `packages/wos-core/ports/task_delivery.go`; [N] `packages/wos-core/storage/sqlite/task_deliveries.go`; [N] `packages/wos-core/storage/memory/task_deliveries.go`; [N] `packages/wos-core/storage/sqlite/migrations/0042_task_deliveries.sql`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/task_deliveries_test.go`.
+**Arquivos:** [N] `packages/wos-core/ports/task_delivery.go`; [N] `packages/wos-core/storage/sqlite/task_deliveries.go`; [N] `packages/wos-core/storage/memory/task_deliveries.go`; [N] `packages/wos-core/storage/sqlite/migrations/0045_task_deliveries.sql`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/task_deliveries_test.go`.
 
 **Implementação:**
 
@@ -1773,7 +1779,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E19, E35
 
-**Arquivos:** [A] `packages/wos-core/domain/objective_completion.go`; [N] `packages/wos-core/ports/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/objective_completion.go`; [N] `packages/wos-core/storage/memory/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/migrations/0043_objective_completion_authority.sql`; [A] `packages/wos-core/application/operational_policy.go`.
+**Arquivos:** [A] `packages/wos-core/domain/objective_completion.go`; [N] `packages/wos-core/ports/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/objective_completion.go`; [N] `packages/wos-core/storage/memory/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/migrations/0050_objective_completion_authority.sql`; [A] `packages/wos-core/application/operational_policy.go`.
 
 **Implementação:**
 
@@ -1842,13 +1848,13 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E37, E38
 
-**Arquivos:** [A] `packages/wos-core/application/objective_completion_effects.go`; [A] `packages/wos-core/storage/sqlite/objective_completion.go`; [A] `packages/wos-core/ports/objective_completion.go`; [A] `packages/wos-core/application/dependencies.go`; [A] `packages/wos-core/application/issues_blockers.go`; [N] `packages/wos-core/application/objective_completion_reconcile.go`; [N] `packages/wos-core/application/objective_completion_reconcile_test.go`; [N] `packages/wos-core/storage/sqlite/migrations/0044_objective_completion_reconciliation.sql`.
+**Arquivos:** [A] `packages/wos-core/application/objective_completion_effects.go`; [A] `packages/wos-core/storage/sqlite/objective_completion.go`; [A] `packages/wos-core/ports/objective_completion.go`; [A] `packages/wos-core/application/dependencies.go`; [A] `packages/wos-core/application/issues_blockers.go`; [N] `packages/wos-core/application/objective_completion_reconcile.go`; [N] `packages/wos-core/application/objective_completion_reconcile_test.go`; [N] `packages/wos-core/storage/sqlite/migrations/0052_objective_completion_reconciliation.sql`.
 
 **Implementação:**
 
 1. Construir conjunto de afetados por owners/ancestors, dependentes hard, Blockers liberados e duplicatas canônicas.
 2. Adotar orçamento inicial explícito de 64 conclusões derivadas por transação; confirmar custo nos benchmarks, sem confundir com limite de Tasks lidas para o gate.
-3. Se exceder, persistir pedido coalescido de reconciliação por Outcome/revisão na migration `0044_objective_completion_reconciliation.sql`, dentro da mesma transação, com notificação no mecanismo de eventos/outbox existente.
+3. Se exceder, persistir pedido coalescido de reconciliação por Outcome/revisão na migration `0052_objective_completion_reconciliation.sql`, dentro da mesma transação, com notificação no mecanismo de eventos/outbox existente.
 4. Implementar consumidor interno de reconciliação determinística no processo de serviço e operação run-once para host embedded; não executar agentes nem introduzir broker.
 5. Cada iteração recarrega fatos atuais e respeita política/credenciais administrativas; retry interno não altera a intenção original de um cliente.
 6. Expor pending/last_processed_revision e comando de recomputação auditado para recuperação; antes de habilitar automatic, composição deve demonstrar consumidor ou capacidade síncrona completa.

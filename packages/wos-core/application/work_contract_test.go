@@ -189,7 +189,7 @@ func TestContractRevokeReasonAndHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if v.Value.Contract.Status != d.ContractRevoked || v.Value.WorkItem.Lifecycle != d.WorkItemLifecycleInProgress || v.Value.WorkItem.CurrentContractID != nil {
+	if v.Value.Contract.Status != d.ContractRevoked || v.Value.WorkItem.Lifecycle != d.WorkItemLifecycleTodo || v.Value.WorkItem.CurrentContractID != nil {
 		t.Fatal("revocation state")
 	}
 	tx, _ := store.Begin(ctx)

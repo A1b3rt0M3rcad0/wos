@@ -24,6 +24,7 @@ type WorkObligation struct {
 type WorkAttention struct {
 	CurrentContractID      *d.ID                      `json:"current_contract_id,omitempty"`
 	ReviewCaseID           *d.ID                      `json:"review_case_id,omitempty"`
+	Verification           *TaskVerificationView      `json:"verification,omitempty"`
 	CorrectionReviewCaseID *d.ID                      `json:"correction_review_case_id,omitempty"`
 	WorkItemID             d.ID                       `json:"work_item_id"`
 	Status                 string                     `json:"status"`
@@ -58,7 +59,17 @@ func (s *Service) GetWorkAttention(ctx context.Context, scope d.Scope, id d.ID) 
 
 func projectWorkAttention(context WorkContext) WorkAttention {
 	w := context.Work
-	v := WorkAttention{CurrentContractID: w.CurrentContractID, ReviewCaseID: w.PendingReviewCaseID, CorrectionReviewCaseID: w.CorrectionReviewCaseID, WorkItemID: w.ID, Status: string(context.Operational.DisplayState), OperationalState: context.Operational, AwaitingReview: w.PendingReviewCaseID != nil, CorrectionRequired: w.CorrectionReviewCaseID != nil, Obligations: []WorkObligation{}, EvidenceSearchComplete: context.Omitted["evidence_links"] == 0, OutcomeRevision: context.OutcomeRevision, EvaluatedAt: context.EvaluatedAt, Omitted: map[string]int{}}
+	v := WorkAttention{CurrentContractID: w.CurrentContractID, Verification: context.Verification, ReviewCaseID: w.PendingReviewCaseID, CorrectionReviewCaseID: w.CorrectionReviewCaseID, WorkItemID: w.ID, Status: string(context.Operational.DisplayState), OperationalState: context.Operational, Obligations: []WorkObligation{}, EvidenceSearchComplete: context.Omitted["evidence_links"] == 0, OutcomeRevision: context.OutcomeRevision, EvaluatedAt: context.EvaluatedAt, Omitted: map[string]int{}}
+	if context.Verification != nil {
+		v.AwaitingReview = context.Verification.Pending
+		v.CorrectionRequired = context.Verification.CorrectionRequired
+	} else {
+		// The aggregate's pending/correction navigation is still meaningful when
+		// the richer verification projection is unavailable. In particular, a
+		// reviewer handoff does not depend on an executor lease remaining active.
+		v.AwaitingReview = w.PendingReviewCaseID != nil
+		v.CorrectionRequired = w.CorrectionReviewCaseID != nil
+	}
 	if context.Contract != nil {
 		v.ExecutionAllowed = context.Contract.ExecutionAllowed
 		v.Status = string(context.Contract.EffectiveStatus)
@@ -75,6 +86,13 @@ func projectWorkAttention(context WorkContext) WorkAttention {
 			v.OperationalState.DisplayState = d.WorkItemDisplayStateInProgress
 		}
 	}
+	if context.Verification != nil {
+		v.OperationalState = applyTaskVerificationOperational(v.OperationalState, context.Verification)
+		v.Status = string(v.OperationalState.DisplayState)
+		if v.AwaitingReview || taskVerificationCorrectionPending(*context.Verification) {
+			v.ExecutionAllowed = false
+		}
+	}
 	if v.AwaitingReview {
 		v.Status = "awaiting_review"
 		v.OperationalState.LeaseStatus = d.LeaseStatusNone
@@ -87,8 +105,14 @@ func projectWorkAttention(context WorkContext) WorkAttention {
 		v.OperationalState.ReadinessReasons = currentReasons
 		v.Obligations = append(v.Obligations, WorkObligation{Kind: "review", Description: "An independent reviewer must evaluate the submitted result.", Status: "awaiting_independent_review"})
 	} else if v.CorrectionRequired {
-		v.Status = "corrections_requested"
+		if w.Lifecycle != d.WorkItemLifecycleInProgress {
+			v.Status = "corrections_requested"
+		}
 		v.Obligations = append(v.Obligations, WorkObligation{Kind: "correction", Description: "Acquire correction authority and address the review findings.", Status: "corrections_requested"})
+	}
+	if w.Lifecycle == d.WorkItemLifecycleDone || w.Lifecycle == d.WorkItemLifecycleCancelled {
+		v.Status, v.AwaitingReview, v.CorrectionRequired, v.ExecutionAllowed = string(w.Lifecycle), false, false, false
+		v.OperationalState.DisplayState = d.WorkItemDisplayState(w.Lifecycle)
 	}
 	if !v.EvidenceSearchComplete {
 		v.Truncated = true
@@ -160,6 +184,9 @@ func projectWorkAttention(context WorkContext) WorkAttention {
 // A current criterion revision alone does not approve a fresh execution or a
 // superseding delivery. Contract work must bind proof to its current submission.
 func attentionAssessmentApplies(context WorkContext, assessment d.CriterionAssessment) bool {
+	if !verificationAssessmentApplies(context.Verification, assessment) {
+		return false
+	}
 	if fact, ok := context.workspaceCriterionFacts[assessment.CriterionID]; ok {
 		return fact.AssessmentApplicable
 	}

@@ -6,6 +6,14 @@ import { humanActions } from "./actions.js";
 
 export const workspaceCommandName = (value) => String(value || "")
   .replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+export function workspaceHeaderTitle(view) {
+  const ref = view?.subject?.ref;
+  const kind = view?.subject?.kind === "criterion" ? "criterion" : ref?.kind;
+  // Blockers have a description, not a domain title. Keep that prose in the
+  // description section instead of promoting it into the workspace heading.
+  if (kind === "blocker") return kindName(kind);
+  return view?.header?.title || kindName(kind || view?.header?.kind);
+}
 const signedOperations = new Set([
   "acquire_signed_work_contract", "acquire_work_contract", "acquire_signed_review_contract", "acquire_review_contract",
 ]);
@@ -113,6 +121,7 @@ const authorityCopy = (state) => ({
 export function renderWorkspaceView(host, {
   view, onReference, onAction, onBlocked, onCriterion, onTimelineMore, onNote,
   onFullRecord, onFacetMore, onSubject, onPlan, principalId, onKanban, onVerify, onMaterial, onActivity, disclosures, operational = false,
+  canManageIssueTaskRelations = false, onIssueTaskRelation, onRemoveIssueTaskRelation,
 } = {}) {
   host.replaceChildren();
   host.classList.add("workspace-view");
@@ -442,8 +451,18 @@ export function renderWorkspaceView(host, {
   }
 
   const relations = section("relationships", copy.text.workspaceRelations, copy.text.workspaceNoRelations);
+  const issueTaskContext = ["issue", "work_item"].includes(kind);
+  if (canManageIssueTaskRelations && issueTaskContext && onIssueTaskRelation) {
+    const label = kind === "issue" ? copy.text.linkCorrectiveTask : copy.text.linkRelatedIssue;
+    relations.node.append(actionButton(label, () => onIssueTaskRelation(subject), "relate_issue_to_work_item"));
+  }
+  let hasIssueTaskRelation = false;
   for (const edge of view.relationships?.items || []) {
     if (!scoped(edge.source_ref, subject) || !scoped(edge.target_ref, subject)) continue;
+    const issueTaskRelation = edge.source_of_truth === "relation" && edge.kind === "relates_to"
+      && ((edge.source_ref.kind === "issue" && edge.target_ref.kind === "work_item")
+        || (edge.source_ref.kind === "work_item" && edge.target_ref.kind === "issue"));
+    if (issueTaskRelation) hasIssueTaskRelation = true;
     const row = el("div", undefined, "workspace-relationship");
     const label = {
       ownership: copy.text.workspaceRelationOwnership, hierarchy: copy.text.workspaceRelationOwnership,
@@ -454,9 +473,13 @@ export function renderWorkspaceView(host, {
       context: copy.text.workspaceRelationContext, produces: copy.text.workspaceRelationProduces,
       relates_to: copy.text.workspaceRelationRelated, derived_from: copy.text.workspaceRelationDerived,
     }[edge.kind] || display(edge.kind);
+    const contextLabel = issueTaskRelation
+      ? kind === "issue" ? copy.text.workspaceCorrectiveTask : copy.text.workspaceRelatedIssue
+      : label;
     const membership = edge.kind === "ownership" || edge.kind === "hierarchy";
     row.append(reference(membership ? edge.target_ref : edge.source_ref),
-      el("span", label, "workspace-relationship-label"), reference(membership ? edge.source_ref : edge.target_ref));
+      el("span", contextLabel, "workspace-relationship-label"), reference(membership ? edge.source_ref : edge.target_ref));
+    if (issueTaskRelation) row.dataset.issueTaskRelation = edge.id;
     if (edge.strength) row.append(el("small", display(edge.strength), "field-help"));
     if (edge.kind === "depends_on" && !edge.strength)
       row.append(el("small", copy.text.workspaceRelationStrengthUnknown, "field-help"));
@@ -465,11 +488,15 @@ export function renderWorkspaceView(host, {
       const ref = { ...subject, kind: edge.source_of_truth, id: edge.id };
       row.append(actionButton(copy.text.workspaceInspectRelation, () => onReference?.(ref), "open_reference"));
     }
+    if (issueTaskRelation && canManageIssueTaskRelations && onRemoveIssueTaskRelation)
+      row.append(actionButton(copy.text.removeIssueTaskLink, () => onRemoveIssueTaskRelation(edge), "remove_issue_work_item_relation"));
     if (edge.criterion_id) row.append(actionButton(copy.text.workspaceOpenCriterion,
       () => onCriterion?.({ id: edge.criterion_id, owner_ref: edge.target_ref }, edge.target_ref), "open_criterion"));
     relations.node.append(row);
   }
   if (!view.relationships?.items?.length) relations.fallback();
+  if (hasIssueTaskRelation || (canManageIssueTaskRelations && issueTaskContext))
+    relations.node.append(el("p", copy.text.issueTaskLinkMeaning, "field-help workspace-relation-meaning"));
   relations.finish();
 
   const activity = section("activity", copy.text.workspaceRecentActivity, copy.text.workspaceNoActivity);

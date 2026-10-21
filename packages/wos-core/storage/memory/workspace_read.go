@@ -248,6 +248,28 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 		return nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid card batch")
 	}
 	result := []ports.WorkspaceCardFacts{}
+	taskIDs := make([]d.ID, 0, len(refs))
+	for _, ref := range refs {
+		if ref.Kind == d.EntityKindWorkItem {
+			taskIDs = append(taskIDs, ref.ID)
+		}
+	}
+	type nativeBinding struct {
+		id     d.ID
+		digest string
+		round  uint64
+	}
+	nativeBindings := map[d.ID]nativeBinding{}
+	for _, id := range taskIDs {
+		item := r.tx.workItems[entityKey(scope, id)]
+		if item.LatestDeliveryID == nil {
+			continue
+		}
+		delivery, ok := r.tx.taskDeliveries[entityKey(scope, *item.LatestDeliveryID)]
+		if ok && delivery.Scope == scope && delivery.WorkItemID == id && delivery.Round == item.DeliveryRound {
+			nativeBindings[id] = nativeBinding{id: delivery.ID, digest: delivery.Digest, round: delivery.Round}
+		}
+	}
 	linked := map[d.EntityRef]map[d.ID]bool{}
 	for _, link := range r.tx.evidenceLinks {
 		if link.Scope == scope && link.Lifecycle == d.EvidenceLinkLifecycleActive && link.CriterionID != nil {
@@ -305,27 +327,36 @@ func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Sc
 					valid = false
 				}
 			}
-			if w != nil && w.ContractsEnabled {
-				var sid *d.ID
-				digest := ""
-				if w.CurrentContractID != nil {
-					contract, ok := r.tx.contracts[entityKey(scope, *w.CurrentContractID)]
-					if !ok {
-						contract = r.tx.signedContracts[entityKey(scope, *w.CurrentContractID)]
-					}
-					sid = contract.LatestSubmissionID
-					if sid != nil {
-						sub, ok := r.tx.submissions[entityKey(scope, *sid)]
+			if w != nil {
+				if a.TaskDeliveryRef != nil {
+					native, haveNative := nativeBindings[w.ID]
+					valid = valid && haveNative && native.id == a.TaskDeliveryRef.ID && native.digest == a.TaskDeliveryRef.Digest && native.round == a.TaskDeliveryRef.Round
+				} else if _, haveNative := nativeBindings[w.ID]; haveNative {
+					// Assessments for a native delivery must name that exact immutable
+					// round. An unbound historical assessment cannot satisfy it.
+					valid = false
+				} else if w.ContractsEnabled {
+					var sid *d.ID
+					digest := ""
+					if w.CurrentContractID != nil {
+						contract, ok := r.tx.contracts[entityKey(scope, *w.CurrentContractID)]
 						if !ok {
-							sub = r.tx.signedSubmissions[entityKey(scope, *sid)]
+							contract = r.tx.signedContracts[entityKey(scope, *w.CurrentContractID)]
 						}
-						digest = sub.Digest
+						sid = contract.LatestSubmissionID
+						if sid != nil {
+							sub, ok := r.tx.submissions[entityKey(scope, *sid)]
+							if !ok {
+								sub = r.tx.signedSubmissions[entityKey(scope, *sid)]
+							}
+							digest = sub.Digest
+						}
+					} else if w.CurrentConclusion != nil {
+						sid = w.CurrentConclusion.SubmissionID
+						digest = w.CurrentConclusion.SubmissionDigest
 					}
-				} else if w.CurrentConclusion != nil {
-					sid = w.CurrentConclusion.SubmissionID
-					digest = w.CurrentConclusion.SubmissionDigest
+					valid = valid && sid != nil && a.SubmissionID != nil && *sid == *a.SubmissionID && digest != "" && digest == a.SubmissionDigest
 				}
-				valid = valid && sid != nil && a.SubmissionID != nil && *sid == *a.SubmissionID && digest != "" && digest == a.SubmissionDigest
 			}
 			f.Criteria = append(f.Criteria, ports.WorkspaceCriterionFact{ID: c.ID, Revision: c.Revision, Required: c.Required, Status: c.Status, AssessmentResult: a.Result, AssessmentApplicable: valid, EvidenceLinked: linked[ref][c.ID]})
 		}

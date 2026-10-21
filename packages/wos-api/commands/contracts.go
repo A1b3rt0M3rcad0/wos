@@ -138,12 +138,13 @@ func typeSchema(t reflect.Type) map[string]any {
 			// Typed setters distinguish an explicit clear from an omitted field.
 			// Only explicitly required pointers accept null; existing optional
 			// command fields retain their established schema and encoding.
-			if f.Tag.Get("wos") == "required" && f.Type.Kind() == reflect.Pointer {
+			if f.Tag.Get("wos") == "required" && f.Type.Kind() == reflect.Pointer && f.Tag.Get("wosnullable") != "false" {
 				p[name] = map[string]any{"anyOf": []any{p[name], map[string]any{"type": "null"}}}
 			}
 			if strings.Contains(f.Tag.Get("json"), ",string") {
 				p[name] = map[string]any{"type": "string", "pattern": "^(0|[1-9][0-9]{0,19})$"}
 			}
+			p[name] = operationalFieldSchema(t, name, p[name].(map[string]any))
 			if f.Tag.Get("wos") == "required" || (f.Tag.Get("wos") != "optional" && f.Type.Kind() != reflect.Pointer && !strings.Contains(f.Tag.Get("json"), "omitempty") && f.Name != "Description" && f.Name != "ResultSummary" && f.Type.Kind() != reflect.Slice) {
 				required = append(required, name)
 			}
@@ -159,6 +160,7 @@ func typeSchema(t reflect.Type) map[string]any {
 				schema["else"] = map[string]any{"properties": map[string]any{"measurement": map[string]any{"type": "null"}}}
 			}
 		}
+		operationalObjectSchema(t, schema)
 		return schema
 	default:
 		return map[string]any{}
@@ -226,6 +228,9 @@ func normalizeValue(value any, t reflect.Type) (any, error) {
 				return nil, fmt.Errorf("%s must be explicitly provided", name)
 			}
 			if v, ok := m[name]; ok {
+				if v == nil && f.Tag.Get("wosnullable") == "false" {
+					return nil, fmt.Errorf("%s must not be null", name)
+				}
 				if strings.Contains(f.Tag.Get("json"), ",string") {
 					if _, quoted := v.(string); !quoted {
 						return nil, fmt.Errorf("%s must be a quoted decimal string", name)

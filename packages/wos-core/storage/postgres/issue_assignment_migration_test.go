@@ -15,7 +15,7 @@ import (
 func openStoreAtSchema33(t *testing.T) (*Store, string) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "issue-assignment.db")
-	store, err := openTestPostgres(path, Options{})
+	store, err := openTestPostgres(t, path, Options{})
 	if err != nil {
 		t.Fatal(err)
 	}

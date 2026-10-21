@@ -44,7 +44,12 @@ func init() {
 	add(ports.PermissionWorkWrite, ports.PermissionTaskClaim, "ClaimWorkItem", "ReclaimWorkItem")
 	add(ports.PermissionWorkWrite, ports.PermissionTaskRenew, "RenewWorkItemLease", "RenewWorkContract", "ResumeWorkContract", "RenewSignedWorkContract", "ResumeSignedWorkContract")
 	add(ports.PermissionWorkWrite, ports.PermissionTaskRelease, "ReleaseWorkItem")
-	add(ports.PermissionWorkWrite, ports.PermissionTaskDeliver, "SubmitWorkResult", "SyncWorkContract")
+	add(ports.PermissionWorkWrite, ports.PermissionTaskDeliver, "SubmitTaskForReview", "SubmitWorkResult", "SyncWorkContract")
+	add(ports.PermissionWorkWrite, ports.PermissionTaskWithdrawDelivery, "WithdrawTaskDelivery")
+	add(ports.PermissionTaskReview, ports.PermissionWorkReviewDecide, "AcceptTaskDelivery", "RequestTaskDeliveryChanges")
+	add(ports.PermissionWorkWrite, ports.PermissionTaskAccept, "AcceptTaskDelivery")
+	add(ports.PermissionWorkWrite, ports.PermissionConclusionWrite, "AcceptTaskDelivery")
+	add(ports.PermissionWorkWrite, ports.PermissionTaskRequestChanges, "RequestTaskDeliveryChanges")
 	add(ports.PermissionWorkWrite, ports.PermissionTaskAccept, "CompleteWorkItem")
 	add(ports.PermissionWorkWrite, ports.PermissionTaskCancel, "CancelWorkItem")
 	add(ports.PermissionWorkWrite, ports.PermissionTaskReopen, "ReopenWorkItem")
@@ -83,13 +88,19 @@ func legacyPermissionForCommand(command string, current ports.Permission) ports.
 }
 
 func legacyCompatibilityCapabilities(permissions []ports.Permission) []ports.Permission {
-	set := make(map[ports.Permission]struct{}, len(permissions))
+	legacySet := make(map[ports.Permission]struct{}, len(permissions))
 	for _, permission := range permissions {
+		legacySet[permission] = struct{}{}
+	}
+	set := make(map[ports.Permission]struct{}, len(legacySet))
+	for permission := range legacySet {
 		set[permission] = struct{}{}
 	}
 	for _, byCapability := range legacyCommandPermissions {
 		for current, legacy := range byCapability {
-			if _, exists := set[legacy]; exists {
+			// Expand only from the source permissions. A newly derived capability
+			// must not be treated as another legacy grant in the same pass.
+			if _, exists := legacySet[legacy]; exists {
 				set[current] = struct{}{}
 			}
 		}

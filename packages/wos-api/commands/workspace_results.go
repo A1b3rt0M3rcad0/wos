@@ -11,15 +11,28 @@ import (
 // contracts to HTTP documentation and MCP without maintaining a second DTO.
 func WorkspaceCommandResults() map[string]map[string]any {
 	resultTypes := map[string]reflect.Type{
-		"append_entity_note":           reflect.TypeFor[application.MutationResult[domain.EntityNote]](),
-		"create_plan_items":            reflect.TypeFor[application.MutationResult[application.CreatePlanItemsResult]](),
-		"set_work_item_execution_spec": reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
-		"set_work_item_not_before":     reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
-		"set_work_item_objective":      reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
-		"set_objective_parent":         reflect.TypeFor[application.MutationResult[domain.Objective]](),
-		"register_evidence_with_links": reflect.TypeFor[application.MutationResult[application.RegisterEvidenceWithLinksResult]](),
-		"register_artifact_in_context": reflect.TypeFor[application.MutationResult[application.RegisterArtifactInContextResult]](),
-		"propose_decision_in_context":  reflect.TypeFor[application.MutationResult[application.ProposeDecisionInContextResult]](),
+		"append_entity_note":                    reflect.TypeFor[application.MutationResult[domain.EntityNote]](),
+		"create_plan_items":                     reflect.TypeFor[application.MutationResult[application.CreatePlanItemsResult]](),
+		"set_work_item_execution_spec":          reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
+		"set_work_item_not_before":              reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
+		"set_work_item_objective":               reflect.TypeFor[application.MutationResult[domain.WorkItem]](),
+		"set_objective_parent":                  reflect.TypeFor[application.MutationResult[domain.Objective]](),
+		"register_evidence_with_links":          reflect.TypeFor[application.MutationResult[application.RegisterEvidenceWithLinksResult]](),
+		"register_artifact_in_context":          reflect.TypeFor[application.MutationResult[application.RegisterArtifactInContextResult]](),
+		"propose_decision_in_context":           reflect.TypeFor[application.MutationResult[application.ProposeDecisionInContextResult]](),
+		"configure_outcome_operational_profile": reflect.TypeFor[application.MutationResult[domain.Outcome]](),
+		"set_objective_completion_mode":         reflect.TypeFor[application.MutationResult[application.ObjectiveCompletionModeChange]](),
+		"submit_task_for_review":                reflect.TypeFor[application.MutationResult[application.TaskDeliveryResult]](),
+		"accept_task_delivery":                  reflect.TypeFor[application.MutationResult[application.TaskDeliveryReviewResult]](),
+		"request_task_delivery_changes":         reflect.TypeFor[application.MutationResult[application.TaskDeliveryReviewResult]](),
+		"withdraw_task_delivery":                reflect.TypeFor[application.MutationResult[application.TaskDeliveryWithdrawalResult]](),
+		"assign_issue":                          reflect.TypeFor[application.MutationResult[domain.Issue]](),
+		"unassign_issue":                        reflect.TypeFor[application.MutationResult[domain.Issue]](),
+		"start_issue_investigation":             reflect.TypeFor[application.MutationResult[domain.Issue]](),
+		"report_issue_with_blockers":            reflect.TypeFor[application.MutationResult[application.ReportIssueWithBlockersResult]](),
+		"relate_issue_to_work_item":             reflect.TypeFor[application.MutationResult[domain.Relation]](),
+		"remove_issue_work_item_relation":       reflect.TypeFor[application.MutationResult[domain.Relation]](),
+		"apply_dependency_changes":              reflect.TypeFor[application.MutationResult[application.DependencyChangesResult]](),
 	}
 	results := make(map[string]map[string]any, len(resultTypes))
 	for name, resultType := range resultTypes {
@@ -41,7 +54,14 @@ func workspaceReceiptSchema() map[string]any {
 			"version":       map[string]any{"type": "string", "pattern": "^[1-9][0-9]{0,19}$"},
 			"criterion_ids": map[string]any{"type": "array", "maxItems": 100, "items": Schema(reflect.TypeFor[domain.ID]())},
 		}}},
-		"evidence_link_ids": map[string]any{"type": "array", "maxItems": 100, "items": Schema(reflect.TypeFor[domain.ID]())},
+		"evidence_link_ids":       map[string]any{"type": "array", "maxItems": 100, "items": Schema(reflect.TypeFor[domain.ID]())},
+		"delivery_id":             Schema(reflect.TypeFor[domain.ID]()),
+		"delivery_digest":         map[string]any{"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+		"delivery_round":          map[string]any{"type": "string", "pattern": operationalUint64Pattern(true)},
+		"withdrawal_id":           Schema(reflect.TypeFor[domain.ID]()),
+		"completion_authority_id": Schema(reflect.TypeFor[domain.ID]()),
+		"work_item_id":            Schema(reflect.TypeFor[domain.ID]()),
+		"scope":                   Schema(reflect.TypeFor[domain.Scope]()),
 	}
 	for _, kind := range []string{"entity", "evidence", "artifact", "observation", "decision", "relation"} {
 		properties[kind+"_id"] = Schema(reflect.TypeFor[domain.ID]())

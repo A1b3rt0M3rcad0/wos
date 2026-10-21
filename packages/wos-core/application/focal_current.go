@@ -89,6 +89,12 @@ func (s *Service) currentFocalWorkContextWithParentProofAt(ctx context.Context, 
 	blocking := projectBlockingState(work.Ref(), work.ObjectiveID, records.Blockers, ancestors)
 	value.Blocking = &blocking
 	value.Operational = d.ProjectWorkItemOperationalState(work, outcome, value.Objective, records.DependencyEvaluations, blocking.IsBlocked, now)
+	value.Verification, e = s.optionalTaskVerificationAt(ctx, u, work, revision, now)
+	if e != nil {
+		return WorkContext{}, e
+	}
+	value.Operational = applyTaskVerificationOperational(value.Operational, value.Verification)
+	annotateTaskVerificationReadiness(value.Verification, value.Operational)
 	value.Dependencies = records.Dependencies[:min(100, len(records.Dependencies))]
 	value.Decisions = records.Decisions[:min(25, len(records.Decisions))]
 	value.EvidenceLinks = records.EvidenceLinks[:min(25, len(records.EvidenceLinks))]
@@ -130,6 +136,10 @@ func (s *Service) currentFocalWorkContextWithParentProofAt(ctx context.Context, 
 			return WorkContext{}, e
 		}
 		value.Contract = &view.Value
+	}
+	if value.Verification != nil {
+		value.Verification.Requirements = verificationCriteriaSummary(value)
+		value.Verification.Coverage["criteria"] = WorkspaceCoverage{Status: "complete"}
 	}
 	raw, e := json.Marshal(value)
 	if e != nil {

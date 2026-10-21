@@ -26,7 +26,9 @@ export async function seedCanvas(wos, { title = "Ship a connected workspace", ex
     ["blocked", "Publish the verified handoff", objective.id],
     ["dependent", "Review the completed delivery", child.id],
     ["advisory", "Check the editorial details", objective.id],
-    ["unscoped", "Record the shared decision", null],
+    // New Tasks always have an Objective owner. Keep the stable fixture key
+    // used by the Board tests, but model this record as a real Objective child.
+    ["unscoped", "Record the shared decision", objective.id],
   ]) tasks[key] = await wos.command("create_work_item", {
     scope, title: taskTitle, priority: key === "ready" ? "high" : "normal",
     lifecycle: "backlog", ...(objectiveId ? { objective_id: objectiveId } : {}),
@@ -51,7 +53,7 @@ export async function seedCanvas(wos, { title = "Ship a connected workspace", ex
     scope, work_item_id: task.id, expected_version: task.version,
   });
   const issue = await wos.command("create_issue", {
-    scope, title: "Access to the review environment is missing", severity: "major",
+    scope, objective_id: objective.id, title: "Access to the review environment is missing", severity: "major",
     description: "A problem record is separate from its blocking impact.",
     affected_refs: [ref("work_item", tasks.blocked)],
   });

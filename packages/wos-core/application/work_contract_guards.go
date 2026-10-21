@@ -134,7 +134,7 @@ func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWor
 			wholeOutcome = true
 		}
 	case ApplyDependencyChangesCommand:
-		return validateDependencyChangesContract(ctx, s, u, cmd, inspectionAt)
+		return validateDependencyChangesContract(ctx, s, u, cmd, inspectionAt, nil)
 	case RemoveDependencyCommand:
 		if acquireGuard {
 			if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {

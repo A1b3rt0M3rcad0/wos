@@ -21,7 +21,7 @@ test("a Task move previews real inherited blocking, rejects a stale revision and
   await wos.command("attest_criterion", { owner, expected_version: task.version, criterion_id: criterion.id,
     criterion_revision: criterion.criterion_revision, result: "not_met", rationale: "The first transcript is missing the final command." });
   task = (await wos.api(`${base}/work-items/${task.id}`)).value;
-  const issue = await wos.command("create_issue", { scope, title: "Destination environment access is missing", severity: "major",
+  const issue = await wos.command("create_issue", { scope, objective_id: destination.id, title: "Destination environment access is missing", severity: "major",
     description: "Access is a separate recorded impediment rather than a Task lifecycle change.", affected_refs: [{ ...scope, kind: "objective", id: destination.id }] });
   const createBlocker = (description) => wos.command("create_blocker", { scope,
     blocked_ref: { ...scope, kind: "objective", id: destination.id }, cause_ref: { ...scope, kind: "issue", id: issue.id },

@@ -7,7 +7,7 @@ import { createCanvasData, canvasRevision } from "./canvas-data.js";
 import { mountWorkspaceCanvas } from "./workspace-canvas.js";
 import { createWorkspaceInspector } from "./workspace-inspector.js";
 import { renderActionMenu } from "./workspace-action-menu.js";
-import { renderWorkspaceView, renderWorkspaceActions, renderCriterionHistory } from "./workspace-view.js";
+import { renderWorkspaceView, renderWorkspaceActions, renderCriterionHistory, workspaceHeaderTitle } from "./workspace-view.js";
 import { workspaceActionName, workspaceActions, commandForSchema } from "./workspace-actions.js";
 import {
   areas,
@@ -3122,6 +3122,7 @@ function effectiveActions(
     permissions: state.permissions,
     principal: state.principal,
     inventory,
+    outcome: state.outcome,
   });
   const subject = state.workspaceView?.subject;
   return subject && subject.ref.id === entity.id && subject.ref.kind === (entity._kind || context)
@@ -3180,7 +3181,7 @@ async function showEntity(ref, { internal = false, preserveCamera = contextualKa
     if (isCanvas) state.canvasSelected = ref;
     state.entities.set(`${ref.kind}/${ref.id}`, { ref, title: view.header.title, lifecycle: view.header.lifecycle });
     $("detail-kind").textContent = `${kindName(view.header.kind)} / ${shortId(selection.criterion_id || ref.id)}`;
-    $("detail-title").textContent = view.header.title || kindName(ref.kind);
+    $("detail-title").textContent = workspaceHeaderTitle(view);
     const detail = $("detail-content");
     let activityLoading = false;
     const render = () => {
@@ -3207,6 +3208,42 @@ async function showEntity(ref, { internal = false, preserveCamera = contextualKa
         onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report),
         onPlan: (plan) => viewCanvasPlan(plan),
         onAction: (action, capability) => workspaceAction(action, capability),
+        canManageIssueTaskRelations: isCanvas
+          && state.outcome?.lifecycle === "active"
+          && state.permissions.includes(inventory.relate_issue_to_work_item.permission),
+        onIssueTaskRelation: () => {
+          if (!allowCanvasNavigation()) return;
+          if (state.outcome?.lifecycle !== "active"
+            || !state.permissions.includes(inventory.relate_issue_to_work_item.permission)) {
+            notice(copy.text.issueTaskLinkUnavailable, true);
+            return;
+          }
+          openCommands("relate_issue_to_work_item");
+        },
+        onRemoveIssueTaskRelation: async (edge) => {
+          if (!allowCanvasNavigation()) return;
+          if (state.outcome?.lifecycle !== "active"
+            || !state.permissions.includes(inventory.remove_issue_work_item_relation.permission)) {
+            notice(copy.text.issueTaskLinkUnavailable, true);
+            return;
+          }
+          const response = await request(`${outcomeBase()}/relations/${edge.id}`);
+          const relation = response.value || response;
+          const endpoints = [relation.source_ref, relation.target_ref];
+          const focal = state.workspaceView?.subject?.ref;
+          if (relation.id !== edge.id || relation.relation_type !== "relates_to"
+            || relation.lifecycle !== "active" || !relation.version
+            || !((endpoints[0]?.kind === "issue" && endpoints[1]?.kind === "work_item")
+              || (endpoints[0]?.kind === "work_item" && endpoints[1]?.kind === "issue"))
+            || !endpoints.some((ref) => ref?.kind === focal?.kind && ref?.id === focal?.id
+              && ref?.namespace_id === focal?.namespace_id && ref?.outcome_id === focal?.outcome_id)) {
+            notice(copy.text.issueTaskLinkChangedRefresh, true);
+            await showEntity(focal, { preserveCamera: true }).catch(report);
+            return;
+          }
+          state.selected = { ...relation, _kind: "relation" };
+          openCommands("remove_issue_work_item_relation");
+        },
         onCriterion: (definition, ownerRef = ref) => showEntity(ownerRef, {
           subject: { kind: "criterion", ref: ownerRef, criterion_id: definition.id },
           preserveCamera: true,
@@ -4223,8 +4260,14 @@ function openCommands(name, menuTarget, targetLifecycle) {
   state.formEpoch++;
   state.formTarget = structuredClone(state.selected);
   state.formOriginCanvas = canvasActive();
-  state.formSubject = state.workspaceView?.subject && state.selected?.id === state.workspaceView.subject.ref.id
-    ? structuredClone(state.workspaceView.subject) : null;
+  const focusedSubject = state.workspaceView?.subject;
+  const selectedRelationTouchesFocus = name === "remove_issue_work_item_relation"
+    && focusedSubject?.ref && [state.selected?.source_ref, state.selected?.target_ref].some((endpoint) =>
+      endpoint?.kind === focusedSubject.ref.kind && endpoint?.id === focusedSubject.ref.id
+      && endpoint?.namespace_id === focusedSubject.ref.namespace_id
+      && endpoint?.outcome_id === focusedSubject.ref.outcome_id);
+  state.formSubject = focusedSubject && (state.selected?.id === focusedSubject.ref.id
+    || selectedRelationTouchesFocus) ? structuredClone(focusedSubject) : null;
   state.humanForm?.dispose();
   state.technical = false;
   $("command-form").dataset.mode = "human";
@@ -4427,7 +4470,19 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
     }[pending.name];
     const selectedKind = createdKind || state.formTarget?._kind;
     const selectedID = createdKind ? result.value?.id : state.formTarget?.id;
-    if (canvasOrigin && selectedKind && selectedID) {
+    const returnedContext = pending.name === "remove_issue_work_item_relation"
+      ? state.formSubject : null;
+    if (canvasOrigin && returnedContext?.ref) {
+      // Removing a relationship is an operation on the link, but the user's
+      // workspace is still the Issue or Task they were inspecting. Reopen that
+      // focal record after the write so its contextual actions use the right
+      // entity kind and its refreshed version.
+      await showEntity(returnedContext.ref, {
+        internal: true,
+        preserveCamera: true,
+        subject: returnedContext,
+      });
+    } else if (canvasOrigin && selectedKind && selectedID) {
       await showEntity(
         { ...currentScope(), kind: selectedKind, id: selectedID },
         { internal: true, ...(!createdKind && state.formSubject ? { subject: state.formSubject, preserveCamera: true } : {}) },
@@ -4455,10 +4510,12 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
           : copy.text.changeSaved,
     );
   } catch (e) {
+    const staleObservedVersion = e.code === "version_conflict"
+      || (e.code === "precondition_failed" && /version conflict/i.test(e.message));
     $("command-error").className = "danger";
     $("command-error").textContent = committed
       ? copy.text.savedButTheRefreshedViewCouldNotBeLoaded
-      : e.code === "version_conflict"
+      : staleObservedVersion
         ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
         : e.message;
     if (canvasInspector.isVisible("form")) {
@@ -4482,11 +4539,7 @@ async function submit(retry = false, reconciled, { repeatCreation = false } = {}
       const pending = state.pending;
       state.pending = null;
       $("fields").inert = false;
-      if (
-        pending &&
-        e.code === "version_conflict"
-      )
-        offerConflict(pending);
+      if (pending && staleObservedVersion) offerConflict(pending);
       else if (pending && e.details) showPreparation(e, pending);
     }
   } finally {

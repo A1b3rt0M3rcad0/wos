@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+const ContractV1DeliveryCloseReason = "submitted for verification"
+
 type WorkCheckpoint struct {
 	ID            ID        `json:"id"`
 	Scope         Scope     `json:"scope"`
@@ -163,7 +165,13 @@ func (p WorkSubmission) Validate() error {
 	return nil
 }
 func (c *WorkContract) RecordCheckpoint(p WorkCheckpoint, principal string, execution ID, token FencingToken, expected Version, now time.Time) error {
-	if err := c.Authorize(principal, execution, token, now); err != nil {
+	return c.recordCheckpoint(p, principal, nil, execution, token, expected, now)
+}
+func (c *WorkContract) RecordCheckpointForCredential(p WorkCheckpoint, principal string, credentialID ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	return c.recordCheckpoint(p, principal, &credentialID, execution, token, expected, now)
+}
+func (c *WorkContract) recordCheckpoint(p WorkCheckpoint, principal string, credentialID *ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	if err := c.authorize(principal, credentialID, execution, token, now); err != nil {
 		return err
 	}
 	if expected != c.Version {
@@ -185,7 +193,52 @@ func (c *WorkContract) RecordCheckpoint(p WorkCheckpoint, principal string, exec
 	return nil
 }
 func (c *WorkContract) Submit(p WorkSubmission, principal string, execution ID, token FencingToken, expected Version, now time.Time) error {
-	if err := c.Authorize(principal, execution, token, now); err != nil {
+	return c.submit(p, principal, nil, execution, token, expected, now)
+}
+func (c *WorkContract) SubmitForCredential(p WorkSubmission, principal string, credentialID ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	return c.submit(p, principal, &credentialID, execution, token, expected, now)
+}
+
+// DeliverV1 closes a contracts_v1 executor authority after its exact current
+// submission is handed to review. It completes the contract, not the Task;
+// Task acceptance and Conclusion remain separate records.
+func (c *WorkContract) DeliverV1(p WorkSubmission, principal string, execution ID, token FencingToken, expected Version, now time.Time) error {
+	return c.deliverV1(p, principal, nil, execution, token, expected, now)
+}
+
+func (c *WorkContract) DeliverV1ForCredential(p WorkSubmission, principal string, credentialID ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	return c.deliverV1(p, principal, &credentialID, execution, token, expected, now)
+}
+
+func (c *WorkContract) deliverV1(p WorkSubmission, principal string, credentialID *ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	if c.SignedBinding != nil || p.ProtocolVersion == 2 {
+		return NewError(ErrorCodeSignedProtocolRequired, "signed-v2 deliveries use the signed review protocol")
+	}
+	if c.CredentialBindingVersion != WorkContractCredentialBindingV1 || credentialID == nil {
+		return NewError(ErrorCodeLease, "contracts_v1 delivery requires credential-bound authority")
+	}
+	if err := c.AuthorizeForCredential(principal, *credentialID, execution, token, now); err != nil {
+		return err
+	}
+	if c.Version != expected {
+		return NewError(ErrorCodeVersionConflict, "contract version changed before delivery")
+	}
+	if err := validateContractV1SubmissionForConstruction(*c, p); err != nil {
+		return err
+	}
+	next := *c
+	if err := next.close(ContractCompleted, ContractV1DeliveryCloseReason, principal, now); err != nil {
+		return err
+	}
+	if err := next.Validate(); err != nil {
+		return err
+	}
+	*c = next
+	return nil
+}
+
+func (c *WorkContract) submit(p WorkSubmission, principal string, credentialID *ID, execution ID, token FencingToken, expected Version, now time.Time) error {
+	if err := c.authorize(principal, credentialID, execution, token, now); err != nil {
 		return err
 	}
 	if expected != c.Version {
@@ -219,7 +272,14 @@ func (c *WorkContract) Finalize(w *WorkItem, p WorkSubmission, principal string,
 	if c.SignedBinding != nil {
 		return NewError(ErrorCodeSignedProtocolRequired, "signed contracts require atomic verified return")
 	}
-	return c.finalize(w, p, principal, execution, token, expected, expectedWork, conclusion, now)
+	return c.finalize(w, p, principal, nil, execution, token, expected, expectedWork, conclusion, now)
+}
+
+func (c *WorkContract) FinalizeForCredential(w *WorkItem, p WorkSubmission, principal string, credentialID ID, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
+	if c.SignedBinding != nil {
+		return NewError(ErrorCodeSignedProtocolRequired, "signed contracts require atomic verified return")
+	}
+	return c.finalize(w, p, principal, &credentialID, execution, token, expected, expectedWork, conclusion, now)
 }
 
 // CompleteSignedDirect is domain composition; Application must verify exact signed request/spec and live policy first.
@@ -232,10 +292,10 @@ func (c *WorkContract) CompleteSignedDirect(w *WorkItem, p WorkSubmission, princ
 	}
 	id := p.ID
 	c.LatestSubmissionID = &id
-	return c.finalize(w, p, principal, execution, token, expected, expectedWork, conclusion, now)
+	return c.finalize(w, p, principal, nil, execution, token, expected, expectedWork, conclusion, now)
 }
-func (c *WorkContract) finalize(w *WorkItem, p WorkSubmission, principal string, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
-	if err := c.Authorize(principal, execution, token, now); err != nil {
+func (c *WorkContract) finalize(w *WorkItem, p WorkSubmission, principal string, credentialID *ID, execution ID, token FencingToken, expected, expectedWork Version, conclusion Conclusion, now time.Time) error {
+	if err := c.authorize(principal, credentialID, execution, token, now); err != nil {
 		return err
 	}
 	if c.Version != expected || w.Version != expectedWork {

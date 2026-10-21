@@ -16,7 +16,7 @@ func TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically(t *test
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "editing.db")
-	store, err := openTestPostgres(path, Options{MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically(t *test
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	store, err = openTestPostgres(path, Options{MigrateOnOpen: true})
+	store, err = openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

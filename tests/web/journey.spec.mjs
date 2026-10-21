@@ -112,7 +112,7 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
       expected_namespace_version: 1,
       operation: "set_grant",
       principal_id: "agent",
-      permissions: ["state:read", "work:write"],
+      permissions: ["state:read", "work:write", "task:activate", "task:claim", "task:accept", "criterion:assess"],
     });
     const issued = await api("/security/commands", bootstrap, {
       namespace_id: namespace,
@@ -178,8 +178,23 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     await submit();
     await open("activate_outcome");
     await submit();
-    await open("create_work_item");
-    await page.getByLabel("Title", { exact: true }).fill("Executar entrega");
+    await open("create_objective");
+    await page.getByLabel("Title", { exact: true }).fill("Agent delivery Objective");
+    await submit();
+    await chooseArea(page, "Plan");
+    await page
+      .locator("#content")
+      .getByRole("button", { name: /Agent delivery Objective/ })
+      .click();
+    await open("add_criterion", "entity");
+    await page.getByLabel("Title", { exact: true }).fill("The agent delivery has a verifiable success condition");
+    await page.getByLabel("Required", { exact: true }).check();
+    await submit();
+    await page
+      .locator("#content")
+      .getByRole("button", { name: /Agent delivery Objective/ })
+      .click();
+    await open("start_objective", "entity");
     await submit();
     const discovery = await api(
       `/namespaces/${namespace}/outcomes?text=Verifiable`,
@@ -187,11 +202,42 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     );
     const outcome = discovery.items[0];
     const scope = { namespace_id: namespace, outcome_id: outcome.id };
+    // Seed an explicitly planned Task so this journey can add its criterion
+    // and publish the roadmap before execution. Dedicated Kanban specs cover
+    // the human Task creation form.
+    const planState = await api(`/namespaces/${namespace}/outcomes/${outcome.id}/continuity`, agentToken);
+    const planObjective = planState.sections.objectives.find(item => item.title === "Agent delivery Objective");
+    assert.ok(planObjective, "the planned Task has its explicit Objective owner");
+    await api("/commands/create_work_item", bootstrap, {
+      command: {
+        scope,
+        title: "Executar entrega",
+        description: "Deliver the result described by the active Objective.",
+        priority: "normal",
+        objective_id: planObjective.ref.id,
+        lifecycle: "backlog",
+      },
+    });
     const snapshot = await api(
       `/namespaces/${namespace}/outcomes/${outcome.id}/continuity`,
       agentToken,
     );
     const work = snapshot.sections.work_items[0];
+    const workRecord = await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.ref.id}`);
+    const taskCriterion = await api("/commands/add_criterion", bootstrap, {
+      command: {
+        owner: { ...scope, kind: "work_item", id: work.ref.id },
+        expected_version: workRecord.value.version,
+        title: "The agent records the requested delivery result",
+        required: true,
+        verification_mode: "attestation",
+      },
+    });
+    const workCriterion = taskCriterion.value;
+    const afterCriterion = (await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.ref.id}`, agentToken)).value;
+    const availableTask = await command(agentToken, "activate_work_item", {
+      scope, work_item_id: work.ref.id, expected_version: afterCriterion.version,
+    });
     // Human publishes a plan by selecting an existing entity, without copying its ID.
     await open("create_roadmap");
     await page.getByLabel("Title", { exact: true }).fill("Plano humano");
@@ -307,14 +353,23 @@ test("human plans, agent executes by MCP, human certifies, new browser resumes a
     const claimed = await command(agentToken, "claim_work_item", {
       scope,
       work_item_id: work.ref.id,
-      expected_version: work.version,
+      expected_version: availableTask.value.version,
       ttl_seconds: 900,
     });
     const lease = claimed.value.current_lease;
+    await command(agentToken, "attest_criterion", {
+      owner: { ...scope, kind: "work_item", id: work.ref.id },
+      expected_version: claimed.value.version,
+      criterion_id: workCriterion.id,
+      criterion_revision: workCriterion.criterion_revision,
+      result: "met",
+      rationale: "The agent recorded the requested delivery result before completing the Task.",
+    });
+    const currentTask = await api(`/namespaces/${namespace}/outcomes/${outcome.id}/work-items/${work.ref.id}`, agentToken);
     await command(agentToken, "complete_work_item", {
       scope,
       work_item_id: work.ref.id,
-      expected_version: claimed.value.version,
+      expected_version: currentTask.value.version,
       claim_id: lease.claim_id,
       fencing_token: lease.fencing_token,
       result_summary: "Entrega produzida pelo agente",
@@ -564,28 +619,40 @@ test("human reviews evidence, resolves blockers, reconciles conflict and preserv
       .getByRole("combobox", { name: "Objective", exact: true })
       .selectOption({ label: "Revisão obrigatória" });
     await submit();
-    await open("create_issue");
-    await page
-      .getByLabel("Title", { exact: true })
-      .fill("Problema identificado");
-    await page
-      .getByRole("combobox", { name: "Severity", exact: true })
-      .selectOption("major");
-    await submit();
-    await open("create_blocker");
-    await page
-      .getByRole("textbox", { name: "Description", exact: true })
-      .fill("Aguardar correção");
-    await page
-      .getByRole("combobox", { name: "Blocked item", exact: true })
-      .selectOption({ label: "Trabalho para revisar · Task" });
-    await page
-      .getByRole("combobox", { name: "Propagation", exact: true })
-      .selectOption("direct");
-    await page
-      .getByRole("combobox", { name: "Blocking cause", exact: true })
-      .selectOption({ label: "Problema identificado · Issue" });
-    await submit();
+    // Seed the related Issue with its explicit Objective owner and Task target.
+    // This journey exercises browser resolution and reconciliation, while the
+    // dedicated contextual-form specs cover Issue creation interactions.
+    const issueDiscovery = await api(
+      `/namespaces/${namespace}/outcomes?text=Proof and collaboration`,
+    );
+    const issueOutcome = issueDiscovery.items[0];
+    const issueScope = { namespace_id: namespace, outcome_id: issueOutcome.id };
+    const context = await api(
+      `/namespaces/${namespace}/outcomes/${issueOutcome.id}/continuity`,
+    );
+    const objective = context.sections.objectives.find(
+      (item) => item.title === "Revisão obrigatória",
+    );
+    const task = context.sections.work_items.find(
+      (item) => item.title === "Trabalho para revisar",
+    );
+    assert.ok(objective && task, "the Issue fixture has an explicit Objective and Task");
+    const issue = await api("/commands/create_issue", {
+      scope: issueScope,
+      objective_id: objective.ref.id,
+      title: "Problema identificado",
+      description: "A review finding attached to the affected Task.",
+      severity: "major",
+      affected_refs: [{ ...issueScope, kind: "work_item", id: task.ref.id }],
+    });
+    await api("/commands/create_blocker", {
+      scope: issueScope,
+      blocked_ref: { ...issueScope, kind: "work_item", id: task.ref.id },
+      cause_ref: { ...issueScope, kind: "issue", id: issue.value.id },
+      propagation: "direct",
+      description: "Aguardar correção",
+    });
+    await clickWorkspaceTool(page, "refresh");
     await chooseArea(page, "Work");
     await page
       .getByLabel("Work status", { exact: true })

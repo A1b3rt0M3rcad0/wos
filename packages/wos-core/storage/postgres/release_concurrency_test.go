@@ -16,11 +16,11 @@ import (
 func releaseServices(t *testing.T) (*application.Service, *application.Service, domain.Outcome) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "release.db")
-	a, err := openTestPostgres(path, Options{MigrateOnOpen: true, BusyTimeout: 5 * time.Second})
+	a, err := openTestPostgres(t, path, Options{MigrateOnOpen: true, BusyTimeout: 5 * time.Second})
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := openTestPostgres(path, Options{MigrateOnOpen: true, BusyTimeout: 5 * time.Second})
+	b, err := openTestPostgres(t, path, Options{MigrateOnOpen: true, BusyTimeout: 5 * time.Second})
 	if err != nil {
 		a.Close()
 		t.Fatal(err)

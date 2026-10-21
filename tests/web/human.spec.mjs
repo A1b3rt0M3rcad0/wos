@@ -40,7 +40,7 @@ test("F02/F03: add an Objective and scoped Task with readable list instructions"
   await page.getByLabel("Required for Outcome", { exact: true }).check();
   await save(page);
   await detail(page, "Objectives", "Condition to verify");
-  await clickRecordAction(page, "New task");
+  await clickRecordAction(page, "New task · Backlog");
   await page.getByLabel("Task title", { exact: true }).fill("Bounded task");
   await expect(page.locator("#fields")).toContainText("Condition to verify");
   await page.getByText("Details and success conditions", { exact: true }).click();
@@ -67,11 +67,13 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Referenced work Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope,
     title: "Referenced task",
     priority: "normal",
     lifecycle: "todo",
+    objective_id: objective.id,
   });
   await wos.login(page);
   await openOutcome(page);
@@ -205,11 +207,13 @@ test("F06: reporting an Issue and blocking work are explicit; resolving the Issu
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Blocked delivery Objective", priority: "normal" });
   await wos.command("create_work_item", {
     scope,
     title: "Blocked delivery",
     priority: "normal",
     lifecycle: "todo",
+    objective_id: objective.id,
   });
   await wos.login(page);
   await openOutcome(page);
@@ -358,6 +362,8 @@ test("reference picker searches 1,001 authorized Tasks and Evidence beyond the f
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Task with distant context");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  await pick(page, "New placement", "Validation objective");
   await page.getByText("Details and success conditions", { exact: true }).click();
   await pick(page, "Context references", "Off-page acceptance task");
   await pick(page, "Context references", "Off-page acceptance evidence");
@@ -396,7 +402,7 @@ test("reference picker keyboard navigation selects duplicate titles using IDs an
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Keyboard selection");
-  await page.getByRole("button", { name: "Change placement", exact: true }).click();
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
   const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
   const matchingSearch = page.waitForResponse((response) => {
@@ -431,6 +437,8 @@ test("stale reference cursor asks for reload and retains selections without sile
   await page
     .getByLabel("Task title", { exact: true })
     .fill("Stale cursor draft");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  await pick(page, "New placement", "Objective 0");
   await page.getByText("Details and success conditions", { exact: true }).click();
   const input = page.getByRole("combobox", {
     name: "Context references",

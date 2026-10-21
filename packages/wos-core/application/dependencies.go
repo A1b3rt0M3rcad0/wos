@@ -281,7 +281,9 @@ func (s *Service) ApplyDependencyChanges(ctx context.Context, cc domain.CommandC
 		// the same transaction before preparing any writes. In particular,
 		// removal source identity comes from the persisted Relation, not a client
 		// supplied SourceRef.
-		if err := validateDependencyChangesContract(ctx, s, uow, cmd, nil); err != nil {
+		if err := validateDependencyChangesContract(ctx, s, uow, cmd, nil, func(sources []domain.EntityRef) error {
+			return s.authorizeDependencyChangeSources(ctx, uow, cc, cmd.Scope, sources)
+		}); err != nil {
 			return DependencyChangesResult{}, 0, err
 		}
 		prepared, err := s.prepareDependencyChanges(ctx, uow, cmd, s.clock.Now().UTC())
@@ -309,6 +311,95 @@ func (s *Service) ApplyDependencyChanges(ctx context.Context, cc domain.CommandC
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
 		return result, revision, err
 	})
+}
+
+// authorizeDependencyChangeSources checks authority against every distinct
+// source whose dependency list is changed. Fresh commands pass source refs
+// resolved from the relation snapshot; verified receipt replays pass refs from
+// the stored result that was produced by that same request fingerprint.
+func (s *Service) authorizeDependencyChangeSources(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, sources []domain.EntityRef) error {
+	if !s.requireIdentity {
+		return nil
+	}
+	ordered := append([]domain.EntityRef(nil), sources...)
+	sort.Slice(ordered, func(i, j int) bool {
+		return dependencyImpactRefKey(ordered[i]) < dependencyImpactRefKey(ordered[j])
+	})
+	for i, source := range ordered {
+		if source.Scope != scope || source.Validate() != nil || (i > 0 && source == ordered[i-1]) {
+			return domain.NewError(domain.ErrorCodeInvalidRelation, "dependency source authority could not be resolved")
+		}
+	}
+	for _, source := range ordered {
+		resource := source
+		request := ports.AuthorizationRequest{
+			NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID,
+			PrincipalID: cc.PrincipalID, Permission: ports.PermissionDependencyWrite,
+			LegacyPermission: legacyPermissionForCommand("ApplyDependencyChanges", ports.PermissionDependencyWrite),
+			ResourceRef:      &resource,
+		}
+		if err := request.Validate(); err != nil {
+			return err
+		}
+		if auth, ok := s.authorizer.(ports.TransactionalAuthorizer); ok {
+			if err := auth.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
+				return err
+			}
+		} else if err := s.authorizer.Authorize(ctx, request); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func dependencyChangesCommand(command any) (ApplyDependencyChangesCommand, bool) {
+	switch value := command.(type) {
+	case ApplyDependencyChangesCommand:
+		return value, true
+	case *ApplyDependencyChangesCommand:
+		if value != nil {
+			return *value, true
+		}
+	}
+	return ApplyDependencyChangesCommand{}, false
+}
+
+// authorizeDependencyChangesReplay binds disclosure to the same sources as the
+// fingerprinted request. The stored result preserves the authoritative source
+// for removals after the active relation itself has been removed.
+func (s *Service) authorizeDependencyChangesReplay(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, cmd ApplyDependencyChangesCommand, stored domain.StoredCommandResult) error {
+	if !s.requireIdentity {
+		return nil
+	}
+	var replay MutationResult[DependencyChangesResult]
+	if err := json.Unmarshal(stored.ResponseJSON, &replay); err != nil {
+		return domain.WrapError(domain.ErrorCodeIdempotencyState, "stored dependency result cannot be decoded", err)
+	}
+	if len(replay.Value.Changes) != len(cmd.Changes) || replay.OutcomeRevision == 0 {
+		return domain.NewError(domain.ErrorCodeIdempotencyState, "stored dependency result does not match its request")
+	}
+	sources := make([]domain.EntityRef, 0, len(replay.Value.Changes))
+	for i, requested := range cmd.Changes {
+		actual := replay.Value.Changes[i]
+		relation := actual.Relation
+		if actual.Action != requested.Action || relation.Validate() != nil || relation.Scope != cmd.Scope || relation.RelationType != domain.RelationTypeDependsOn {
+			return domain.NewError(domain.ErrorCodeIdempotencyState, "stored dependency relation does not match its request")
+		}
+		switch requested.Action {
+		case DependencyChangeAdd:
+			if relation.Lifecycle != domain.RelationLifecycleActive || relation.SourceRef != *requested.SourceRef || relation.TargetRef != *requested.TargetRef || relation.Strength != requested.Strength {
+				return domain.NewError(domain.ErrorCodeIdempotencyState, "stored dependency addition does not match its request")
+			}
+		case DependencyChangeRemove:
+			if relation.Lifecycle != domain.RelationLifecycleRemoved || relation.ID != *requested.RelationID {
+				return domain.NewError(domain.ErrorCodeIdempotencyState, "stored dependency removal does not match its request")
+			}
+		default:
+			return domain.NewError(domain.ErrorCodeIdempotencyState, "stored dependency action is invalid")
+		}
+		sources = append(sources, relation.SourceRef)
+	}
+	return s.authorizeDependencyChangeSources(ctx, uow, cc, cmd.Scope, sources)
 }
 
 func validateDependencyChangesEnvelope(cmd ApplyDependencyChangesCommand) error {
@@ -342,6 +433,7 @@ func validateDependencyChangesEnvelope(cmd ApplyDependencyChangesCommand) error 
 		sources[expected.SourceRef] = true
 	}
 	removed := map[domain.ID]bool{}
+	addedEdges := map[[2]domain.EntityRef]struct{}{}
 	for _, change := range cmd.Changes {
 		switch change.Action {
 		case DependencyChangeAdd:
@@ -353,6 +445,11 @@ func validateDependencyChangesEnvelope(cmd ApplyDependencyChangesCommand) error 
 					return domain.NewError(domain.ErrorCodeInvalidRelation, "dependency endpoints must be Objectives or Tasks in this Outcome")
 				}
 			}
+			edge := [2]domain.EntityRef{*change.SourceRef, *change.TargetRef}
+			if _, exists := addedEdges[edge]; exists {
+				return domain.NewError(domain.ErrorCodeInvalidArgument, "dependency batch repeats the same source and target edge")
+			}
+			addedEdges[edge] = struct{}{}
 		case DependencyChangeRemove:
 			if change.RelationID == nil || change.ExpectedVersion == nil || change.SourceRef != nil || change.TargetRef != nil || change.Strength != "" || *change.ExpectedVersion == 0 || strings.TrimSpace(change.Reason) == "" {
 				return domain.NewError(domain.ErrorCodeInvalidArgument, "remove dependency change requires relation_id, expected_version and reason only")
@@ -506,7 +603,7 @@ func (s *Service) prepareDependencyChanges(ctx context.Context, uow ports.UnitOf
 	return result, nil
 }
 
-func validateDependencyChangesContract(ctx context.Context, s *Service, uow ports.UnitOfWork, cmd ApplyDependencyChangesCommand, inspectionAt *time.Time) error {
+func validateDependencyChangesContract(ctx context.Context, s *Service, uow ports.UnitOfWork, cmd ApplyDependencyChangesCommand, inspectionAt *time.Time, authorizeSources func([]domain.EntityRef) error) error {
 	if err := validateDependencyChangesEnvelope(cmd); err != nil {
 		return err
 	}
@@ -584,6 +681,11 @@ func validateDependencyChangesContract(ctx context.Context, s *Service, uow port
 	sort.Slice(sourceRefs, func(i, j int) bool {
 		return dependencyImpactRefKey(sourceRefs[i]) < dependencyImpactRefKey(sourceRefs[j])
 	})
+	if authorizeSources != nil {
+		if err := authorizeSources(sourceRefs); err != nil {
+			return err
+		}
+	}
 	for _, source := range sourceRefs {
 		state, err := dependencyEndpointState(ctx, uow, source)
 		if err != nil {

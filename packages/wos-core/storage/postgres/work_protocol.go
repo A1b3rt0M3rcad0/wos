@@ -83,11 +83,11 @@ func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, no
 	if err = r.uow.tx.QueryRowContext(ctx, `SELECT COALESCE(MAX(version),0) FROM schema_migrations`).Scan(&schemaVersion); err != nil {
 		return mapSQLError("read schema version for work protocol cutover", err)
 	}
-	query := `UPDATE work_items SET contracts_enabled=1,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE namespace_id=$1`
+	query := `UPDATE work_items SET contracts_enabled=1,lifecycle=CASE WHEN lease_claim_id IS NOT NULL THEN 'todo' ELSE lifecycle END,version=version+CASE WHEN lease_claim_id IS NOT NULL THEN 1 ELSE 0 END,updated_at=CASE WHEN lease_claim_id IS NOT NULL THEN $1 ELSE updated_at END,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE namespace_id=$2`
 	if schemaVersion >= 42 {
-		query = `UPDATE work_items SET contracts_enabled=1,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,lease_credential_binding_version=0,lease_holder_credential_id=NULL,lease_session_credential_id=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE namespace_id=$1`
+		query = `UPDATE work_items SET contracts_enabled=1,lifecycle=CASE WHEN lease_claim_id IS NOT NULL THEN 'todo' ELSE lifecycle END,version=version+CASE WHEN lease_claim_id IS NOT NULL THEN 1 ELSE 0 END,updated_at=CASE WHEN lease_claim_id IS NOT NULL THEN $1 ELSE updated_at END,lease_claim_id=NULL,lease_principal_id=NULL,lease_actor_json=NULL,lease_acquired_at=NULL,lease_expires_at=NULL,lease_credential_binding_version=0,lease_holder_credential_id=NULL,lease_session_credential_id=NULL,fencing_token_decimal=COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)) WHERE namespace_id=$2`
 	}
-	_, err = r.uow.tx.ExecContext(ctx, query, ns.String())
+	_, err = r.uow.tx.ExecContext(ctx, query, encodeTime(now), ns.String())
 	return mapSQLError("enable work contracts", err)
 }
 func (r workProtocolRepository) Save(ctx context.Context, p d.NamespaceWorkProtocol, expected d.Version) error {

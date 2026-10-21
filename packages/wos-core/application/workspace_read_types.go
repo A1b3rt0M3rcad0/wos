@@ -128,6 +128,7 @@ type EntityWorkspaceView struct {
 	PlacementPreview   *WorkspacePlacementPreview   `json:"placement_preview,omitempty"`
 	BlockerPreview     *WorkspaceBlockerPreview     `json:"blocker_preview,omitempty"`
 	Delivery           *WorkspaceDelivery           `json:"delivery,omitempty"`
+	Verification       *TaskVerificationView        `json:"verification,omitempty"`
 	Roadmap            *WorkspaceRoadmapFacet       `json:"roadmap,omitempty"`
 	Relationships      WorkspaceRelationships       `json:"relationships"`
 	Attention          *WorkAttention               `json:"attention,omitempty"`
@@ -172,6 +173,7 @@ type WorkspaceCardSummary struct {
 	Criteria           *WorkspaceCriteriaSummary `json:"criteria,omitempty"`
 	AuthorityState     string                    `json:"authority_state"`
 	AttentionReason    string                    `json:"attention_reason,omitempty"`
+	Verification       *TaskVerificationView     `json:"verification,omitempty"`
 }
 type WorkspaceCardsPage struct {
 	Items           []WorkspaceCardSummary `json:"items"`

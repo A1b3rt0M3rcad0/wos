@@ -77,6 +77,11 @@ func TestSQLiteOperationalPolicyUpgradeDefaultsPopulatedRows(t *testing.T) {
 	if profile != string(domain.OperationalProfileCompatibilityV1) || mode != string(domain.ObjectiveCompletionModeManual) || cycle != "1" {
 		t.Fatalf("legacy defaults = profile %q, mode %q, cycle %q", profile, mode, cycle)
 	}
+	// The next repository read targets the current schema, not schema 37.
+	// Apply every later migration after asserting the exact v37 defaults.
+	if err := store.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
 	uow, err := store.Begin(ctx)
 	if err != nil {
 		t.Fatal(err)

@@ -23,6 +23,12 @@
     "permission": "conclusion:write",
     "surface": "human"
   },
+  "accept_task_delivery": {
+    "exposure": "C",
+    "journey": "Task delivery review",
+    "permission": "work.review.decide",
+    "surface": "human"
+  },
   "acquire_next_signed_review_contract": {
     "exposure": "S",
     "journey": "Signed v2 review",
@@ -581,6 +587,12 @@
     "permission": "objective:update",
     "surface": "human"
   },
+  "set_objective_completion_mode": {
+    "exposure": "C",
+    "journey": "Objective completion policy",
+    "permission": "objective:configure_completion",
+    "surface": "human"
+  },
   "set_objective_parent": {
     "exposure": "C",
     "journey": "Objective placement",
@@ -640,6 +652,12 @@
     "journey": "Legacy v1 contracts",
     "permission": "task:deliver",
     "surface": "developer"
+  },
+  "submit_task_for_review": {
+    "exposure": "C",
+    "journey": "Task delivery",
+    "permission": "task:deliver",
+    "surface": "human"
   },
   "supersede_decision": {
     "exposure": "C",
@@ -705,6 +723,18 @@
     "exposure": "C",
     "journey": "Task creation and editing",
     "permission": "task:update_definition",
+    "surface": "human"
+  },
+  "request_task_delivery_changes": {
+    "exposure": "C",
+    "journey": "Task delivery review",
+    "permission": "work.review.decide",
+    "surface": "human"
+  },
+  "withdraw_task_delivery": {
+    "exposure": "C",
+    "journey": "Task delivery",
+    "permission": "task:withdraw_delivery",
     "surface": "human"
   },
   "withdraw_artifact": {

@@ -64,8 +64,8 @@ func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !migrated.ContractsEnabled || migrated.CurrentLease != nil || migrated.Version != claimed.Value.Version || migrated.Lifecycle != d.WorkItemLifecycleInProgress {
-		t.Fatalf("migration rewrote canonical work: %+v", migrated)
+	if !migrated.ContractsEnabled || migrated.CurrentLease != nil || migrated.Version != claimed.Value.Version+1 || migrated.Lifecycle != d.WorkItemLifecycleTodo {
+		t.Fatalf("expired legacy authority was not returned to the acquisition queue during cutover: %+v", migrated)
 	}
 	cc.IdempotencyKey = "legacy-protocol-claim-1"
 	replay, err = s.ClaimWorkItem(ctx, cc, claim)
@@ -93,11 +93,10 @@ func TestNamespaceCutoverPreservesLegacyReceiptAndRejectsOldMutations(t *testing
 	if err != nil || view.Value.Contract.Status != d.ContractExpired || !view.Value.Recoverable {
 		t.Fatal("expiry not recoverable", err, view)
 	}
-	admin.IdempotencyKey = "cancel-reconciled"
 	tx, _ = store.Begin(ctx)
 	current, _ := tx.WorkItems().Get(ctx, w.Scope, w.ID)
 	tx.Rollback()
-	if _, err = s.AdministrativeCancelWorkItem(ctx, admin, a.AdministrativeCancelWorkItemCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedVersion: current.Version, Reason: "operator cancellation after expiry"}); err != nil {
-		t.Fatal(err)
+	if current.Lifecycle != d.WorkItemLifecycleTodo || current.CurrentContractID != nil {
+		t.Fatal("expired contract left execution state without authority", current)
 	}
 }

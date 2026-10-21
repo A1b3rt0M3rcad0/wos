@@ -122,6 +122,12 @@ func workActivityTransportJourney(t *testing.T, ctx context.Context, worker *sdk
 	// Time of observation may differ; the persisted work, signals and revision must agree.
 	mcpAttention.EvaluatedAt = attention.EvaluatedAt
 	mcpAttention.OperationalState.EvaluatedAt = attention.OperationalState.EvaluatedAt
+	if attention.Verification != nil && mcpAttention.Verification != nil {
+		// Verification is evaluated inside each independent read frame. Normalize
+		// only its observation timestamp; source, status, authority, and revision
+		// remain covered by the exact parity assertion below.
+		mcpAttention.Verification.EvaluatedAt = attention.Verification.EvaluatedAt
+	}
 	if !reflect.DeepEqual(attention, mcpAttention) {
 		t.Fatalf("HTTP/MCP attention mismatch: %+v %+v", attention, mcpAttention)
 	}

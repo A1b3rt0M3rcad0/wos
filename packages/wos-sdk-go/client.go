@@ -50,20 +50,25 @@ type Error struct {
 func (e *Error) Error() string { return fmt.Sprintf("WOS %s (%d): %s", e.Code, e.Status, e.Message) }
 
 type CommandResult[T any] struct {
-	Value            T                             `json:"value"`
-	OutcomeRevision  domain.OutcomeRevision        `json:"outcome_revision"`
-	CommandID        domain.ID                     `json:"command_id"`
-	IdempotentReplay bool                          `json:"idempotent_replay"`
-	ResultOmitted    bool                          `json:"result_omitted"`
-	CreatedRefs      map[string]domain.EntityRef   `json:"created_refs,omitempty"`
-	CreatedItems     []WorkspaceCreatedItemReceipt `json:"created_items,omitempty"`
-	EntityID         *domain.ID                    `json:"entity_id,omitempty"`
-	EvidenceID       *domain.ID                    `json:"evidence_id,omitempty"`
-	ArtifactID       *domain.ID                    `json:"artifact_id,omitempty"`
-	ObservationID    *domain.ID                    `json:"observation_id,omitempty"`
-	DecisionID       *domain.ID                    `json:"decision_id,omitempty"`
-	RelationID       *domain.ID                    `json:"relation_id,omitempty"`
-	EvidenceLinkIDs  []domain.ID                   `json:"evidence_link_ids,omitempty"`
+	Value                 T                             `json:"value"`
+	OutcomeRevision       domain.OutcomeRevision        `json:"outcome_revision"`
+	CommandID             domain.ID                     `json:"command_id"`
+	IdempotentReplay      bool                          `json:"idempotent_replay"`
+	ResultOmitted         bool                          `json:"result_omitted"`
+	CreatedRefs           map[string]domain.EntityRef   `json:"created_refs,omitempty"`
+	CreatedItems          []WorkspaceCreatedItemReceipt `json:"created_items,omitempty"`
+	EntityID              *domain.ID                    `json:"entity_id,omitempty"`
+	EvidenceID            *domain.ID                    `json:"evidence_id,omitempty"`
+	ArtifactID            *domain.ID                    `json:"artifact_id,omitempty"`
+	ObservationID         *domain.ID                    `json:"observation_id,omitempty"`
+	DecisionID            *domain.ID                    `json:"decision_id,omitempty"`
+	RelationID            *domain.ID                    `json:"relation_id,omitempty"`
+	EvidenceLinkIDs       []domain.ID                   `json:"evidence_link_ids,omitempty"`
+	DeliveryID            *domain.ID                    `json:"delivery_id,omitempty"`
+	DeliveryDigest        string                        `json:"delivery_digest,omitempty"`
+	DeliveryRound         uint64                        `json:"delivery_round,omitempty,string"`
+	WithdrawalID          *domain.ID                    `json:"withdrawal_id,omitempty"`
+	CompletionAuthorityID *domain.ID                    `json:"completion_authority_id,omitempty"`
 }
 
 type WorkspaceCreatedItemReceipt struct {

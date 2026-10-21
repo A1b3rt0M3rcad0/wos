@@ -106,6 +106,9 @@ func (s *Service) AdministrativeCompleteWorkItem(
 		if err := requireHardDependenciesSatisfied(ctx, uow, item.Ref()); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
+		if err := requireTaskDeliveryReviewForCompletion(ctx, uow, cmd.Scope, item.ID); err != nil {
+			return domain.WorkItem{}, 0, err
+		}
 		if err := item.CompleteAdministratively(cmd.ResultSummary, conclusion, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}

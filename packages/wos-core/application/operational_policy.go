@@ -17,7 +17,7 @@ const maxOperationalProfileMigrationReasonRunes = 1024
 type ConfigureOutcomeOperationalProfileCommand struct {
 	Scope                   d.Scope            `json:"scope"`
 	ExpectedVersion         d.Version          `json:"expected_version,string"`
-	ExpectedOutcomeRevision *d.OutcomeRevision `json:"expected_outcome_revision,string"`
+	ExpectedOutcomeRevision *d.OutcomeRevision `wos:"required" wosnullable:"false" json:"expected_outcome_revision,string"`
 	Reason                  string             `json:"reason"`
 }
 

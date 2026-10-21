@@ -24,15 +24,23 @@ func (m noHydrationManager) Begin(ctx context.Context) (ports.UnitOfWork, error)
 	if e != nil {
 		return nil, e
 	}
-	return noHydrationUnit{UnitOfWork: u, read: u.(ports.ContinuityReadUnitOfWork).ContinuityReads()}, nil
+	return noHydrationUnit{
+		UnitOfWork:        u,
+		read:              u.(ports.ContinuityReadUnitOfWork).ContinuityReads(),
+		verificationReads: u.(ports.TaskVerificationReadUnitOfWork).TaskVerificationReads(),
+	}, nil
 }
 
 type noHydrationUnit struct {
 	ports.UnitOfWork
-	read ports.ContinuityReadRepository
+	read              ports.ContinuityReadRepository
+	verificationReads ports.TaskVerificationReadRepository
 }
 
 func (u noHydrationUnit) ContinuityReads() ports.ContinuityReadRepository { return u.read }
+func (u noHydrationUnit) TaskVerificationReads() ports.TaskVerificationReadRepository {
+	return u.verificationReads
+}
 func (u noHydrationUnit) Outcomes() ports.OutcomeRepository {
 	return noHydrationOutcome{u.UnitOfWork.Outcomes()}
 }

@@ -97,6 +97,13 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 	}
 	// synctest advances this virtual interval immediately, without a real sleep.
 	time.Sleep(time.UnixMicro(lastCommandAt).Sub(time.Now()))
+	// The historical fixture deliberately stops before the ownership migration
+	// because it contains unmapped Tasks. E25's additive receipt column is still
+	// needed to exercise replay with the current application code; adding it here
+	// does not mark any migration complete or alter the legacy ownership state.
+	if _, err := store.db.ExecContext(ctx, `ALTER TABLE idempotency_records ADD COLUMN authority_credential_id TEXT CHECK (authority_credential_id IS NULL OR length(authority_credential_id) = 36)`); err != nil {
+		t.Fatal("prepare additive receipt column for current replay reader", err)
+	}
 	service, err := a.NewService(store, sqliteFixedClock{time.UnixMicro(lastCommandAt).UTC()}, &sqliteSequenceIDs{prefix: "0199ff91", next: 1})
 	if err != nil {
 		t.Fatal(err)

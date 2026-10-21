@@ -85,6 +85,13 @@ func (s *Service) signedAcceptanceFloor(ctx context.Context, uow ports.UnitOfWor
 	if s.independentReviewer {
 		floor = d.AcceptanceIndependentReview
 	}
+	requiresIndependentReview, err := workItemRequiresIndependentReview(ctx, uow, scope, work)
+	if err != nil {
+		return "", err
+	}
+	if requiresIndependentReview {
+		floor = d.AcceptanceIndependentReview
+	}
 	registry, err := signingRepository(uow)
 	if err != nil {
 		return "", err
@@ -100,4 +107,26 @@ func (s *Service) signedAcceptanceFloor(ctx context.Context, uow ports.UnitOfWor
 		floor = d.StrongerAcceptance(floor, p.AcceptanceFloor)
 	}
 	return floor, nil
+}
+
+// workItemRequiresIndependentReview is the shared acceptance-floor policy for
+// operational_v2 Tasks. The profile itself is authoritative: do not infer the
+// floor from the Task's current criteria, since later criterion edits must not
+// turn off independent review for an otherwise operational_v2 Task.
+func workItemRequiresIndependentReview(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, work d.ID) (bool, error) {
+	item, err := uow.WorkItems().Get(ctx, scope, work)
+	if err != nil {
+		return false, err
+	}
+	if item.Scope != scope || item.ID != work {
+		return false, d.NewError(d.ErrorCodeNotFound, "signed Task scope differs")
+	}
+	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return false, err
+	}
+	if err = validateOperationalProfile(outcome); err != nil {
+		return false, err
+	}
+	return outcome.OperationalProfile.Effective() == d.OperationalProfileOperationalV2, nil
 }

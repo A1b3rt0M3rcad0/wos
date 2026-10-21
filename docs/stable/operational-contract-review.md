@@ -150,3 +150,80 @@ currently calculates `1.2.0` from queued change manifests, which does not
 reflect this breaking request change. Release remains blocked until the owner
 chooses a compatible adapter or approves a semver-correct release plan. This
 review does not change `VERSION`, prepare a release or publish an artifact.
+
+## Permission migration command surface — 2026-10-21
+
+E17's generated command catalog exposes eight implemented operations through
+the existing HTTP/MCP/catalog/Go SDK surfaces: dependency-batch changes, issue
+assignment and unassignment, issue-to-Task relation add/remove, multi-blocker
+Issue reporting, Issue investigation start, and Outcome operational-profile
+configuration. Their request schemas use the existing scoped IDs, revision
+preconditions, and bounded command envelopes. No pre-existing route, field,
+required input, enum value, or constraint changed in this generated update.
+
+The permission compatibility migration itself remains internal. There is no
+public preview/apply command or route. Existing broad grants map only through
+the frozen `legacy-v1` command crosswalk; `ConfigureOutcomeOperationalProfile`
+has no legacy alias and still requires its explicit `policy:manage` capability.
+`permission_compatibility_version` is an optional migration-managed Credential
+Policy metadata field in the identity view/intent shapes. Ordinary policy writes
+ignore a client-supplied marker and preserve only the persisted marker, so it
+cannot grant the legacy alias.
+
+The normalized current-candidate OpenAPI fingerprint is
+`5a83403cac1fe2ec6bed8093c41b4e6035950bcff755b66c9aa8527e428a9098`. The
+contract test pins the exact candidate and checks the eight reviewed operations,
+the optional metadata marker, and the absence of a public migration route. The
+recursive released-v0.4.2 guard continues to pass, and its immutable fixture is
+unchanged. This refresh records the E17 public-surface addition; it does not
+change product version or release status.
+
+## Operational command contracts (E49) — 2026-10-21
+
+The reviewed candidate adds five implemented Application commands to the shared
+HTTP command catalog, MCP and generated Go SDK: `submit_task_for_review`,
+`accept_task_delivery`, `request_task_delivery_changes`, `withdraw_task_delivery`
+and `set_objective_completion_mode`. They add five command routes and no removal.
+The eight unreleased E17 command routes gain typed response annotations. Existing
+released path annotations, numeric field encodings, signed envelopes, canonical
+material digests and CLI schemas remain unchanged.
+
+New native delivery preconditions use quoted decimal Task versions and delivery
+rounds, including the exact uint64 maximum. Submission describes the exclusive
+legacy-lease and contracts-v1 authority/material variants, with the implemented
+inline material and findings limits. Historical embedded WorkItem and material
+counter encodings are retained. Signed-v2 continues to use its signed host and
+return protocol; the native commands provide no unsigned fallback.
+
+The previously optional-looking observed revisions on the unreleased Outcome
+profile configuration and plural Issue/Blocker commands are now required and
+non-null in discovery and normalization, matching their existing Application
+guards. Completion-mode configuration has the same explicit revision contract.
+Required nullable placement setters retain their separate explicit-clear
+semantics. Dependency-batch required fields and bounds likewise describe the
+implemented validator rather than new execution behavior.
+
+The public descriptor and the additive `x-wos-command-metadata` OpenAPI extension
+describe the Core registry's primary/composite permission requirements,
+non-authoritative conditional permission branches and authenticated transport
+requirements. They never grant execution authority. New schema components cover
+implemented completion, native delivery, verification, credential metadata,
+dependency reads and structured error details. A schema component alone does not
+claim that a dedicated HTTP route or MCP read adapter has been implemented.
+
+Bounded compact receipts add native delivery ID/digest/round, withdrawal ID and
+completion-authority ID. They preserve canonical recovery targets through typed
+SDK mutation results and receipt lookup without copying material, reasons,
+delegator credentials or secrets. An integration delivery is not interpreted as
+a TaskDelivery, and unrelated withdrawal/authority bindings are excluded.
+
+The reviewed normalized OpenAPI fingerprint is
+`1520579d31e089d4274be9b01012c6fc6a7ab096cab88528bb4a7d15cfdff772`.
+Two documented MCP/catalog/SDK and OpenAPI generations produced identical hashes
+for all four generated outputs. The recursive released-v0.4.2 compatibility
+guard passed, with its existing, explicitly reviewed Issue-owner requirement
+exception unchanged. Only the current candidate OpenAPI digest is refreshed;
+all eight CLI schema digests and immutable released reference files are retained.
+The strict candidate fingerprint gate remains enabled. This review does not
+prepare a release, publish a version, or establish the later transport and CLI
+journeys' acceptance.

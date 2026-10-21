@@ -9,6 +9,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 )
@@ -130,7 +131,16 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			must(e)
 			got, e := bounded.GetWorkContext(ctx, scope, work.ID)
 			must(e)
-			assertFocalJSON(t, want, got)
+			// The operational reader adds an actual-source verification projection
+			// that the legacy hydration path cannot provide. Compare the shared
+			// context contract, then assert the new projection against this same
+			// snapshot explicitly.
+			comparable := got
+			comparable.Verification = nil
+			assertFocalJSON(t, want, comparable)
+			if got.Verification == nil || got.Verification.Ref != work.Ref() || got.Verification.TaskVersion != got.Work.Version || got.Verification.OutcomeRevision != got.OutcomeRevision || !slices.Contains(got.Verification.ReasonCodes, "hard_dependency_unsatisfied") {
+				t.Fatalf("bounded read lost current verification or its dependency reason: %+v", got.Verification)
+			}
 			if got.Operational.DisplayState != d.WorkItemDisplayStateWaitingDependencies || len(got.Dependencies) != 100 || got.Omitted["dependencies"] != 1 || got.Omitted["assessment_history"] != 1000 || len(got.Work.Criteria.Assessments) != 0 || got.Work.Criteria.CurrentAssessments[criterion.ID].ID != portID(1999) {
 				t.Fatal("current proof, counts or hidden hard dependency lost", got.Operational, got.Omitted)
 			}

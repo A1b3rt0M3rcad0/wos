@@ -168,22 +168,47 @@ func (r EvaluatorRef) Validate() error {
 }
 
 type CriterionAssessment struct {
-	SubmissionID           *ID               `json:"submission_id,omitempty"`
-	SubmissionDigest       string            `json:"submission_digest,omitempty"`
-	ID                     ID                `json:"id"`
-	CriterionID            ID                `json:"criterion_id"`
-	CriterionRevision      CriterionRevision `json:"criterion_revision"`
-	Result                 AssessmentResult  `json:"result"`
-	Rationale              string            `json:"rationale"`
-	EvidenceIDs            []ID              `json:"evidence_ids,omitempty"`
-	EvaluatorRef           *EvaluatorRef     `json:"evaluator_ref,omitempty"`
-	PrincipalID            string            `json:"principal_id"`
-	Actor                  ActorRef          `json:"actor_ref"`
-	AssessedAt             time.Time         `json:"assessed_at"`
-	SupersedesAssessmentID *ID               `json:"supersedes_assessment_id,omitempty"`
+	SubmissionID           *ID                        `json:"submission_id,omitempty"`
+	SubmissionDigest       string                     `json:"submission_digest,omitempty"`
+	TaskDeliveryRef        *TaskDeliveryAssessmentRef `json:"task_delivery_ref,omitempty"`
+	ID                     ID                         `json:"id"`
+	CriterionID            ID                         `json:"criterion_id"`
+	CriterionRevision      CriterionRevision          `json:"criterion_revision"`
+	Result                 AssessmentResult           `json:"result"`
+	Rationale              string                     `json:"rationale"`
+	EvidenceIDs            []ID                       `json:"evidence_ids,omitempty"`
+	EvaluatorRef           *EvaluatorRef              `json:"evaluator_ref,omitempty"`
+	PrincipalID            string                     `json:"principal_id"`
+	Actor                  ActorRef                   `json:"actor_ref"`
+	AssessedAt             time.Time                  `json:"assessed_at"`
+	SupersedesAssessmentID *ID                        `json:"supersedes_assessment_id,omitempty"`
+}
+
+// TaskDeliveryAssessmentRef binds a criterion assessment to the exact
+// immutable TaskDelivery review round whose proof it evaluates. A
+// contracts_v1 assessment also binds separately to its exact WorkSubmission.
+type TaskDeliveryAssessmentRef struct {
+	ID     ID     `json:"id"`
+	Digest string `json:"digest"`
+	Round  uint64 `json:"round,string"`
+}
+
+func (r TaskDeliveryAssessmentRef) Validate() error {
+	if err := r.ID.Validate(); err != nil {
+		return err
+	}
+	if r.Round == 0 || !ValidSignedDigest(r.Digest) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery assessment reference requires an exact digest and nonzero round")
+	}
+	return nil
 }
 
 func (a CriterionAssessment) Validate() error {
+	if a.TaskDeliveryRef != nil {
+		if err := a.TaskDeliveryRef.Validate(); err != nil {
+			return err
+		}
+	}
 	if a.SubmissionID != nil {
 		if err := a.SubmissionID.Validate(); err != nil {
 			return err

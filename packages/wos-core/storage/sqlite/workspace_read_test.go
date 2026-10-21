@@ -71,7 +71,7 @@ func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
 			must(e)
 			page, e := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: refs})
 			must(e)
-			if counted.begins != 1 || len(page.Items) != 100 || page.Items[0].Version != d.Version(9007199254740993) || page.Items[0].AuthorityState != "unknown" || page.Items[0].Criteria.Pending != 1 {
+			if counted.begins != 1 || len(page.Items) != 100 || page.Items[0].Version != d.Version(9007199254740993) || page.Items[0].AuthorityState != "none" || page.Items[0].Criteria.Pending != 1 {
 				t.Fatalf("batch was hydrated, rounded or invented authority: begins=%d page=%+v", counted.begins, page)
 			}
 			raw, e := json.Marshal(page)

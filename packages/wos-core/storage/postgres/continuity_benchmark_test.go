@@ -32,7 +32,7 @@ func BenchmarkContinuity(b *testing.B) {
 		}
 	}
 
-	store, err := openTestPostgres(filepath.Join(b.TempDir(), "bench.db"), Options{MigrateOnOpen: true})
+	store, err := openTestPostgres(b, filepath.Join(b.TempDir(), "bench.db"), Options{MigrateOnOpen: true})
 	if err != nil {
 		b.Fatal(err)
 	}

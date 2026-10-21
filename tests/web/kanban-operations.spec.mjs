@@ -36,25 +36,51 @@ async function save(page,name,{nextCommand,proof=false}={}){
  await expect(modal(page).locator('#command-form')).toHaveCount(0);
  await expect(modal(page)).toBeVisible();await expect(modal(page).locator('.workspace-kanban-status')).not.toHaveText('Loading work…');return json.value;
 }
-async function fixture(wos){
+async function fixture(wos,{startObjective=true}={}){
  const {value:outcome,scope}=await wos.outcome('An operational result');
  await wos.command('add_criterion',{owner:{...scope,kind:'outcome',id:outcome.id},expected_version:outcome.version,title:'A checked delivery',required:true,verification_mode:'attestation'});
  await wos.command('activate_outcome',{scope,expected_version:outcome.version+1});
- const objective=await wos.command('create_objective',{scope,title:'A reviewed installation guide',priority:'normal',required_for_outcome:false});
+ let objective=await wos.command('create_objective',{scope,title:'A reviewed installation guide',priority:'normal',required_for_outcome:false});
+ if(startObjective){
+  await wos.command('add_criterion',{owner:{...scope,kind:'objective',id:objective.id},expected_version:objective.version,title:'The installation guide has a verifiable success condition',required:true,verification_mode:'attestation'});
+  objective=(await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/objectives/${objective.id}`)).value;
+  objective=await wos.command('start_objective',{scope,objective_id:objective.id,expected_version:objective.version});
+ }
  return {outcome,scope,objective};
+}
+async function startCanvasObjectives(wos,canvas){
+ const base=`/namespaces/${wos.namespace}/outcomes/${canvas.outcome.id}`;
+ for(const objective of [canvas.objective,canvas.child]){
+  let current=(await wos.api(`${base}/objectives/${objective.id}`)).value;
+  await wos.command('add_criterion',{owner:{...canvas.scope,kind:'objective',id:objective.id},expected_version:current.version,title:`${objective.title} has an explicit success condition`,required:true,verification_mode:'attestation'});
+  current=(await wos.api(`${base}/objectives/${objective.id}`)).value;
+  await wos.command('start_objective',{scope:canvas.scope,objective_id:objective.id,expected_version:current.version});
+ }
 }
 for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3840,height:2160},{width:390,height:844}]){
  test(`create, assign, acquire, prove, assess and conclude in one Kanban at ${viewport.width}px`,async({page,wos})=>{
   await page.setViewportSize(viewport);const {outcome,scope,objective}=await fixture(wos);
   const base=`/namespaces/${wos.namespace}/outcomes/${outcome.id}`;
   await open(page,wos,outcome,objective.title);
-  await modal(page).getByRole('button',{name:'Add Task',exact:true}).click();
+  const addBacklogTask=modal(page).locator('button[data-target-lifecycle="backlog"]');
+  const addTodoTask=modal(page).locator('button[data-target-lifecycle="todo"]');
+  await expect(addBacklogTask).toBeVisible();
+  await expect(addTodoTask).toBeVisible();
+  await expect(modal(page).locator('.workspace-kanban-card-shell select')).toHaveCount(0);
+  await addBacklogTask.click();
   await expect(modal(page).locator('#command-form')).toBeVisible();
   await page.getByLabel('Task title',{exact:true}).fill('Verify installation commands');
   const task=await save(page,'create_work_item');expect(task.lifecycle).toBe('backlog');expect(task.objective_id).toBe(objective.id);
   await modal(page).getByRole('button',{name:/Verify installation commands/}).click();
   await expect(modal(page).locator('.workspace-kanban-columns')).toBeVisible();
-  await modal(page).locator('[data-operational-group=people] > summary').click();
+  const inspector=modal(page).locator('.workspace-kanban-inspection');
+  const inspectorHeader=inspector.locator('.workspace-kanban-inspection-header');
+  await inspector.locator('[data-operational-group=people] > summary').click();
+  await inspector.evaluate(node=>{node.scrollTop=node.scrollHeight;});
+  const headerBounds=await inspectorHeader.boundingBox(),inspectorBounds=await inspector.boundingBox();
+  expect(headerBounds.y).toBeGreaterThanOrEqual(inspectorBounds.y-1);
+  expect(headerBounds.y).toBeLessThan(inspectorBounds.y+50);
+  await expect(inspectorHeader.getByRole('button',{name:'Back to Kanban',exact:true})).toBeVisible();
   await expect(modal(page).getByRole('heading',{name:'Responsibility and execution authority',exact:true})).toBeVisible();
   await capture(page,`item-${viewport.width}`);
   await action(page,'set_work_item_assignees');
@@ -79,7 +105,7 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   await action(page,'claim_work_item');const claimed=await save(page,'claim_work_item');expect(claimed.current_lease.principal_id).toBe('owner');
   await expect(modal(page).locator('.workspace-kanban-controls')).toBeVisible();
   await expect(modal(page).getByRole('button',{name:'Review acceptance criteria',exact:true})).toBeVisible();
-  await expect(modal(page).getByRole('button',{name:'Add Task',exact:true})).toBeVisible();
+  await expect(modal(page).locator('button[data-target-lifecycle="backlog"]')).toBeVisible();
   await action(page,'renew_work_item_lease');const renewed=await save(page,'renew_work_item_lease');expect(renewed.current_lease.claim_id).toBe(claimed.current_lease.claim_id);expect(renewed.current_lease.fencing_token).toBe(claimed.current_lease.fencing_token);
   await capture(page,`executing-${viewport.width}`);
   await modal(page).getByRole('button',{name:'Review acceptance criteria',exact:true}).click();
@@ -97,14 +123,14 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   await page.getByRole('option').filter({hasText:'documented installation'}).first().click();
   const assessment=await save(page,'record_criterion_assessment',{proof:true});expect(assessment.result).toBe('met');expect(assessment.evidence_ids).toContain(proof.evidence.id);
   await modal(page).getByRole('button',{name:'Back to item',exact:true}).click();
-  await expect(board(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
+  await expect(board(page).locator('.workspace-kanban-inspection-header > h3')).toHaveText(task.title);
   await action(page,'complete_work_item');await page.getByLabel('Task result',{exact:true}).fill('The installation guide was exercised and its output is linked.');await page.getByLabel('Reason',{exact:true}).fill('The current required criterion was assessed with actual evidence.');
   const footerBounds=await page.locator('#command-form > footer').boundingBox();
   const reasonBounds=await page.getByLabel('Reason',{exact:true}).boundingBox();
   expect(reasonBounds.y+reasonBounds.height,'The footer must not cover the focused completion field').toBeLessThanOrEqual(footerBounds.y+1);
   await capture(page,`completion-${viewport.width}`);
   const done=await save(page,'complete_work_item');expect(done.lifecycle).toBe('done');expect(done.conclusion).toBeTruthy();
-  expect((await wos.api(`${base}/objectives/${objective.id}`)).value.lifecycle).toBe('planned');
+  expect((await wos.api(`${base}/objectives/${objective.id}`)).value.lifecycle).toBe('in_progress');
   await page.keyboard.press('Escape');await expect(modal(page).locator('[data-column=accepted]')).toContainText(task.title);
   await capture(page,`accepted-${viewport.width}`);
   const issues=await new AxeBuilder({page}).include('#workspace-kanban').analyze();expect(issues.violations).toEqual([]);
@@ -112,10 +138,22 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
  });
 }
 test('drag prepares actual operations; blocked and read-only work never moves',async({page,wos,browser})=>{
- const c=await seedCanvas(wos);await open(page,wos,c.outcome,c.objective.title);
+ const c=await seedCanvas(wos);
+ const base=`/namespaces/${wos.namespace}/outcomes/${c.outcome.id}`;
+ await startCanvasObjectives(wos,c);
+ await open(page,wos,c.outcome,c.objective.title);
  const moves=[];page.on('request',r=>{if(r.url().includes('/commands/'))moves.push(r.url());});
+ const blockedBefore=(await wos.api(`${base}/work-items/${c.tasks.blocked.id}`)).value;
+ const blockedCard=modal(page).locator(`[data-kanban-ref="work_item/${c.tasks.blocked.id}"]`);
+ await expect(blockedCard).toHaveAttribute('draggable','true');
+ await expect(blockedCard.locator('select')).toHaveCount(0);
+ await expect(modal(page).locator('.workspace-kanban-card-shell select')).toHaveCount(0);
  await move(page,c.tasks.blocked.title,'in_progress');
  await expect(modal(page).locator('.workspace-move-feedback')).toContainText('No state changed');expect(moves).toEqual([]);
+ await expect(modal(page).locator('.workspace-requirement').first()).toBeVisible();
+ await expect(board(page).locator('[data-column=todo]')).toContainText(c.tasks.blocked.title);
+ await expect(board(page).locator('[data-column=in_progress]')).not.toContainText(c.tasks.blocked.title);
+ expect((await wos.api(`${base}/work-items/${c.tasks.blocked.id}`)).value).toMatchObject({lifecycle:blockedBefore.lifecycle,version:blockedBefore.version});
  await expect(modal(page).locator('[data-workspace-facet=attention]')).toContainText(/Blocked|blocked/);
  await page.keyboard.press('Escape');
  const card=modal(page).locator(`[data-kanban-ref="work_item/${c.tasks.advisory.id}"]`);
@@ -145,9 +183,9 @@ test('embedded forms preserve conflicting input and recover the same uncertain c
  await page.locator('#submit-command').click();expect((await (await rejected).json()).error.code).toBe('version_conflict');
  await expect(page.getByLabel('Task title',{exact:true})).toHaveValue('My retained title');await expect(page.locator('#command-error')).toContainText(/newer version/i);
  await page.locator('#close-command').click();await expect(modal(page).locator('.workspace-kanban-status')).not.toHaveText('Loading work…');
- await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText('Concurrent title');
+ await expect(modal(page).locator('.workspace-kanban-inspection-header > h3')).toHaveText('Concurrent title');
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
- await modal(page).getByRole('button',{name:'Add Task',exact:true}).click();await page.getByLabel('Task title',{exact:true}).fill('Recover exactly once');
+ await modal(page).locator('button[data-target-lifecycle="backlog"]').click();await page.getByLabel('Task title',{exact:true}).fill('Recover exactly once');
  let first=true;const writes=[];
  await page.route('**/commands/create_work_item',async route=>{
   writes.push({key:route.request().headers()['idempotency-key'],body:route.request().postData()});
@@ -164,7 +202,7 @@ test('embedded forms preserve conflicting input and recover the same uncertain c
 });
 
 test('Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion',async({page,wos})=>{
- const {outcome,scope,objective}=await fixture(wos),owner={...scope,kind:'objective',id:objective.id};
+ const {outcome,scope,objective}=await fixture(wos,{startObjective:false}),owner={...scope,kind:'objective',id:objective.id};
  const criterion=await wos.command('add_criterion',{owner,expected_version:objective.version,title:'Guide checked against agreed condition',required:true,verification_mode:'attestation'});
  await open(page,wos,outcome,outcome.title);
  await move(page,objective.title,'in_progress');
@@ -194,19 +232,32 @@ test('contract-backed movement stays an explicit external handoff without browse
 
 test('related Issues and Blockers remain operable in place and resolution never silently releases an impediment',async({page,wos})=>{
  const c=await seedCanvas(wos),base=`/namespaces/${wos.namespace}/outcomes/${c.outcome.id}`;
+ await startCanvasObjectives(wos,c);
  await open(page,wos,c.outcome,c.objective.title);await modal(page).getByRole('button',{name:new RegExp(c.tasks.blocked.title)}).click();
  await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=blocker][data-reference-id="${c.blocker.id}"]`).first().click();
  await expect(board(page).locator(".workspace-kanban-inspection")).toHaveAttribute("data-subject",new RegExp(c.blocker.id));
  await modal(page).locator('[data-operational-group=impediments] > summary').click();
  await modal(page).locator(`[data-reference-kind=issue][data-reference-id="${c.issue.id}"]`).first().click();
- await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(c.issue.title);
+ await expect(modal(page).locator('.workspace-kanban-inspection-header > h3')).toHaveText(c.issue.title);
  await action(page,'resolve_issue');await page.getByLabel('Resolution summary',{exact:true}).fill('Review environment access has been restored.');await save(page,'resolve_issue');
  expect((await wos.api(`${base}/blockers/${c.blocker.id}`)).value.lifecycle).toBe('active');
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
+ let inspection=modal(page).locator('.workspace-kanban-inspection');
+ if (!(await inspection.count())) {
+  await modal(page).getByRole('button',{name:new RegExp(c.tasks.blocked.title)}).click();
+  inspection=modal(page).locator('.workspace-kanban-inspection');
+ }
+ await expect(inspection).toContainText('Wait for verified environment access');
+ const impediments=inspection.locator('[data-operational-group=impediments]');
+ if (!(await impediments.evaluate(node=>node.open))) await impediments.locator(':scope > summary').click();
+ await inspection.locator(`[data-reference-kind=blocker][data-reference-id="${c.blocker.id}"]`).first().click();
+ await expect(modal(page).locator('.workspace-kanban-inspection-header > h3')).toHaveText('Blocker');
  await expect(modal(page).locator('.workspace-kanban-inspection')).toContainText('Wait for verified environment access');
  await action(page,'resolve_blocker');await page.getByLabel('Resolution summary',{exact:true}).fill('Explicitly release this impediment after checking access.');await page.getByLabel('Confirm work can proceed',{exact:true}).check();await save(page,'resolve_blocker');
  await modal(page).getByRole('button',{name:/^Back to (Kanban|previous item)$/}).click();
+ inspection=modal(page).locator('.workspace-kanban-inspection');
+ if (!(await inspection.count())) await modal(page).getByRole('button',{name:new RegExp(c.tasks.blocked.title)}).click();
  await expect(modal(page).locator('[data-workspace-facet=attention]')).not.toContainText(/work is blocked/i);
  await action(page,'claim_work_item');const claimed=await save(page,'claim_work_item');expect(claimed.current_lease.principal_id).toBe('owner');
 });
@@ -229,7 +280,7 @@ test('an already acquired contract has a direct readonly continuation without a 
  const cameraBeforeClose=await page.locator('.canvas-world').getAttribute('style');
  await modal(page).locator('#close-detail').click();
  await expect(modal(page).locator('.workspace-kanban-operation')).toHaveCount(0);
- await expect(modal(page).locator('.workspace-kanban-inspection > h3')).toHaveText(task.title);
+ await expect(modal(page).locator('.workspace-kanban-inspection-header > h3')).toHaveText(task.title);
  await expect(page.locator('.canvas-world')).toHaveAttribute('style',cameraBeforeClose);
  await expect(page.locator('dialog[open]')).toHaveCount(1);
 });

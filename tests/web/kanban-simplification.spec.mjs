@@ -25,7 +25,10 @@ async function setup(wos){
  const {value:outcome,scope}=await wos.outcome('Focused planning and proof');
  await wos.command('add_criterion',{owner:{...scope,kind:'outcome',id:outcome.id},expected_version:outcome.version,title:'A verified result',required:true,verification_mode:'attestation'});
  await wos.command('activate_outcome',{scope,expected_version:outcome.version+1});
- const objective=await wos.command('create_objective',{scope,title:'A focused work context',priority:'normal'});
+ let objective=await wos.command('create_objective',{scope,title:'A focused work context',priority:'normal'});
+ await wos.command('add_criterion',{owner:{...scope,kind:'objective',id:objective.id},expected_version:objective.version,title:'The focused work context has a verifiable result',required:true,verification_mode:'attestation'});
+ objective=(await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/objectives/${objective.id}`)).value;
+ objective=await wos.command('start_objective',{scope,objective_id:objective.id,expected_version:objective.version});
  const task=await wos.command('create_work_item',{scope,title:'Deliver the agreed login',description:'Implement the login and demonstrate the agreed behavior.',priority:'normal',objective_id:objective.id,lifecycle:'backlog'});
  const criterion=await wos.command('add_criterion',{owner:{...scope,kind:'work_item',id:task.id},expected_version:task.version,title:'An expired token is rejected',required:true,verification_mode:'evidence_review'});
  return {outcome,scope,objective,task,criterion};
@@ -36,6 +39,26 @@ async function open(page,wos,outcome,title){
  await page.getByRole('option').filter({hasText:title}).first().click();
  await page.locator('#canvas-details').getByRole('button',{name:title===outcome.title?'Open Objectives Kanban':'Open Tasks Kanban',exact:true}).click();
  await expect(kanban(page).locator('.workspace-kanban-status')).not.toHaveText('Loading work…');
+}
+for(const viewport of [{width:1280,height:720},{width:390,height:844}]){
+ test(`focused item title and return control stay visible while details scroll at ${viewport.width}px`,async({page,wos})=>{
+  await page.setViewportSize(viewport);const {outcome,objective,task}=await setup(wos);
+  await open(page,wos,outcome,objective.title);
+  await kanban(page).locator('.workspace-kanban-card').filter({hasText:task.title}).click();
+  const inspector=kanban(page).locator('.workspace-kanban-inspection');
+  const header=inspector.locator('.workspace-kanban-inspection-header');
+  await inspector.locator('[data-operational-group=people] > summary').click();
+  await inspector.evaluate(node=>{node.scrollTop=node.scrollHeight;});
+  const scroll=await inspector.evaluate(node=>({top:node.scrollTop,height:node.clientHeight,content:node.scrollHeight}));
+  expect(scroll.top).toBeGreaterThan(0);
+  expect(scroll.content).toBeGreaterThan(scroll.height);
+  const panel=await inspector.boundingBox(),heading=await header.locator('h3').boundingBox(),back=await header.getByRole('button',{name:'Back to Kanban',exact:true}).boundingBox();
+  expect(heading.y).toBeGreaterThanOrEqual(panel.y-1);
+  expect(heading.y+heading.height).toBeLessThanOrEqual(panel.y+panel.height+1);
+  expect(back.y).toBeGreaterThanOrEqual(panel.y-1);
+  expect(back.y+back.height).toBeLessThanOrEqual(panel.y+panel.height+1);
+  await expect(header.getByRole('button',{name:'Back to Kanban',exact:true})).toBeVisible();
+ });
 }
 for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3840,height:2160},{width:390,height:844}]){
  test(`focused modal, contextual controls and clean inspection at ${viewport.width}`,async({page,wos})=>{
@@ -51,7 +74,8 @@ for(const viewport of [{width:1280,height:720},{width:2560,height:1440},{width:3
   if(viewport.width===2560) await capture(page,wos,'objectives-2560');
   await kanban(page).getByRole('button',{name:'Open Tasks Kanban',exact:true}).click();
   await expect(kanban(page).getByRole('heading',{name:'Tasks Kanban',exact:true})).toBeVisible();
-  await expect(kanban(page).getByRole('button',{name:'Add Task',exact:true})).toBeVisible();
+  await expect(kanban(page).locator('button[data-target-lifecycle="backlog"]')).toBeVisible();
+  await expect(kanban(page).locator('button[data-target-lifecycle="todo"]')).toBeVisible();
   await expect(kanban(page).getByRole('button',{name:/Add.*[Oo]bjective/})).toHaveCount(0);
   await kanban(page).locator('.workspace-kanban-card').filter({hasText:task.title}).click();
   const inspector=kanban(page).locator('.workspace-kanban-inspection');
