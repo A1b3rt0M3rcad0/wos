@@ -155,7 +155,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return zero, 0, err
 		}
 		repo, err := contractRepository(uow)
@@ -169,8 +169,18 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 		if err := validateContractSpec(c, cmd.Authority); err != nil {
 			return zero, 0, err
 		}
+		w, err := uow.WorkItems().Get(ctx, cmd.Scope, c.WorkItemID)
+		if err != nil {
+			return zero, 0, err
+		}
 		now, err := s.transactionTime(ctx, uow)
 		if err != nil {
+			return zero, 0, err
+		}
+		candidate := w
+		candidate.Lifecycle = d.WorkItemLifecycleTodo
+		candidate.CurrentLease = nil
+		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 			return zero, 0, err
 		}
 		if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
@@ -187,10 +197,6 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 		if err := repo.Save(ctx, c, v, l); err != nil {
 			return zero, 0, err
 		}
-		w, err := uow.WorkItems().Get(ctx, cmd.Scope, c.WorkItemID)
-		if err != nil {
-			return zero, 0, err
-		}
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
 		return WorkContractResult{EvaluatedAt: now, Contract: c, WorkItem: w}, rev, err
 	})
@@ -201,7 +207,7 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return zero, 0, err
 		}
 		repo, err := contractRepository(uow)
@@ -221,6 +227,12 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 		}
 		now, err := s.transactionTime(ctx, uow)
 		if err != nil {
+			return zero, 0, err
+		}
+		candidate := w
+		candidate.Lifecycle = d.WorkItemLifecycleTodo
+		candidate.CurrentLease = nil
+		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 			return zero, 0, err
 		}
 		execution, err := s.ids.NewID()

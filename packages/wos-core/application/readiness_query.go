@@ -35,24 +35,21 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 	if err := s.authorizeScopedReadInUnitOfWork(ctx, uow, scope); err != nil {
 		return ReadyWork{}, err
 	}
+	// Serialize the readiness snapshot with lifecycle/coordination mutations
+	// before loading the Outcome, Tasks or their Objective hierarchy.
+	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
+	if err != nil {
+		return ReadyWork{}, err
+	}
 
 	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
 	if err != nil {
 		return ReadyWork{}, err
 	}
+	if err := validateOperationalProfile(outcome); err != nil {
+		return ReadyWork{}, err
+	}
 	workItems, err := uow.WorkItems().ListByOutcome(ctx, scope)
-	if err != nil {
-		return ReadyWork{}, err
-	}
-	objectives, err := uow.Objectives().ListByOutcome(ctx, scope)
-	if err != nil {
-		return ReadyWork{}, err
-	}
-	relations, err := uow.Relations().ListByOutcome(ctx, scope)
-	if err != nil {
-		return ReadyWork{}, err
-	}
-	coordination, err := uow.Coordination().LockOutcome(ctx, scope)
 	if err != nil {
 		return ReadyWork{}, err
 	}
@@ -62,32 +59,12 @@ func (s *Service) ListReadyWork(ctx context.Context, scope domain.Scope) (ReadyW
 		return ReadyWork{}, err
 	}
 
-	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
-	for _, objective := range objectives {
-		objectiveByID[objective.ID] = objective
-	}
-
 	items := make([]ReadyWorkItem, 0)
 	for _, item := range workItems {
-		var objective *domain.Objective
-		if item.ObjectiveID != nil {
-			value, ok := objectiveByID[*item.ObjectiveID]
-			if !ok {
-				return ReadyWork{}, domain.NewError(domain.ErrorCodeNotFound, "work item objective is missing")
-			}
-			copyValue := value
-			objective = &copyValue
-		}
-		evaluations, err := dependencyEvaluationsForSource(ctx, uow, item.Ref(), relations)
+		readiness, err := evaluateTaskAcquisition(ctx, uow, item, snapshotTime)
 		if err != nil {
 			return ReadyWork{}, err
 		}
-		readiness := domain.WorkItemReadiness(item, outcome, objective, evaluations, snapshotTime)
-		blocking, err := blockingStateForRef(ctx, uow, item.Ref())
-		if err != nil {
-			return ReadyWork{}, err
-		}
-		readiness = domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked)
 		if readiness.Ready {
 			items = append(items, ReadyWorkItem{WorkItem: item, Readiness: readiness})
 		}

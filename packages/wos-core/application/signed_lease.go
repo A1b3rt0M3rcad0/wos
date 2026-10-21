@@ -164,6 +164,12 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 	if err != nil {
 		return zero, 0, err
 	}
+	candidate := work
+	candidate.Lifecycle = d.WorkItemLifecycleTodo
+	candidate.CurrentLease = nil
+	if err = requireWorkItemReady(ctx, uow, candidate, now); err != nil {
+		return zero, 0, err
+	}
 	version, lease := contract.Version, contract.LeaseVersion
 	if takeover {
 		execution, e := s.ids.NewID()
