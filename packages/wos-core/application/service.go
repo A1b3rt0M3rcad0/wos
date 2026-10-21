@@ -134,12 +134,18 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 
 	waiverAuthorized := false
 	if cmd.Result == domain.AssessmentResultWaived {
-		if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-			NamespaceID: cmd.Owner.Scope.NamespaceID,
-			PrincipalID: commandContext.PrincipalID,
-			Permission:  ports.PermissionAssessmentWaive,
-		}); err != nil {
-			return MutationResult[domain.CriterionAssessment]{}, err
+		permissions, registered := CommandAuthorizationPermissions("RecordCriterionAssessment", cmd)
+		if !registered || len(permissions) < 2 {
+			return MutationResult[domain.CriterionAssessment]{}, domain.NewError(domain.ErrorCodeForbidden, "waiver authorization requirement is not registered")
+		}
+		for _, permission := range permissions[1:] {
+			if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
+				NamespaceID: cmd.Owner.Scope.NamespaceID,
+				PrincipalID: commandContext.PrincipalID,
+				Permission:  permission,
+			}); err != nil {
+				return MutationResult[domain.CriterionAssessment]{}, err
+			}
 		}
 		waiverAuthorized = true
 	}

@@ -13,7 +13,6 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 type commandMetadata struct {
@@ -100,15 +99,9 @@ func transactCommand[T any, C any](
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
-		if assessment, ok := any(command).(RecordCriterionAssessmentCommand); ok && assessment.Result == domain.AssessmentResultWaived {
-			request.Permission = ports.PermissionAssessmentWaive
-			if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
-				return MutationResult[T]{Value: zero}, err
-			}
-		}
 	}
 	cutoverIntent := service.requireIdentity && signedCutoverCommand(command)
-	if err := service.authorizePlanningCommandPermissions(ctx, uow, commandContext, command); err != nil {
+	if err := service.authorizePlanningCommandPermissions(ctx, uow, commandContext, meta.Scope, command); err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
 	var signedIdentity Identity
@@ -327,53 +320,21 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 		return commandMetadata{}, domain.NewError(domain.ErrorCodeInvalidArgument, "command must be a struct")
 	}
 
-	name := value.Type().Name()
-	name = strings.TrimSuffix(name, "Command")
+	name := commandNameForAuthorization(command)
 	if name == "" {
 		return commandMetadata{}, domain.NewError(domain.ErrorCodeInvalidArgument, "command name cannot be empty")
 	}
-
-	meta := commandMetadata{Name: name}
-	if field := value.FieldByName("NamespaceID"); field.IsValid() {
-		meta.NamespaceID = field.Interface().(domain.ID)
+	resource, registered, err := commandAuthorizationResourceFor(name, command)
+	if !registered {
+		return commandMetadata{}, domain.NewError(domain.ErrorCodeForbidden, "command authorization requirement is not registered")
 	}
-	if field := value.FieldByName("Scope"); field.IsValid() {
-		meta.Scope = field.Interface().(domain.Scope)
-		meta.NamespaceID = meta.Scope.NamespaceID
+	if err != nil {
+		return commandMetadata{}, err
 	}
-	if field := value.FieldByName("Owner"); field.IsValid() {
-		owner := field.Interface().(domain.EntityRef)
-		meta.Owner = &owner
-		meta.Scope = owner.Scope
-		meta.NamespaceID = owner.NamespaceID
-	}
+	meta := commandMetadata{Name: name, NamespaceID: resource.NamespaceID, Scope: resource.Scope, Owner: resource.Owner}
 	if field := value.FieldByName("ExpectedVersion"); field.IsValid() {
 		expected := field.Interface().(domain.Version)
 		meta.ExpectedVersion = &expected
-	}
-	if c, ok := any(command).(ReturnSignedWorkCommand); ok {
-		var hint signing.WorkReturnPayload[SignedReturnMaterial]
-		if err := signedRequestHint(c.Envelope, &hint); err != nil {
-			return commandMetadata{}, err
-		}
-		scope, err := signedRequestScope(hint.RequestBinding)
-		if err != nil {
-			return commandMetadata{}, err
-		}
-		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
-	}
-	if c, ok := any(command).(ReturnSignedReviewCommand); ok {
-		var hint signing.ReviewReturnPayload[SignedReviewMaterial]
-		if err := signedRequestHint(c.Envelope, &hint); err != nil {
-			return commandMetadata{}, err
-		}
-		scope, err := signedRequestScope(hint.RequestBinding)
-		if err != nil {
-			return commandMetadata{}, err
-		}
-		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
 	}
 	if err := meta.NamespaceID.Validate(); err != nil {
 		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command namespace cannot be resolved", err)

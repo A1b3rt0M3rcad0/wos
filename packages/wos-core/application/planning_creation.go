@@ -116,29 +116,8 @@ func (s *Service) authorizeCreationPermissions(ctx context.Context, uow ports.Un
 // The pipeline also calls this before receipt replay. Retaining only the
 // primary permission must not disclose a compound result after a constituent
 // planning/work permission has been revoked.
-func (s *Service) authorizePlanningCommandPermissions(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, command any) error {
-	var scope domain.Scope
-	var permissions []ports.Permission
-	switch cmd := command.(type) {
-	case CreatePlanItemsCommand:
-		scope = cmd.Scope
-		for _, item := range cmd.Items {
-			if item.Kind == domain.EntityKindObjective || len(item.InitialCriteria) > 0 {
-				permissions = append(permissions, ports.PermissionOutcomeWrite)
-			}
-			if item.Kind == domain.EntityKindWorkItem {
-				permissions = append(permissions, ports.PermissionWorkWrite)
-			}
-		}
-	case CreateWorkItemCommand:
-		scope = cmd.Scope
-		if len(cmd.InitialCriteria) > 0 {
-			permissions = append(permissions, ports.PermissionOutcomeWrite)
-		}
-	default:
-		return nil
-	}
-	return s.authorizeCreationPermissions(ctx, uow, cc, scope, permissions...)
+func (s *Service) authorizePlanningCommandPermissions(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, command any) error {
+	return s.authorizeCommandAdditionalPermissions(ctx, uow, cc, scope, command)
 }
 
 func (s *Service) initialCriteria(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, owner domain.EntityRef, definitions []InitialCriterion, now time.Time, add func(domain.SuccessCriterion, time.Time) error) error {
