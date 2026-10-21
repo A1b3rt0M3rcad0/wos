@@ -1,0 +1,1598 @@
+{
+  "schema_version": 1,
+  "repository": "A1b3rt0M3rcad0/wos",
+  "pull_request": 116,
+  "branch": "fix/workspace-operational-density",
+  "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
+  "execution_head_sha": null,
+  "source_plan": {
+    "path": "docs/implementation/operational-consolidation/implementation-plan.md",
+    "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
+    "original_filename": "WOS_Plano_Completo_Implementacao_Operacional.md"
+  },
+  "pr_must_remain_draft": true,
+  "merge_release_tag_publication_authorized": false,
+  "stages": [
+    {
+      "id": "E01",
+      "title": "Congelar baseline e reconciliar o plano existente",
+      "state": "in_progress",
+      "depends_on": [],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/baseline.md",
+      "tests_run": [
+        "GOVET ./... (pass)",
+        "GO_TEST_ALL ./... (pass with E01 fixture corrections)",
+        "WEB_UNIT (79 pass)",
+        "PLAYWRIGHT_KANBAN_LOGIN (47 pass)",
+        "PLAYWRIGHT_LOGIN_CAPTURE (12 pass)"
+      ],
+      "tests_not_run": [
+        "live PostgreSQL: WOS_TEST_POSTGRES_DSN unset",
+        "hosted CI: not queried"
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "Registrar ADRs e defaults do novo contrato",
+      "state": "planned",
+      "depends_on": [
+        "E01"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E02.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E03",
+      "title": "Preparar fixtures operacionais e testes de caracterização",
+      "state": "planned",
+      "depends_on": [
+        "E01",
+        "E02"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E03.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E04",
+      "title": "Adicionar tipos de política operacional ao domínio",
+      "state": "planned",
+      "depends_on": [
+        "E02",
+        "E03"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E04.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E05",
+      "title": "Persistir políticas e atualizar adapters",
+      "state": "planned",
+      "depends_on": [
+        "E04"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E05.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E06",
+      "title": "Criar preview e migração explícita de perfil",
+      "state": "planned",
+      "depends_on": [
+        "E05"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E06.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E07",
+      "title": "Implementar predicados compartilhados de execução",
+      "state": "planned",
+      "depends_on": [
+        "E04",
+        "E05"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E07.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E08",
+      "title": "Aplicar o gate a todas as aquisições e ready queries",
+      "state": "planned",
+      "depends_on": [
+        "E07"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E08.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E09",
+      "title": "Fechar bypass de ativação e criação em To Do",
+      "state": "planned",
+      "depends_on": [
+        "E07",
+        "E08"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E09.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E10",
+      "title": "Validar hierarquia e dependências contra esperas impossíveis",
+      "state": "planned",
+      "depends_on": [
+        "E07",
+        "E09"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E10.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E11",
+      "title": "Fortalecer cancelamento e reabertura hierárquicos",
+      "state": "planned",
+      "depends_on": [
+        "E09",
+        "E10"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E11.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E12",
+      "title": "Alinhar capabilities e erros estruturados",
+      "state": "planned",
+      "depends_on": [
+        "E07",
+        "E08",
+        "E09",
+        "E11"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E12.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E13",
+      "title": "Qualificar verticalmente os gates antes de ampliar UX",
+      "state": "planned",
+      "depends_on": [
+        "E08",
+        "E09",
+        "E11",
+        "E12"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E13.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E14",
+      "title": "Substituir autorização por nome por catálogo explícito",
+      "state": "planned",
+      "depends_on": [
+        "E02",
+        "E03"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E14.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E15",
+      "title": "Introduzir permissões granulares e limites coerentes",
+      "state": "planned",
+      "depends_on": [
+        "E14"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E15.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E16",
+      "title": "Aplicar escopo e requisitos compostos na transação",
+      "state": "planned",
+      "depends_on": [
+        "E14",
+        "E15"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E16.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E17",
+      "title": "Migrar direitos legados sem conceder poderes futuros",
+      "state": "planned",
+      "depends_on": [
+        "E15",
+        "E16"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E17.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E18",
+      "title": "Implementar presets de papéis versionados",
+      "state": "planned",
+      "depends_on": [
+        "E17"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E18.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E19",
+      "title": "Emitir credencial restrita e metadados atomicamente",
+      "state": "planned",
+      "depends_on": [
+        "E16",
+        "E18"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E19.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E20",
+      "title": "Implementar gestão, rotação e observação de chaves",
+      "state": "planned",
+      "depends_on": [
+        "E19"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E20.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E21",
+      "title": "Endurecer revogação e trilha administrativa",
+      "state": "planned",
+      "depends_on": [
+        "E19",
+        "E20"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E21.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E22",
+      "title": "Vincular o lease legado à credencial no domínio",
+      "state": "planned",
+      "depends_on": [
+        "E07",
+        "E21"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E22.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E23",
+      "title": "Persistir binding e preparar migração de reservas",
+      "state": "planned",
+      "depends_on": [
+        "E22"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E23.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E24",
+      "title": "Resolver credencial canônica e aplicar em comandos",
+      "state": "planned",
+      "depends_on": [
+        "E22",
+        "E23"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E24.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E25",
+      "title": "Proteger recibos, recuperação e intervenção",
+      "state": "planned",
+      "depends_on": [
+        "E24"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E25.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E26",
+      "title": "Qualificar binding dos contratos existentes",
+      "state": "planned",
+      "depends_on": [
+        "E24",
+        "E25"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E26.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E27",
+      "title": "Modelar entrega e decisão não assinada",
+      "state": "planned",
+      "depends_on": [
+        "E02",
+        "E09",
+        "E26"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E27.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E28",
+      "title": "Persistir entregas, decisões e fila não assinada",
+      "state": "planned",
+      "depends_on": [
+        "E27"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E28.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E29",
+      "title": "Implementar submissão atômica para Verification",
+      "state": "planned",
+      "depends_on": [
+        "E24",
+        "E28"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E29.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E30",
+      "title": "Implementar aprovação e solicitação de correções",
+      "state": "planned",
+      "depends_on": [
+        "E29",
+        "E16"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E30.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E31",
+      "title": "Preservar rodadas de correção e replanning explícito",
+      "state": "planned",
+      "depends_on": [
+        "E30",
+        "E11"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E31.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E32",
+      "title": "Integrar política de Verification ao fluxo assinado",
+      "state": "planned",
+      "depends_on": [
+        "E27",
+        "E30",
+        "E31"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E32.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E33",
+      "title": "Fechar todos os atalhos de aceite e de assessment",
+      "state": "planned",
+      "depends_on": [
+        "E09",
+        "E30",
+        "E32"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E33.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E34",
+      "title": "Unificar projeção de verificação e estágio",
+      "state": "planned",
+      "depends_on": [
+        "E30",
+        "E32",
+        "E33"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E34.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E35",
+      "title": "Construir relatório canônico de elegibilidade de Objective",
+      "state": "planned",
+      "depends_on": [
+        "E11",
+        "E33",
+        "E34"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E35.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E36",
+      "title": "Persistir delegação e proveniência da conclusão automática",
+      "state": "planned",
+      "depends_on": [
+        "E19",
+        "E35"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E36.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E37",
+      "title": "Adicionar autofechamento atômico ao pipeline",
+      "state": "planned",
+      "depends_on": [
+        "E35",
+        "E36"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E37.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E38",
+      "title": "Tratar reabertura, ciclos e invalidação de elegibilidade",
+      "state": "planned",
+      "depends_on": [
+        "E11",
+        "E35",
+        "E37"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E38.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E39",
+      "title": "Implementar reconciliação durável e impacto indireto",
+      "state": "planned",
+      "depends_on": [
+        "E37",
+        "E38"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E39.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E40",
+      "title": "Expor progresso e closure report autoritativos",
+      "state": "planned",
+      "depends_on": [
+        "E34",
+        "E35",
+        "E39"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E40.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E41",
+      "title": "Concluir paridade de ownership de Issues",
+      "state": "planned",
+      "depends_on": [
+        "E01",
+        "E16",
+        "E35"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E41.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E42",
+      "title": "Qualificar responsabilidade e investigação concorrente de Issues",
+      "state": "planned",
+      "depends_on": [
+        "E15",
+        "E41"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E42.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E43",
+      "title": "Consolidar o gate de Issues próprias e duplicatas",
+      "state": "planned",
+      "depends_on": [
+        "E35",
+        "E41",
+        "E42"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E43.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E44",
+      "title": "Concluir operações compostas de Issues e Blockers",
+      "state": "planned",
+      "depends_on": [
+        "E16",
+        "E41",
+        "E43"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E44.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E45",
+      "title": "Integrar relações corretivas Issue–Task",
+      "state": "planned",
+      "depends_on": [
+        "E41",
+        "E42",
+        "E44"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E45.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E46",
+      "title": "Concluir preview de dependências e validação do grafo",
+      "state": "planned",
+      "depends_on": [
+        "E10",
+        "E16",
+        "E43"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E46.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E47",
+      "title": "Proteger edição bidirecional e batch de dependências",
+      "state": "planned",
+      "depends_on": [
+        "E46"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E47.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E48",
+      "title": "Expor impacto e satisfação de dependências com cobertura",
+      "state": "planned",
+      "depends_on": [
+        "E40",
+        "E46",
+        "E47"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E48.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E49",
+      "title": "Consolidar catálogo público e schemas gerados",
+      "state": "planned",
+      "depends_on": [
+        "E12",
+        "E21",
+        "E26",
+        "E34",
+        "E39",
+        "E44",
+        "E47",
+        "E48"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E49.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E50",
+      "title": "Completar rotas HTTP e administração compatível",
+      "state": "planned",
+      "depends_on": [
+        "E49"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E50.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E51",
+      "title": "Completar tools e resources MCP",
+      "state": "planned",
+      "depends_on": [
+        "E49",
+        "E50"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E51.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E52",
+      "title": "Atualizar SDK Go e exemplos tipados",
+      "state": "planned",
+      "depends_on": [
+        "E49",
+        "E50",
+        "E51"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E52.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E53",
+      "title": "Adicionar CLI administrativo de chaves e políticas",
+      "state": "planned",
+      "depends_on": [
+        "E20",
+        "E21",
+        "E52"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E53.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E54",
+      "title": "Adicionar CLI de Objective, Issue e dependências",
+      "state": "planned",
+      "depends_on": [
+        "E41",
+        "E42",
+        "E47",
+        "E48",
+        "E52"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E54.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E55",
+      "title": "Integrar entrega/revisão e recuperação no CLI",
+      "state": "planned",
+      "depends_on": [
+        "E26",
+        "E31",
+        "E32",
+        "E34",
+        "E52",
+        "E54"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E55.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E56",
+      "title": "Unificar todas as ações de criação contextual",
+      "state": "planned",
+      "depends_on": [
+        "E12",
+        "E41",
+        "E50"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E56.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E57",
+      "title": "Reorganizar criação e preparação de Objective",
+      "state": "planned",
+      "depends_on": [
+        "E35",
+        "E36",
+        "E56"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E57.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E58",
+      "title": "Reorganizar criação de Task com owner e critérios",
+      "state": "planned",
+      "depends_on": [
+        "E09",
+        "E33",
+        "E56"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E58.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E59",
+      "title": "Criar definições com dependências atomicamente",
+      "state": "planned",
+      "depends_on": [
+        "E46",
+        "E47",
+        "E57",
+        "E58"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E59.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E60",
+      "title": "Criar listagem administrativa de API Keys",
+      "state": "planned",
+      "depends_on": [
+        "E20",
+        "E21",
+        "E50"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E60.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E61",
+      "title": "Criar formulário seguro de emissão e permissões",
+      "state": "planned",
+      "depends_on": [
+        "E18",
+        "E19",
+        "E60"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E61.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E62",
+      "title": "Criar fluxos explícitos de rotação e revogação",
+      "state": "planned",
+      "depends_on": [
+        "E20",
+        "E21",
+        "E61"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E62.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E63",
+      "title": "Exibir responsabilidade e reserva como informações distintas",
+      "state": "planned",
+      "depends_on": [
+        "E24",
+        "E25",
+        "E26",
+        "E34"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E63.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E64",
+      "title": "Ajustar movimentações e bloqueios do Kanban",
+      "state": "planned",
+      "depends_on": [
+        "E12",
+        "E34",
+        "E40",
+        "E56",
+        "E63"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E64.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E65",
+      "title": "Integrar entrega e revisão no inspector",
+      "state": "planned",
+      "depends_on": [
+        "E29",
+        "E30",
+        "E31",
+        "E32",
+        "E34",
+        "E64"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E65.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E66",
+      "title": "Exibir elegibilidade e conclusão de Objective",
+      "state": "planned",
+      "depends_on": [
+        "E35",
+        "E36",
+        "E37",
+        "E38",
+        "E39",
+        "E40",
+        "E64"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E66.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E67",
+      "title": "Criar editor legível de dependências em duas direções",
+      "state": "planned",
+      "depends_on": [
+        "E46",
+        "E47",
+        "E48",
+        "E59"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E67.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E68",
+      "title": "Melhorar conexão e impacto no Canvas",
+      "state": "planned",
+      "depends_on": [
+        "E48",
+        "E67"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E68.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E69",
+      "title": "Concluir read model e lanes de Issues",
+      "state": "planned",
+      "depends_on": [
+        "E41",
+        "E42",
+        "E43",
+        "E44",
+        "E45",
+        "E64"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E69.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E70",
+      "title": "Completar inspector e fluxos operacionais de Issue",
+      "state": "planned",
+      "depends_on": [
+        "E42",
+        "E44",
+        "E45",
+        "E69"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E70.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E71",
+      "title": "Preservar navegação, drafts e recuperação incerta",
+      "state": "planned",
+      "depends_on": [
+        "E56",
+        "E57",
+        "E58",
+        "E61",
+        "E62",
+        "E65",
+        "E66",
+        "E67",
+        "E70"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E71.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E72",
+      "title": "Garantir operações por toque, teclado e acessibilidade",
+      "state": "planned",
+      "depends_on": [
+        "E64",
+        "E65",
+        "E66",
+        "E67",
+        "E68",
+        "E69",
+        "E70",
+        "E71"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E72.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E73",
+      "title": "Executar matriz funcional e de autorização completa",
+      "state": "planned",
+      "depends_on": [
+        "E13",
+        "E21",
+        "E25",
+        "E33",
+        "E38",
+        "E43",
+        "E47",
+        "E49",
+        "E72"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E73.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E74",
+      "title": "Testar concorrência em processos e bancos reais",
+      "state": "planned",
+      "depends_on": [
+        "E73"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E74.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E75",
+      "title": "Qualificar migrações, backup e restore",
+      "state": "planned",
+      "depends_on": [
+        "E23",
+        "E28",
+        "E36",
+        "E74"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E75.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E76",
+      "title": "Executar paridade e compatibilidade pública",
+      "state": "planned",
+      "depends_on": [
+        "E49",
+        "E50",
+        "E51",
+        "E52",
+        "E53",
+        "E54",
+        "E55",
+        "E75"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E76.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E77",
+      "title": "Executar jornadas E2E e regressão de onboarding",
+      "state": "planned",
+      "depends_on": [
+        "E72",
+        "E76"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E77.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E78",
+      "title": "Medir custo de consultas e cascatas",
+      "state": "planned",
+      "depends_on": [
+        "E40",
+        "E48",
+        "E74",
+        "E77"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E78.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E79",
+      "title": "Consolidar eventos, observação e diagnóstico",
+      "state": "planned",
+      "depends_on": [
+        "E39",
+        "E55",
+        "E76",
+        "E78"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E79.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E80",
+      "title": "Criar cenário demonstrável e roteiro de aceite",
+      "state": "planned",
+      "depends_on": [
+        "E77",
+        "E79"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E80.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E81",
+      "title": "Publicar runbook de rollout e migração coordenada",
+      "state": "planned",
+      "depends_on": [
+        "E75",
+        "E76",
+        "E79",
+        "E80"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E81.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E82",
+      "title": "Regenerar, executar CI completo e vincular à HEAD",
+      "state": "planned",
+      "depends_on": [
+        "E73",
+        "E74",
+        "E75",
+        "E76",
+        "E77",
+        "E78",
+        "E79",
+        "E81"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E82.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E83",
+      "title": "Realizar aceite manual de compreensão e acessibilidade",
+      "state": "planned",
+      "depends_on": [
+        "E80",
+        "E82"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E83.md",
+      "tests_run": [],
+      "tests_not_run": []
+    },
+    {
+      "id": "E84",
+      "title": "Encerrar o planejamento executado e entregar PR Draft",
+      "state": "planned",
+      "depends_on": [
+        "E82",
+        "E83"
+      ],
+      "responsible": "primary",
+      "commit_sha": null,
+      "evidence_path": "docs/implementation/operational-consolidation/evidence/E84.md",
+      "tests_run": [],
+      "tests_not_run": []
+    }
+  ],
+  "previous_plan_stages": [
+    {
+      "id": "01",
+      "state": "implemented",
+      "commit": "402ab4d",
+      "mapped_to": "E01-E03, E06, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "02",
+      "state": "implemented",
+      "commit": "f80bdf9",
+      "mapped_to": "E01-E03, E06, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "03",
+      "state": "implemented",
+      "commit": "1435b5e",
+      "mapped_to": "E01-E03, E06, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "04",
+      "state": "implemented",
+      "commit": "48de104",
+      "mapped_to": "E01-E03, E06, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "05",
+      "state": "implemented",
+      "commit": "165abfb",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "06",
+      "state": "implemented",
+      "commit": "b3c284f",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "07",
+      "state": "implemented",
+      "commit": "b6255fa",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "08",
+      "state": "implemented",
+      "commit": "889af1a",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "09",
+      "state": "implemented",
+      "commit": "213ef20",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "10",
+      "state": "implemented",
+      "commit": "757342c",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "11",
+      "state": "implemented",
+      "commit": "7bd353e",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "12",
+      "state": "implemented",
+      "commit": "46f5b7c",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "13",
+      "state": "implemented",
+      "commit": "21d04af",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "14",
+      "state": "implemented",
+      "commit": "24fc800",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "15",
+      "state": "implemented",
+      "commit": "0c4e8bc",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "16",
+      "state": "implemented",
+      "commit": "89f0144",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "17",
+      "state": "implemented",
+      "commit": "f471b5b",
+      "mapped_to": "E09, E23, E41-E42, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "18",
+      "state": "implemented",
+      "commit": "2376e0a",
+      "mapped_to": "E35, E43",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "19",
+      "state": "implemented",
+      "commit": "b813cce",
+      "mapped_to": "E40, E43-E44, E69-E70",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "20",
+      "state": "implemented",
+      "commit": "aaed622",
+      "mapped_to": "E40, E43-E44, E69-E70",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "21",
+      "state": "implemented",
+      "commit": "6df2139",
+      "mapped_to": "E40, E43-E44, E69-E70",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "22",
+      "state": "implemented",
+      "commit": "152e6af",
+      "mapped_to": "E48, E67-E68",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "23",
+      "state": "implemented",
+      "commit": "0062e6f",
+      "mapped_to": "E46-E47, E59",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "24",
+      "state": "implemented",
+      "commit": "e021fca",
+      "mapped_to": "E45",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "25",
+      "state": "implemented",
+      "commit": "2eb2e26",
+      "mapped_to": "E01, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "26",
+      "state": "implemented",
+      "commit": "2aab252",
+      "mapped_to": "E01, E75",
+      "evidence": "branch commit; current E01 suite"
+    },
+    {
+      "id": "27",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E49",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "28",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E50",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "29",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E51",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "30",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E52",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "31",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E53-E55",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "32",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E69",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "33",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E69-E71",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "34",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E69-E70",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "35",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E42, E70",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "36",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E69-E72",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "37",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E44, E70",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "38",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E67",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "39",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E68",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "40",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E47, E67",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "41",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E09, E56-E59",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "42",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E74-E75",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "43",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E72, E77, E83",
+      "evidence": "pending in consolidated plan"
+    },
+    {
+      "id": "44",
+      "state": "planned",
+      "commit": null,
+      "mapped_to": "E76, E79-E84",
+      "evidence": "pending in consolidated plan"
+    }
+  ]
+}

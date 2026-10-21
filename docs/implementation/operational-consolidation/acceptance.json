@@ -1,0 +1,1191 @@
+{
+  "schema_version": 1,
+  "source_plan": "docs/implementation/operational-consolidation/implementation-plan.md",
+  "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
+  "status": "pending",
+  "note": "E01 baseline checks are recorded separately; the plan acceptance scenarios remain unqualified until their feature stages and required adapters are tested.",
+  "groups": {
+    "LC": [
+      "T-LC-01",
+      "T-LC-02",
+      "T-LC-03",
+      "T-LC-04",
+      "T-LC-05",
+      "T-LC-06",
+      "T-LC-07",
+      "T-LC-08",
+      "T-LC-09",
+      "T-LC-10",
+      "T-LC-11",
+      "T-LC-12",
+      "T-LC-13",
+      "T-LC-14"
+    ],
+    "AU": [
+      "T-AU-01",
+      "T-AU-02",
+      "T-AU-03",
+      "T-AU-04",
+      "T-AU-05",
+      "T-AU-06",
+      "T-AU-07",
+      "T-AU-08",
+      "T-AU-09",
+      "T-AU-10",
+      "T-AU-11",
+      "T-AU-12",
+      "T-AU-13",
+      "T-AU-14",
+      "T-AU-15",
+      "T-AU-16",
+      "T-AU-17"
+    ],
+    "LS": [
+      "T-LS-01",
+      "T-LS-02",
+      "T-LS-03",
+      "T-LS-04",
+      "T-LS-05",
+      "T-LS-06",
+      "T-LS-07",
+      "T-LS-08",
+      "T-LS-09",
+      "T-LS-10",
+      "T-LS-11",
+      "T-LS-12",
+      "T-LS-13",
+      "T-LS-14",
+      "T-LS-15"
+    ],
+    "RV": [
+      "T-RV-01",
+      "T-RV-02",
+      "T-RV-03",
+      "T-RV-04",
+      "T-RV-05",
+      "T-RV-06",
+      "T-RV-07",
+      "T-RV-08",
+      "T-RV-09",
+      "T-RV-10",
+      "T-RV-11",
+      "T-RV-12",
+      "T-RV-13",
+      "T-RV-14",
+      "T-RV-15",
+      "T-RV-16"
+    ],
+    "OC": [
+      "T-OC-01",
+      "T-OC-02",
+      "T-OC-03",
+      "T-OC-04",
+      "T-OC-05",
+      "T-OC-06",
+      "T-OC-07",
+      "T-OC-08",
+      "T-OC-09",
+      "T-OC-10",
+      "T-OC-11",
+      "T-OC-12",
+      "T-OC-13",
+      "T-OC-14",
+      "T-OC-15",
+      "T-OC-16",
+      "T-OC-17",
+      "T-OC-18",
+      "T-OC-19",
+      "T-OC-20",
+      "T-OC-21",
+      "T-OC-22"
+    ],
+    "DP": [
+      "T-DP-01",
+      "T-DP-02",
+      "T-DP-03",
+      "T-DP-04",
+      "T-DP-05",
+      "T-DP-06",
+      "T-DP-07",
+      "T-DP-08",
+      "T-DP-09",
+      "T-DP-10",
+      "T-DP-11",
+      "T-DP-12"
+    ],
+    "IS": [
+      "T-IS-01",
+      "T-IS-02",
+      "T-IS-03",
+      "T-IS-04",
+      "T-IS-05",
+      "T-IS-06",
+      "T-IS-07",
+      "T-IS-08",
+      "T-IS-09",
+      "T-IS-10",
+      "T-IS-11",
+      "T-IS-12"
+    ],
+    "TR": [
+      "T-TR-01",
+      "T-TR-02",
+      "T-TR-03",
+      "T-TR-04",
+      "T-TR-05",
+      "T-TR-06",
+      "T-TR-07",
+      "T-TR-08",
+      "T-TR-09",
+      "T-TR-10",
+      "T-TR-11",
+      "T-TR-12"
+    ],
+    "UX": [
+      "T-UX-01",
+      "T-UX-02",
+      "T-UX-03",
+      "T-UX-04",
+      "T-UX-05",
+      "T-UX-06",
+      "T-UX-07",
+      "T-UX-08",
+      "T-UX-09",
+      "T-UX-10",
+      "T-UX-11",
+      "T-UX-12",
+      "T-UX-13",
+      "T-UX-14",
+      "T-UX-15"
+    ],
+    "MG": [
+      "T-MG-01",
+      "T-MG-02",
+      "T-MG-03",
+      "T-MG-04",
+      "T-MG-05",
+      "T-MG-06",
+      "T-MG-07",
+      "T-MG-08",
+      "T-MG-09",
+      "T-MG-10"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "T-LC-01",
+      "scenario": "Criar Task em Backlog sob Objective Planned",
+      "expected": "Criação permitida com owner válido; nenhuma autoridade adquirida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-02",
+      "scenario": "Ativar Task sob Objective Planned",
+      "expected": "Negar com objective_not_started; versão/eventos não mudam.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-03",
+      "scenario": "Criar Task diretamente em todo sob Planned",
+      "expected": "Negar atomicamente, inclusive initial criteria/dependencies.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-04",
+      "scenario": "Claim/acquire sob Planned",
+      "expected": "Negar em legacy, contracts_v1 e signed_v2.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-05",
+      "scenario": "Acquire-next quando apenas Tasks de Objectives Planned existem",
+      "expected": "Não adquirir; explicar ausência de trabalho pronto sem inventar Task.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-06",
+      "scenario": "Objective In Progress sob ancestral Planned",
+      "expected": "Negar início de trabalho descendente com referência ao ancestral.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-07",
+      "scenario": "AchieveObjective partindo de Planned em perfil v2",
+      "expected": "Negar; não executar Start implicitamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-08",
+      "scenario": "Ativar quando Outcome é draft, terminal ou archived",
+      "expected": "Negar segundo gate; criar Backlog só quando planejamento é permitido.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-09",
+      "scenario": "Criar/reparent Task para Objective terminal",
+      "expected": "Negar e preservar owner anterior.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-10",
+      "scenario": "Cancelar Objective com lease/contract/review ativa",
+      "expected": "Negar ou exigir intervenção explícita; não abandonar autoridade.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-11",
+      "scenario": "Release de Task cujo Objective está bloqueado",
+      "expected": "Permitir recuperação ao titular válido; não exigir avanço habilitado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-12",
+      "scenario": "Reabrir Task sob Objective Achieved/Planned",
+      "expected": "Negar até reabrir/iniciar parents aplicáveis.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-13",
+      "scenario": "ReopenObjective",
+      "expected": "Preservar ConclusionHistory, retornar Planned e avançar ciclo.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LC-14",
+      "scenario": "Chamada embedded ao domínio v2",
+      "expected": "Invariantes se mantêm; identidade de credencial não pode vir de payload não confiável.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-01",
+      "scenario": "Novo comando sem registro de autorização",
+      "expected": "Teste de catálogo falha; execução nega por default.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-02",
+      "scenario": "Executor tenta editar definição ou aprovar entrega",
+      "expected": "Negar sem as permissões específicas.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-03",
+      "scenario": "Reviewer tenta adquirir execução",
+      "expected": "Negar salvo concessão explícita separada.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-04",
+      "scenario": "Criar Task+Criterion sem criterion:define",
+      "expected": "Negar toda a criação composta.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-05",
+      "scenario": "Criar Issue+Blocker sem blocker:create",
+      "expected": "Negar toda a operação composta.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-06",
+      "scenario": "Credencial restringe Outcome que o Principal pode ler",
+      "expected": "Restrição da credencial prevalece; sem vazamento em preview/counters.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-07",
+      "scenario": "Actor/Principal/Credential falsificados no corpo",
+      "expected": "Ignorar como autoridade ou rejeitar schema; usar identidade autenticada.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-08",
+      "scenario": "Grants amplos e CredentialPolicy vazia",
+      "expected": "Não converter vazio em acesso irrestrito.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-09",
+      "scenario": "Permissão desconhecida, duplicada ou acima do limite",
+      "expected": "Validar e rejeitar; catálogo/contratos têm os mesmos limites.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-10",
+      "scenario": "Template atualizado depois de emitir chave",
+      "expected": "Chave anterior conserva permissões materializadas.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-11",
+      "scenario": "Emissão falha antes de persistir policy",
+      "expected": "Rollback integral; não sobra token válido irrestrito.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-12",
+      "scenario": "Resposta de emissão perdida e replay",
+      "expected": "Recibo volta sem segredo; não reemitir secret nem nova chave ocultamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-13",
+      "scenario": "Revogação concorrente com mutation",
+      "expected": "Ordem transacional determina resultado; depois do revoke confirmado, negar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-14",
+      "scenario": "Root credential revogada",
+      "expected": "Sessões filhas deixam de autenticar/autorizar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-15",
+      "scenario": "Alteração da última via administrativa",
+      "expected": "Negar sem recovery válido ou confirmação do procedimento permitido.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-16",
+      "scenario": "List/status/audit de chaves",
+      "expected": "Nenhum token, digest secreto ou private key aparece.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-AU-17",
+      "scenario": "Alias legado e comando novo sensível",
+      "expected": "Alias não concede capacidade não existente no mapa congelado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-01",
+      "scenario": "Duas chaves tentam claim da mesma Task/version",
+      "expected": "Uma vence; outra recebe conflito, sem lease duplicado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-02",
+      "scenario": "Duas chaves diferentes do mesmo Principal",
+      "expected": "A segunda não renew/release/deliver usando autoridade da primeira.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-03",
+      "scenario": "Duas sessões da mesma chave root",
+      "expected": "Podem operar o lease se ambas continuam válidas e autorizadas.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-04",
+      "scenario": "Outro Actor com o mesmo Principal em credencial incompatível",
+      "expected": "Binding/autoridade nega; não depende apenas de texto do assignee.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-05",
+      "scenario": "Renovar exatamente em expires_at",
+      "expected": "Negar: igualdade é expiração.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-06",
+      "scenario": "Reclaim após expirar",
+      "expected": "Novo claim/execution e fence estritamente maior.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-07",
+      "scenario": "Executor antigo entrega depois de reclaim",
+      "expected": "Negar stale_execution mesmo com material aparentemente válido.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-08",
+      "scenario": "Resposta perdida de claim e retry pela mesma credencial",
+      "expected": "Retornar a mesma aquisição, não duplicar nem estender prazo indevidamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-09",
+      "scenario": "Outra chave tenta replay da aquisição",
+      "expected": "Não divulgar authority receipt utilizável.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-10",
+      "scenario": "Rotação de chave com lease ativo",
+      "expected": "Nova chave não herda reserva; a antiga segue política de overlap.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-11",
+      "scenario": "Revogar chave com lease ativo",
+      "expected": "Nenhuma nova ação; reserva só liberada/recuperada por operação definida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-12",
+      "scenario": "Mudar assignee durante execução",
+      "expected": "Não muda holder, claim ou fencing.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-13",
+      "scenario": "Clock skew do cliente e espera longa em lock",
+      "expected": "Servidor usa tempo transacional após espera, não timestamp do cliente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-14",
+      "scenario": "Passagem do tempo com lease expirado",
+      "expected": "Projeção muda; lifecycle não muda sozinho.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-LS-15",
+      "scenario": "Processo externo continua após revogação",
+      "expected": "WOS recusa writes antigos; UI não afirma ter interrompido o processo externo.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-01",
+      "scenario": "Abrir Review proof",
+      "expected": "Nenhuma entrega/estado é criado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-02",
+      "scenario": "SubmitTaskForReview válido no lease legado",
+      "expected": "Registra entrega, encerra lease e vincula pending delivery atomicamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-03",
+      "scenario": "SubmitTaskForReview para contrato v1",
+      "expected": "Usa WorkSubmission real e não duplica material.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-04",
+      "scenario": "Comando nativo aplicado a Task assinada",
+      "expected": "Negar mismatch; não fallback para revisão sem assinatura.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-05",
+      "scenario": "ReturnSignedWork com política v2",
+      "expected": "Abre revisão assinada de fato; não conclui direto.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-06",
+      "scenario": "In Progress sem lease nem entrega/caso válido",
+      "expected": "Estado rejeitado; não usar booleano client-side para contornar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-07",
+      "scenario": "Review independente com outra key do mesmo Principal",
+      "expected": "Negar; key/profile diferente não cria independência.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-08",
+      "scenario": "Dois revisores decidem simultaneamente",
+      "expected": "Uma decisão vence por versão; a outra não altera o histórico.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-09",
+      "scenario": "Evidence adicionada sem Assessment",
+      "expected": "Critério continua não aprovado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-10",
+      "scenario": "Assessment de revisão antiga do Criterion",
+      "expected": "Não é aplicável à definição atual.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-11",
+      "scenario": "Assessment de entrega/rodada anterior",
+      "expected": "Não aceita a nova entrega automaticamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-12",
+      "scenario": "Waiver em critério obrigatório",
+      "expected": "Não aparece como met; exceção manual exige permissão e motivo.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-13",
+      "scenario": "Request changes",
+      "expected": "Rodada encerrada, findings persistidos e Task todo sem autoridade.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-14",
+      "scenario": "Correção tenta mudar definição enquanto review aberta",
+      "expected": "Negar; exigir retirada/replanning explícitos.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-15",
+      "scenario": "AdministrativeCompleteWorkItem em v2 sem review",
+      "expected": "Negar; administração não remove prova exigida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-RV-16",
+      "scenario": "Artifact URI aponta para recurso externo",
+      "expected": "Transação registra referência; não busca URL nem executa conteúdo remoto.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-01",
+      "scenario": "Todas as Tasks aceitas, Criterion próprio pendente",
+      "expected": "Objective permanece In Progress com motivo explícito.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-02",
+      "scenario": "Última Task aceita e todos os requisitos próprios satisfeitos",
+      "expected": "Modo automatic produz uma Conclusion e evento de achievement.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-03",
+      "scenario": "Modo manual elegível",
+      "expected": "Exibe Ready to achieve; não muda lifecycle até confirmação autorizada.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-04",
+      "scenario": "Objective sem trabalho direto nem descendente",
+      "expected": "Não auto-achieve por conjunto vazio.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-05",
+      "scenario": "Parent sem Task direta mas com trabalho em descendentes",
+      "expected": "Usa subárvore real e conclusão de filhos, sem considerar o parent vazio.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-06",
+      "scenario": "Uma Task cancelada e as demais aceitas",
+      "expected": "Não autofecha; exige decisão manual de exclusão quando permitida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-07",
+      "scenario": "Issue própria open/investigating",
+      "expected": "Impede achievement manual/automático.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-08",
+      "scenario": "Issue afetando Task do Objective, mas pertencendo a outro",
+      "expected": "Não inventa gate de ownership; Blocker explícito continua aplicável.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-09",
+      "scenario": "Duplicate própria aponta para canônica open",
+      "expected": "Impede achievement até fechamento canônico válido.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-10",
+      "scenario": "Blocker aplicável permanece ativo após Issue resolvida",
+      "expected": "Objective continua bloqueado até liberação explícita.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-11",
+      "scenario": "Dependência hard não satisfeita",
+      "expected": "Não conclui; cancelled no alvo não conta como sucesso.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-12",
+      "scenario": "Último Criterion é avaliado depois de todas as Tasks",
+      "expected": "Reavalia e fecha quando a política permite.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-13",
+      "scenario": "Última pendência é dependência/Blocker/Issue",
+      "expected": "Evento correspondente provoca reavaliação dos alvos corretos.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-14",
+      "scenario": "Dois últimos aceites concorrentes",
+      "expected": "Uma Conclusion de Objective, sem eventos duplicados.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-15",
+      "scenario": "Criar Task concorre com autofechamento",
+      "expected": "Ou Task entra antes e impede conclusão, ou parent já fechado recusa criação.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-16",
+      "scenario": "Lista UI carrega somente parte das Tasks",
+      "expected": "Gate consulta universo completo; não fecha pela página carregada.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-17",
+      "scenario": "ReopenObjective e Start com assessments históricos",
+      "expected": "Não refecha; novo ciclo precisa de avaliação válida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-18",
+      "scenario": "Tentativa de chamar auto-achieve como executor",
+      "expected": "Nenhum endpoint privilegiado permite assumir a identidade interna.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-19",
+      "scenario": "Cascata supera 64 conclusões",
+      "expected": "Persistir pendência e retomar deterministicamente sem declarar resultados não gravados.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-20",
+      "scenario": "Restart ou evento repetido durante reconciliação",
+      "expected": "Retomar sem perder candidato ou duplicar conclusão.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-21",
+      "scenario": "Todos os Objectives obrigatórios Achieved",
+      "expected": "Outcome permanece não aceito até sua decisão explícita.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-OC-22",
+      "scenario": "Optional Objective para Outcome",
+      "expected": "Não se torna required_for_outcome por agregado ou contagem visual.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-01",
+      "scenario": "A depende de B",
+      "expected": "Persistir source=A,target=B, com texto da UI equivalente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-02",
+      "scenario": "Editar Required by a partir de B",
+      "expected": "Revalidar direitos/editabilidade do source A.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-03",
+      "scenario": "Task hard-depende do próprio Objective",
+      "expected": "Negar sem mutação.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-04",
+      "scenario": "Task hard-depende de ancestral que precisa daquela Task",
+      "expected": "Negar deadlock semântico mesmo sem ciclo explícito simples.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-05",
+      "scenario": "Objective hard-depende de descendente que não pode iniciar",
+      "expected": "Negar pela combinação hierarchy/lifecycle.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-06",
+      "scenario": "Advisory não satisfeito",
+      "expected": "Exibir contexto, não bloquear execução.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-07",
+      "scenario": "Batch remove/add só é válido no grafo final",
+      "expected": "Aplicar atomicamente quando resultado final é válido.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-08",
+      "scenario": "Batch com uma edge inválida ou source sem permissão",
+      "expected": "Rollback de todas as alterações.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-09",
+      "scenario": "Duas inserções opostas em processos distintos",
+      "expected": "No máximo uma efetivada; grafo permanece acíclico.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-10",
+      "scenario": "Alterar outgoing dependency de Task fora de Backlog",
+      "expected": "Negar sem Defer automático.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-11",
+      "scenario": "Impact query truncada por limite",
+      "expected": "Retornar partial coverage, não total de impacto fictício.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-DP-12",
+      "scenario": "Cursor de impacto após revisão mudar",
+      "expected": "Invalidar/requerer refresh; não juntar snapshots incoerentes.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-01",
+      "scenario": "Issue sem Objective no body",
+      "expected": "Negar pelo domínio/API; UI exige owner.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-02",
+      "scenario": "Issue criada a partir de Task",
+      "expected": "Owner corresponde ao Objective da Task, explicitamente mostrado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-03",
+      "scenario": "Affected refs de múltiplos Objectives",
+      "expected": "Owner único permanece estável.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-04",
+      "scenario": "Duas investigações com mesma expected_version",
+      "expected": "Uma atribuição vence; a outra recebe conflito.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-05",
+      "scenario": "Issue assumida pelo operador",
+      "expected": "Nenhum lease de Task é criado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-06",
+      "scenario": "Resolver Issue sem liberar Blocker",
+      "expected": "Blocker continua ativo.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-07",
+      "scenario": "Resolver e liberar subset de Blockers",
+      "expected": "Somente os explicitamente confirmados são liberados.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-08",
+      "scenario": "Report com múltiplos alvos, um inválido",
+      "expected": "Nenhuma Issue/Blocker parcial persiste.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-09",
+      "scenario": "wont_fix sem reason/resolution_summary",
+      "expected": "Negar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-10",
+      "scenario": "Duplicate com ciclo ou alvo fora do Outcome",
+      "expected": "Negar sem encobrir pendência.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-11",
+      "scenario": "Reabrir canônica que sustenta conclusão de outro owner",
+      "expected": "Exigir reabertura/impacto explícito; não invalidar silenciosamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-IS-12",
+      "scenario": "Vínculo relates_to Issue–Task",
+      "expected": "Não muda readiness sem Blocker/dependência real.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-01",
+      "scenario": "Mesmo comando por REST histórico e catálogo",
+      "expected": "Mesmo serviço, validação, evento e resultado sem bypass.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-02",
+      "scenario": "HTTP/MCP/SDK/CLI sob mesma identidade/estado",
+      "expected": "Mesma decisão de autorização e domínio.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-03",
+      "scenario": "uint64 acima de 2^53 em novo wire",
+      "expected": "Preservar decimal exato; JS não arredonda versão/fencing.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-04",
+      "scenario": "Body com campos de identidade/estado não permitidos",
+      "expected": "Schema nega ou mapeia estritamente; não mass assignment.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-05",
+      "scenario": "Consulta GET de completion/verification",
+      "expected": "Não altera lifecycle nem dispara conclusão por leitura.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-06",
+      "scenario": "CLI work finish retorna delivered_for_review",
+      "expected": "Não reporta Task accepted como se fosse equivalente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-07",
+      "scenario": "CLI signed sem signing key válida",
+      "expected": "Não tenta executar comando legado equivalente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-08",
+      "scenario": "CLI troca profile após intenção pendente",
+      "expected": "Não reenvia a intenção com outra identidade/destino.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-09",
+      "scenario": "CLI create key e arquivo secreto já existe",
+      "expected": "Não sobrescreve por default; falha segura e recibo correto.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-10",
+      "scenario": "Secret-output falha após emissão confirmada",
+      "expected": "Relatar emissão realizada e necessidade de substituir; não supor rollback remoto.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-11",
+      "scenario": "Comando aplicado, refresh falhou",
+      "expected": "Cliente repete read, não novo write.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-TR-12",
+      "scenario": "Revogação antes do replay de recibo",
+      "expected": "Autorização revalidada antes de divulgar resultado.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-01",
+      "scenario": "Add no Outcome",
+      "expected": "Abre criação de Objective, nunca Task filha direta.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-02",
+      "scenario": "Add em Objective/Tasks Kanban",
+      "expected": "Abre Task com owner correto.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-03",
+      "scenario": "Criação na lista global",
+      "expected": "Exige escolher Objective; não escolhe primeiro item automaticamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-04",
+      "scenario": "Criação incompleta em Backlog",
+      "expected": "Salva quando campos mínimos existem e mostra o que falta para ativar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-05",
+      "scenario": "Erro de validação/permissão/conflito",
+      "expected": "Preserva texto, seleção e intenção; mostra remédio aplicável.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-06",
+      "scenario": "DnD antes da confirmação",
+      "expected": "Card permanece na lane persistida.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-07",
+      "scenario": "Toque ou clique sem drag",
+      "expected": "Permite a mesma operação pelo inspector.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-08",
+      "scenario": "Teclado, Escape e browser Back",
+      "expected": "Foco e contexto retornam corretamente; uma modal por vez.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-09",
+      "scenario": "Troca de Outcome enquanto read antigo retorna",
+      "expected": "Não mostra dados/ações do contexto anterior.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-10",
+      "scenario": "Rotação/revogação com reserva ativa",
+      "expected": "Explica que posse não é transferida e não a altera implicitamente.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-11",
+      "scenario": "Última checkbox de critério",
+      "expected": "Não equivale automaticamente a aceitar a entrega da Task.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-12",
+      "scenario": "Concluído automaticamente",
+      "expected": "Timeline identifica política/causa e não afirma aceite do Outcome.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-13",
+      "scenario": "Somente parte dos cards carregada",
+      "expected": "Rótulo de cobertura parcial e contagem correta.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-14",
+      "scenario": "320/390px e zoom 400%",
+      "expected": "Operações essenciais acessíveis, sem botões cortados ou sobreposição impeditiva.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-UX-15",
+      "scenario": "Onboarding e identidade editorial",
+      "expected": "Sem alteração não autorizada em login, tokens, assets e fluxo inicial.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-01",
+      "scenario": "Fresh install na última migration",
+      "expected": "Todos os schemas/constraints/policies novos presentes.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-02",
+      "scenario": "Upgrade com Task/Issue órfã",
+      "expected": "Parar contract migration; não adivinhar owner.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-03",
+      "scenario": "Lease antigo sem prova da credencial",
+      "expected": "Drenar/intervir; não atribuir a única chave atual.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-04",
+      "scenario": "Task ativa sob Planned no legado",
+      "expected": "Preview identifica e requer decisão explícita antes de migrar perfil.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-05",
+      "scenario": "Writer antigo depois do cutover",
+      "expected": "Recusar escrita incompatível.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-06",
+      "scenario": "Restore com revisão/entrega/lease pendente",
+      "expected": "Manter autoridade, versões e retomada coerentes.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-07",
+      "scenario": "Restore de fatos assinados históricos",
+      "expected": "Digests/envelopes continuam verificáveis sem transformação.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-08",
+      "scenario": "Gerador PostgreSQL depois de alteração SQL fonte",
+      "expected": "Derivados consistentes e commitados; zero-diff após regenerar.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-09",
+      "scenario": "PG tests sem DSN",
+      "expected": "Registrar não qualificado; não aprovar E74/E75/E82 por skip.",
+      "state": "not_run",
+      "evidence": null
+    },
+    {
+      "id": "T-MG-10",
+      "scenario": "Manifest da qualificação",
+      "expected": "SHA, comandos e limitações reais; sem reutilizar verde de outra versão.",
+      "state": "not_run",
+      "evidence": null
+    }
+  ]
+}

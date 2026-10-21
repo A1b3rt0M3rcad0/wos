@@ -181,7 +181,11 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(e)
 	outcome.Lifecycle = d.OutcomeLifecycleActive
 	must(u.Outcomes().Insert(ctx, outcome))
-	work, e := d.NewWorkItem(d.MustParseID("0199ff31-0000-7000-8000-000000000005"), scope, "Bounded task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+	objective, e := d.NewObjective(d.MustParseID("0199ff31-0000-7000-8000-000000000006"), scope, "Bounded objective", "", d.PriorityNormal, false, now)
+	must(e)
+	objective.Lifecycle = d.ObjectiveLifecycleInProgress
+	must(u.Objectives().Insert(ctx, objective))
+	work, e := d.NewWorkItemForObjective(d.MustParseID("0199ff31-0000-7000-8000-000000000005"), scope, &objective.ID, "Bounded task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	must(e)
 	work.ContractsEnabled = true
 	work.LastFencingToken = 9007199254740993

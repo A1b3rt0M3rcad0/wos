@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–26 concluídas; etapa 27 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** etapas 01–26 concluídas. As etapas 27–44 permanecem como histórico pendente e foram reconciliadas no [plano operacional consolidado de 84 etapas](../../implementation/operational-consolidation/implementation-plan.md), que agora é a fonte da ordem de execução no PR #116. Cada etapa exige commit e aceite próprios; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.

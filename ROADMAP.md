@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 26 is next
+**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01 baseline is verified and E02 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -13,6 +13,14 @@
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
+
+## Operational consolidation — 2026-10-21
+
+The owner authorized implementation of the [complete operational plan](docs/implementation/operational-consolidation/implementation-plan.md) in the existing Draft PR #116 and allowed subagent use. Its 84-stage manifest, pending acceptance matrix, baseline, corrected test fixtures and source-bound login screenshots are under [`docs/implementation/operational-consolidation/`](docs/implementation/operational-consolidation/). The source plan's historical “document delivery only” sentence is superseded by the owner's current implementation request; its architecture and rollout constraints remain active.
+
+E01 reconciles the earlier 44-stage plan against the actual branch: stages 01–26 are committed; stages 27–44 are still pending and mapped to the new plan. In particular, migrations 0035 and 0036 are already implemented and are not to be recreated. E01 baseline checks pass after correcting three stale test fixtures to satisfy Objective ownership. The current executor has no live PostgreSQL DSN, so real PostgreSQL qualification is explicitly pending. E02 is next; E03 and E04 are gated on the documented decisions and fixtures.
+
+PR #116 remains open and Draft. No merge, release, tag, publication or version advancement is authorized.
 
 ## Drag-only card movement follow-up — 2026-10-20
 
@@ -112,9 +120,11 @@ triggers, and validates forward and reverse FKs. Both migration runners perform
 a transactional zero-orphan preflight and stop without changing schema version
 or ownership when a legacy Task lacks a reviewed mapping. The actual v0.1
 fixture verifies that such an upgrade remains blocked; SQLite full storage
-tests and focused PostgreSQL migration/hierarchy tests pass. Stage 26 is next:
-add the mandatory Objective owner FK and NOT NULL contract for Issues. The Draft
-PR must remain unmerged and no release/tag is part of this work.
+tests and focused PostgreSQL migration/hierarchy tests passed in their stage
+receipts. Stage 26 is complete in commit `2aab252`; its SQLite preflight/rebuild
+and PostgreSQL constraint are not to be repeated. The consolidated operational
+plan maps the unfinished Stage 27–44 work. The Draft PR remains unmerged, with
+no release or tag as part of this work.
 
 ## Operational Kanban UX audit — 2026-10-20
 

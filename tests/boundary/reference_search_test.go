@@ -220,7 +220,7 @@ func runReferenceSearch(t *testing.T, tx ports.TransactionManager, count int) {
 			t.Fatalf("ASCII folding / Unicode preservation mismatch for %q: %+v %v", text, v, e)
 		}
 	}
-	issue, e := s.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: scope, Title: "Issue target", Severity: domain.IssueSeverityMinor})
+	issue, e := s.CreateIssue(ctx, commandContext(), application.CreateIssueCommand{Scope: scope, ObjectiveID: objective.Value.ID, Title: "Issue target", Severity: domain.IssueSeverityMinor})
 	if e != nil {
 		t.Fatal(e)
 	}
