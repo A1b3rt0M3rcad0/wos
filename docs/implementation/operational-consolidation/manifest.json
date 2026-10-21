@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "88a2a05a74bdbf1016f8f78ffd9415511665ae1a",
+  "execution_head_sha": "88ed20f3f6a41e4ed0d1ca67d8bae320e8642a2f",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -105,15 +105,24 @@
     {
       "id": "E05",
       "title": "Persistir políticas e atualizar adapters",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E04"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "88ed20f3f6a41e4ed0d1ca67d8bae320e8642a2f",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E05.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go test ./packages/wos-core/storage/memory -count=1 — pass",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go test ./packages/wos-core/storage/sqlite -count=1 — pass, including close/reopen persistence",
+        "WOS_TEST_POSTGRES_DSN=<temporary PostgreSQL 18.6> go test ./packages/wos-core/storage/postgres -run 'TestPostgresOperational' -count=1 -v — 2 passed against a real local PostgreSQL server",
+        "PATH=/tmp/wos-go-1.27.2/bin:$PATH python3 tools/postgresgen/generate.py followed by git diff --exit-code -- packages/wos-core/storage/postgres — pass, zero generated diff",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go vet ./packages/wos-core/storage/postgres — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full PostgreSQL storage package suite — only the two E05 migration/persistence tests were run against the temporary server."
+      ]
     },
     {
       "id": "E06",
