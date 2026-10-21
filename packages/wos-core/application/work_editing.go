@@ -219,21 +219,45 @@ func validateWorkObjectiveChange(ctx context.Context, u ports.UnitOfWork, item d
 	if err != nil {
 		return err
 	}
-	if len(relations) > domain.DefaultDependencyGraphLimit {
-		return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "work association validation exceeds the relation graph limit")
+	focus := map[domain.EntityRef]struct{}{item.Ref(): {}}
+	if !hasRelevantHardDependency(relations, focus) {
+		return nil
 	}
 	candidate := item
 	candidate.ObjectiveID = destination
-	for _, relation := range relations {
-		if domain.IsOwnObjectiveHardDependency(candidate, relation) {
-			return ownObjectiveDependencyError(candidate, relation)
+	if err := validateOwnObjectiveHardDependencies(ctx, u, relations, focus, map[domain.ID]domain.WorkItem{candidate.ID: candidate}); err != nil {
+		return err
+	}
+	profile, err := dependencyOutcomeProfile(ctx, u, item.Scope)
+	if err != nil {
+		return err
+	}
+	if profile != domain.OperationalProfileOperationalV2 {
+		return nil
+	}
+	if len(relations) > domain.DefaultDependencyGraphLimit {
+		return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "work association validation exceeds the relation graph limit")
+	}
+	objectives, items, err := loadDependencyHierarchy(ctx, u, item.Scope)
+	if err != nil {
+		return err
+	}
+	found := false
+	for index := range items {
+		if items[index].ID == candidate.ID {
+			items[index] = candidate
+			found = true
+			break
 		}
 	}
-	return nil
+	if !found {
+		return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "Task is missing from the bounded hierarchy snapshot")
+	}
+	return validateDependencyHierarchyDeadlocks(relations, objectives, items, focus, "objective_id")
 }
 
 func ownObjectiveDependencyError(item domain.WorkItem, relation domain.Relation) error {
-	return definitionPrecondition(domain.ErrorCodePreconditionFailed, "own_objective_hard_dependency", "a Task cannot depend hard on its own Objective; use association for belonging or explicitly remove the dependency", item.Ref(), []string{"objective_id"}, relation.TargetRef, relation.Ref())
+	return definitionPrecondition(domain.ErrorCodePreconditionFailed, "own_objective_hard_dependency", "a Task cannot depend hard on its own Objective; use association for belonging or explicitly remove the dependency", item.Ref(), []string{"objective_id"}, relation.TargetRef)
 }
 
 func validateOwnObjectiveDependency(ctx context.Context, u ports.UnitOfWork, relation domain.Relation) error {
@@ -340,6 +364,45 @@ func validateObjectiveParentChange(ctx context.Context, s *Service, u ports.Unit
 		if item.Lifecycle != domain.WorkItemLifecycleBacklog && item.Lifecycle != domain.WorkItemLifecycleTodo {
 			return definitionPrecondition(domain.ErrorCodePreconditionFailed, "objective_subtree_in_execution", "prepare descendant work before moving its Objective branch", objective.Ref(), []string{"parent_objective_id"}, item.Ref())
 		}
+	}
+	candidateObjectives := append([]domain.Objective(nil), objectives...)
+	for index := range candidateObjectives {
+		if candidateObjectives[index].ID == objective.ID {
+			candidateObjectives[index].ParentObjectiveID = cloneIDPointer(destination)
+			break
+		}
+	}
+	changed := make(map[domain.EntityRef]struct{}, len(branch)+len(items))
+	for id := range branch {
+		changed[domain.EntityRef{Scope: objective.Scope, Kind: domain.EntityKindObjective, ID: id}] = struct{}{}
+	}
+	for _, item := range items {
+		if item.ObjectiveID != nil && branch[*item.ObjectiveID] {
+			changed[item.Ref()] = struct{}{}
+		}
+	}
+	// Validate active hard edges touching the moved branch against the proposed
+	// parent graph. Advisory-only and unrelated legacy edges cannot make a move
+	// unsafe, so skip the relation limit when no hard edge is affected.
+	relations, err := u.Relations().ListByOutcome(ctx, objective.Scope)
+	if err != nil {
+		return err
+	}
+	profile, err := dependencyOutcomeProfile(ctx, u, objective.Scope)
+	if err != nil {
+		return err
+	}
+	if profile != domain.OperationalProfileOperationalV2 {
+		return nil
+	}
+	if !hasRelevantHardDependency(relations, changed) {
+		return nil
+	}
+	if len(relations) > domain.DefaultDependencyGraphLimit {
+		return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "Objective placement validation exceeds the relation graph limit")
+	}
+	if err := validateDependencyHierarchyDeadlocks(relations, candidateObjectives, items, changed, "parent_objective_id"); err != nil {
+		return err
 	}
 	return nil
 }

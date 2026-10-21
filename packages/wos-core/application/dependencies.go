@@ -130,9 +130,15 @@ func (s *Service) AddDependency(
 	relation.Reason = strings.TrimSpace(cmd.Reason)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Relation, domain.OutcomeRevision, error) {
-		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
+		// Dependency validation reads the Outcome-wide graph. Serialize the
+		// read/validate/write sequence so opposing edges cannot both pass against
+		// stale snapshots (PostgreSQL uses this row lock; SQLite and memory
+		// serialize their write transactions).
+		outcome, err := lockOpenDependencyOutcome(ctx, uow, cmd.Scope)
+		if err != nil {
 			return domain.Relation{}, 0, err
 		}
+		profile := outcome.OperationalProfile.Effective()
 		sourceState, err := dependencyEndpointState(ctx, uow, cmd.SourceRef)
 		if err != nil {
 			return domain.Relation{}, 0, err
@@ -146,12 +152,21 @@ func (s *Service) AddDependency(
 		if sourceState.inProgress && strings.TrimSpace(cmd.Reason) == "" {
 			return domain.Relation{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "adding dependency to in-progress source requires reason")
 		}
-		if err := validateOwnObjectiveDependency(ctx, uow, relation); err != nil {
-			return domain.Relation{}, 0, err
-		}
 		existing, err := uow.Relations().ListByOutcome(ctx, cmd.Scope)
 		if err != nil {
 			return domain.Relation{}, 0, err
+		}
+		if err := validateOwnObjectiveHardDependencies(ctx, uow, []domain.Relation{relation}, nil, nil); err != nil {
+			return domain.Relation{}, 0, err
+		}
+		if relation.Strength == domain.DependencyStrengthHard && profile == domain.OperationalProfileOperationalV2 {
+			objectives, items, err := loadDependencyHierarchy(ctx, uow, cmd.Scope)
+			if err != nil {
+				return domain.Relation{}, 0, err
+			}
+			if err := validateDependencyHierarchyDeadlocks([]domain.Relation{relation}, objectives, items, nil, "target_ref"); err != nil {
+				return domain.Relation{}, 0, err
+			}
 		}
 		if err := domain.ValidateDependencyAcyclic(existing, relation, domain.DefaultDependencyGraphLimit); err != nil {
 			return domain.Relation{}, 0, err
@@ -422,9 +437,6 @@ func (s *Service) prepareDependencyChanges(ctx context.Context, uow ports.UnitOf
 		if _, err := dependencyEndpointState(ctx, uow, relation.TargetRef); err != nil {
 			return result, err
 		}
-		if err := validateOwnObjectiveDependency(ctx, uow, relation); err != nil {
-			return result, err
-		}
 		result.items = append(result.items, DependencyChangeResult{Action: DependencyChangeAdd, Relation: relation})
 	}
 	final = final[:0]
@@ -440,6 +452,33 @@ func (s *Service) prepareDependencyChanges(ctx context.Context, uow ports.UnitOf
 	}
 	if err := validateDependencyGraphAcyclic(final, cmd.Scope); err != nil {
 		return result, err
+	}
+	// Check only newly-added hard edges against the final graph. This preserves
+	// compatibility for untouched legacy rows while ensuring a remove/add batch
+	// is judged as one proposed state, not in command order.
+	added := make([]domain.Relation, 0, len(result.items))
+	for _, change := range result.items {
+		if change.Action == DependencyChangeAdd {
+			added = append(added, change.Relation)
+		}
+	}
+	if hasRelevantHardDependency(added, nil) {
+		if err := validateOwnObjectiveHardDependencies(ctx, uow, added, nil, nil); err != nil {
+			return result, err
+		}
+		profile, err := dependencyOutcomeProfile(ctx, uow, cmd.Scope)
+		if err != nil {
+			return result, err
+		}
+		if profile == domain.OperationalProfileOperationalV2 {
+			objectives, items, err := loadDependencyHierarchy(ctx, uow, cmd.Scope)
+			if err != nil {
+				return result, err
+			}
+			if err := validateDependencyHierarchyDeadlocks(added, objectives, items, nil, "target_ref"); err != nil {
+				return result, err
+			}
+		}
 	}
 	result.finalActiveDependencyCount = len(final)
 	// Restore the caller's requested ordering so emitted events remain stable.
@@ -655,6 +694,336 @@ func validateDependencyGraphAcyclic(relations []domain.Relation, scope domain.Sc
 		return domain.NewError(domain.ErrorCodeDependencyCycle, "dependency batch would create a cycle")
 	}
 	return nil
+}
+
+// loadDependencyHierarchy returns a complete, bounded containment snapshot.
+// A partial list is not sufficient to prove that a dependency is safe.
+func loadDependencyHierarchy(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope) ([]domain.Objective, []domain.WorkItem, error) {
+	var objectives []domain.Objective
+	var items []domain.WorkItem
+	var err error
+	if reads, ok := uow.(ports.ContinuityReadUnitOfWork); ok {
+		if repo, ok := reads.ContinuityReads().(ports.WorkspaceReadRepository); ok {
+			objectives, items, err = repo.WorkspaceStructure(ctx, scope, domain.DefaultDependencyGraphLimit+1)
+			if err != nil {
+				return nil, nil, err
+			}
+			if len(objectives) > domain.DefaultDependencyGraphLimit || len(items) > domain.DefaultDependencyGraphLimit {
+				return nil, nil, domain.NewError(domain.ErrorCodeGraphLimitExceeded, "dependency hierarchy validation exceeds the structural read limit")
+			}
+			return objectives, items, nil
+		}
+	}
+	objectives, err = uow.Objectives().ListByOutcome(ctx, scope)
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err = uow.WorkItems().ListByOutcome(ctx, scope)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(objectives) > domain.DefaultDependencyGraphLimit || len(items) > domain.DefaultDependencyGraphLimit {
+		return nil, nil, domain.NewError(domain.ErrorCodeGraphLimitExceeded, "dependency hierarchy validation exceeds the structural read limit")
+	}
+	return objectives, items, nil
+}
+
+func hasRelevantHardDependency(relations []domain.Relation, focus map[domain.EntityRef]struct{}) bool {
+	for _, relation := range relations {
+		if relation.RelationType != domain.RelationTypeDependsOn || relation.Lifecycle != domain.RelationLifecycleActive || relation.Strength != domain.DependencyStrengthHard {
+			continue
+		}
+		if focus == nil {
+			return true
+		}
+		if _, changed := focus[relation.SourceRef]; changed {
+			return true
+		}
+		if _, changed := focus[relation.TargetRef]; changed {
+			return true
+		}
+	}
+	return false
+}
+
+func dependencyOutcomeProfile(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope) (domain.OperationalProfile, error) {
+	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return "", err
+	}
+	if err := validateOperationalProfile(outcome); err != nil {
+		return "", err
+	}
+	return outcome.OperationalProfile.Effective(), nil
+}
+
+func lockOpenDependencyOutcome(ctx context.Context, uow ports.UnitOfWork, scope domain.Scope) (domain.Outcome, error) {
+	if _, err := uow.Coordination().LockOutcome(ctx, scope); err != nil {
+		return domain.Outcome{}, err
+	}
+	outcome, err := uow.Outcomes().Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return domain.Outcome{}, err
+	}
+	if err := validateOpenOutcome(outcome); err != nil {
+		return domain.Outcome{}, err
+	}
+	if err := validateOperationalProfile(outcome); err != nil {
+		return domain.Outcome{}, err
+	}
+	return outcome, nil
+}
+
+// The direct own-Objective veto predates operational_v2 and remains part of
+// compatibility_v1. Keep it separate from the newer hierarchy deadlock rules
+// so compatibility can preserve its historical behavior without reading or
+// gating against the full Objective/Task graph.
+func validateOwnObjectiveHardDependencies(
+	ctx context.Context,
+	uow ports.UnitOfWork,
+	relations []domain.Relation,
+	focus map[domain.EntityRef]struct{},
+	workOverrides map[domain.ID]domain.WorkItem,
+) error {
+	for _, relation := range relations {
+		if relation.RelationType != domain.RelationTypeDependsOn || relation.Lifecycle != domain.RelationLifecycleActive ||
+			relation.Strength != domain.DependencyStrengthHard || relation.SourceRef.Kind != domain.EntityKindWorkItem ||
+			relation.TargetRef.Kind != domain.EntityKindObjective {
+			continue
+		}
+		if focus != nil {
+			_, sourceChanged := focus[relation.SourceRef]
+			_, targetChanged := focus[relation.TargetRef]
+			if !sourceChanged && !targetChanged {
+				continue
+			}
+		}
+		work, ok := workOverrides[relation.SourceRef.ID]
+		if !ok {
+			var err error
+			work, err = uow.WorkItems().Get(ctx, relation.Scope, relation.SourceRef.ID)
+			if err != nil {
+				return err
+			}
+		}
+		if domain.IsOwnObjectiveHardDependency(work, relation) {
+			return ownObjectiveDependencyError(work, relation)
+		}
+	}
+	return nil
+}
+
+// validateDependencyHierarchyDeadlocks evaluates proposed hard dependency
+// edges against Objective containment. A dependency edge is directional:
+// source waits for target. Objective ancestry is also an operational gate, so
+// an acyclic depends_on graph can still contain an impossible wait.
+//
+// focus, when non-nil, limits placement checks to edges touching a changed
+// entity. That lets a move repair legacy data without unrelated historical
+// edges blocking it.
+func validateDependencyHierarchyDeadlocks(
+	proposed []domain.Relation,
+	objectives []domain.Objective,
+	items []domain.WorkItem,
+	focus map[domain.EntityRef]struct{},
+	fieldPath string,
+) error {
+	objectiveByID := make(map[domain.ID]domain.Objective, len(objectives))
+	workByID := make(map[domain.ID]domain.WorkItem, len(items))
+	for _, objective := range objectives {
+		if objective.Scope != (domain.Scope{}) && objective.ID != "" {
+			if _, exists := objectiveByID[objective.ID]; exists {
+				return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "Objective hierarchy contains duplicate identities")
+			}
+			objectiveByID[objective.ID] = objective
+		}
+	}
+	for _, item := range items {
+		if item.Scope != (domain.Scope{}) && item.ID != "" {
+			if _, exists := workByID[item.ID]; exists {
+				return domain.NewError(domain.ErrorCodeGraphLimitExceeded, "Task hierarchy contains duplicate identities")
+			}
+			workByID[item.ID] = item
+		}
+	}
+
+	objectiveChain := func(start domain.ID, subject domain.EntityRef) ([]domain.Objective, error) {
+		chain := make([]domain.Objective, 0, 4)
+		seen := map[domain.ID]bool{}
+		current := start
+		for current != "" {
+			if seen[current] {
+				return nil, definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency safety cannot be established because the Objective hierarchy contains a cycle", subject, []string{fieldPath})
+			}
+			seen[current] = true
+			value, ok := objectiveByID[current]
+			if !ok {
+				return nil, definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency safety cannot be established because Objective ancestry is incomplete", subject, []string{fieldPath})
+			}
+			chain = append(chain, value)
+			if value.ParentObjectiveID == nil {
+				break
+			}
+			current = *value.ParentObjectiveID
+		}
+		return chain, nil
+	}
+
+	for _, relation := range proposed {
+		if relation.RelationType != domain.RelationTypeDependsOn || relation.Lifecycle != domain.RelationLifecycleActive || relation.Strength != domain.DependencyStrengthHard {
+			continue
+		}
+		if focus != nil {
+			_, sourceChanged := focus[relation.SourceRef]
+			_, targetChanged := focus[relation.TargetRef]
+			if !sourceChanged && !targetChanged {
+				continue
+			}
+		}
+		if relation.SourceRef.Scope != relation.Scope || relation.TargetRef.Scope != relation.Scope {
+			return domain.NewError(domain.ErrorCodeInvalidRelation, "dependency endpoints must match relation scope")
+		}
+
+		var sourceObjective *domain.Objective
+		var sourceTask *domain.WorkItem
+		switch relation.SourceRef.Kind {
+		case domain.EntityKindObjective:
+			value, ok := objectiveByID[relation.SourceRef.ID]
+			if !ok {
+				return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency source is missing from the bounded Objective snapshot", relation.SourceRef, []string{fieldPath})
+			}
+			sourceObjective = &value
+		case domain.EntityKindWorkItem:
+			value, ok := workByID[relation.SourceRef.ID]
+			if !ok {
+				return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency source is missing from the bounded Task snapshot", relation.SourceRef, []string{fieldPath})
+			}
+			sourceTask = &value
+		default:
+			continue
+		}
+
+		var targetObjective *domain.Objective
+		var targetTask *domain.WorkItem
+		targetState := endpointState{}
+		switch relation.TargetRef.Kind {
+		case domain.EntityKindObjective:
+			value, ok := objectiveByID[relation.TargetRef.ID]
+			if !ok {
+				return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency target is missing from the bounded Objective snapshot", relation.SourceRef, []string{fieldPath}, relation.TargetRef)
+			}
+			targetObjective = &value
+			targetState = endpointState{
+				completed:  value.Lifecycle == domain.ObjectiveLifecycleAchieved,
+				terminal:   value.Lifecycle == domain.ObjectiveLifecycleAchieved || value.Lifecycle == domain.ObjectiveLifecycleCancelled,
+				inProgress: value.Lifecycle == domain.ObjectiveLifecycleInProgress,
+			}
+		case domain.EntityKindWorkItem:
+			value, ok := workByID[relation.TargetRef.ID]
+			if !ok {
+				return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency target is missing from the bounded Task snapshot", relation.SourceRef, []string{fieldPath}, relation.TargetRef)
+			}
+			targetTask = &value
+			targetState = endpointState{
+				completed:  value.Lifecycle == domain.WorkItemLifecycleDone,
+				terminal:   value.Lifecycle == domain.WorkItemLifecycleDone || value.Lifecycle == domain.WorkItemLifecycleCancelled,
+				inProgress: value.Lifecycle == domain.WorkItemLifecycleInProgress,
+			}
+		default:
+			continue
+		}
+
+		if sourceTask != nil && targetObjective != nil && sourceTask.ObjectiveID != nil {
+			chain, err := objectiveChain(*sourceTask.ObjectiveID, sourceTask.Ref())
+			if err != nil {
+				return err
+			}
+			for index := 1; index < len(chain); index++ {
+				if chain[index].ID == targetObjective.ID {
+					path := []domain.EntityRef{sourceTask.Ref()}
+					for _, ancestor := range chain[:index+1] {
+						path = append(path, ancestor.Ref())
+					}
+					return dependencyHierarchyDeadlockError(relation, path, fieldPath,
+						"a Task cannot wait for an ancestor Objective to finish: the ancestor is an execution gate for this Task and cannot finish while required descendant work is waiting")
+				}
+			}
+		}
+		if sourceTask != nil && targetObjective != nil && sourceTask.ObjectiveID == nil && !targetState.completed {
+			return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "cannot validate a hard Task-to-Objective dependency until the Task has an Objective owner", sourceTask.Ref(), []string{fieldPath, "objective_id"}, targetObjective.Ref())
+		}
+
+		if sourceObjective != nil {
+			var targetOwner *domain.Objective
+			switch {
+			case targetObjective != nil:
+				targetOwner = targetObjective
+			case targetTask != nil && targetTask.ObjectiveID != nil:
+				value, ok := objectiveByID[*targetTask.ObjectiveID]
+				if !ok {
+					return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "dependency target Task has missing Objective ownership", relation.SourceRef, []string{fieldPath}, relation.TargetRef)
+				}
+				targetOwner = &value
+			}
+			if targetTask != nil && targetTask.ObjectiveID == nil && !targetState.completed {
+				return definitionPrecondition(domain.ErrorCodePreconditionFailed, "dependency_hierarchy_incomplete", "cannot validate an Objective dependency on an unowned Task until its Objective owner is known", sourceObjective.Ref(), []string{fieldPath}, targetTask.Ref())
+			}
+			if targetOwner != nil {
+				chain, err := objectiveChain(targetOwner.ID, relation.SourceRef)
+				if err != nil {
+					return err
+				}
+				sourceOnTargetChain := -1
+				for index, ancestor := range chain {
+					if ancestor.ID == sourceObjective.ID {
+						sourceOnTargetChain = index
+						break
+					}
+				}
+				if sourceOnTargetChain >= 0 {
+					if sourceObjective.Lifecycle != domain.ObjectiveLifecycleInProgress && !targetState.completed {
+						path := []domain.EntityRef{sourceObjective.Ref()}
+						for index := sourceOnTargetChain - 1; index >= 0; index-- {
+							path = append(path, chain[index].Ref())
+						}
+						path = append(path, relation.TargetRef)
+						return dependencyHierarchyDeadlockError(relation, path, fieldPath,
+							"this Objective waits for work below it, but that work cannot start until this Objective is in progress")
+					}
+				}
+				if targetObjective != nil && sourceObjective.ID != targetObjective.ID {
+					sourceChain, err := objectiveChain(sourceObjective.ID, relation.SourceRef)
+					if err != nil {
+						return err
+					}
+					for index := 1; index < len(sourceChain); index++ {
+						if sourceChain[index].ID == targetObjective.ID {
+							path := []domain.EntityRef{sourceObjective.Ref()}
+							for _, ancestor := range sourceChain[1 : index+1] {
+								path = append(path, ancestor.Ref())
+							}
+							return dependencyHierarchyDeadlockError(relation, path, fieldPath,
+								"a descendant Objective cannot wait for an ancestor to finish because the ancestor must remain in progress for descendant work to start")
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func dependencyHierarchyDeadlockError(relation domain.Relation, path []domain.EntityRef, fieldPath, explanation string) error {
+	subject := relation.SourceRef
+	related := append([]domain.EntityRef(nil), path...)
+	return domain.NewDetailedError(domain.ErrorCodePreconditionFailed,
+		explanation+"; remove the dependency, make it advisory if it is informational, or change the Objective hierarchy",
+		domain.ErrorDetails{
+			ReasonCode:  "dependency_hierarchy_deadlock",
+			SubjectRef:  &subject,
+			FieldPaths:  []string{fieldPath},
+			RelatedRefs: related,
+		})
 }
 
 func dependencyPreviewError(err error) *DependencyChangesPreviewError {
