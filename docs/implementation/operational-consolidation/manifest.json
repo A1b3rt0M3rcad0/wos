@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "c7b3b73a2985c72e36e9ea5811964003d4f0c7f3",
+  "execution_head_sha": "f83cd3f668eefce458c3bdeb3f3a8b5ff0089051",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -415,25 +415,35 @@
     {
       "id": "E19",
       "title": "Emitir credencial restrita e metadados atomicamente",
-      "state": "planned",
+      "state": "implemented",
       "depends_on": [
         "E16",
         "E18"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "f83cd3f668eefce458c3bdeb3f3a8b5ff0089051",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E19.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application ./packages/wos-core/storage/memory ./packages/wos-core/storage/sqlite -count=1 -timeout=3m — pass",
+        "Focused credential issuance, policy scope, and security administration tests in Application, Memory, and SQLite — pass",
+        "go test ./packages/wos-api/http -run 'TestLegacyCredentialRouteAcceptsAndReplaysIssuanceMetadata|TestIssueHTTPCreateRejectsLegacyPayloadWithoutObjectiveOwner' -count=1 — pass",
+        "go test ./packages/wos-api/mcp -run '^$' -count=1 — compile pass",
+        "go test ./packages/wos-core/storage/postgres -run '^$' -count=1 — compile pass",
+        "PostgreSQL generator, OpenAPI YAML parse, migration parity, gofmt, and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Live PostgreSQL migration/transaction acceptance — WOS_TEST_POSTGRES_DSN was unset; stage remains implemented rather than verified.",
+        "Full repository and browser suites — outside E19 qualification."
+      ]
     },
     {
       "id": "E20",
       "title": "Implementar gestão, rotação e observação de chaves",
-      "state": "planned",
+      "state": "in_progress",
       "depends_on": [
         "E19"
       ],
-      "responsible": "primary",
+      "responsible": "primary with subagent distribution_ci_repair",
       "commit_sha": null,
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E20.md",
       "tests_run": [],
