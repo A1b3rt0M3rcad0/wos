@@ -484,6 +484,9 @@ func eventsForCommand[T any](
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if events, handled, err := dependencyChangesCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 	if events, handled, err := compoundDocumentaryEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}

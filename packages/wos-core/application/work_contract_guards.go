@@ -133,6 +133,8 @@ func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWor
 		case domain.EntityKindOutcome:
 			wholeOutcome = true
 		}
+	case ApplyDependencyChangesCommand:
+		return validateDependencyChangesContract(ctx, s, u, cmd, inspectionAt)
 	case RemoveDependencyCommand:
 		if acquireGuard {
 			if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {

@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 23 is next
+**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 24 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -94,8 +94,14 @@ Memory, SQLite and PostgreSQL contract tests pass. Focused Application tests
 cover A→B→C, both directions, Objective dependencies, satisfied prerequisites,
 independent Blockers, depth bounds, pagination and stale-revision rejection.
 The approved plan records the test commands and the remaining transport work.
-Stage 23 (dependency preview and atomic batch edits) is next. The Draft PR must
-remain unmerged and no release/tag is part of this work.
+Stage 23 adds a read-only dependency batch preview and atomic `ApplyDependencyChanges`
+with Outcome-revision and per-Source optimistic guards, versioned removals,
+final-graph DAG validation, and per-Relation events at one revision. Its tests
+cover read-only preview, valid edge replacement against the final graph,
+all-or-nothing cycle rejection, stale source/relation versions, frozen sources,
+invalid endpoints, stale Outcome snapshots, and idempotent replay. Stage 24
+(corrective Issue↔Task relation contract) is next. The Draft PR must remain
+unmerged and no release/tag is part of this work.
 
 ## Operational Kanban UX audit — 2026-10-20
 

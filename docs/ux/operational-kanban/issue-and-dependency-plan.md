@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–22 concluídas; etapa 23 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–23 concluídas; etapa 24 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -510,6 +510,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Implementar preview + ApplyDependencyChanges atômico, em UoW, DAG sobre grafo final, IDs/removals versionados, guards por todos Sources.
 
 **Aceite verificável:** Ciclos, invalidez/lease/freeze ou version conflitante rejeitam lote completo; paridade single command.
+
+**Execução em 2026-10-21:** Implementados `PreviewDependencyChanges` e `ApplyDependencyChanges`. O preview abre uma leitura revisionada, valida os mesmos guards sem criar eventos ou alterar relações e retorna disponibilidade, erro orientado e contagem do grafo final. O apply exige `expected_outcome_revision`, uma versão atual para cada Source distinto e ID+versão+motivo em cada remoção. Sob o lock do Outcome, verifica todos os Sources, regras de planejamento/lease/protocolo, endpoints e relações; aplica primeiro as remoções na projeção em memória, inclui as adições e valida o DAG completo resultante antes da primeira escrita. Depois grava remoções e adições na mesma UoW, avança a revisão uma vez e publica um evento por Relation, correlacionado ao comando e à revisão. O receipt de comando mantém replay idempotente e comandos Add/Remove individuais permanecem disponíveis.
+
+**Verificação:** `go test ./packages/wos-core/application -run "TestDependencyChanges|TestHardDependencyControlsReadyWorkAndRemovalRestoresReadiness|TestDependencyCycleRejectsIndirectCycle" -count=1 -v` e `go test ./packages/wos-core/domain ./packages/wos-core/application -count=1` passaram com Go 1.27.2. Os testes exercitam preview sem mutação; substituição de aresta cujo ciclo aparente só desaparece no grafo final; rejeição integral de ciclo; conflito na segunda Source; conflito de versão de Relation; lease/fonte congelada; endpoint inexistente; Outcome revision obsoleta; eventos em uma revisão e replay idempotente. `gofmt` e `git diff --check` passaram.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 
