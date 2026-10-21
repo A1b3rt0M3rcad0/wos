@@ -100,6 +100,24 @@ func TestOperationalCapabilityReasonsMatchActivationWrite(t *testing.T) {
 
 func TestCreateWorkItemCapabilitiesNameBacklogAndTodoTargets(t *testing.T) {
 	fixture := newTaskActivationFixture(t, true)
+	outcomeState, err := fixture.service.GetOutcomeState(fixture.ctx, fixture.scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	outcomeView, err := fixture.service.GetEntityWorkspaceView(fixture.ctx, fixture.scope, application.WorkspaceViewQuery{
+		Subject: application.WorkspaceSubject{Kind: "entity", Ref: outcomeState.Outcome.Ref()},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if capabilityForTarget(t, outcomeView, "CreateWorkItem", domain.WorkItemLifecycleBacklog).Availability != "available" {
+		t.Fatal("Outcome Task creation should expose the Backlog target")
+	}
+	outcomeTodo := capabilityForTarget(t, outcomeView, "CreateWorkItem", domain.WorkItemLifecycleTodo)
+	if outcomeTodo.Availability != "unknown" || !reflect.DeepEqual(outcomeTodo.ReasonCodes, []string{string(domain.ReadinessReasonTargetDefinitionRequired)}) {
+		t.Fatalf("Outcome To Do target should wait for a Task definition and Objective selection: %#v", outcomeTodo)
+	}
+
 	objective := createTaskActivationObjective(t, fixture, "Planned owner", nil, false)
 	view, err := fixture.service.GetEntityWorkspaceView(fixture.ctx, fixture.scope, application.WorkspaceViewQuery{
 		Subject: application.WorkspaceSubject{Kind: "entity", Ref: objective.Ref()},

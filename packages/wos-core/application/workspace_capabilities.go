@@ -421,9 +421,34 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if e := add("SetOutcomeOwners", "browser_command", 30, ownerCondition); e != nil {
 			return nil, e
 		}
-		for _, command := range []string{"CreateObjective", "CreateWorkItem", "CreatePlanItems"} {
+		for _, command := range []string{"CreateObjective", "CreatePlanItems"} {
 			if e := add(command, "browser_command", 20, open()); e != nil {
 				return nil, e
+			}
+		}
+		if e := add("CreateWorkItem", "browser_command", 20, open(), d.WorkItemLifecycleBacklog); e != nil {
+			return nil, e
+		}
+		todoCondition := open()
+		if todoCondition == nil {
+			if err := validateOperationalProfile(record); err != nil {
+				todoCondition = err
+			} else if record.OperationalProfile.Effective() == d.OperationalProfileOperationalV2 {
+				readiness := d.NewReadiness(record.Ref(), f.at)
+				addOutcomeEligibility(&readiness, record)
+				todoCondition = operationalReadinessError(readiness, "Task cannot be created directly in To Do")
+			}
+		}
+		if e := add("CreateWorkItem", "browser_command", 21, todoCondition, d.WorkItemLifecycleTodo); e != nil {
+			return nil, e
+		}
+		if todoCondition == nil {
+			for i := len(result) - 1; i >= 0; i-- {
+				if result[i].ActionID == "CreateWorkItem" && result[i].TargetLifecycle == d.WorkItemLifecycleTodo {
+					result[i].Availability = "unknown"
+					result[i].ReasonCodes = []string{string(d.ReadinessReasonTargetDefinitionRequired)}
+					break
+				}
 			}
 		}
 		if record.Lifecycle == d.OutcomeLifecycleDraft {
