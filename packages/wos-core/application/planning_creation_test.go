@@ -210,7 +210,7 @@ type planningPermissionPolicy struct{ calls []ports.Permission }
 
 func (p *planningPermissionPolicy) Authorize(_ context.Context, r ports.AuthorizationRequest) error {
 	p.calls = append(p.calls, r.Permission)
-	if r.Permission == ports.PermissionWorkWrite {
+	if r.Permission == ports.PermissionTaskCreate {
 		return domain.NewError(domain.ErrorCodeForbidden, "work write missing")
 	}
 	return nil
@@ -287,13 +287,13 @@ func TestPlanningReplayRechecksConstituentPermissions(t *testing.T) {
 	if _, err := service.CreatePlanItems(ctx, cc, cmd); err == nil {
 		t.Fatal("replay disclosed work after constituent permission was revoked")
 	}
-	policy.denied = ports.PermissionOutcomeWrite
+	policy.denied = ports.PermissionCriterionDefine
 	if _, err := service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), Title: "Old creation contract", Priority: domain.PriorityNormal}); err == nil {
 		t.Fatal("CreateWorkItem accepted a missing Objective")
 	}
 	_, err = service.CreateWorkItem(ctx, commandContext(), application.CreateWorkItemCommand{Scope: owner.Value.Scope(), ObjectiveID: objectiveID, Title: "Creation with criterion", Priority: domain.PriorityNormal, InitialCriteria: []application.InitialCriterion{initialProof("Verified")}})
 	if err == nil {
-		t.Fatal("initial criteria bypassed outcome:write")
+		t.Fatal("initial criteria bypassed criterion:define")
 	}
 }
 

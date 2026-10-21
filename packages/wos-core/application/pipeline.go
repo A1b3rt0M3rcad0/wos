@@ -101,7 +101,7 @@ func transactCommand[T any, C any](
 		}
 	}
 	cutoverIntent := service.requireIdentity && signedCutoverCommand(command)
-	if err := service.authorizePlanningCommandPermissions(ctx, uow, commandContext, meta.Scope, command); err != nil {
+	if err := service.authorizeComposedCommandPermissions(ctx, uow, commandContext, meta.Scope, command, meta.Fingerprint); err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
 	var signedIdentity Identity

@@ -277,15 +277,12 @@ func (s *Service) ApplyDependencyChanges(ctx context.Context, cc domain.CommandC
 		return MutationResult[DependencyChangesResult]{}, err
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (DependencyChangesResult, domain.OutcomeRevision, error) {
-		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
+		// Validate source versions against the actual relation endpoints inside
+		// the same transaction before preparing any writes. In particular,
+		// removal source identity comes from the persisted Relation, not a client
+		// supplied SourceRef.
+		if err := validateDependencyChangesContract(ctx, s, uow, cmd, nil); err != nil {
 			return DependencyChangesResult{}, 0, err
-		}
-		coord, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
-		if err != nil {
-			return DependencyChangesResult{}, 0, err
-		}
-		if coord.Revision != cmd.ExpectedOutcomeRevision {
-			return DependencyChangesResult{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "snapshot_changed")
 		}
 		prepared, err := s.prepareDependencyChanges(ctx, uow, cmd, s.clock.Now().UTC())
 		if err != nil {

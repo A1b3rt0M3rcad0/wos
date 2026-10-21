@@ -113,21 +113,11 @@ func (s *Service) authorizeCreationPermissions(ctx context.Context, uow ports.Un
 	return nil
 }
 
-// The pipeline also calls this before receipt replay. Retaining only the
-// primary permission must not disclose a compound result after a constituent
-// planning/work permission has been revoked.
-func (s *Service) authorizePlanningCommandPermissions(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, command any) error {
-	return s.authorizeCommandAdditionalPermissions(ctx, uow, cc, scope, command)
-}
-
-func (s *Service) initialCriteria(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, owner domain.EntityRef, definitions []InitialCriterion, now time.Time, add func(domain.SuccessCriterion, time.Time) error) error {
+func (s *Service) initialCriteria(ctx context.Context, uow ports.UnitOfWork, owner domain.EntityRef, definitions []InitialCriterion, now time.Time, add func(domain.SuccessCriterion, time.Time) error) error {
 	if len(definitions) == 0 {
 		return nil
 	}
 	if err := validateInitialCriteria(definitions); err != nil {
-		return err
-	}
-	if err := s.authorizeCreationPermissions(ctx, uow, cc, owner.Scope, ports.PermissionOutcomeWrite); err != nil {
 		return err
 	}
 	for _, definition := range definitions {
@@ -146,7 +136,7 @@ func (s *Service) initialCriteria(ctx context.Context, uow ports.UnitOfWork, cc 
 	return nil
 }
 
-func (s *Service) insertObjectiveCreation(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, cmd CreateObjectiveCommand, value *domain.Objective, now time.Time) error {
+func (s *Service) insertObjectiveCreation(ctx context.Context, uow ports.UnitOfWork, cmd CreateObjectiveCommand, value *domain.Objective, now time.Time) error {
 	if err := requireCreationOutcome(ctx, uow, cmd.Scope, "objective"); err != nil {
 		return err
 	}
@@ -155,13 +145,13 @@ func (s *Service) insertObjectiveCreation(ctx context.Context, uow ports.UnitOfW
 			return err
 		}
 	}
-	if err := s.initialCriteria(ctx, uow, cc, value.Ref(), cmd.InitialCriteria, now, value.AddCriterion); err != nil {
+	if err := s.initialCriteria(ctx, uow, value.Ref(), cmd.InitialCriteria, now, value.AddCriterion); err != nil {
 		return err
 	}
 	return uow.Objectives().Insert(ctx, *value)
 }
 
-func (s *Service) insertWorkItemCreation(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, cmd CreateWorkItemCommand, value *domain.WorkItem, now time.Time) error {
+func (s *Service) insertWorkItemCreation(ctx context.Context, uow ports.UnitOfWork, cmd CreateWorkItemCommand, value *domain.WorkItem, now time.Time) error {
 	if err := requireCreationOutcome(ctx, uow, cmd.Scope, "work"); err != nil {
 		return err
 	}
@@ -186,7 +176,7 @@ func (s *Service) insertWorkItemCreation(ctx context.Context, uow ports.UnitOfWo
 	}
 	initialLifecycle := value.Lifecycle
 	value.Lifecycle = domain.WorkItemLifecycleBacklog
-	if err := s.initialCriteria(ctx, uow, cc, value.Ref(), cmd.InitialCriteria, now, value.AddCriterion); err != nil {
+	if err := s.initialCriteria(ctx, uow, value.Ref(), cmd.InitialCriteria, now, value.AddCriterion); err != nil {
 		return err
 	}
 	value.Lifecycle = initialLifecycle
@@ -341,18 +331,6 @@ func (s *Service) CreatePlanItems(ctx context.Context, cc domain.CommandContext,
 		if err := requireCreationOutcome(ctx, uow, cmd.Scope, "plan items"); err != nil {
 			return zero, 0, err
 		}
-		permissions := []ports.Permission{}
-		for _, item := range cmd.Items {
-			if item.Kind == domain.EntityKindObjective || len(item.InitialCriteria) > 0 {
-				permissions = append(permissions, ports.PermissionOutcomeWrite)
-			}
-			if item.Kind == domain.EntityKindWorkItem {
-				permissions = append(permissions, ports.PermissionWorkWrite)
-			}
-		}
-		if err := s.authorizeCreationPermissions(ctx, uow, cc, cmd.Scope, permissions...); err != nil {
-			return zero, 0, err
-		}
 		result := CreatePlanItemsResult{Items: make([]CreatedPlanItem, len(cmd.Items)), Refs: make(map[string]domain.EntityRef, len(cmd.Items))}
 		now := s.clock.Now().UTC()
 		for _, i := range ordered {
@@ -378,7 +356,7 @@ func (s *Service) CreatePlanItems(ctx context.Context, cc domain.CommandContext,
 				}
 				value.ParentObjectiveID = parent
 				create := CreateObjectiveCommand{Scope: cmd.Scope, ParentObjectiveID: parent, InitialCriteria: input.InitialCriteria}
-				if err := s.insertObjectiveCreation(ctx, uow, cc, create, &value, now); err != nil {
+				if err := s.insertObjectiveCreation(ctx, uow, create, &value, now); err != nil {
 					return zero, 0, err
 				}
 				created = CreatedPlanItem{LocalKey: input.LocalKey, Ref: value.Ref(), Version: value.Version, Criteria: value.Criteria.Items}
@@ -388,7 +366,7 @@ func (s *Service) CreatePlanItems(ctx context.Context, cc domain.CommandContext,
 					return zero, 0, err
 				}
 				create := CreateWorkItemCommand{Scope: cmd.Scope, ObjectiveID: parent, InitialCriteria: input.InitialCriteria}
-				if err := s.insertWorkItemCreation(ctx, uow, cc, create, &value, now); err != nil {
+				if err := s.insertWorkItemCreation(ctx, uow, create, &value, now); err != nil {
 					return zero, 0, err
 				}
 				created = CreatedPlanItem{LocalKey: input.LocalKey, Ref: value.Ref(), Version: value.Version, Criteria: value.Criteria.Items}

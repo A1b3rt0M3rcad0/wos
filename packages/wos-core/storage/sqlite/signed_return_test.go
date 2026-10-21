@@ -419,6 +419,48 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					if len(receipt.LocalKeys) != 2 || !receipt.Accepted || !receipt.LocalObligationClosed || receipt.RequestDigest != signing.Digest(mustCanonical(t, request)) || receipt.ContractID != c.ID.String() {
 						t.Fatal("acceptance does not bind exact returned request")
 					}
+					if floor == d.AcceptanceDirect && hasCriteria {
+						// The original Auto return completed directly. Even if the live
+						// acceptance policy later tightens, replay must retain the authority
+						// requirements recorded by the durable acceptance receipt.
+						authorized, err := a.NewAuthorizedService(store, clock, ids, &sec)
+						must(err)
+						must(authorized.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+						replay, err := authorized.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+						must(err)
+						if !replay.IdempotentReplay || string(replay.Value.Receipt.Payload) != string(returned.Value.Receipt.Payload) {
+							t.Fatal("authorized Auto return did not replay its existing durable acceptance")
+						}
+						stateBeforeRevocation, err := authorized.GetOutcomeState(agentCtx, scope)
+						must(err)
+						eventsBeforeRevocation := signedReturnEventCount(t, store, scope)
+						receiptsBeforeRevocation := signedReturnIdempotencyCount(t, store)
+						tightened := policy
+						tightened.Version++
+						tightened.AcceptanceFloor = d.AcceptanceIndependentReview
+						tightened.PermittedOperations = []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}
+						policyUOW, err := store.Begin(ctx)
+						must(err)
+						must(policyUOW.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, tightened, policy.Version))
+						must(policyUOW.Commit())
+						must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{
+							ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite,
+							ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn,
+							ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite,
+						}}))
+						_, err = authorized.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+						if err == nil {
+							t.Fatal("durable direct Auto return replay disclosed completion after the acceptance floor tightened and task.accept was revoked")
+						}
+						if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeForbidden {
+							t.Fatalf("revoked task.accept permission returned %v, want forbidden", err)
+						}
+						stateAfterRevocation, err := authorized.GetOutcomeState(agentCtx, scope)
+						must(err)
+						if stateAfterRevocation.OutcomeRevision != stateBeforeRevocation.OutcomeRevision || signedReturnEventCount(t, store, scope) != eventsBeforeRevocation || signedReturnIdempotencyCount(t, store) != receiptsBeforeRevocation {
+							t.Fatal("denied durable Auto replay changed Outcome revision, events, or idempotency receipts")
+						}
+					}
 					check, e = store.Begin(ctx)
 					must(e)
 					actual, e = check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
@@ -601,6 +643,46 @@ func signedSQLFaultSnapshot(t *testing.T, store *Store) string {
 		t.Fatal(err)
 	}
 	return string(raw)
+}
+
+func signedReturnIdempotencyCount(t *testing.T, store interface {
+	ports.SecurityStore
+	ports.TransactionManager
+}) int {
+	t.Helper()
+	switch value := store.(type) {
+	case *memory.Store:
+		return value.IdempotencyRecordCount()
+	case *Store:
+		var count int
+		if err := value.db.QueryRow(`SELECT COUNT(*) FROM idempotency_records`).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		return count
+	default:
+		t.Fatalf("unsupported test store %T", store)
+		return 0
+	}
+}
+
+func signedReturnEventCount(t *testing.T, store interface {
+	ports.SecurityStore
+	ports.TransactionManager
+}, scope d.Scope) int {
+	t.Helper()
+	switch value := store.(type) {
+	case *memory.Store:
+		return len(value.SnapshotDomainEvents(scope))
+	case *Store:
+		var count int
+		if err := value.db.QueryRow(`SELECT COUNT(*) FROM domain_events WHERE namespace_id=? AND outcome_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		return count
+	default:
+		t.Fatalf("unsupported test store %T", store)
+		return 0
+	}
 }
 
 // The concrete SQL unit is embedded so every optional capability and database

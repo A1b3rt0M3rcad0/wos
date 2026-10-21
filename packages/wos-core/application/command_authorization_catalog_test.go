@@ -1,6 +1,7 @@
 package application_test
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 func commandNameFromPublicID(name string) string {
@@ -117,6 +119,73 @@ func TestAuthorizationCatalogConditionalRequirements(t *testing.T) {
 			for i := range got {
 				if got[i] != test.want[i] {
 					t.Fatalf("permissions = %v, want %v", got, test.want)
+				}
+			}
+		})
+	}
+}
+
+func TestAuthorizationCatalogComposesDocumentaryAndSignedReturnEffects(t *testing.T) {
+	directReturn := application.ReturnSignedWorkCommand{Envelope: signing.Envelope{Payload: base64.StdEncoding.EncodeToString([]byte(`{"completion_intent":"direct","material":{"artifacts":[{}],"criterion_assessments":[{"result":"waived"}]}}`))}}
+	reviewReturn := application.ReturnSignedReviewCommand{Envelope: signing.Envelope{Payload: base64.StdEncoding.EncodeToString([]byte(`{"decision":"approved","material":{"evidence":[{}],"criterion_assessments":[{"result":"waived"}]}}`))}}
+	syncRecords := application.SyncWorkContractCommand{Artifacts: []application.SyncArtifactInput{{LocalKey: "artifact"}}}
+
+	tests := []struct {
+		name string
+		cmd  any
+		want []ports.Permission
+	}{
+		{
+			name: "SyncWorkContract with records",
+			cmd:  syncRecords,
+			want: []ports.Permission{ports.PermissionTaskDeliver, ports.PermissionRecordsWrite},
+		},
+		{
+			name: "signed direct work return",
+			cmd:  directReturn,
+			want: []ports.Permission{
+				ports.PermissionTaskDeliver,
+				ports.PermissionWorkContractReturn,
+				ports.PermissionRecordsWrite,
+				ports.PermissionTaskAccept,
+				ports.PermissionWorkCompleteDirect,
+
+				ports.PermissionCriterionAssess,
+				ports.PermissionAssessmentWrite,
+				ports.PermissionConclusionWrite,
+				ports.PermissionAssessmentWaive,
+			},
+		},
+		{
+			name: "signed approved review return",
+			cmd:  reviewReturn,
+			want: []ports.Permission{
+				ports.PermissionTaskReview,
+				ports.PermissionWorkReviewDecide,
+				ports.PermissionRecordsWrite,
+				ports.PermissionTaskAccept,
+				ports.PermissionCriterionAssess,
+				ports.PermissionAssessmentWrite,
+				ports.PermissionConclusionWrite,
+				ports.PermissionAssessmentWaive,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			name := "SyncWorkContract"
+			if test.name == "signed direct work return" {
+				name = "ReturnSignedWork"
+			} else if test.name == "signed approved review return" {
+				name = "ReturnSignedReview"
+			}
+			got, ok := application.CommandAuthorizationPermissions(name, test.cmd)
+			if !ok || len(got) != len(test.want) {
+				t.Fatalf("permissions=%v registered=%v; want %v", got, ok, test.want)
+			}
+			for i := range got {
+				if got[i] != test.want[i] {
+					t.Fatalf("permissions=%v, want %v", got, test.want)
 				}
 			}
 		})

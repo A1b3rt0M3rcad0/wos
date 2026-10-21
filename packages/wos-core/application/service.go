@@ -72,7 +72,7 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		if _, err := uow.Coordination().LockOutcome(ctx, outcome.Scope()); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		if err := s.initialCriteria(ctx, uow, commandContext, outcome.Ref(), cmd.InitialCriteria, now, outcome.AddCriterion); err != nil {
+		if err := s.initialCriteria(ctx, uow, outcome.Ref(), cmd.InitialCriteria, now, outcome.AddCriterion); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		if err := uow.Outcomes().Insert(ctx, outcome); err != nil {
@@ -319,7 +319,7 @@ func (s *Service) CreateObjective(ctx context.Context, commandContext domain.Com
 	objective.ParentObjectiveID = cloneIDPtr(cmd.ParentObjectiveID)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
-		if err := s.insertObjectiveCreation(ctx, uow, commandContext, cmd, &objective, now); err != nil {
+		if err := s.insertObjectiveCreation(ctx, uow, cmd, &objective, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -420,7 +420,7 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 	item.NotBefore = cloneTimePtrUTC(cmd.NotBefore)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
-		if err := s.insertWorkItemCreation(ctx, uow, commandContext, cmd, &item, now); err != nil {
+		if err := s.insertWorkItemCreation(ctx, uow, cmd, &item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
