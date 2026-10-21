@@ -92,6 +92,11 @@ test("explicit cutover, contract progress, human review and privileged revocatio
       scope,
       expected_version: outcome.version + 1,
     });
+    const objective = await command("create_objective", {
+      scope,
+      title: "Objetivo do fluxo contratual",
+      priority: "normal",
+    });
     await command("set_namespace_work_protocol", {
       scope,
       expected_protocol_version: 1,
@@ -107,6 +112,7 @@ test("explicit cutover, contract progress, human review and privileged revocatio
     });
     const work = await command("create_work_item", {
       scope,
+      objective_id: objective.id,
       title: "Implementar fluxo contratual",
       priority: "normal",
       lifecycle: "backlog",

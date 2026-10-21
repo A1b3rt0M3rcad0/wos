@@ -1001,13 +1001,13 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E01, E02
 
-**Arquivos:** [A] `packages/wos-core/application/test_objective_helpers_test.go`; [A] `packages/wos-core/domain/lifecycle_test.go`; [N] `packages/wos-core/application/operational_profile_fixture_test.go`; [N] `tests/web/fixtures/operational-policy.mjs`.
+**Arquivos:** [A] `packages/wos-core/application/test_objective_helpers_test.go`; [A] `packages/wos-core/domain/lifecycle_test.go`; [N] `packages/wos-core/application/operational_profile_fixture_test.go`; [N] `tests/web/fixtures/operational-policy.mjs`; [N] `tests/web/operational-policy-fixture.spec.mjs`.
 
 **Implementação:**
 
 1. Criar fixtures para Outcome ativo, Objective Planned/In Progress, Task em cada fase, duas credenciais do mesmo Principal e outro Principal revisor.
-2. Adicionar cenários de contrato legado, contracts_v1 e signed_v2, com o bootstrap real dos testes existentes.
-3. Preparar dados com dependências, Issues próprias, Blockers subtree, delivery pendente e histórico de conclusão sem fabricar assinatura.
+2. Reutilizar os bootstraps reais dos testes específicos de `legacy`, `contracts_v1` e `signed_v2`; o fixture compartilhado não deve rotular uma fase como se tivesse configurado protocolo, credencial assinada ou receipt.
+3. Preparar dados comuns com dependências, Issues próprias, Blockers subtree e histórico de conclusão. Usar os cenários existentes de cada protocolo para receipts/entregas pendentes; não fabricar assinatura nem representar entrega ainda não suportada como dado real.
 4. Registrar comportamentos antigos como caracterização do perfil compatível; os testes v2 futuros deverão negar os bypasses, não perpetuá-los.
 5. Manter IDs determinísticos apenas em fixtures; não alterar geradores ou relógios reais para facilitar testes.
 

@@ -128,6 +128,52 @@ func TestObjectiveCancelAndReopenPreservesConclusionHistory(t *testing.T) {
 	}
 }
 
+func TestCompatibilityCharacterization_ObjectiveMayBeAchievedFromPlanned(t *testing.T) {
+	// Capture the current compatibility behavior before operational_v2 adds its
+	// in_progress gate. This characterization is not the future v2 contract.
+	scope := domain.Scope{NamespaceID: nsID, OutcomeID: outID}
+	obj, err := domain.NewObjective(objID, scope, "Compatibility completion", "", domain.PriorityNormal, false, t0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	criterion, err := domain.NewSuccessCriterion(
+		criterion1,
+		obj.Ref(),
+		"Condition is satisfied",
+		"",
+		true,
+		domain.VerificationModeAttestation,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := obj.AddCriterion(criterion, t0.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	assessmentRecord := domain.CriterionAssessment{
+		ID:                assessment,
+		CriterionID:       criterion.ID,
+		CriterionRevision: criterion.Revision,
+		Result:            domain.AssessmentResultMet,
+		Rationale:         "condition checked",
+		PrincipalID:       "human-1",
+		Actor:             actor(),
+		AssessedAt:        t0.Add(2 * time.Minute),
+	}
+	if err := obj.AssessCriterionAttestation(assessmentRecord, t0.Add(2*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if obj.Lifecycle != domain.ObjectiveLifecyclePlanned {
+		t.Fatalf("lifecycle before achievement = %q, want planned", obj.Lifecycle)
+	}
+	if err := obj.Achieve(conclusion("current compatibility behavior", t0.Add(3*time.Minute)), t0.Add(3*time.Minute)); err != nil {
+		t.Fatalf("compatibility Achieve() from planned returned error: %v", err)
+	}
+	if obj.Lifecycle != domain.ObjectiveLifecycleAchieved {
+		t.Fatalf("lifecycle after achievement = %q, want achieved", obj.Lifecycle)
+	}
+}
+
 func TestCriterionRevisionInvalidatesCurrentAssessment(t *testing.T) {
 	outcome, err := domain.NewOutcome(outID, nsID, "Revision test", "", "State", domain.PriorityNormal, t0)
 	if err != nil {

@@ -159,6 +159,11 @@ for (const decision of ["approved", "changes_requested"])
         scope,
         expected_version: outcome.version + 1,
       });
+      const objective = await command("create_objective", {
+        scope,
+        title: "Objetivo do fluxo assinado",
+        priority: "normal",
+      });
       let identity = await api("/security/signing-identity", token);
       const adminOperations = [
         "state:read",
@@ -213,6 +218,7 @@ for (const decision of ["approved", "changes_requested"])
         });
       const work = await command("create_work_item", {
         scope,
+        objective_id: objective.id,
         title: "Tarefa com avaliação independente",
         priority: "normal",
         lifecycle: "todo",
@@ -666,11 +672,10 @@ for (const decision of ["approved", "changes_requested"])
       // A real signed submission (not a mock display_state) projects to review.
       const beforeKanbanWrites = mutations.length;
       const searchBoard = page.getByRole("combobox", {name:"Search Outcome Board",exact:true});
-      await searchBoard.fill(outcome.title);
-      await page.getByRole("option").filter({hasText:outcome.title}).first().click();
-      await page.locator("#canvas-details").getByRole("button",{name:"Open Objectives Kanban",exact:true}).click();
+      await searchBoard.fill(objective.title);
+      await page.getByRole("option").filter({hasText:objective.title}).first().click();
+      await page.locator("#canvas-details").getByRole("button",{name:"Open Tasks Kanban",exact:true}).click();
       const kanban = page.locator("#workspace-kanban");
-      await kanban.getByRole('combobox',{name:'Kanban context',exact:true}).selectOption('tasks');
       await expect(kanban.locator("[data-column=verification]")).toContainText(work.title);
       await expect(kanban.locator("[data-column=accepted]")).not.toContainText(work.title);
       await kanban.locator(".workspace-kanban-card").filter({hasText:work.title}).click();
