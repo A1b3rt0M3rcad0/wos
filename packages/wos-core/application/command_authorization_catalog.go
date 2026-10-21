@@ -553,6 +553,20 @@ func (s *Service) authorizeComposedCommandPermissions(ctx context.Context, uow p
 	if !ok {
 		return domain.NewError(domain.ErrorCodeForbidden, "command authorization requirement is not registered")
 	}
+	// Some commands, notably CreateOutcome, are namespace-scoped and do not
+	// carry an Outcome Scope yet. Resolve the namespace from the command's
+	// explicit authorization resource before checking any conditional
+	// permissions (such as criterion:define for initial criteria).
+	if scope.NamespaceID.IsZero() {
+		resource, registered, err := commandAuthorizationResourceFor(name, command)
+		if err != nil {
+			return err
+		}
+		if !registered {
+			return domain.NewError(domain.ErrorCodeForbidden, "command authorization requirement is not registered")
+		}
+		scope.NamespaceID = resource.NamespaceID
+	}
 	if name == "ReturnSignedWork" && s.requireIdentity {
 		permissionsForDirectCompletion, err := s.signedAutoReturnCompletionPermissions(ctx, uow, cc, command, fingerprint)
 		if err != nil {

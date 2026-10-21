@@ -219,6 +219,51 @@ func (p *planningPermissionPolicy) AuthorizeInUnitOfWork(ctx context.Context, _ 
 	return p.Authorize(ctx, r)
 }
 
+type planningAuthorizationRequestRecorder struct{ requests []ports.AuthorizationRequest }
+
+func (p *planningAuthorizationRequestRecorder) Authorize(_ context.Context, request ports.AuthorizationRequest) error {
+	p.requests = append(p.requests, request)
+	return nil
+}
+
+func (p *planningAuthorizationRequestRecorder) AuthorizeInUnitOfWork(ctx context.Context, _ ports.UnitOfWork, request ports.AuthorizationRequest) error {
+	return p.Authorize(ctx, request)
+}
+
+func TestCreateOutcomeInitialCriteriaUsesResolvedNamespaceForConditionalAuthorization(t *testing.T) {
+	ctx := context.Background()
+	store := memory.New()
+	policy := &planningAuthorizationRequestRecorder{}
+	service, err := application.NewAuthorizedService(store, fixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}, &wave09IDs{next: 1}, policy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := planningIntent(t.Name())
+	namespace := id("0199e200-0000-7000-8000-000000000001")
+	ctx = application.WithIdentity(ctx, application.Identity{NamespaceID: namespace, PrincipalID: cc.PrincipalID, Actor: cc.Actor})
+	_, err = service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{
+		NamespaceID:  namespace,
+		Title:        "Outcome with an initial criterion",
+		DesiredState: "The criterion is authorized in the owning namespace",
+		Priority:     domain.PriorityNormal,
+		InitialCriteria: []application.InitialCriterion{
+			initialProof("Initial criterion is persisted"),
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateOutcome with initial criteria: %v", err)
+	}
+	for _, request := range policy.requests {
+		if request.Permission == ports.PermissionCriterionDefine {
+			if request.NamespaceID != namespace {
+				t.Fatalf("criterion:define namespace = %q, want %q", request.NamespaceID, namespace)
+			}
+			return
+		}
+	}
+	t.Fatal("CreateOutcome did not request criterion:define for initial criteria")
+}
+
 func TestCreatePlanItemsChecksPermissionsForEachKindInsideTransaction(t *testing.T) {
 	ctx := context.Background()
 	store := memory.New()
