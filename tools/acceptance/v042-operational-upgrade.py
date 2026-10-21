@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Actual pinned v0.4.2 signed producer -> operator restore -> additive upgrade.
 
-Only the private archive's existing test is instrumented to capture its already
-validated fixture and separate issuer seed. No historical production file changes.
+Only the private archive's existing test is instrumented: it creates an explicit
+Objective owner before signing, then captures its validated fixture and separate
+issuer seed. No historical production file changes or post-signing ownership edits.
 Private databases/seeds/logs stay outside public evidence; publish report.json only.
 """
 import argparse
@@ -35,7 +36,7 @@ def source_migrations(root):
             manifest.append({'version':int(match[1]),'name':path.name,'checksum':ops.file_hash(path)})
         assert manifest,'candidate migration chain is empty: '+backend
         versions=[item['version'] for item in manifest]
-        assert versions==list(range(1,versions[-1]+1)),'candidate migration chain has missing or duplicate versions: '+backend
+        assert versions[0]==1 and versions==sorted(set(versions)),'candidate migration chain has invalid or duplicate versions: '+backend
         manifests[backend]=manifest
     assert [(item['version'],item['name']) for item in manifests['sqlite']]==[(item['version'],item['name']) for item in manifests['postgres']],'candidate adapter migration chains differ'
     return manifests
@@ -80,6 +81,24 @@ def instrument(archive,backend):
 '''
     marker='\t\t\tctx := context.Background()'
     assert text.count(marker)==1;text=text.replace(marker,capture.replace('CAPTURE',body)+marker)
+    # Ownership must exist in the historical producer before it freezes signed
+    # authority. No migration invents an owner or rewrites historical row bytes.
+    marker='\t\t\tworks := []d.WorkItem{}'
+    assert text.count(marker)==1
+    owner='''
+            var historicalOwnerID *d.ID
+            if os.Getenv("WOS_HISTORICAL_FIXTURE_DIR") != "" && backend == "sql" {
+                id := testID("0199a555-0000-7000-8000-000000000090")
+                objective, e := d.NewObjective(id, scope, "Historical signed-work owner", "Explicit fixture ownership before signing", d.PriorityNormal, false, now)
+                must(e)
+                must(uow.Objectives().Insert(ctx, objective))
+                historicalOwnerID = &id
+            }
+'''
+    text=text.replace(marker,owner+marker)
+    marker='\t\t\t\tw.ContractsEnabled = true'
+    assert text.count(marker)==1
+    text=text.replace(marker,'\t\t\t\tw.ObjectiveID = historicalOwnerID\n'+marker)
     marker='\t\t\tpub, private, err := ed25519.GenerateKey(rand.Reader)'
     assert text.count(marker)==1
     text=text.replace(marker,marker+'''
@@ -179,7 +198,7 @@ def main():
             results.append({'backend':backend,'old_schema':26,'current_schema':current_schema,'candidate_migration_manifest_sha256':hashlib.sha256(ops.canonical(candidate_migrations[backend])).hexdigest(),'all_candidate_migrations_matched_source':True,'old_producer_test_sha256':TEST_HASH[backend],'all_original_tables_preserved':len(originals),'old_migration_rows_preserved':True,'current_codec_historical_dsse':verified,'old_binary_new_schema_refused':True,'missing_private_seed_failed_explicitly':True,'issuer_identity_preserved':True,'backup_restore':restored})
     finally:
         for name in reversed(owned):subprocess.run(['docker','exec',container,'dropdb','-U',dsn.username,'--force',name],check=True)
-        (root/'report.json').write_text(json.dumps({'complete':len(results)==len(backends),'baseline_source':BASE,'baseline_production_sha256':before,'candidate_source':args.source,'old_binary_sha256':ops.file_hash(Path(binaries['old'])),'candidate_binary_sha256':ops.file_hash(Path(binaries['current'])),'historical_test_only_capture':True,'private_seed_separate_from_backup':True,'results':results,'production_sla':False},indent=2)+'\n')
+        (root/'report.json').write_text(json.dumps({'complete':len(results)==len(backends),'baseline_source':BASE,'baseline_production_sha256':before,'candidate_source':args.source,'old_binary_sha256':ops.file_hash(Path(binaries['old'])),'candidate_binary_sha256':ops.file_hash(Path(binaries['current'])),'historical_test_only_capture':True,'fixture_objective_owner_before_signing':True,'private_seed_separate_from_backup':True,'results':results,'production_sla':False},indent=2)+'\n')
 
 def postgres_environment(dsn):
     os.environ['WOS_UPGRADE_INITIAL_DSN']=dsn

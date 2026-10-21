@@ -34,6 +34,15 @@ class CandidateMigrationContract(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError,'complete candidate source'):
             upgrade.verify_current_migrations(original['sqlite'],current['sqlite'])
 
+    def test_reserved_migration_ordinals_preserve_the_exact_applied_manifest(self):
+        for backend in ('sqlite','postgres'):
+            (self.directory(backend)/'0002_migration.sql').unlink()
+        manifests=upgrade.source_migrations(self.root)
+        self.assertEqual([item['version'] for item in manifests['sqlite']],[1,3])
+        self.assertEqual(upgrade.verify_current_migrations(manifests['sqlite'],manifests['sqlite']),3)
+        with self.assertRaisesRegex(AssertionError,'complete candidate source'):
+            upgrade.verify_current_migrations(manifests['sqlite'][:-1],manifests['sqlite'])
+
     def test_missing_duplicate_malformed_or_different_adapter_chains_fail(self):
         for name in ('missing','duplicate','malformed','different'):
             with self.subTest(name=name):

@@ -70,7 +70,9 @@ test("Issue and Task context create and remove the canonical corrective-work lin
   relation = await loadRelation(wos, data.scope, data.issue, data.tasks.ready, "active");
   expect(relation?.lifecycle).toBe("active");
   await reference(relationRow(page, relation.id), "issue", data.issue.id).click();
+  await expect(inspector(page).locator("#detail-title")).toHaveText(data.issue.title);
   await expandWorkspaceDetails(inspector(page), { history: false });
+  await expect(relationRow(page, relation.id)).toContainText("Corrective Task");
   await relationRow(page, relation.id).getByRole("button", { name: "Remove link", exact: true }).click();
   await page.getByLabel("Reason", { exact: true }).fill("The corrective work is no longer needed");
   await save(page);

@@ -44,6 +44,7 @@ def exercise(args, driver):
     with tempfile.TemporaryDirectory(prefix="wos-v020-upgrade-") as temporary:
         directory = Path(temporary)
         token = secrets.token_urlsafe(32)
+        upgrade_admin_token = secrets.token_urlsafe(32)
         namespace = "01a11a00-0000-7000-8000-000000000001"
         port = free_port()
         origin = f"http://127.0.0.1:{port}"
@@ -72,8 +73,8 @@ def exercise(args, driver):
             database_name = name
             base["WOS_POSTGRES_DSN"] = urlunsplit((parsed.scheme, parsed.netloc, "/" + name, parsed.query, parsed.fragment))
 
-        def request(path, body=None, key=None, expected=200, health=False):
-            headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
+        def request(path, body=None, key=None, expected=200, health=False, credential=None):
+            headers = {"Authorization": "Bearer " + (credential or token), "Content-Type": "application/json"}
             if body is not None:
                 headers["Idempotency-Key"] = key or str(uuid4())
             req = Request(origin + ("" if health else "/api/v1") + path, headers=headers, data=None if body is None else json.dumps(body).encode())
@@ -105,10 +106,10 @@ def exercise(args, driver):
             nonlocal process
             environment = dict(base)
             if signed:
-                environment.update(WOS_SERVER_SIGNING_SEED_ENV="WOS_HISTORICAL_ISSUER", WOS_HISTORICAL_ISSUER=base64.b64encode(bytes(range(32))).decode())
+                environment.update(WOS_LOCAL_PRINCIPAL_ID="explicit-upgrade-administrator", WOS_BOOTSTRAP_TOKEN=upgrade_admin_token, WOS_SERVER_SIGNING_SEED_ENV="WOS_HISTORICAL_ISSUER", WOS_HISTORICAL_ISSUER=base64.b64encode(bytes(range(32))).decode())
             process = subprocess.Popen([str(Path(binary).resolve()), "server"], env=environment, stdout=log, stderr=log)
             for _ in range(150):
-                assert process.poll() is None, f"{driver} server exited before readiness; see owned test log"
+                assert process.poll() is None, f"{driver} server exited before readiness: {(directory / 'server.log').read_text()[-6000:]}"
                 try:
                     request("/readyz" if ready else "/livez", health=True)
                     return
@@ -138,6 +139,11 @@ def exercise(args, driver):
 
         def replays():
             for name, key, body, original in originals:
+                if name in ("acquire_work_contract", "submit_work_result"):
+                    rejected = request("/commands/" + name, body, key, expected=409)
+                    assert rejected["error"]["code"] == "idempotency_conflict"
+                    assert "no provable credential authority" in rejected["error"]["message"]
+                    continue
                 replay = request("/commands/" + name, body, key)
                 assert replay["idempotent_replay"] is True, f"{name}: not an original replay"
                 for field in ("command_id", "outcome_revision", "value"):
@@ -155,7 +161,8 @@ def exercise(args, driver):
             command("activate_outcome", {"scope": scope, "expected_version": outcome["version"] + 1}, True)
             command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 1, "phase": "draining", "reason": "Actual v0.2 fixture drains legacy"})
             command("set_namespace_work_protocol", {"scope": scope, "expected_protocol_version": 2, "phase": "contracts_v1", "writers_drained": True, "reason": "Actual v0.2 fixture activates unsigned contracts"})
-            work = command("create_work_item", {"scope": scope, "title": "Original v0.2 Task", "priority": "normal", "lifecycle": "todo", "execution_spec": {"instructions": ["Existing obligation only"]}}, True)
+            objective = command("create_objective", {"scope": scope, "title": "Original v0.2 owner", "priority": "normal", "required_for_outcome": False})
+            work = command("create_work_item", {"scope": scope, "objective_id": objective["id"], "title": "Original v0.2 Task", "priority": "normal", "lifecycle": "todo", "execution_spec": {"instructions": ["Existing obligation only"]}}, True)
             command("add_criterion", {"owner": {**scope, "kind": "work_item", "id": work["id"]}, "expected_version": work["version"], "title": "Original Task criterion", "required": True, "verification_mode": "attestation"}, True)
             acquired = command("acquire_work_contract", {"scope": scope, "work_item_id": work["id"], "expected_work_item_version": work["version"] + 1, "ttl_seconds": 900}, True)
             contract = acquired["contract"]
@@ -187,6 +194,15 @@ def exercise(args, driver):
             start(args.binary, signed=True)
             preserves(old_history)
             assert request(path + "/work-items/" + work["id"])["value"] == historic_work
+            # Upgrade authority explicitly through the public CAS operations.
+            # Legacy coarse grants are not silently expanded to new permissions.
+            identity = request("/security/signing-identity")
+            administrator = request("/security/signing-identity", credential=upgrade_admin_token)
+            permissions = ["state:read", "namespace:admin", "permissions:manage", "policy:manage", "outcome:write", "work:write", "task:create", "task:claim", "task:deliver", "criterion:define", "work.contract.acquire", "work.contract.return", "work.contract.revoke", "identity.signing_key.enroll", "actor:delegate"]
+            request("/security/commands", {"namespace_id": namespace, "expected_namespace_version": administrator["namespace_version"], "operation": "set_grant", "principal_id": identity["principal_id"], "permissions": permissions, "reason": "Explicit historical upgrade operator authorization"}, credential=upgrade_admin_token)
+            identity = request("/security/signing-identity")
+            administrator = request("/security/signing-identity", credential=upgrade_admin_token)
+            request("/security/signing-commands", {"namespace_id": namespace, "expected_namespace_version": administrator["namespace_version"], "expected_version": str((identity.get("credential_policy") or {}).get("revision", 0)), "operation": "set_credential_policy", "credential_policy": {"namespace_id": namespace, "credential_id": identity["credential_id"], "principal_id": identity["principal_id"], "permitted_operations": permissions, "acceptance_floor": "independent_review", "max_active_work_contracts": 3, "max_active_review_contracts": 1}}, credential=upgrade_admin_token)
             replays()
             identity = request("/security/signing-identity")
             request("/security/signing-commands", {"namespace_id": namespace, "expected_namespace_version": identity["namespace_version"], "operation": "set_acceptance_policy", "acceptance_policy": {"namespace_id": namespace, "acceptance_floor": "independent_review", "max_active_work_contracts": 3, "max_active_review_contracts": 1}})
@@ -211,7 +227,7 @@ def exercise(args, driver):
             preserves(old_history)
             assert request(path + "/work-items/" + work["id"])["value"] == before_work
             replays()
-            return {"driver": driver, "old_schema": old_schema, "current_schema": rows("SELECT MAX(version) FROM schema_migrations")[0][0], "backup_sha256": backup_digest, "historical_receipts_replayed": len(originals), "contracts_preserved": len(old_history["contracts"]), "submissions_preserved": len(old_history["submissions"]), "criteria_preserved": len(old_history["criteria"]), "unsigned_history_not_resigned": True, "active_v1_cutover_refused": True, "old_binary_may_bind": True, "old_binary_ready_status": 503, "incompatible_old_mutation_refused": True}
+            return {"driver": driver, "old_schema": old_schema, "current_schema": rows("SELECT MAX(version) FROM schema_migrations")[0][0], "backup_sha256": backup_digest, "historical_receipts_replayed": sum(name not in ("acquire_work_contract", "submit_work_result") for name, *_ in originals), "historical_unbound_protected_receipts_refused": sum(name in ("acquire_work_contract", "submit_work_result") for name, *_ in originals), "contracts_preserved": len(old_history["contracts"]), "submissions_preserved": len(old_history["submissions"]), "criteria_preserved": len(old_history["criteria"]), "unsigned_history_not_resigned": True, "active_v1_cutover_refused": True, "old_binary_may_bind": True, "old_binary_ready_status": 503, "incompatible_old_mutation_refused": True}
         finally:
             stop()
             log.close()

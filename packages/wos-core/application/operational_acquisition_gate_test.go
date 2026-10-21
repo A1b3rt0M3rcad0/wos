@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,11 +17,10 @@ type acquisitionGateClock struct{ now time.Time }
 
 func (c acquisitionGateClock) Now() time.Time { return c.now }
 
-type acquisitionGateIDs struct{ next int }
+type acquisitionGateIDs struct{ next atomic.Uint64 }
 
 func (g *acquisitionGateIDs) NewID() (domain.ID, error) {
-	g.next++
-	return domain.ParseID(fmt.Sprintf("0199f101-0000-7000-8000-%012x", g.next))
+	return domain.ParseID(fmt.Sprintf("0199f101-0000-7000-8000-%012x", g.next.Add(1)))
 }
 
 func newAcquisitionGateService(t *testing.T, fixture operationalGateFixture, now time.Time) (*Service, domain.CommandContext) {
