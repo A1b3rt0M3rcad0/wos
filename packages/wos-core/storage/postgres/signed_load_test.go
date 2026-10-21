@@ -91,7 +91,7 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 						for _, op := range permissions {
 							ops = append(ops, string(op))
 						}
-						must(registry.SaveCredentialPolicy(ctx, d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: name, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}, 0))
+						must(registry.SaveCredentialPolicy(ctx, d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: name, Version: 2, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}, 1))
 						must(u.Commit())
 						return signedLoadParticipant{identity, a.WithIdentity(ctx, identity), kid, key}
 					}

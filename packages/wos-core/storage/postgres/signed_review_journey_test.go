@@ -74,8 +74,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-			must(registry.SaveCredentialPolicy(ctx, policy, 0))
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveCredentialPolicy(ctx, policy, 1))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
 			outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -289,8 +289,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				for _, op := range permissions {
 					ops = append(ops, string(op))
 				}
-				p := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: principal, Version: 1, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
-				must(registry.SaveCredentialPolicy(ctx, p, 0))
+				p := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: principal, Version: 2, PermittedOperations: ops, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{kid}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+				must(registry.SaveCredentialPolicy(ctx, p, 1))
 				must(u.Commit())
 				return id, a.WithIdentity(ctx, id), kid, private, p
 			}
@@ -524,8 +524,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			must(e)
 			anotherPolicy := reviewPolicy
 			anotherPolicy.CredentialID = anotherCredential.ID
-			anotherPolicy.Version = 1
-			must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, anotherPolicy, 0))
+			anotherPolicy.Version = 2
+			must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, anotherPolicy, 1))
 			must(policyUnit.Commit())
 			if _, e = historical.ReturnSignedReview(a.WithIdentity(ctx, anotherIdentity), nextCC(anotherIdentity, approvedReceipt.IdempotencyKey), a.ReturnSignedReviewCommand{Envelope: originalEnvelope}); e == nil {
 				t.Fatal("another reviewer CID replayed cacheless accepted decision")

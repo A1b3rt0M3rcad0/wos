@@ -50,7 +50,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 			reg := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			cp := *first.Policy
 			cp.CredentialID = cred.ID
-			must(reg.SaveCredentialPolicy(ctx, cp, 0))
+			must(reg.SaveCredentialPolicy(ctx, cp, 1))
 			out, e := d.NewOutcome(portID(90000), ns, "Other quota Outcome", "", "same Principal is same quota", d.PriorityNormal, clock.Now())
 			must(e)
 			criterion, e := d.NewSuccessCriterion(portID(90001), out.Ref(), "Configured outcome proof", "", true, d.VerificationModeAttestation)
@@ -205,7 +205,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			must(e)
 			cp := *identity.Policy
 			cp.MaxActiveWorkContracts = 1
-			mutate(nil, &cp, 1)
+			mutate(nil, &cp, 2)
 			five := 5
 			policy := d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, MaxActiveWorkPerPrincipal: &five}
 			mutate(&policy, nil, 0)
@@ -225,7 +225,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 				template.PrincipalID = principal
 				template.AllowedSigningKeyIDs = []d.ID{key}
 				template.MaxActiveWorkContracts = 4
-				mutate(nil, &template, 0)
+				mutate(nil, &template, 1)
 				return id, a.WithIdentity(ctx, id)
 			}
 			second, secondCtx := participant(f.cc.PrincipalID, d.ID(f.request.SignerKeyID), cp)

@@ -44,16 +44,23 @@ func (h *Handler) issueCredential(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var b struct {
-		PrincipalID     string          `json:"principal_id"`
-		Actor           domain.ActorRef `json:"actor_ref"`
-		ExpiresAt       time.Time       `json:"expires_at"`
-		ExpectedVersion domain.Version  `json:"expected_namespace_version"`
+		PrincipalID          string                     `json:"principal_id"`
+		Actor                domain.ActorRef            `json:"actor_ref"`
+		ExpiresAt            time.Time                  `json:"expires_at"`
+		ExpectedVersion      domain.Version             `json:"expected_namespace_version"`
+		CredentialName       string                     `json:"credential_name,omitempty"`
+		Description          string                     `json:"credential_description,omitempty"`
+		RoleTemplateID       ports.PermissionTemplateID `json:"role_template_id,omitempty"`
+		RoleTemplateVersion  uint32                     `json:"role_template_version,omitempty"`
+		Permissions          []ports.Permission         `json:"permissions,omitempty"`
+		AllowedOutcomeIDs    []domain.ID                `json:"allowed_outcome_ids,omitempty"`
+		AllowedSigningKeyIDs []domain.ID                `json:"allowed_signing_key_ids,omitempty"`
 	}
 	if err = decodeJSON(w, r, &b); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}})
+	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}, CredentialName: b.CredentialName, CredentialDescription: b.Description, RoleTemplateID: b.RoleTemplateID, RoleTemplateVersion: b.RoleTemplateVersion, CredentialPermissions: b.Permissions, AllowedOutcomeIDs: b.AllowedOutcomeIDs, AllowedSigningKeyIDs: b.AllowedSigningKeyIDs})
 	if err != nil {
 		writeError(w, r, err)
 		return

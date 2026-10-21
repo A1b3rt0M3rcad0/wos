@@ -151,7 +151,7 @@ func (s *Store) PutNamespace(ctx context.Context, n ports.Namespace) error {
 
 var _ ports.SecurityStore = (*Store)(nil)
 
-func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
+func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential, policy domain.CredentialPolicy, metadata ports.CredentialMetadata) error {
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "invalid bootstrap binding")
 	}
@@ -187,11 +187,7 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 	if _, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3)`, g.NamespaceID.String(), g.PrincipalID, perms); err != nil {
 		return err
 	}
-	actor, err := marshalJSON(c.Actor)
-	if err != nil {
-		return err
-	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO credentials(id,namespace_id,principal_id,actor_json,digest,expires_at,revoked) VALUES($1,$2,$3,$4,$5,$6,0)`, c.ID.String(), c.NamespaceID.String(), c.PrincipalID, actor, c.Digest, encodeTime(c.ExpiresAt)); err != nil {
+	if err = persistCredentialBundle(ctx, tx, &c, &policy, &metadata, g, metadata.CreatedAt, g.PrincipalID, c.Actor); err != nil {
 		return err
 	}
 	return tx.Commit()

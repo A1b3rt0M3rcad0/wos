@@ -112,7 +112,7 @@ func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.N
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, ctx.Err()
 }
-func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
+func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential, policy d.CredentialPolicy, metadata ports.CredentialMetadata) error {
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid bootstrap binding")
 	}
@@ -127,10 +127,15 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 	if _, ok := s.security.Namespaces[n.ID]; ok {
 		return ctx.Err()
 	}
+	if err := validateMemoryCredentialBundle(s.security, s.outcomes, c, &policy, &metadata, g, metadata.CreatedAt, g.PrincipalID, c.Actor); err != nil {
+		return err
+	}
 	s.security.Namespaces[n.ID] = n
 	s.security.Versions[n.ID] = 1
 	s.security.Grants[securityKey(n.ID, g.PrincipalID)] = deepCopy(g)
 	s.security.Credentials[c.Digest] = c
+	s.security.Policies[securityKey(n.ID, c.ID.String())] = deepCopy(policy)
+	s.security.Metadata[securityKey(n.ID, c.ID.String())] = deepCopy(metadata)
 	return ctx.Err()
 }
 func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {

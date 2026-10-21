@@ -154,7 +154,8 @@ func createOperationalTaskFixture(
 func seedCredentialFixture(t *testing.T, fixture *operationalProfileFixture) {
 	t.Helper()
 
-	expiresAt := time.Date(2035, time.January, 1, 0, 0, 0, 0, time.UTC)
+	now := time.Date(2026, time.October, 1, 21, 30, 0, 0, time.UTC)
+	expiresAt := now.Add(366 * 24 * time.Hour)
 	human := domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "fixture", ID: "operator"}
 	agent := domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "fixture", ID: "worker"}
 	reviewer := domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "fixture", ID: "reviewer"}
@@ -162,10 +163,21 @@ func seedCredentialFixture(t *testing.T, fixture *operationalProfileFixture) {
 		NamespaceID: fixture.Scope.NamespaceID, ID: id("0199e280-0000-7000-8000-000000000001"),
 		PrincipalID: "principal-operator", Actor: human, Digest: "test-credential-digest/operator-human", ExpiresAt: expiresAt,
 	}
+	grant := ports.NamespaceGrant{NamespaceID: fixture.Scope.NamespaceID, PrincipalID: primary.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead}}
+	prepared, err := application.PrepareCredentialIssuance(application.CredentialIssuanceSelection{
+		NamespaceID: fixture.Scope.NamespaceID, CredentialID: primary.ID, PrincipalID: primary.PrincipalID,
+		Actor: primary.Actor, ExpiresAt: primary.ExpiresAt, Name: "Fixture operator credential",
+		CreatedByPrincipalID: primary.PrincipalID, CreatedByActor: primary.Actor,
+	}, grant, now)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := fixture.Store.BootstrapSecurity(fixture.Context,
 		ports.Namespace{ID: fixture.Scope.NamespaceID, Name: "fixture"},
-		ports.NamespaceGrant{NamespaceID: fixture.Scope.NamespaceID, PrincipalID: primary.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead}},
+		grant,
 		primary,
+		prepared.Policy,
+		prepared.Metadata,
 	); err != nil {
 		t.Fatal(err)
 	}

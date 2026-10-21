@@ -90,8 +90,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionTaskRenew), string(ports.PermissionWorkWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-			must(registry.SaveCredentialPolicy(ctx, policy, 0))
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionTaskRenew), string(ports.PermissionWorkWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveCredentialPolicy(ctx, policy, 1))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
 			outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -226,7 +226,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				must(e)
 				legacyPolicy := policy
 				legacyPolicy.CredentialID = legacyCredential.ID
-				must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, legacyPolicy, 0))
+				legacyPolicy.Version = 2
+				must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, legacyPolicy, 1))
 				must(uow.Commit())
 				if _, e = service.AcquireSignedWorkContract(a.WithIdentity(ctx, legacyIdentity), firstCC, firstCmd); e == nil {
 					t.Fatal("legacy cache allowed another CID to substitute identity")
@@ -288,7 +289,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			must(err)
 			otherPolicy := policy
 			otherPolicy.CredentialID = otherCredential.ID
-			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+			otherPolicy.Version = 2
+			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 1))
 			must(uow.Commit())
 			otherCtx := a.WithIdentity(ctx, otherIdentity)
 			if _, err = withoutCache.AcquireSignedWorkContract(otherCtx, firstCC, firstCmd); err == nil {

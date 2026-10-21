@@ -85,10 +85,10 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				must(e)
 				id, e := sec.Authenticate(ctx, token)
 				must(e)
-				cp := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskReview), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
+				cp := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 2, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskReview), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
 				u, e := f.store.Begin(ctx)
 				must(e)
-				must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, cp, 0))
+				must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, cp, 1))
 				must(u.Commit())
 				participants = append(participants, id)
 				contexts = append(contexts, a.WithIdentity(ctx, id))
@@ -127,7 +127,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 			cp.MaxActiveReviewContracts = 1
 			v, e = sec.SigningIdentity(adminCtx, nil)
 			must(e)
-			_, e = sec.SigningMutation(adminCtx, "review-quota-credential-cap", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: v.NamespaceVersion, ExpectedVersion: 1, CredentialPolicy: &cp})
+			_, e = sec.SigningMutation(adminCtx, "review-quota-credential-cap", a.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: v.NamespaceVersion, ExpectedVersion: cp.Version, CredentialPolicy: &cp})
 			must(e)
 			if _, e = acquire(1, 2); e == nil || !strings.Contains(e.Error(), "credential") {
 				t.Fatal("Principal increase bypassed credential review quota", e)

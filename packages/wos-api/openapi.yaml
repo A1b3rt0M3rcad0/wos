@@ -5879,7 +5879,11 @@ paths:
   /api/v1/namespaces/{namespace_id}/credentials:
     post:
       description: Atomic Namespace CAS, receipt and audit. Credential secret appears only on initial issue; replay
-        omits token, requiring explicit replacement if lost.
+        omits token, requiring explicit replacement if lost. An omitted permissions/template selection freezes the
+        target Principal's current Namespace grant; omitted Outcome scope is unrestricted within
+        that frozen permission set. An omitted or empty signing-key scope allows no signing keys until enrollment
+        explicitly adds a key to the credential policy. Prefer this receipt-capable operation with an Idempotency-Key for retryable
+        issuance; replay returns safe credential metadata and omits the token.
       parameters:
       - name: namespace_id
         in: path
@@ -5912,6 +5916,40 @@ paths:
                 expires_at:
                   type: string
                   format: date-time
+                credential_name:
+                  type: string
+                  maxLength: 100
+                credential_description:
+                  type: string
+                  maxLength: 1000
+                role_template_id:
+                  type: string
+                  maxLength: 64
+                  description: Exact versioned permission template to freeze at issuance.
+                role_template_version:
+                  type: integer
+                  minimum: 1
+                permissions:
+                  type: array
+                  maxItems: 128
+                  uniqueItems: true
+                  description: Optional custom frozen permission set, intersected with the target Principal's grant.
+                  items:
+                    type: string
+                allowed_outcome_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  description: Optional Outcome restriction; omitted means unrestricted within permitted operations.
+                  items:
+                    $ref: '#/components/schemas/ID'
+                allowed_signing_key_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  description: Optional signing-key allowlist; omitted or empty means no signing keys are allowed. Enrollment can add a key to the credential policy.
+                  items:
+                    $ref: '#/components/schemas/ID'
               required:
               - expected_namespace_version
               - principal_id
@@ -6001,7 +6039,9 @@ paths:
       summary: Apply guarded administrative intent
       description: Requires the operation-specific credentials:issue, credentials:revoke, permissions:manage,
         or namespace:admin permission, Idempotency-Key and expected_namespace_version. A credential token is
-        returned once; replay preserves the receipt and omits the token.
+        returned once; replay preserves the receipt and omits the token. Newly issued root credentials receive
+        a frozen CredentialPolicy and safe metadata in the same transaction. A custom permissions list or an
+        exact role_template_id/version may be supplied; either is intersected with the target Principal's grant.
       parameters:
       - name: Idempotency-Key
         in: header
@@ -6052,6 +6092,31 @@ paths:
                   format: uuid
                 namespace_name:
                   type: string
+                credential_name:
+                  type: string
+                  maxLength: 100
+                credential_description:
+                  type: string
+                  maxLength: 1000
+                role_template_id:
+                  type: string
+                  maxLength: 64
+                  description: Exact versioned template to materialize at issuance.
+                role_template_version:
+                  type: integer
+                  minimum: 1
+                allowed_outcome_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  items:
+                    $ref: '#/components/schemas/ID'
+                allowed_signing_key_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  items:
+                    $ref: '#/components/schemas/ID'
       responses:
         '200':
           description: Administrative receipt and optional one-time token

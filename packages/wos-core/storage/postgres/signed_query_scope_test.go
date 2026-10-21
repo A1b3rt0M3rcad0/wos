@@ -66,7 +66,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			first := testID("0199a557-0000-7000-8000-000000000020")
 			hidden := testID("0199a557-0000-7000-8000-000000000021")
 			last := testID("0199a557-0000-7000-8000-000000000022")
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			u, err := store.Begin(ctx)
 			must(err)
 			for _, id := range []d.ID{first, hidden, last} {
@@ -74,7 +74,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 				must(err)
 				must(u.Outcomes().Insert(ctx, outcome))
 			}
-			must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 0))
+			must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 1))
 			must(u.Commit())
 			service, err := a.NewAuthorizedService(store, clock, ids, &sec)
 			must(err)

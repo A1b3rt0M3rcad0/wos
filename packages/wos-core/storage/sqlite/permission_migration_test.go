@@ -52,13 +52,17 @@ func newPermissionMigrationFixture(t *testing.T, backend string) permissionMigra
 	if err != nil {
 		t.Fatal(err)
 	}
+	version, err := store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(ctx, namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
 	policy := domain.CredentialPolicy{
 		NamespaceID: namespace, CredentialID: credential.ID, PrincipalID: principal,
 		PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkWrite)},
 		AcceptanceFloor:     domain.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1,
 	}
 	if _, err = security.SigningMutation(adminCtx, "configure-permission-migration-policy", application.SigningSecurityIntent{
-		NamespaceID: namespace, ExpectedNamespaceVersion: 1, Operation: "set_credential_policy", CredentialPolicy: &policy,
+		NamespaceID: namespace, ExpectedNamespaceVersion: version, ExpectedVersion: 1, Operation: "set_credential_policy", CredentialPolicy: &policy,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -204,6 +208,10 @@ func TestPermissionMigrationDoesNotAcceptCallerSuppliedMarkerOrExpandEmptyGrant(
 	if err != nil {
 		t.Fatal(err)
 	}
+	version, err := f.store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(context.Background(), f.namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
 	forgedPolicy := domain.CredentialPolicy{
 		NamespaceID: f.namespace, CredentialID: newCredential.ID, PrincipalID: "empty",
 		PermissionCompatibilityVersion: domain.PermissionCompatibilityLegacyV1,
@@ -211,7 +219,7 @@ func TestPermissionMigrationDoesNotAcceptCallerSuppliedMarkerOrExpandEmptyGrant(
 		AcceptanceFloor:                domain.AcceptanceDirect, MaxActiveWorkContracts: 1, MaxActiveReviewContracts: 1,
 	}
 	policyResult, err := f.security.SigningMutation(f.adminCtx, "permission-migration-marker-forgery", application.SigningSecurityIntent{
-		NamespaceID: f.namespace, ExpectedNamespaceVersion: 2, Operation: "set_credential_policy", CredentialPolicy: &forgedPolicy,
+		NamespaceID: f.namespace, ExpectedNamespaceVersion: version, ExpectedVersion: 1, Operation: "set_credential_policy", CredentialPolicy: &forgedPolicy,
 	})
 	if err != nil || policyResult.CredentialPolicy.PermissionCompatibilityVersion != 0 {
 		t.Fatalf("ordinary policy API accepted a migration marker: result=%+v err=%v", policyResult, err)

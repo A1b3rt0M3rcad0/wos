@@ -82,8 +82,8 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(err)
 					foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 					must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-					must(registry.SaveCredentialPolicy(ctx, policy, 0))
+					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+					must(registry.SaveCredentialPolicy(ctx, policy, 1))
 					outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 					must(err)
 					outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -289,19 +289,19 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						u, err := store.Begin(ctx)
 						must(err)
 						changed := policy
-						changed.Version = 2
+						changed.Version = 3
 						if floor == d.AcceptanceDirect {
 							changed.AcceptanceFloor = d.AcceptanceIndependentReview
 						} else {
 							changed.AcceptanceFloor = d.AcceptanceDirect
 						}
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, changed, 1))
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, changed, 2))
 						must(u.Commit())
 						assertDirectDenied(t, agentCtx, changed, "changed-live-policy-denial")
 						u, err = store.Begin(ctx)
 						must(err)
-						policy.Version = 3
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 2))
+						policy.Version = 4
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 3))
 						must(u.Commit())
 					})
 					t.Run("alternate_credential_cannot_replace_frozen_owner", func(t *testing.T) {
@@ -310,10 +310,10 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						alternateIdentity, err := sec.Authenticate(ctx, bearer)
 						must(err)
 						alternatePolicy := policy
-						alternatePolicy.CredentialID, alternatePolicy.Version, alternatePolicy.AcceptanceFloor = alternate.ID, 1, d.AcceptanceDirect
+						alternatePolicy.CredentialID, alternatePolicy.Version, alternatePolicy.AcceptanceFloor = alternate.ID, 2, d.AcceptanceDirect
 						u, err := store.Begin(ctx)
 						must(err)
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, alternatePolicy, 0))
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, alternatePolicy, 1))
 						must(u.Commit())
 						assertDirectDenied(t, a.WithIdentity(ctx, alternateIdentity), alternatePolicy, "alternate-credential-denial")
 					})
@@ -529,8 +529,8 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(e)
 					otherPolicy := policy
 					otherPolicy.CredentialID = otherCredential.ID
-					otherPolicy.Version = 1
-					must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+					otherPolicy.Version = 2
+					must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 1))
 					must(policyUnit.Commit())
 					if _, e = historical.ReturnSignedWork(otherCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
 						t.Fatal("another CID sharing Principal/Actor/key permission replayed cacheless acceptance")

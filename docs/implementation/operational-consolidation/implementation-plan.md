@@ -815,15 +815,18 @@ IDs entre `<...>` são placeholders explicativos, não IDs válidos para enviar.
 
 ### 12.1 Alocação de migrações
 
-No baseline existem migrações até 0036. Reservar números seguintes somente depois de verificar a HEAD real. Nomes sugeridos, **provisórios**:
+O baseline congelado contém migrações até `0037_operational_profile.sql`. E17 ocupa `0038_permission_compatibility.sql`; as etapas seguintes usam o mapa monotônico abaixo, reconciliado com a árvore real de migrações:
 
 | Arquivo SQLite fonte [N] | Conteúdo |
 |---|---|
 | `packages/wos-core/storage/sqlite/migrations/0037_operational_profile.sql` | Perfil operacional do Outcome, modo/ciclo de conclusão do Objective e defaults de compatibilidade. |
-| `packages/wos-core/storage/sqlite/migrations/0038_credential_management.sql` | Metadados, versão de permissões/template, auditoria e binding necessário aos novos recibos. |
-| `packages/wos-core/storage/sqlite/migrations/0039_lease_credential_binding.sql` | Vínculo de lease legado com credencial e classificação de reservas sem atribuição demonstrável. |
-| `packages/wos-core/storage/sqlite/migrations/0040_task_deliveries.sql` | Entregas/decisões não assinadas, vínculo pendente da Task e índices de fila. |
-| `packages/wos-core/storage/sqlite/migrations/0041_objective_completion_authority.sql` | Delegação, proveniência de conclusão, ciclos e reconciliação durável especificada na E39. |
+| `packages/wos-core/storage/sqlite/migrations/0038_permission_compatibility.sql` (E17; PostgreSQL generated counterpart) | Frozen legacy-permission markers and idempotent migration receipts. |
+| `packages/wos-core/storage/sqlite/migrations/0039_credential_management.sql` (E19) | Credential metadata, materialized template permissions, and constrained issuance records. |
+| `packages/wos-core/storage/sqlite/migrations/0040_credential_lifecycle.sql` (E20) | Coalesced usage/revocation observations, credential revisions, and rotation provenance. |
+| `packages/wos-core/storage/sqlite/migrations/0041_lease_credential_binding.sql` (E23) | Credential binding for leases and classification of reservations without provable attribution. |
+| `packages/wos-core/storage/sqlite/migrations/0042_task_deliveries.sql` (E28) | Unsigned deliveries/decisions, Task pending-delivery link, and queue indexes. |
+| `packages/wos-core/storage/sqlite/migrations/0043_objective_completion_authority.sql` (E36) | Delegation, completion provenance, and Objective completion cycles. |
+| `packages/wos-core/storage/sqlite/migrations/0044_objective_completion_reconciliation.sql` (E39) | Durable deterministic reconciliation requests for bounded completion cascades. |
 
 Se número já estiver ocupado, renumerar novas migrações e registrar o mapa. Não editar o conteúdo/checksum de migração já aplicada. PostgreSQL é gerado a partir de SQLite e transformações explícitas em `tools/postgresgen/generate.py`; atualizar esse gerador para SQL diferente por engine, em vez de editar o derivado manualmente.
 
@@ -1325,7 +1328,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E15, E16
 
-**Arquivos:** [N] `packages/wos-core/application/permission_compatibility.go`; [A] `packages/wos-core/storage/sqlite/security.go`; [A] `packages/wos-core/storage/sqlite/signing_identity.go`; [A] `packages/wos-core/storage/memory/security.go`; [N] `packages/wos-core/storage/sqlite/permission_migration_test.go`; [N] `docs/implementation/operational-consolidation/permission-map.md`.
+**Arquivos:** [N] `packages/wos-core/application/permission_compatibility.go`; [N] `packages/wos-core/application/permission_compatibility_migration.go`; [N] `packages/wos-core/ports/permission_compatibility.go`; [N] `packages/wos-core/storage/memory/permission_compatibility.go`; [N] `packages/wos-core/storage/sqlite/permission_compatibility.go`; [N] `packages/wos-core/storage/sqlite/migrations/0038_permission_compatibility.sql` (PostgreSQL generated counterpart); [N] `packages/wos-core/storage/sqlite/permission_migration_test.go`; [N] `docs/implementation/operational-consolidation/permission-map.md`.
 
 **Implementação:**
 
@@ -1333,7 +1336,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 2. Canonicalizar grant e credential restriction antes da interseção; não elevar uma chave limitada.
 3. Exigir concessão explícita de emissão de chaves e delegação automática, sem expansão por novidade.
 4. Produzir dry-run por Principal/credencial e aplicar sob versão de Namespace/policy.
-5. Preservar recibos históricos e documentar o cutover de permissões.
+5. Preservar recibos históricos e documentar o cutover de permissões. E17 usa a migration `0038_permission_compatibility.sql`; ajustar as alocações posteriores no mapa da seção 12 para manter a ordem monotônica.
 
 **Testes/verificação:** Comparação de conjunto efetivo antes/depois, revogação durante migração, replay, empty permissions, novo comando não herdado.
 
@@ -1371,7 +1374,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E16, E18
 
-**Arquivos:** [A] `packages/wos-core/application/security.go`; [A] `packages/wos-core/application/security_admin.go`; [N] `packages/wos-core/application/credential_management.go`; [A] `packages/wos-core/ports/security.go`; [A] `packages/wos-core/ports/security_admin.go`; [A] `packages/wos-core/storage/sqlite/security_admin.go`; [N] `packages/wos-core/storage/sqlite/migrations/0038_credential_management.sql`.
+**Arquivos:** [A] `packages/wos-core/application/security.go`; [A] `packages/wos-core/application/security_admin.go`; [N] `packages/wos-core/application/credential_management.go`; [A] `packages/wos-core/ports/security.go`; [A] `packages/wos-core/ports/security_admin.go`; [A] `packages/wos-core/storage/sqlite/security_admin.go`; [N] `packages/wos-core/storage/sqlite/migrations/0039_credential_management.sql`.
 
 **Implementação:**
 
@@ -1380,6 +1383,8 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 3. Implementar nome/descrição/expiração e vínculo ao template com limites definidos.
 4. Não devolver novamente segredo em replay; definir recuperação de resultado incerto.
 5. Atualizar Memory, fonte SQLite, gerador PostgreSQL e endpoints existentes para usar a primitiva única.
+
+**Precisão de escopo:** a lista vazia de `AllowedOutcomeIDs` preserva o comportamento legado de permitir qualquer Outcome dentro das permissões congeladas. A lista vazia de `AllowedSigningKeyIDs` é fail-closed e não permite nenhuma signing key; o enrollment de uma chave pode vinculá-la explicitamente à política. Clientes e OpenAPI devem refletir essa diferença.
 
 **Testes/verificação:** Falha entre insert e policy faz rollback; token recém-emitido nunca nasce amplo; retries não revelam segredo; conflito de Namespace.
 
@@ -1394,7 +1399,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E19
 
-**Arquivos:** [A] `packages/wos-core/application/credential_management.go`; [A] `packages/wos-core/ports/security_admin.go`; [A] `packages/wos-core/storage/sqlite/security_admin.go`; [N] `packages/wos-core/application/credential_management_query.go`; [N] `packages/wos-core/storage/sqlite/credential_management_test.go`.
+**Arquivos:** [A] `packages/wos-core/application/credential_management.go`; [A] `packages/wos-core/ports/security_admin.go`; [A] `packages/wos-core/storage/sqlite/security_admin.go`; [N] `packages/wos-core/application/credential_management_query.go`; [N] `packages/wos-core/storage/sqlite/credential_management_test.go`; [N] `packages/wos-core/storage/sqlite/migrations/0040_credential_lifecycle.sql`.
 
 **Implementação:**
 
@@ -1465,7 +1470,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E22
 
-**Arquivos:** [N] `packages/wos-core/storage/sqlite/migrations/0039_lease_credential_binding.sql`; [A] `packages/wos-core/storage/sqlite/repositories.go`; [A] `packages/wos-core/storage/sqlite/codec.go`; [A] `packages/wos-core/storage/memory/repositories.go`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/lease_credential_migration_test.go`.
+**Arquivos:** [N] `packages/wos-core/storage/sqlite/migrations/0041_lease_credential_binding.sql`; [A] `packages/wos-core/storage/sqlite/repositories.go`; [A] `packages/wos-core/storage/sqlite/codec.go`; [A] `packages/wos-core/storage/memory/repositories.go`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/lease_credential_migration_test.go`.
 
 **Implementação:**
 
@@ -1582,7 +1587,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E27
 
-**Arquivos:** [N] `packages/wos-core/ports/task_delivery.go`; [N] `packages/wos-core/storage/sqlite/task_deliveries.go`; [N] `packages/wos-core/storage/memory/task_deliveries.go`; [N] `packages/wos-core/storage/sqlite/migrations/0040_task_deliveries.sql`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/task_deliveries_test.go`.
+**Arquivos:** [N] `packages/wos-core/ports/task_delivery.go`; [N] `packages/wos-core/storage/sqlite/task_deliveries.go`; [N] `packages/wos-core/storage/memory/task_deliveries.go`; [N] `packages/wos-core/storage/sqlite/migrations/0042_task_deliveries.sql`; [A] `tools/postgresgen/generate.py`; [N] `packages/wos-core/storage/sqlite/task_deliveries_test.go`.
 
 **Implementação:**
 
@@ -1768,7 +1773,7 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E19, E35
 
-**Arquivos:** [A] `packages/wos-core/domain/objective_completion.go`; [N] `packages/wos-core/ports/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/objective_completion.go`; [N] `packages/wos-core/storage/memory/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/migrations/0041_objective_completion_authority.sql`; [A] `packages/wos-core/application/operational_policy.go`.
+**Arquivos:** [A] `packages/wos-core/domain/objective_completion.go`; [N] `packages/wos-core/ports/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/objective_completion.go`; [N] `packages/wos-core/storage/memory/objective_completion.go`; [N] `packages/wos-core/storage/sqlite/migrations/0043_objective_completion_authority.sql`; [A] `packages/wos-core/application/operational_policy.go`.
 
 **Implementação:**
 
@@ -1837,13 +1842,13 @@ A evidência por etapa fica em `docs/implementation/operational-consolidation/ev
 
 **Depende de:** E37, E38
 
-**Arquivos:** [A] `packages/wos-core/application/objective_completion_effects.go`; [A] `packages/wos-core/storage/sqlite/objective_completion.go`; [A] `packages/wos-core/ports/objective_completion.go`; [A] `packages/wos-core/application/dependencies.go`; [A] `packages/wos-core/application/issues_blockers.go`; [N] `packages/wos-core/application/objective_completion_reconcile.go`; [N] `packages/wos-core/application/objective_completion_reconcile_test.go`.
+**Arquivos:** [A] `packages/wos-core/application/objective_completion_effects.go`; [A] `packages/wos-core/storage/sqlite/objective_completion.go`; [A] `packages/wos-core/ports/objective_completion.go`; [A] `packages/wos-core/application/dependencies.go`; [A] `packages/wos-core/application/issues_blockers.go`; [N] `packages/wos-core/application/objective_completion_reconcile.go`; [N] `packages/wos-core/application/objective_completion_reconcile_test.go`; [N] `packages/wos-core/storage/sqlite/migrations/0044_objective_completion_reconciliation.sql`.
 
 **Implementação:**
 
 1. Construir conjunto de afetados por owners/ancestors, dependentes hard, Blockers liberados e duplicatas canônicas.
 2. Adotar orçamento inicial explícito de 64 conclusões derivadas por transação; confirmar custo nos benchmarks, sem confundir com limite de Tasks lidas para o gate.
-3. Se exceder, persistir pedido coalescido de reconciliação por Outcome/revisão, na mesma transação, com notificação no mecanismo de eventos/outbox existente.
+3. Se exceder, persistir pedido coalescido de reconciliação por Outcome/revisão na migration `0044_objective_completion_reconciliation.sql`, dentro da mesma transação, com notificação no mecanismo de eventos/outbox existente.
 4. Implementar consumidor interno de reconciliação determinística no processo de serviço e operação run-once para host embedded; não executar agentes nem introduzir broker.
 5. Cada iteração recarrega fatos atuais e respeita política/credenciais administrativas; retry interno não altera a intenção original de um cliente.
 6. Expor pending/last_processed_revision e comando de recomputação auditado para recuperação; antes de habilitar automatic, composição deve demonstrar consumidor ou capacidade síncrona completa.

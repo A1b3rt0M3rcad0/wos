@@ -6,6 +6,8 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -50,6 +52,13 @@ func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
 	}
 	if _, err = security.Authenticate(context.Background(), secret); err != nil {
 		t.Fatal(err)
+	}
+	policy, err := store.CredentialPolicy(context.Background(), ns, issued.Credential.ID)
+	if err != nil || !reflect.DeepEqual(policy.PermittedOperations, []string{string(ports.PermissionStateRead)}) {
+		t.Fatalf("issued credential did not receive its frozen restrictive policy: %+v %v", policy, err)
+	}
+	if issued.CredentialMetadata == nil || issued.CredentialMetadata.Name != "Issued credential" || issued.CredentialMetadata.PolicyRevision != policy.Version {
+		t.Fatalf("issuance metadata missing or inconsistent: %+v", issued.CredentialMetadata)
 	}
 	replay, hidden, err := security.AdministrativeMutation(ctx, "admin-issue-key-0001", credential)
 	if err != nil || hidden != "" || !replay.TokenOmitted || replay.Credential.ID != issued.Credential.ID {
@@ -109,6 +118,124 @@ func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
 	if _, _, err = security.AdministrativeMutation(ctx, "admin-issue-key-0001", credential); securityErrorCode(err) != domain.ErrorCodeForbidden {
 		t.Fatalf("revoked administration replay: %v", err)
 	}
+}
+
+func TestCredentialIssueIsAtomicAndWorksWithIssueOnlyAuthority(t *testing.T) {
+	store := openTestStore(t, filepath.Join(t.TempDir(), "atomic-credential.db"))
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: &sqliteSequenceIDs{prefix: "0199d088", next: 1}}
+	ns := testID("0199d088-0000-7000-8000-000000000010")
+	adminToken := "atomic-credential-admin-token-at-least-32"
+	if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: "Atomic credential issuance"}, "admin", adminToken); err != nil {
+		t.Fatal(err)
+	}
+	adminIdentity, err := security.Authenticate(context.Background(), adminToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	adminCtx := application.WithIdentity(context.Background(), adminIdentity)
+	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "issuer", Permissions: []ports.Permission{ports.PermissionCredentialsIssue}}); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "target", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		t.Fatal(err)
+	}
+	issuerActor := domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "issuer"}
+	issuerCredential, issuerToken, err := security.IssueCredential(adminCtx, ns, "issuer", issuerActor, clock.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuerIdentity, err := security.Authenticate(context.Background(), issuerToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuerCtx := application.WithIdentity(context.Background(), issuerIdentity)
+	if err = security.Require(issuerCtx, ns, ports.PermissionCredentialsIssue); err != nil {
+		policy, _ := store.CredentialPolicy(context.Background(), ns, issuerCredential.ID)
+		t.Fatalf("issued issue-only credential cannot exercise its frozen permission: policy=%+v identity=%+v err=%v", policy, issuerIdentity, err)
+	}
+	if _, err = security.AdministrativeSnapshot(issuerCtx, ns); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatalf("credentials:issue-only Principal unexpectedly read administration: %v", err)
+	}
+	// Inject a failure after credential and policy inserts. The transaction must
+	// leave no credential, policy, metadata, namespace revision, audit, or receipt.
+	if _, err = store.db.Exec(`CREATE TRIGGER reject_credential_metadata BEFORE INSERT ON credential_metadata BEGIN SELECT RAISE(ABORT, 'injected metadata failure'); END`); err != nil {
+		t.Fatal(err)
+	}
+	issue := ports.SecurityAdminCommand{NamespaceID: ns, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: "target", Actor: issuerActor, ExpiresAt: clock.Now().Add(time.Hour)}}
+	beforeVersion, err := store.ReadSecurityAdminVersion(context.Background(), ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issue.ExpectedVersion = beforeVersion
+	if _, _, err = security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue); err == nil {
+		t.Fatal("injected metadata failure unexpectedly committed")
+	}
+	assertCounts := func(expectedCredentials, expectedPolicies, expectedMetadata, expectedAudit, expectedReceipts int) {
+		t.Helper()
+		var credentials, policies, metadata, audit, receipts int
+		queries := []struct {
+			query string
+			dst   *int
+		}{
+			{`SELECT count(*) FROM credentials WHERE namespace_id=? AND principal_id='target'`, &credentials},
+			{`SELECT count(*) FROM credential_policies WHERE namespace_id=? AND principal_id='target'`, &policies},
+			{`SELECT count(*) FROM credential_metadata WHERE namespace_id=?`, &metadata},
+			{`SELECT count(*) FROM security_audit WHERE namespace_id=? AND operation='issue_credential'`, &audit},
+			{`SELECT count(*) FROM security_admin_results WHERE namespace_id=? AND idempotency_key='atomic-credential-retry-0001'`, &receipts},
+		}
+		for _, q := range queries {
+			if err := store.db.QueryRow(q.query, ns.String()).Scan(q.dst); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if credentials != expectedCredentials || policies != expectedPolicies || metadata != expectedMetadata || audit != expectedAudit || receipts != expectedReceipts {
+			t.Fatalf("atomic counts credentials/policies/metadata/audit/receipts=%d/%d/%d/%d/%d, want %d/%d/%d/%d/%d", credentials, policies, metadata, audit, receipts, expectedCredentials, expectedPolicies, expectedMetadata, expectedAudit, expectedReceipts)
+		}
+	}
+	assertCounts(0, 0, 2, 1, 0) // the bootstrap and issuer metadata already exist
+	afterVersion, err := store.ReadSecurityAdminVersion(context.Background(), ns)
+	if err != nil || afterVersion != beforeVersion {
+		t.Fatalf("failed issuance changed Namespace version: %d => %d (%v)", beforeVersion, afterVersion, err)
+	}
+	if _, err = store.db.Exec(`DROP TRIGGER reject_credential_metadata`); err != nil {
+		t.Fatal(err)
+	}
+	result, secret, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || secret == "" || result.Credential == nil || result.CredentialMetadata == nil {
+		t.Fatalf("retry after rollback: %+v %v", result, err)
+	}
+	assertCounts(1, 1, 3, 2, 1)
+	replay, hidden, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || hidden != "" || !replay.IdempotentReplay || !replay.TokenOmitted {
+		t.Fatalf("replay leaked token or failed: %+v %v", replay, err)
+	}
+	assertCounts(1, 1, 3, 2, 1)
+	var receipt string
+	if err = store.db.QueryRow(`SELECT result_json FROM security_admin_results WHERE namespace_id=? AND idempotency_key='atomic-credential-retry-0001'`, ns.String()).Scan(&receipt); err != nil {
+		t.Fatal(err)
+	}
+	var audit string
+	if err = store.db.QueryRow(`SELECT target FROM security_audit WHERE namespace_id=? AND operation='issue_credential' ORDER BY namespace_version DESC LIMIT 1`, ns.String()).Scan(&audit); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(receipt, secret) || strings.Contains(receipt, "digest") || strings.Contains(audit, secret) {
+		t.Fatal("bearer token or credential digest entered durable receipt/audit")
+	}
+	if _, err = security.Authenticate(context.Background(), secret); err != nil {
+		t.Fatalf("issued retry token did not authenticate: %v", err)
+	}
+	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "target", Permissions: []ports.Permission{}}); err != nil {
+		t.Fatal(err)
+	}
+	replayAfterGrantChange, hiddenAfterGrantChange, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || hiddenAfterGrantChange != "" || !replayAfterGrantChange.IdempotentReplay || replayAfterGrantChange.Credential == nil || replayAfterGrantChange.Credential.ID != result.Credential.ID {
+		t.Fatalf("receipt replay failed after target grant change: %+v %v", replayAfterGrantChange, err)
+	}
+	if _, directToken, directErr := security.IssueCredential(issuerCtx, ns, "target", issuerActor, clock.Now().Add(time.Hour)); directErr != nil || directToken == "" {
+		t.Fatalf("credentials:issue-only Principal could not use the legacy atomic issuance entry point: %v", directErr)
+	}
+	_ = issuerCredential
 }
 
 func securityErrorCode(err error) domain.ErrorCode { code, _ := domain.ErrorCodeOf(err); return code }

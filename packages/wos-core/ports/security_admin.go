@@ -8,14 +8,23 @@ import (
 
 // Security administration coordinates on the Namespace, rather than an Outcome.
 type SecurityAdminCommand struct {
-	NamespaceName   string          `json:"namespace_name,omitempty"`
-	NewNamespace    *Namespace      `json:"-"`
-	NamespaceID     domain.ID       `json:"namespace_id"`
-	ExpectedVersion domain.Version  `json:"expected_namespace_version"`
-	Operation       string          `json:"operation"`
-	Grant           *NamespaceGrant `json:"grant,omitempty"`
-	Credential      *Credential     `json:"credential,omitempty"`
-	CredentialID    domain.ID       `json:"credential_id,omitempty"`
+	NamespaceName         string                   `json:"namespace_name,omitempty"`
+	NewNamespace          *Namespace               `json:"-"`
+	NamespaceID           domain.ID                `json:"namespace_id"`
+	ExpectedVersion       domain.Version           `json:"expected_namespace_version"`
+	Operation             string                   `json:"operation"`
+	Grant                 *NamespaceGrant          `json:"grant,omitempty"`
+	Credential            *Credential              `json:"credential,omitempty"`
+	CredentialPolicy      *domain.CredentialPolicy `json:"-"`
+	CredentialMetadata    *CredentialMetadata      `json:"-"`
+	CredentialName        string                   `json:"credential_name,omitempty"`
+	CredentialDescription string                   `json:"credential_description,omitempty"`
+	RoleTemplateID        PermissionTemplateID     `json:"role_template_id,omitempty"`
+	RoleTemplateVersion   uint32                   `json:"role_template_version,omitempty"`
+	CredentialPermissions []Permission             `json:"permissions,omitempty"`
+	AllowedOutcomeIDs     []domain.ID              `json:"allowed_outcome_ids,omitempty"`
+	AllowedSigningKeyIDs  []domain.ID              `json:"allowed_signing_key_ids,omitempty"`
+	CredentialID          domain.ID                `json:"credential_id,omitempty"`
 }
 
 // SecurityAdminPermission binds each administrative operation to its specific
@@ -45,15 +54,26 @@ type SecurityAdminRequest struct {
 	Now              time.Time
 }
 type SecurityAdminResult struct {
-	CreatedNamespace *Namespace     `json:"created_namespace,omitempty"`
-	NamespaceVersion domain.Version `json:"namespace_version"`
-	Credential       *Credential    `json:"credential,omitempty"`
-	IdempotentReplay bool           `json:"idempotent_replay"`
-	TokenOmitted     bool           `json:"token_omitted,omitempty"`
+	CreatedNamespace   *Namespace          `json:"created_namespace,omitempty"`
+	NamespaceVersion   domain.Version      `json:"namespace_version"`
+	Credential         *Credential         `json:"credential,omitempty"`
+	CredentialMetadata *CredentialMetadata `json:"credential_metadata,omitempty"`
+	IdempotentReplay   bool                `json:"idempotent_replay"`
+	TokenOmitted       bool                `json:"token_omitted,omitempty"`
 }
 type SecurityAdministrationStore interface {
 	ApplySecurityAdmin(context.Context, SecurityAdminRequest) (SecurityAdminResult, error)
+	// ReadSecurityAdminReceipt returns an authorized replay before operation
+	// preparation. This lets retries recover safe metadata even when mutable
+	// target state (such as a recipient's grant) changed after the first commit.
+	ReadSecurityAdminReceipt(context.Context, SecurityAdminRequest) (SecurityAdminResult, bool, error)
 	ReadSecurityAdmin(context.Context, domain.ID) (SecurityAdminSnapshot, error)
+}
+
+// SecurityAdminVersionReader supports legacy application methods that need
+// only the Namespace CAS head; it avoids reading grants, credentials, or audit.
+type SecurityAdminVersionReader interface {
+	ReadSecurityAdminVersion(context.Context, domain.ID) (domain.Version, error)
 }
 type SecurityAudit struct {
 	NamespaceVersion domain.Version  `json:"namespace_version"`
@@ -64,10 +84,11 @@ type SecurityAudit struct {
 	RecordedAt       time.Time       `json:"recorded_at"`
 }
 type SecurityAdminSnapshot struct {
-	Namespace        Namespace        `json:"namespace"`
-	NamespaceVersion domain.Version   `json:"namespace_version"`
-	Grants           []NamespaceGrant `json:"grants"`
-	Credentials      []Credential     `json:"credentials"`
-	Audit            []SecurityAudit  `json:"audit"`
-	Truncated        bool             `json:"truncated"`
+	Namespace          Namespace            `json:"namespace"`
+	NamespaceVersion   domain.Version       `json:"namespace_version"`
+	Grants             []NamespaceGrant     `json:"grants"`
+	Credentials        []Credential         `json:"credentials"`
+	CredentialMetadata []CredentialMetadata `json:"credential_metadata,omitempty"`
+	Audit              []SecurityAudit      `json:"audit"`
+	Truncated          bool                 `json:"truncated"`
 }
