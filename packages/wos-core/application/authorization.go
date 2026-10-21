@@ -81,6 +81,8 @@ func commandPermission(name string) ports.Permission {
 		return ports.PermissionRecordsWrite
 	case "CreatePlanItems":
 		return ports.PermissionPlanningWrite
+	case "ConfigureOutcomeOperationalProfile":
+		return ports.PermissionNamespaceAdmin
 	case "ResolveSignedReturnIntent":
 		return ports.PermissionStateRead
 	case "InterveneSignedReviewCase", "SetNamespaceWorkProtocol", "ReconcileExpiredWorkContracts":

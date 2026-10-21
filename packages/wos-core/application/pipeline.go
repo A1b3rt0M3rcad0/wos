@@ -754,6 +754,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"outcome.archived"}, nil
 	case "UnarchiveOutcome":
 		return []string{"outcome.unarchived"}, nil
+	case "ConfigureOutcomeOperationalProfile":
+		return []string{"outcome.operational_profile_configured"}, nil
 	case "SetOutcomeOwners", "UpdateOutcome":
 		return []string{"outcome.updated"}, nil
 	case "CreateObjective":
