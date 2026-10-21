@@ -104,6 +104,43 @@ func credentialIDPointer(id domain.ID) *domain.ID {
 	return &value
 }
 
+func credentialBoundProtectedReceiptCommand(commandName string) bool {
+	switch commandName {
+	case "ClaimWorkItem", "RenewWorkItemLease", "ReclaimWorkItem", "ReleaseWorkItem", "CompleteWorkItem",
+		"AcquireWorkContract", "AcquireNextWorkContract", "RenewWorkContract", "ResumeWorkContract",
+		"SyncWorkContract", "SubmitWorkResult", "FinalizeWorkContract", "RevokeWorkContract":
+		return true
+	default:
+		return false
+	}
+}
+
+// protectedReceiptCredentialID stores the canonical root credential. For
+// RevokeWorkContract this is the authorized administrator/issuer root, not the
+// contract holder; receipt validation never compares the two roles.
+func protectedReceiptCredentialID(commandName string, authority *leaseCredentialAuthority) domain.ID {
+	if !credentialBoundProtectedReceiptCommand(commandName) || authority == nil {
+		return domain.ID("")
+	}
+	return authority.holderID
+}
+
+func validateProtectedReceiptAuthority(result domain.StoredCommandResult, authority *leaseCredentialAuthority, requireIdentity bool) error {
+	if result.AuthorityCredentialID.IsZero() {
+		// Old receipts and explicitly trusted embedded callers have no credential
+		// binding. Keep embedded compatibility, but never disclose an unbound
+		// protected receipt to an authenticated request.
+		if authority == nil && !requireIdentity {
+			return nil
+		}
+		return domain.NewError(domain.ErrorCodeIdempotencyConflict, "protected command receipt has no provable credential authority")
+	}
+	if authority == nil || authority.holderID != result.AuthorityCredentialID {
+		return domain.NewError(domain.ErrorCodeIdempotencyConflict, "protected command receipt belongs to another credential")
+	}
+	return nil
+}
+
 func leaseCredentialAuthorityDenied(message string) error {
 	return domain.NewDetailedError(domain.ErrorCodeForbidden, message, domain.ErrorDetails{ReasonCode: "lease_credential_authority_unavailable"})
 }

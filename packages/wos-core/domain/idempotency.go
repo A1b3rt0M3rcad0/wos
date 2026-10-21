@@ -46,9 +46,10 @@ func ValidateIdempotencyKey(value string) error {
 }
 
 type StoredCommandResult struct {
-	CommandID       ID              `json:"command_id"`
-	OutcomeRevision OutcomeRevision `json:"outcome_revision"`
-	ResponseJSON    json.RawMessage `json:"response_json"`
+	CommandID             ID              `json:"command_id"`
+	OutcomeRevision       OutcomeRevision `json:"outcome_revision"`
+	ResponseJSON          json.RawMessage `json:"response_json"`
+	AuthorityCredentialID ID              `json:"authority_credential_id,omitempty"`
 }
 
 func (r StoredCommandResult) Validate() error {
@@ -60,6 +61,11 @@ func (r StoredCommandResult) Validate() error {
 	}
 	if len(r.ResponseJSON) == 0 || !json.Valid(r.ResponseJSON) {
 		return NewError(ErrorCodeIdempotencyState, "stored response must be valid JSON")
+	}
+	if !r.AuthorityCredentialID.IsZero() {
+		if err := r.AuthorityCredentialID.Validate(); err != nil {
+			return WrapError(ErrorCodeIdempotencyState, "stored authority credential is invalid", err)
+		}
 	}
 	return nil
 }

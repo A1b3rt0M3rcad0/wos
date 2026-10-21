@@ -105,6 +105,17 @@ func transactCommand[T any, C any](
 	if err := service.authorizeComposedCommandPermissions(ctx, uow, commandContext, meta.Scope, command, meta.Fingerprint); err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
+	var receiptAuthority *leaseCredentialAuthority
+	if commandContext.IdempotencyKey != "" && credentialBoundProtectedReceiptCommand(meta.Name) {
+		now, e := service.transactionTime(ctx, uow)
+		if e != nil {
+			return MutationResult[T]{Value: zero}, e
+		}
+		receiptAuthority, err = service.resolveLeaseCredentialAuthority(ctx, uow, commandContext, meta.Scope, nil, meta.Name, now)
+		if err != nil {
+			return MutationResult[T]{Value: zero}, err
+		}
+	}
 	var signedIdentity Identity
 	if signedCommand(meta.Name) {
 		selectedKey := domain.ID("")
@@ -213,6 +224,11 @@ func transactCommand[T any, C any](
 			return MutationResult[T]{Value: zero}, err
 		}
 		if reservation.IsReplay() {
+			if credentialBoundProtectedReceiptCommand(meta.Name) {
+				if err := validateProtectedReceiptAuthority(*reservation.Replay, receiptAuthority, service.requireIdentity); err != nil {
+					return MutationResult[T]{Value: zero}, err
+				}
+			}
 			var replay MutationResult[T]
 			if err := json.Unmarshal(reservation.Replay.ResponseJSON, &replay); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "stored command result cannot be decoded", err)
@@ -281,9 +297,10 @@ func transactCommand[T any, C any](
 			return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "command result cannot be serialized", err)
 		}
 		if err := uow.Idempotency().Complete(ctx, reservation, domain.StoredCommandResult{
-			CommandID:       commandContext.CommandID,
-			OutcomeRevision: revision,
-			ResponseJSON:    response,
+			CommandID:             commandContext.CommandID,
+			OutcomeRevision:       revision,
+			ResponseJSON:          response,
+			AuthorityCredentialID: protectedReceiptCredentialID(meta.Name, receiptAuthority),
 		}); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
