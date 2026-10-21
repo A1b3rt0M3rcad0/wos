@@ -3,7 +3,7 @@
   "candidate_product": "unreleased operational workspace candidate after 1.1.0",
   "scope": "Exact public command/read and CLI YAML JSON schemas; only product metadata version is normalized. Semantic authority requires real tests.",
   "files": {
-    "packages/wos-api/commands.openapi.json": "9cc1b9622f3131eb8e9474366790660185b6b06c29848947714aeef584dba3ba",
+    "packages/wos-api/commands.openapi.json": "ff70a6ad2029ee71490a7755a7aa04d29cf555d6bab5c47b849dde2c92d7e3c5",
     "packages/wos-cli/schemas/checkpoint.schema.json": "55d197b792573b7b58d4f5e3975fc110bbfececbe76cd8f440030b22fb47a127",
     "packages/wos-cli/schemas/config.schema.json": "66920721a33a7ecbc7cf8aa4267a30096b764c80db13bf2fb90bfc12009113ec",
     "packages/wos-cli/schemas/contract-v2.schema.json": "c9403076e9721e25b0593ad454b5a237d19c9c17b341ecd02260e109ffb23303",

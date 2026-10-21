@@ -125,3 +125,28 @@ gate remains enabled; no test or historical receipt is rewritten to hide drift.
 semantic scope; the [qualification](../ux/contextual-kanban/qualification.md)
 separates actual adapter tests, presentation checks and pending manual evidence.
 No release is prepared or published by this review.
+
+## Required Issue ownership — 2026-10-21
+
+The hierarchy implementation adds one intentional, breaking input requirement
+relative to the published v0.4.2 contract: `objective_id` is now required by
+`create_issue` and `report_issue_with_blocker`. Each Issue must belong to an
+Objective so workspace reads, blocker impact and relationship traversal share a
+canonical owner. The affected-resource list remains independent of that owner.
+
+The released v0.4.2 OpenAPI snapshot and its fingerprint are unchanged. The
+current normalized candidate fingerprint is
+`ff70a6ad2029ee71490a7755a7aa04d29cf555d6bab5c47b849dde2c92d7e3c5`, refreshed
+after reviewing the generated diff. The permission-policy `permitted_operations`
+schema now advertises the catalog's explicit `maxItems: 128` bound. The
+compatibility test permits exactly that bound and the two newly required Issue
+owner fields; it continues to reject all other removals, changed constraints
+and unreviewed new required inputs. CLI schemas and signed wire formats are
+unchanged. This is an explicit source-candidate compatibility break, not a
+promise that v0.4.2 clients can continue creating unowned Issues.
+
+The version and release decision remain pending. The read-only release planner
+currently calculates `1.2.0` from queued change manifests, which does not
+reflect this breaking request change. Release remains blocked until the owner
+chooses a compatible adapter or approves a semver-correct release plan. This
+review does not change `VERSION`, prepare a release or publish an artifact.

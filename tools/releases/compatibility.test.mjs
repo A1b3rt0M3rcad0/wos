@@ -36,26 +36,28 @@ test('frozen public wire schemas reject unreviewed drift while allowing product 
 
 // Reject a removed old field/enum or new required input even after an explicit
 // candidate fingerprint review. Byte/shape limits remain identical on old nodes.
-function additiveSchema(before,after,where){
+function additiveSchema(before,after,where,reviewedRequiredAdds=new Set(),reviewedConstraintValues=new Map()){
  assert.ok(after,where+' was removed');
  for(const [key,value] of Object.entries(before)){
   if(key==='properties'){
-   for(const [name,child] of Object.entries(value))additiveSchema(child,after.properties?.[name],where+'.'+name);
+   for(const [name,child] of Object.entries(value))additiveSchema(child,after.properties?.[name],where+'.'+name,reviewedRequiredAdds,reviewedConstraintValues);
   }else if(key==='required'){
-   for(const name of after.required??[])assert.ok(value.includes(name),where+' newly requires '+name);
+   for(const name of after.required??[])assert.ok(value.includes(name)||reviewedRequiredAdds.has(`${where}.${name}`),where+' newly requires '+name);
   }else if(key==='enum'){
    for(const item of value)assert.ok(after.enum?.includes(item),where+' removed enum '+item);
   }else if(['anyOf','oneOf','allOf'].includes(key)){
    assert.equal(after[key]?.length,value.length,where+'.'+key);
-   value.forEach((child,index)=>additiveSchema(child,after[key][index],where+'.'+key+'['+index+']'));
+   value.forEach((child,index)=>additiveSchema(child,after[key][index],where+'.'+key+'['+index+']',reviewedRequiredAdds,reviewedConstraintValues));
   }else if(key==='items'&&typeof value==='object'){
-   additiveSchema(value,after.items,where+'.items');
+   additiveSchema(value,after.items,where+'.items',reviewedRequiredAdds,reviewedConstraintValues);
+  }else if(key==='maxItems'&&reviewedConstraintValues.has(`${where}.maxItems`)){
+   assert.equal(after.maxItems,reviewedConstraintValues.get(`${where}.maxItems`),where+'.maxItems differs from reviewed value');
   }else assert.deepEqual(after[key],value,where+'.'+key+' changed existing constraint');
  }
  if(!before.required)assert.equal(after.required?.length??0,0,where+' acquired required inputs');
- for(const key of Object.keys(after))assert.ok(key in before||key==='required'&&(after.required?.length??0)===0,where+' added an existing-node constraint '+key);
+ for(const key of Object.keys(after))assert.ok(key in before||key==='required'&&(after.required?.length??0)===0||key==='maxItems'&&reviewedConstraintValues.get(`${where}.maxItems`)===after.maxItems,where+' added an existing-node constraint '+key);
 }
-test('released v0.4.2 requests and workspace schemas retain old accepted shapes',async()=>{
+test('released v0.4.2 baseline stays immutable and candidate breaking inputs are exact and reviewed',async()=>{
  const directory=path.join(root,'docs/stable/contracts/v0.4.2');
  const historicalBytes=await readFile(path.join(directory,'public-contract.json'));
  assert.equal(digest(historicalBytes),'661320a06ff5d510bfabe0973bdc8ee4a9b1ceddf2b81be5ef62b569518a5266');
@@ -69,7 +71,18 @@ test('released v0.4.2 requests and workspace schemas retain old accepted shapes'
  const bytes=await readFile(path.join(directory,'commands.openapi.json'));
  assert.equal(digest(normalize(filename,bytes)),historical.files[filename]);
  const before=JSON.parse(bytes),after=JSON.parse(await readFile(path.join(root,filename)));
- for(const [name,schema] of Object.entries(before.components.schemas))additiveSchema(schema,after.components.schemas[name],name);
+ // The operational hierarchy plan makes Issue ownership mandatory. These are
+ // the only reviewed request-shape breaks relative to published v0.4.2; the
+ // immutable released snapshot remains untouched and every other old shape is
+ // checked with the additive compatibility guard below.
+ const reviewedRequiredAdds=new Set([
+  'Catalog_create_issue.objective_id',
+  'Catalog_report_issue_with_blocker.objective_id',
+ ]);
+ const reviewedConstraintValues=new Map([
+  ['SigningSecurityIntentV2.credential_policy.permitted_operations.maxItems',128],
+ ]);
+ for(const [name,schema] of Object.entries(before.components.schemas))additiveSchema(schema,after.components.schemas[name],name,reviewedRequiredAdds,reviewedConstraintValues);
  for(const [route,operations] of Object.entries(before.paths)){
   assert.ok(after.paths[route],route+' removed');
   if(route==='/api/v1/security/signing-identity'){
