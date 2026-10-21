@@ -33,21 +33,40 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 			t.Fatalf("%s:%d: %v", file, line, e)
 		}
 	}
-	own, e := operator.SigningIdentity(ctx, nil)
+	adminOperator := operator
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionAuditRead, ports.PermissionNamespaceAdmin, ports.PermissionPermissionsManage, ports.PermissionPolicyManage, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
+	operatorPrincipal := "cutover-operator"
+	operatorActor := d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: operatorPrincipal}
+	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: operatorPrincipal, Permissions: permissions}))
+	operatorCredential, operatorToken, e := security.IssueCredential(adminCtx, scope.NamespaceID, operatorPrincipal, operatorActor, time.Now().UTC().Add(time.Hour))
 	must(e)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionSigningKeyEnroll, ports.PermissionActorDelegate, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionPlanningWrite, ports.PermissionAssessmentWrite, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractAcquire}
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, Permissions: permissions}))
-	own, e = operator.SigningIdentity(ctx, nil)
+	adminIdentity, e := adminOperator.SigningIdentity(ctx, nil)
 	must(e)
-	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
+	policy := d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: operatorCredential.ID, PrincipalID: operatorPrincipal, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, permission := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(permission))
 	}
-	configured, e := operator.SigningMutation(ctx, "cutover-cli-admin-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: own.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := adminOperator.SigningMutation(ctx, "cutover-cli-operator-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
+	if configured.CredentialPolicy == nil {
+		t.Fatal("target operator policy was not persisted before compatibility migration")
+	}
+	migrated, e := security.ApplyPermissionMigration(adminCtx, "cutover-cli-operator-permission-migration", a.PermissionMigrationApplyRequest{
+		NamespaceID: scope.NamespaceID, PrincipalID: operatorPrincipal, CredentialID: operatorCredential.ID,
+		ExpectedNamespaceVersion: configured.NamespaceVersion, ExpectedPolicyVersion: configured.CredentialPolicy.Version,
+		PolicyVersionPresent: true, Reason: "Migrate the cutover operator to the reviewed permission map",
+	})
+	must(e)
+	operator, e = sdk.New(adminOperator.BaseURL, operatorToken, adminOperator.HTTP)
+	must(e)
+	own, e := operator.SigningIdentity(ctx, nil)
+	must(e)
+	if own.PrincipalID != operatorPrincipal || own.CredentialID != operatorCredential.ID || own.NamespaceVersion != migrated.NamespaceVersion {
+		t.Fatal("CLI operator identity was not the separately migrated target")
+	}
 	public, private, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
-	enrolled, e := operator.SigningMutation(ctx, "cutover-cli-admin-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
+	enrolled, e := operator.SigningMutation(ctx, "cutover-cli-admin-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: own.NamespaceVersion, Operation: "create_enrollment", CredentialID: own.CredentialID, PrincipalID: own.PrincipalID, ExpectedFingerprint: signing.Digest(public)})
 	must(e)
 	challenge := enrolled.Enrollment
 	proof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: scope.NamespaceID.String(), PrincipalID: own.PrincipalID, SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(public), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), private)
@@ -91,7 +110,7 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}))
 	defer endpoint.Close()
 	root := t.TempDir()
-	t.Setenv("WOS_CLI_CUTOVER_TOKEN", adminToken)
+	t.Setenv("WOS_CLI_CUTOVER_TOKEN", operatorToken)
 	t.Setenv("WOS_CLI_CUTOVER_KEY", base64.StdEncoding.EncodeToString(private.Seed()))
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	run := func(expected int, args ...string) cli.Output {
@@ -112,9 +131,9 @@ func signedCLICutoverJourney(t *testing.T, handler http.Handler, security *a.Sec
 	must(e)
 	defer w.Close()
 	profile := cli.ProfileV2{SchemaVersion: 2, Kind: "WOSProfile", Name: "operator", Binding: cli.ProfileBindingV2{ServerID: server.ID, ServerOrigin: endpoint.URL, NamespaceID: scope.NamespaceID, PrincipalID: own.PrincipalID, CredentialID: own.CredentialID, IssuerKeys: []cli.ProfileIssuerV2{{KeyID: server.IssuerKeyID, PublicKey: server.PublicKey, Fingerprint: server.Fingerprint}}}, Authentication: cli.ProfileAuthenticationV2{CredentialRef: "env:WOS_CLI_CUTOVER_TOKEN"}, Signing: cli.ProfileSigningV2{KeyID: registered.Key.ID, PrivateKeyRef: "env:WOS_CLI_CUTOVER_KEY", PublicKeyFingerprint: registered.Key.Fingerprint}, Lease: cli.LeaseConfig{RequestedTTLSeconds: 300}, Output: cli.OutputConfig{DefaultFormat: "json"}, Local: cli.ProfileLocalV2{SchemaVersion: 1, PendingOperations: []cli.PendingOperationV2{}}}
-	must(profile.SealBinding([]byte(adminToken)))
+	must(profile.SealBinding([]byte(operatorToken)))
 	must(w.CreateV2(".wos/profiles/operator/profile.yaml", profile))
-	signedCLILegacyMigrationJourney(t, root, endpoint.URL, scope, adminToken)
+	signedCLILegacyMigrationJourney(t, root, endpoint.URL, scope, operatorToken)
 	phase, e := operator.GetNamespaceWorkProtocol(ctx, scope.NamespaceID)
 	must(e)
 	version := func(v d.Version) string { return strconv.FormatUint(uint64(v), 10) }

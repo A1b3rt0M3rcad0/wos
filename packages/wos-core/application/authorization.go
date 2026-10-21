@@ -36,11 +36,20 @@ func NewAuthorizedService(tx ports.TransactionManager, clock ports.Clock, ids po
 	return s, nil
 }
 func (s *Service) Authorize(ctx context.Context, namespace domain.ID, permission ports.Permission) error {
+	return s.authorizePermission(ctx, ports.AuthorizationRequest{NamespaceID: namespace, PrincipalID: identityPrincipal(ctx), Permission: permission})
+}
+
+func identityPrincipal(ctx context.Context) string {
+	id, _ := IdentityFromContext(ctx)
+	return id.PrincipalID
+}
+
+func (s *Service) authorizePermission(ctx context.Context, request ports.AuthorizationRequest) error {
 	id, ok := IdentityFromContext(ctx)
-	if !ok || id.PrincipalID == "" {
+	if !ok || id.PrincipalID == "" || request.PrincipalID != id.PrincipalID {
 		return domain.NewError(domain.ErrorCodeForbidden, "authenticated identity is required")
 	}
-	return s.authorizer.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: namespace, PrincipalID: id.PrincipalID, Permission: permission})
+	return s.authorizer.Authorize(ctx, request)
 }
 func (s *Service) authorizeRead(ctx context.Context, namespace domain.ID) error {
 	if err := s.authorizeNamespaceMetadataRead(ctx, namespace); err != nil {
@@ -78,7 +87,10 @@ func (s *Service) authorizeMutation(ctx context.Context, cc domain.CommandContex
 	if !ok || id.PrincipalID != cc.PrincipalID || id.Actor != cc.Actor {
 		return domain.NewError(domain.ErrorCodeForbidden, "command identity does not match authenticated identity")
 	}
-	return s.Authorize(ctx, meta.NamespaceID, requirement.PrimaryPermission)
+	return s.authorizePermission(ctx, ports.AuthorizationRequest{
+		NamespaceID: meta.NamespaceID, PrincipalID: id.PrincipalID, Permission: requirement.PrimaryPermission,
+		LegacyPermission: legacyPermissionForCommand(meta.Name, requirement.PrimaryPermission),
+	})
 }
 func commandPermission(name string) ports.Permission {
 	requirement, ok := commandAuthorizationRequirement(name)

@@ -67,11 +67,17 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.AppendWorkActivityCommand](c, "append_work_activity", func(ctx context.Context, cc domain.CommandContext, cmd application.AppendWorkActivityCommand) (any, error) {
 		return service.AppendWorkActivity(ctx, cc, cmd)
 	})
+	register[application.ApplyDependencyChangesCommand](c, "apply_dependency_changes", func(ctx context.Context, cc domain.CommandContext, cmd application.ApplyDependencyChangesCommand) (any, error) {
+		return service.ApplyDependencyChanges(ctx, cc, cmd)
+	})
 	register[application.ArchiveOutcomeCommand](c, "archive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.ArchiveOutcomeCommand) (any, error) {
 		return service.ArchiveOutcome(ctx, cc, cmd)
 	})
 	register[application.ArchiveRoadmapCommand](c, "archive_roadmap", func(ctx context.Context, cc domain.CommandContext, cmd application.ArchiveRoadmapCommand) (any, error) {
 		return service.ArchiveRoadmap(ctx, cc, cmd)
+	})
+	register[application.AssignIssueCommand](c, "assign_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.AssignIssueCommand) (any, error) {
+		return service.AssignIssue(ctx, cc, cmd)
 	})
 	register[application.AttestCriterionCommand](c, "attest_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.AttestCriterionCommand) (any, error) {
 		return service.AttestCriterion(ctx, cc, cmd)
@@ -90,6 +96,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.CompleteWorkItemCommand](c, "complete_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.CompleteWorkItemCommand) (any, error) {
 		return service.CompleteWorkItem(ctx, cc, cmd)
+	})
+	register[application.ConfigureOutcomeOperationalProfileCommand](c, "configure_outcome_operational_profile", func(ctx context.Context, cc domain.CommandContext, cmd application.ConfigureOutcomeOperationalProfileCommand) (any, error) {
+		return service.ConfigureOutcomeOperationalProfile(ctx, cc, cmd)
 	})
 	register[application.ConfigureTriggerCommand](c, "configure_trigger", func(ctx context.Context, cc domain.CommandContext, cmd application.ConfigureTriggerCommand) (any, error) {
 		return service.ConfigureTrigger(ctx, cc, cmd)
@@ -187,6 +196,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.RejectDecisionCommand](c, "reject_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.RejectDecisionCommand) (any, error) {
 		return service.RejectDecision(ctx, cc, cmd)
 	})
+	register[application.RelateIssueWorkItemCommand](c, "relate_issue_to_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.RelateIssueWorkItemCommand) (any, error) {
+		return service.RelateIssueToWorkItem(ctx, cc, cmd)
+	})
 	register[application.ReleaseWorkItemCommand](c, "release_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReleaseWorkItemCommand) (any, error) {
 		return service.ReleaseWorkItem(ctx, cc, cmd)
 	})
@@ -195,6 +207,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.RemoveExternalReferenceCommand](c, "remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
 		return service.RemoveExternalReference(ctx, cc, cmd)
+	})
+	register[application.RemoveIssueWorkItemRelationCommand](c, "remove_issue_work_item_relation", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveIssueWorkItemRelationCommand) (any, error) {
+		return service.RemoveIssueWorkItemRelation(ctx, cc, cmd)
 	})
 	register[application.RenewSignedReviewContractCommand](c, "renew_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewSignedReviewContractCommand) (any, error) {
 		return service.RenewSignedReviewContract(ctx, cc, cmd)
@@ -231,6 +246,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.ReportIssueWithBlockerCommand](c, "report_issue_with_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockerCommand) (any, error) {
 		return service.ReportIssueWithBlocker(ctx, cc, cmd)
+	})
+	register[application.ReportIssueWithBlockersCommand](c, "report_issue_with_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockersCommand) (any, error) {
+		return service.ReportIssueWithBlockers(ctx, cc, cmd)
 	})
 	register[application.ResolveBlockerCommand](c, "resolve_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveBlockerCommand) (any, error) {
 		return service.ResolveBlocker(ctx, cc, cmd)
@@ -304,6 +322,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	register[application.SetWorkItemObjectiveCommand](c, "set_work_item_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.SetWorkItemObjectiveCommand) (any, error) {
 		return service.SetWorkItemObjective(ctx, cc, cmd)
 	})
+	register[application.StartIssueInvestigationCommand](c, "start_issue_investigation", func(ctx context.Context, cc domain.CommandContext, cmd application.StartIssueInvestigationCommand) (any, error) {
+		return service.StartIssueInvestigation(ctx, cc, cmd)
+	})
 	register[application.StartObjectiveCommand](c, "start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
 	})
@@ -318,6 +339,9 @@ func NewCatalog(service *application.Service, ids ports.IDGenerator) *Catalog {
 	})
 	register[application.UnarchiveOutcomeCommand](c, "unarchive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.UnarchiveOutcomeCommand) (any, error) {
 		return service.UnarchiveOutcome(ctx, cc, cmd)
+	})
+	register[application.UnassignIssueCommand](c, "unassign_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.UnassignIssueCommand) (any, error) {
+		return service.UnassignIssue(ctx, cc, cmd)
 	})
 	register[application.UpdateBlockerDescriptionCommand](c, "update_blocker_description", func(ctx context.Context, cc domain.CommandContext, cmd application.UpdateBlockerDescriptionCommand) (any, error) {
 		return service.UpdateBlockerDescription(ctx, cc, cmd)

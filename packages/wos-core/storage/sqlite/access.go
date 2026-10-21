@@ -13,7 +13,8 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 		return denied
 	}
 	var raw string
-	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw)
+	var compatibility uint32
+	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json,g.permission_compatibility_version FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw, &compatibility)
 	if err != nil {
 		return denied
 	}
@@ -23,7 +24,7 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 	}
 	allowed := false
 	for _, p := range permissions {
-		allowed = allowed || p == r.Authorization.Permission
+		allowed = allowed || p == r.Authorization.Permission || (r.Authorization.LegacyPermission != "" && compatibility == ports.PermissionCompatibilityLegacyV1 && p == r.Authorization.LegacyPermission)
 	}
 	if !allowed {
 		return denied
@@ -58,7 +59,7 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 		}
 	}
 	policy, err := signing.CredentialPolicy(ctx, credential.NamespaceID, credential.ID)
-	if err == nil && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
+	if err == nil && !policy.PermitsWithCompatibility(string(r.Authorization.Permission), string(r.Authorization.LegacyPermission), r.Authorization.OutcomeID) {
 		return denied
 	}
 	if err != nil {

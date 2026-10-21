@@ -17,7 +17,7 @@ func signedCutoverCommand(command any) bool {
 	cmd, ok := command.(SetNamespaceWorkProtocolCommand)
 	return ok && (cmd.Phase == d.WorkProtocolSignedDraining || cmd.Phase == d.WorkProtocolSigned)
 }
-func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, permission ports.Permission, keyID d.ID) (Identity, d.CredentialPolicy, error) {
+func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope d.Scope, permission ports.Permission, keyID d.ID, legacy ...ports.Permission) (Identity, d.CredentialPolicy, error) {
 	var policy d.CredentialPolicy
 	identity, ok := IdentityFromContext(ctx)
 	if !ok || identity.NamespaceID != scope.NamespaceID || identity.CredentialDigest == "" {
@@ -42,7 +42,11 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 	if !ok {
 		return identity, policy, d.NewError(d.ErrorCodeInvalidConfig, "transactional signed access unavailable")
 	}
-	if err = access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+	var legacyPermission ports.Permission
+	if len(legacy) > 0 {
+		legacyPermission = legacy[0]
+	}
+	if err = access.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: permission, LegacyPermission: legacyPermission}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
 		return identity, policy, err
 	}
 	registry, err := signingRepository(uow)
@@ -57,7 +61,7 @@ func (s *Service) signedAccess(ctx context.Context, uow ports.UnitOfWork, scope 
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "browser sessions cannot exercise signed authority")
 	}
 	policy, err = registry.CredentialPolicy(ctx, scope.NamespaceID, credential.ID)
-	if err != nil || policy.PrincipalID != identity.PrincipalID || !policy.Permits(string(permission), scope.OutcomeID) {
+	if err != nil || policy.PrincipalID != identity.PrincipalID || !policy.PermitsWithCompatibility(string(permission), string(legacyPermission), scope.OutcomeID) {
 		return identity, policy, d.NewError(d.ErrorCodeForbidden, "explicit signed credential policy required")
 	}
 	identity.CredentialID = credential.ID

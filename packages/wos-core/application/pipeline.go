@@ -95,7 +95,8 @@ func transactCommand[T any, C any](
 	}
 
 	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
-		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
+		permission := commandPermission(meta.Name)
+		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: permission, LegacyPermission: legacyPermissionForCommand(meta.Name, permission)}
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
@@ -115,7 +116,7 @@ func transactCommand[T any, C any](
 			selectedKey = field.Interface().(domain.ID)
 		}
 		var accessError error
-		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey)
+		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey, legacyPermissionForCommand(meta.Name, commandPermission(meta.Name)))
 		if accessError != nil {
 			return MutationResult[T]{Value: zero}, accessError
 		}

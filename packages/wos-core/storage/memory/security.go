@@ -76,6 +76,9 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
 		return err
 	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.security.Namespaces[g.NamespaceID]; !ok {
@@ -113,6 +116,9 @@ func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g port
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid bootstrap binding")
 	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+	}
 	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
 		return err
 	}
@@ -138,7 +144,7 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 	}
 	allowed := false
 	for _, p := range grant.Permissions {
-		allowed = allowed || p == r.Authorization.Permission
+		allowed = allowed || p == r.Authorization.Permission || (r.Authorization.LegacyPermission != "" && grant.PermissionCompatibilityVersion == ports.PermissionCompatibilityLegacyV1 && p == r.Authorization.LegacyPermission)
 	}
 	if !allowed {
 		return denied
@@ -154,7 +160,7 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 		}
 		c = parent
 	}
-	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
+	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok && !policy.PermitsWithCompatibility(string(r.Authorization.Permission), string(r.Authorization.LegacyPermission), r.Authorization.OutcomeID) {
 		return denied
 	}
 	return ctx.Err()

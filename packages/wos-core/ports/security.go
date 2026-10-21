@@ -17,9 +17,10 @@ type Credential struct {
 	Revoked      bool            `json:"revoked"`
 }
 type NamespaceGrant struct {
-	NamespaceID domain.ID    `json:"namespace_id"`
-	PrincipalID string       `json:"principal_id"`
-	Permissions []Permission `json:"permissions"`
+	NamespaceID                    domain.ID    `json:"namespace_id"`
+	PrincipalID                    string       `json:"principal_id"`
+	Permissions                    []Permission `json:"permissions"`
+	PermissionCompatibilityVersion uint32       `json:"permission_compatibility_version,omitempty"`
 }
 type Namespace struct {
 	ID   domain.ID `json:"id"`

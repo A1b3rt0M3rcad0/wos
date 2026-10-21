@@ -266,7 +266,7 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		cv, lv, rv, wv := contract.Version, contract.LeaseVersion, review.Version, work.Version
 		if request.Decision == "approved" {
 			for _, permission := range []ports.Permission{ports.PermissionTaskAccept, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
-				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID); err != nil {
+				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID, legacyPermissionForCommand("ReturnSignedReview", permission)); err != nil {
 					return zero, 0, err
 				}
 			}

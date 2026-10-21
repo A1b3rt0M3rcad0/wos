@@ -155,6 +155,7 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 		// retain the permissions previously inferred for their exact names.
 		"ApplyDependencyChanges":      {primary: ports.PermissionDependencyWrite},
 		"AssignIssue":                 {primary: ports.PermissionIssueAssign},
+		"RelateIssueToWorkItem":       {primary: ports.PermissionIssueUpdate},
 		"RelateIssueWorkItem":         {primary: ports.PermissionIssueUpdate},
 		"RemoveIssueWorkItemRelation": {primary: ports.PermissionIssueUpdate},
 		"ReportIssueWithBlockers":     {primary: ports.PermissionIssueCreate, additional: reportIssueWithBlockerPermissions},
@@ -563,7 +564,7 @@ func (s *Service) authorizeComposedCommandPermissions(ctx context.Context, uow p
 		return nil
 	}
 	additional := permissions[1:]
-	return s.authorizeCreationPermissions(ctx, uow, cc, scope, additional...)
+	return s.authorizeCreationPermissions(ctx, uow, cc, scope, name, additional...)
 }
 
 var signedDirectCompletionPermissions = []ports.Permission{
@@ -606,7 +607,7 @@ func (s *Service) signedAutoReturnCompletionPermissions(ctx context.Context, uow
 	if err != nil {
 		return nil, err
 	}
-	identity, policy, err := s.signedAccess(ctx, uow, scope, ports.PermissionTaskDeliver, domain.ID(hint.SignerKeyID))
+	identity, policy, err := s.signedAccess(ctx, uow, scope, ports.PermissionTaskDeliver, domain.ID(hint.SignerKeyID), legacyPermissionForCommand("ReturnSignedWork", ports.PermissionTaskDeliver))
 	if err != nil {
 		return nil, err
 	}

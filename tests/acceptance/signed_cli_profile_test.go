@@ -47,10 +47,19 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	}
 	configured, e := operator.SigningMutation(ctx, "cli-profile-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
 	must(e)
+	if configured.CredentialPolicy == nil {
+		t.Fatal("CLI executor policy was not persisted before compatibility migration")
+	}
+	migrated, e := security.ApplyPermissionMigration(adminCtx, "cli-profile-permission-migration", a.PermissionMigrationApplyRequest{
+		NamespaceID: scope.NamespaceID, PrincipalID: "cli-worker", CredentialID: credential.ID,
+		ExpectedNamespaceVersion: configured.NamespaceVersion, ExpectedPolicyVersion: configured.CredentialPolicy.Version,
+		PolicyVersionPresent: true, Reason: "Migrate the CLI executor's reviewed legacy permissions",
+	})
+	must(e)
 	public, private, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	fingerprint := signing.Digest(public)
-	enrollment, e := operator.SigningMutation(ctx, "cli-profile-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "cli-worker", ExpectedFingerprint: fingerprint})
+	enrollment, e := operator.SigningMutation(ctx, "cli-profile-enrollment", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: migrated.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "cli-worker", ExpectedFingerprint: fingerprint})
 	must(e)
 	root := t.TempDir()
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
@@ -378,7 +387,11 @@ func signedCLIProfileJourney(t *testing.T, handler http.Handler, security *a.Sec
 	// continue renewing the other contract and preserve both local drafts.
 	adminIdentity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
-	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: adminIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
+	adminPolicyVersion := d.Version(0)
+	if adminIdentity.Policy != nil {
+		adminPolicyVersion = adminIdentity.Policy.Version
+	}
+	_, e = operator.SigningMutation(ctx, "cli-admin-revocation-policy", a.SigningSecurityIntent{NamespaceID: scope.NamespaceID, ExpectedNamespaceVersion: adminIdentity.NamespaceVersion, ExpectedVersion: adminPolicyVersion, Operation: "set_credential_policy", CredentialPolicy: &d.CredentialPolicy{NamespaceID: scope.NamespaceID, CredentialID: adminIdentity.CredentialID, PrincipalID: adminIdentity.PrincipalID, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractRevoke), string(ports.PermissionNamespaceAdmin), string(ports.PermissionActorDelegate), string(ports.PermissionSigningKeyRevoke)}, AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}})
 	must(e)
 	activeState, e := operator.ReadSignedState(ctx, a.SignedStateQuery{Scope: batchScope, Resource: "execution", ID: d.ID(view.Authority.ContractID)})
 	must(e)

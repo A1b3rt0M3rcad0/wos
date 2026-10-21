@@ -254,7 +254,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 		}
 		if direct {
 			for _, permission := range []ports.Permission{ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
-				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID); err != nil {
+				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID, legacyPermissionForCommand("ReturnSignedWork", permission)); err != nil {
 					return zero, 0, err
 				}
 			}

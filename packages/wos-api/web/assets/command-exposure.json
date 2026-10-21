@@ -113,6 +113,12 @@
     "permission": "records:write",
     "surface": "profile"
   },
+  "apply_dependency_changes": {
+    "exposure": "C",
+    "journey": "Dependencies",
+    "permission": "dependency:write",
+    "surface": "human"
+  },
   "archive_outcome": {
     "exposure": "C",
     "journey": "Outcome transitions",
@@ -123,6 +129,12 @@
     "exposure": "C",
     "journey": "Roadmap publication and lifecycle",
     "permission": "planning:write",
+    "surface": "human"
+  },
+  "assign_issue": {
+    "exposure": "H",
+    "journey": "Issues and blockers",
+    "permission": "issue:assign",
     "surface": "human"
   },
   "attest_criterion": {
@@ -160,6 +172,12 @@
     "journey": "Legacy v0 leases",
     "permission": "task:accept",
     "surface": "human"
+  },
+  "configure_outcome_operational_profile": {
+    "exposure": "A",
+    "journey": "Operational profile migration",
+    "permission": "policy:manage",
+    "surface": "developer"
   },
   "configure_trigger": {
     "exposure": "I",
@@ -353,6 +371,12 @@
     "permission": "records:write",
     "surface": "human"
   },
+  "relate_issue_to_work_item": {
+    "exposure": "C",
+    "journey": "Issues and blockers",
+    "permission": "issue:update",
+    "surface": "human"
+  },
   "release_work_item": {
     "exposure": "L",
     "journey": "Legacy v0 leases",
@@ -370,6 +394,12 @@
     "journey": "External references",
     "permission": "outcome:write",
     "surface": "developer"
+  },
+  "remove_issue_work_item_relation": {
+    "exposure": "C",
+    "journey": "Issues and blockers",
+    "permission": "issue:update",
+    "surface": "human"
   },
   "renew_signed_review_contract": {
     "exposure": "S",
@@ -438,6 +468,12 @@
     "surface": "human"
   },
   "report_issue_with_blocker": {
+    "exposure": "H",
+    "journey": "Issues and blockers",
+    "permission": "issue:create",
+    "surface": "human"
+  },
+  "report_issue_with_blockers": {
     "exposure": "H",
     "journey": "Issues and blockers",
     "permission": "issue:create",
@@ -587,6 +623,12 @@
     "permission": "task:update_definition",
     "surface": "human"
   },
+  "start_issue_investigation": {
+    "exposure": "C",
+    "journey": "Issues and blockers",
+    "permission": "issue:investigate",
+    "surface": "human"
+  },
   "start_objective": {
     "exposure": "H",
     "journey": "Objectives",
@@ -615,6 +657,12 @@
     "exposure": "C",
     "journey": "Outcome transitions",
     "permission": "outcome:write",
+    "surface": "human"
+  },
+  "unassign_issue": {
+    "exposure": "C",
+    "journey": "Issues and blockers",
+    "permission": "issue:assign",
     "surface": "human"
   },
   "update_blocker_description": {

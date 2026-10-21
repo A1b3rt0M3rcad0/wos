@@ -123,7 +123,7 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if err != nil {
 			return result, err
 		}
-		_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.NamespaceID.String(), g.PrincipalID, p)
+		_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json,permission_compatibility_version) VALUES($1,$2,$3,0) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json,permission_compatibility_version=0`, g.NamespaceID.String(), g.PrincipalID, p)
 		if err != nil {
 			return result, mapSQLError("write grant", err)
 		}
@@ -203,14 +203,14 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 	result.Grants = []ports.NamespaceGrant{}
 	result.Credentials = []ports.Credential{}
 	result.Audit = []ports.SecurityAudit{}
-	rows, err := tx.QueryContext(ctx, `SELECT principal_id,permissions_json FROM namespace_grants WHERE namespace_id=$1 ORDER BY principal_id LIMIT 101`, ns.String())
+	rows, err := tx.QueryContext(ctx, `SELECT principal_id,permissions_json,permission_compatibility_version FROM namespace_grants WHERE namespace_id=$1 ORDER BY principal_id LIMIT 101`, ns.String())
 	if err != nil {
 		return result, err
 	}
 	for rows.Next() {
 		g := ports.NamespaceGrant{NamespaceID: ns}
 		var p string
-		if err = rows.Scan(&g.PrincipalID, &p); err != nil {
+		if err = rows.Scan(&g.PrincipalID, &p, &g.PermissionCompatibilityVersion); err != nil {
 			rows.Close()
 			return result, err
 		}

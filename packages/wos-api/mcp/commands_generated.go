@@ -67,11 +67,17 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.AppendWorkActivityCommand](server, ids, options, "wos_append_work_activity", func(ctx context.Context, cc domain.CommandContext, cmd application.AppendWorkActivityCommand) (any, error) {
 		return service.AppendWorkActivity(ctx, cc, cmd)
 	})
+	registerCommand[application.ApplyDependencyChangesCommand](server, ids, options, "wos_apply_dependency_changes", func(ctx context.Context, cc domain.CommandContext, cmd application.ApplyDependencyChangesCommand) (any, error) {
+		return service.ApplyDependencyChanges(ctx, cc, cmd)
+	})
 	registerCommand[application.ArchiveOutcomeCommand](server, ids, options, "wos_archive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.ArchiveOutcomeCommand) (any, error) {
 		return service.ArchiveOutcome(ctx, cc, cmd)
 	})
 	registerCommand[application.ArchiveRoadmapCommand](server, ids, options, "wos_archive_roadmap", func(ctx context.Context, cc domain.CommandContext, cmd application.ArchiveRoadmapCommand) (any, error) {
 		return service.ArchiveRoadmap(ctx, cc, cmd)
+	})
+	registerCommand[application.AssignIssueCommand](server, ids, options, "wos_assign_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.AssignIssueCommand) (any, error) {
+		return service.AssignIssue(ctx, cc, cmd)
 	})
 	registerCommand[application.AttestCriterionCommand](server, ids, options, "wos_attest_criterion", func(ctx context.Context, cc domain.CommandContext, cmd application.AttestCriterionCommand) (any, error) {
 		return service.AttestCriterion(ctx, cc, cmd)
@@ -90,6 +96,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.CompleteWorkItemCommand](server, ids, options, "wos_complete_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.CompleteWorkItemCommand) (any, error) {
 		return service.CompleteWorkItem(ctx, cc, cmd)
+	})
+	registerCommand[application.ConfigureOutcomeOperationalProfileCommand](server, ids, options, "wos_configure_outcome_operational_profile", func(ctx context.Context, cc domain.CommandContext, cmd application.ConfigureOutcomeOperationalProfileCommand) (any, error) {
+		return service.ConfigureOutcomeOperationalProfile(ctx, cc, cmd)
 	})
 	registerCommand[application.ConfigureTriggerCommand](server, ids, options, "wos_configure_trigger", func(ctx context.Context, cc domain.CommandContext, cmd application.ConfigureTriggerCommand) (any, error) {
 		return service.ConfigureTrigger(ctx, cc, cmd)
@@ -187,6 +196,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.RejectDecisionCommand](server, ids, options, "wos_reject_decision", func(ctx context.Context, cc domain.CommandContext, cmd application.RejectDecisionCommand) (any, error) {
 		return service.RejectDecision(ctx, cc, cmd)
 	})
+	registerCommand[application.RelateIssueWorkItemCommand](server, ids, options, "wos_relate_issue_to_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.RelateIssueWorkItemCommand) (any, error) {
+		return service.RelateIssueToWorkItem(ctx, cc, cmd)
+	})
 	registerCommand[application.ReleaseWorkItemCommand](server, ids, options, "wos_release_work_item", func(ctx context.Context, cc domain.CommandContext, cmd application.ReleaseWorkItemCommand) (any, error) {
 		return service.ReleaseWorkItem(ctx, cc, cmd)
 	})
@@ -195,6 +207,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.RemoveExternalReferenceCommand](server, ids, options, "wos_remove_external_reference", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveExternalReferenceCommand) (any, error) {
 		return service.RemoveExternalReference(ctx, cc, cmd)
+	})
+	registerCommand[application.RemoveIssueWorkItemRelationCommand](server, ids, options, "wos_remove_issue_work_item_relation", func(ctx context.Context, cc domain.CommandContext, cmd application.RemoveIssueWorkItemRelationCommand) (any, error) {
+		return service.RemoveIssueWorkItemRelation(ctx, cc, cmd)
 	})
 	registerCommand[application.RenewSignedReviewContractCommand](server, ids, options, "wos_renew_signed_review_contract", func(ctx context.Context, cc domain.CommandContext, cmd application.RenewSignedReviewContractCommand) (any, error) {
 		return service.RenewSignedReviewContract(ctx, cc, cmd)
@@ -231,6 +246,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.ReportIssueWithBlockerCommand](server, ids, options, "wos_report_issue_with_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockerCommand) (any, error) {
 		return service.ReportIssueWithBlocker(ctx, cc, cmd)
+	})
+	registerCommand[application.ReportIssueWithBlockersCommand](server, ids, options, "wos_report_issue_with_blockers", func(ctx context.Context, cc domain.CommandContext, cmd application.ReportIssueWithBlockersCommand) (any, error) {
+		return service.ReportIssueWithBlockers(ctx, cc, cmd)
 	})
 	registerCommand[application.ResolveBlockerCommand](server, ids, options, "wos_resolve_blocker", func(ctx context.Context, cc domain.CommandContext, cmd application.ResolveBlockerCommand) (any, error) {
 		return service.ResolveBlocker(ctx, cc, cmd)
@@ -304,6 +322,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	registerCommand[application.SetWorkItemObjectiveCommand](server, ids, options, "wos_set_work_item_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.SetWorkItemObjectiveCommand) (any, error) {
 		return service.SetWorkItemObjective(ctx, cc, cmd)
 	})
+	registerCommand[application.StartIssueInvestigationCommand](server, ids, options, "wos_start_issue_investigation", func(ctx context.Context, cc domain.CommandContext, cmd application.StartIssueInvestigationCommand) (any, error) {
+		return service.StartIssueInvestigation(ctx, cc, cmd)
+	})
 	registerCommand[application.StartObjectiveCommand](server, ids, options, "wos_start_objective", func(ctx context.Context, cc domain.CommandContext, cmd application.StartObjectiveCommand) (any, error) {
 		return service.StartObjective(ctx, cc, cmd)
 	})
@@ -318,6 +339,9 @@ func registerCommands(server *mcp.Server, service *application.Service, ids port
 	})
 	registerCommand[application.UnarchiveOutcomeCommand](server, ids, options, "wos_unarchive_outcome", func(ctx context.Context, cc domain.CommandContext, cmd application.UnarchiveOutcomeCommand) (any, error) {
 		return service.UnarchiveOutcome(ctx, cc, cmd)
+	})
+	registerCommand[application.UnassignIssueCommand](server, ids, options, "wos_unassign_issue", func(ctx context.Context, cc domain.CommandContext, cmd application.UnassignIssueCommand) (any, error) {
+		return service.UnassignIssue(ctx, cc, cmd)
 	})
 	registerCommand[application.UpdateBlockerDescriptionCommand](server, ids, options, "wos_update_blocker_description", func(ctx context.Context, cc domain.CommandContext, cmd application.UpdateBlockerDescriptionCommand) (any, error) {
 		return service.UpdateBlockerDescription(ctx, cc, cmd)

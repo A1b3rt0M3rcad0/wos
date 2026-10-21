@@ -140,9 +140,10 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		}
 		for _, permission := range permissions[1:] {
 			if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-				NamespaceID: cmd.Owner.Scope.NamespaceID,
-				PrincipalID: commandContext.PrincipalID,
-				Permission:  permission,
+				NamespaceID:      cmd.Owner.Scope.NamespaceID,
+				PrincipalID:      commandContext.PrincipalID,
+				Permission:       permission,
+				LegacyPermission: legacyPermissionForCommand("RecordCriterionAssessment", permission),
 			}); err != nil {
 				return MutationResult[domain.CriterionAssessment]{}, err
 			}

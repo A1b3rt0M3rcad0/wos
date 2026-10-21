@@ -27,6 +27,10 @@ The CI check `python3 tools/eventcatalog/check.py` rejects a mapping/catalogue m
 The operational workspace extension adds `entity_note.recorded`,
 `objective.parent_changed`, `work_item.objective_changed`,
 `work_item.execution_spec_changed` and `work_item.not_before_changed`.
-A documentary note is not contracted execution or acceptance. Structural events
-record explicit placement changes; local Board card movement emits none. Existing
-subscriptions and persisted facts retain their original v1 semantics.
+`issue.assigned` and `issue.unassigned` record explicit responsibility changes;
+they do not grant authority over affected Tasks or change their leases.
+`outcome.operational_profile_configured` records the explicit migration of one
+Outcome to an operational profile. A documentary note is not contracted
+execution or acceptance. Structural events record explicit placement changes;
+local Board card movement emits none. Existing subscriptions and persisted
+facts retain their original v1 semantics.

@@ -25,8 +25,8 @@ func commandNameFromPublicID(name string) string {
 
 func TestAuthorizationCatalogCoversEveryPublicCommand(t *testing.T) {
 	descriptors := commands.NewCatalog(nil, nil).Descriptors()
-	if len(descriptors) != 111 {
-		t.Fatalf("public command catalog has %d descriptors, want 111", len(descriptors))
+	if len(descriptors) != 119 {
+		t.Fatalf("public command catalog has %d descriptors, want 119", len(descriptors))
 	}
 	for _, descriptor := range descriptors {
 		t.Run(descriptor.Name, func(t *testing.T) {

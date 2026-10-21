@@ -76,6 +76,9 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
 		return err
 	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -88,7 +91,7 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json) VALUES($1,$2,$3) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json`, g.NamespaceID.String(), g.PrincipalID, payload)
+	_, err = tx.ExecContext(ctx, `INSERT INTO namespace_grants(namespace_id,principal_id,permissions_json,permission_compatibility_version) VALUES($1,$2,$3,$4) ON CONFLICT(namespace_id,principal_id) DO UPDATE SET permissions_json=excluded.permissions_json,permission_compatibility_version=excluded.permission_compatibility_version`, g.NamespaceID.String(), g.PrincipalID, payload, g.PermissionCompatibilityVersion)
 	if err != nil {
 		return err
 	}
@@ -97,10 +100,12 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 func (s *Store) GetGrant(ctx context.Context, ns domain.ID, principal string) (ports.NamespaceGrant, error) {
 	g := ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal}
 	var permissions string
-	err := s.db.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN namespaces n ON n.id=g.namespace_id JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=$1 AND g.principal_id=$2 AND n.lifecycle='active' AND p.lifecycle='active'`, ns.String(), principal).Scan(&permissions)
+	var compatibility uint32
+	err := s.db.QueryRowContext(ctx, `SELECT g.permissions_json,g.permission_compatibility_version FROM namespace_grants g JOIN namespaces n ON n.id=g.namespace_id JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=$1 AND g.principal_id=$2 AND n.lifecycle='active' AND p.lifecycle='active'`, ns.String(), principal).Scan(&permissions, &compatibility)
 	if err != nil {
 		return g, mapSQLError("read namespace grant", err)
 	}
+	g.PermissionCompatibilityVersion = compatibility
 	return g, unmarshalJSON(permissions, &g.Permissions)
 }
 func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.Namespace, error) {
@@ -149,6 +154,9 @@ var _ ports.SecurityStore = (*Store)(nil)
 func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "invalid bootstrap binding")
+	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
 	}
 	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
 		return err

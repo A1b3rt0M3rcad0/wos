@@ -91,7 +91,7 @@ func validateInitialCriteria(criteria []InitialCriterion) error {
 	return nil
 }
 
-func (s *Service) authorizeCreationPermissions(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, permissions ...ports.Permission) error {
+func (s *Service) authorizeCreationPermissions(ctx context.Context, uow ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, commandName string, permissions ...ports.Permission) error {
 	if !s.requireIdentity {
 		return nil
 	}
@@ -101,7 +101,7 @@ func (s *Service) authorizeCreationPermissions(ctx context.Context, uow ports.Un
 			continue
 		}
 		seen[permission] = true
-		request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: cc.PrincipalID, Permission: permission}
+		request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: cc.PrincipalID, Permission: permission, LegacyPermission: legacyPermissionForCommand(commandName, permission)}
 		if auth, ok := s.authorizer.(ports.TransactionalAuthorizer); ok {
 			if err := auth.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 				return err

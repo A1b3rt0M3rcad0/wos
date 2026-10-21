@@ -61,7 +61,7 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 			}
 			if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
 				policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
-				if err == nil && !policy.Permits(string(r.Permission), r.OutcomeID) {
+				if err == nil && !policy.PermitsWithCompatibility(string(r.Permission), string(r.LegacyPermission), r.OutcomeID) {
 					return domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts operation/scope")
 				}
 				if err != nil {
@@ -78,7 +78,7 @@ func (s SecurityService) Authorize(ctx context.Context, r ports.AuthorizationReq
 		return domain.NewError(domain.ErrorCodeForbidden, "namespace permission is not granted")
 	}
 	for _, p := range grant.Permissions {
-		if p == r.Permission {
+		if p == r.Permission || (r.LegacyPermission != "" && grant.PermissionCompatibilityVersion == ports.PermissionCompatibilityLegacyV1 && p == r.LegacyPermission) {
 			return nil
 		}
 	}
@@ -192,6 +192,9 @@ func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.I
 func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGrant) error {
 	if err := s.Require(ctx, grant.NamespaceID, ports.PermissionPermissionsManage); err != nil {
 		return err
+	}
+	if grant.PermissionCompatibilityVersion != 0 {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "permission compatibility can only be changed by the migration service")
 	}
 	if strings.TrimSpace(grant.PrincipalID) == "" {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "principal is required")

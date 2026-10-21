@@ -108,6 +108,10 @@ type AuthorizationRequest struct {
 	OutcomeID   domain.ID
 	PrincipalID string
 	Permission  Permission
+	// LegacyPermission is populated only by the exact, versioned application
+	// command compatibility map. Storage accepts it only for migrated grants and
+	// credential policies; transports must never accept it from callers.
+	LegacyPermission Permission
 }
 
 func (r AuthorizationRequest) Validate() error {
@@ -119,6 +123,9 @@ func (r AuthorizationRequest) Validate() error {
 	}
 	if !r.Permission.Valid() {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "authorization permission is invalid")
+	}
+	if r.LegacyPermission != "" && !r.LegacyPermission.Valid() {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "authorization compatibility permission is invalid")
 	}
 	return nil
 }
