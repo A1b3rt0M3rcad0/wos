@@ -71,6 +71,7 @@ type Error struct {
 // stable error classification. Adapters must not infer these facts from prose.
 type ErrorDetails struct {
 	ReasonCode  string        `json:"reason_code"`
+	ReasonCodes []string      `json:"reason_codes,omitempty"`
 	SubjectRef  *EntityRef    `json:"subject_ref,omitempty"`
 	FieldPaths  []string      `json:"field_paths,omitempty"`
 	RelatedRefs []EntityRef   `json:"related_refs,omitempty"`

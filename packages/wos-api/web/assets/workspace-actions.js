@@ -13,6 +13,15 @@ export function workspaceActions(view, fallback = []) {
     const name = workspaceActionName(capability.action_id);
     const presentation = humanActions[name];
     if (!presentation) continue;
+    if (name === "create_work_item" && capability.target_lifecycle) {
+      // The target lifecycle is part of the create intent; preserve both
+      // authorized variants and remove any unqualified fallback action.
+      items.delete(name);
+      const target = capability.target_lifecycle;
+      const label = `${presentation.label} · ${target === "todo" ? "To do" : "Backlog"}`;
+      items.set(`${name}:${target}`, { name, ...presentation, ...capability, label });
+      continue;
+    }
     items.set(name, { name, ...presentation, ...capability });
   }
   return [...items.values()];

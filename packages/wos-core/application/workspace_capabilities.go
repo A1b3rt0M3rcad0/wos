@@ -60,7 +60,7 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		}
 		return false, e
 	}
-	add := func(command, transport string, priority int, condition error) error {
+	add := func(command, transport string, priority int, condition error, targetLifecycle ...d.WorkItemLifecycle) error {
 		ok, e := allow(command)
 		if e != nil {
 			return e
@@ -69,6 +69,9 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			return nil
 		}
 		c := WorkspaceCapability{ActionID: command, Subject: v.Subject, Transport: transport, Availability: "available", ReasonCodes: []string{}, RelatedRefs: []d.EntityRef{}, ObservedVersion: v.EntityVersion, PresentationPriority: priority}
+		if len(targetLifecycle) > 0 {
+			c.TargetLifecycle = targetLifecycle[0]
+		}
 		if condition != nil {
 			code, ok := d.ErrorCodeOf(condition)
 			if !ok {
@@ -78,11 +81,17 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 			c.ReasonCodes = append(c.ReasonCodes, string(code))
 			var detail *d.Error
 			if errors.As(condition, &detail) && detail.Details != nil {
-				if detail.Details.ReasonCode != "" {
+				if len(detail.Details.ReasonCodes) > 0 {
+					c.ReasonCodes = append([]string(nil), detail.Details.ReasonCodes...)
+				} else if detail.Details.ReasonCode != "" {
 					c.ReasonCodes = []string{detail.Details.ReasonCode}
 				}
-				c.RelatedRefs = append(c.RelatedRefs, detail.Details.RelatedRefs...)
-				c.Remedies = append(c.Remedies, detail.Details.Remedies...)
+				c.RelatedRefs = append(c.RelatedRefs, authorizedReadinessRefs(v.Subject.Ref.Scope, detail.Details.RelatedRefs)...)
+				for _, remedy := range detail.Details.Remedies {
+					if remedyAllowedInScope(v.Subject.Ref.Scope, remedy) {
+						c.Remedies = append(c.Remedies, remedy)
+					}
+				}
 				// Opening a confirmation is available; accepting the result is
 				// still gated by the exact acknowledgement in the command.
 				if detail.Details.ReasonCode == "cancelled_work_requires_ack" && (command == "AchieveOutcome" || command == "AchieveObjective") {
@@ -207,11 +216,11 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 					command = "AcquireSignedWorkContract"
 				}
 			}
-			var reason error
-			if work != nil && len(work.Operational.ReadinessReasons) > 0 {
-				reason = d.NewDetailedError(d.ErrorCodePreconditionFailed, string(work.Operational.ReadinessReasons[0]), d.ErrorDetails{ReasonCode: string(work.Operational.ReadinessReasons[0]), SubjectRef: refPointer(record.Ref())})
+			readiness, e := evaluateTaskAcquisition(ctx, f.u, record, f.at)
+			if e != nil {
+				return nil, e
 			}
-			if e := add(command, transport, 10, reason); e != nil {
+			if e := add(command, transport, 10, operationalReadinessError(readiness, "Task cannot be acquired")); e != nil {
 				return nil, e
 			}
 		}
@@ -318,8 +327,47 @@ func (s *Service) workspaceCapabilities(ctx context.Context, f *continuityReadFr
 		if e := add("CreatePlanItems", "browser_command", 25, creationCondition); e != nil {
 			return nil, e
 		}
-		if e := add("CreateWorkItem", "browser_command", 10, creationCondition); e != nil {
+		if e := add("CreateWorkItem", "browser_command", 10, creationCondition, d.WorkItemLifecycleBacklog); e != nil {
 			return nil, e
+		}
+		todoCondition := creationCondition
+		if todoCondition == nil {
+			profileOutcome, err := f.u.Outcomes().Get(ctx, record.Scope.NamespaceID, record.Scope.OutcomeID)
+			if err != nil {
+				return nil, err
+			}
+			if err := validateOperationalProfile(profileOutcome); err != nil {
+				todoCondition = err
+			} else if profileOutcome.OperationalProfile.Effective() == d.OperationalProfileOperationalV2 {
+				operationalObjective, err := f.u.Objectives().Get(ctx, record.Scope, record.ID)
+				if err != nil {
+					return nil, err
+				}
+				readiness := d.NewReadiness(record.Ref(), f.at)
+				addOutcomeEligibility(&readiness, profileOutcome)
+				if operationalObjective.Lifecycle == d.ObjectiveLifecyclePlanned {
+					readiness.AddReason(d.ReadinessStageScope, d.ReadinessReasonObjectiveNotStarted, operationalObjective.Ref())
+				}
+				if err := addObjectiveAncestorReadiness(ctx, f.u, record.Scope, operationalObjective, &readiness); err != nil {
+					return nil, err
+				}
+				todoCondition = operationalReadinessError(readiness, "Task cannot be created directly in To Do")
+			}
+		}
+		// Direct creation in To Do requires a complete Task definition, so its
+		// target is explicit while availability remains unknown until the form
+		// supplies that definition. The write runs the shared activation gate.
+		if e := add("CreateWorkItem", "browser_command", 11, todoCondition, d.WorkItemLifecycleTodo); e != nil {
+			return nil, e
+		}
+		if todoCondition == nil {
+			for i := len(result) - 1; i >= 0; i-- {
+				if result[i].ActionID == "CreateWorkItem" && result[i].TargetLifecycle == d.WorkItemLifecycleTodo {
+					result[i].Availability = "unknown"
+					result[i].ReasonCodes = []string{string(d.ReadinessReasonTargetDefinitionRequired)}
+					break
+				}
+			}
 		}
 		if e := add("CreateObjective", "browser_command", 20, creationCondition); e != nil {
 			return nil, e

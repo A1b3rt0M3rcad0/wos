@@ -84,16 +84,17 @@ type WorkspaceRelationship struct {
 	Rationale   string               `json:"rationale,omitempty"`
 }
 type WorkspaceCapability struct {
-	ActionID             string           `json:"action_id"`
-	Subject              WorkspaceSubject `json:"subject"`
-	Transport            string           `json:"transport"`
-	Availability         string           `json:"availability"`
-	ReasonCodes          []string         `json:"reason_codes"`
-	RelatedRefs          []d.EntityRef    `json:"related_refs"`
-	Remedies             []d.ErrorRemedy  `json:"remedies,omitempty"`
-	ObservedVersion      d.Version        `json:"observed_version,string"`
-	ConfirmationKind     string           `json:"confirmation_kind,omitempty"`
-	PresentationPriority int              `json:"presentation_priority"`
+	ActionID             string              `json:"action_id"`
+	Subject              WorkspaceSubject    `json:"subject"`
+	TargetLifecycle      d.WorkItemLifecycle `json:"target_lifecycle,omitempty"`
+	Transport            string              `json:"transport"`
+	Availability         string              `json:"availability"`
+	ReasonCodes          []string            `json:"reason_codes"`
+	RelatedRefs          []d.EntityRef       `json:"related_refs"`
+	Remedies             []d.ErrorRemedy     `json:"remedies,omitempty"`
+	ObservedVersion      d.Version           `json:"observed_version,string"`
+	ConfirmationKind     string              `json:"confirmation_kind,omitempty"`
+	PresentationPriority int                 `json:"presentation_priority"`
 }
 type WorkspaceConclusionImpact struct {
 	CompletionPolicy d.CompletionPolicy `json:"completion_policy,omitempty"`

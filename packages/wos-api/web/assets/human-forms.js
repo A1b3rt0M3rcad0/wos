@@ -36,6 +36,7 @@ export function humanForm(
     outcomeTitle,
     eligibility,
     workspaceView,
+    targetLifecycle,
     batchKind = "work_item",
     note,
   },
@@ -234,8 +235,8 @@ export function humanForm(
         value: "normal",
       });
       extra.append(taskPriority.node);
-      fixed.lifecycle = "backlog";
-      if (mode !== "quick") {
+      fixed.lifecycle = targetLifecycle || "backlog";
+      if (mode !== "quick" && !targetLifecycle) {
         const available = inputField(copy.text.formCreateAvailable, {
           type: "checkbox", value: false, help: copy.text.formCreateAvailableHelp,
         });

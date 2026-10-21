@@ -187,6 +187,7 @@ export const copy = Object.freeze({
     "workspaceSignedAction": "Continue with authorized profile",
     "workspaceSignedHelp": "This operation requires the configured authorized host profile. The browser does not hold or use signing keys.",
     "workspaceBlockedAction": "Review what is needed before this action",
+    "workspaceDefineTaskForToDo": "Define the Task before checking To Do readiness",
     "workspaceUnavailableAction": "This action is not currently available",
     "workspaceAudit": "Record details and audit",
     "workspaceSource": "Source",

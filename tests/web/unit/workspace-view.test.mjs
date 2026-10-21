@@ -41,3 +41,15 @@ test("repeated capability hints do not duplicate the same action in a compact fo
   assert.equal(actions.length, 1);
   assert.equal(actions[0].presentation_priority, 25);
 });
+
+test("Task creation capabilities retain separate Backlog and To do targets", () => {
+  const objective = { kind: "entity", ref: { ...ref, kind: "objective", id: "objective" } };
+  const actions = workspaceActions({ subject: objective, capabilities: [
+    cap("CreateWorkItem", 10, { subject: objective, target_lifecycle: "backlog" }),
+    cap("CreateWorkItem", 11, { subject: objective, target_lifecycle: "todo", availability: "unknown", reason_codes: ["target_definition_required"] }),
+    cap("CreateWorkItem", 12, { subject: objective, target_lifecycle: "todo", availability: "blocked", reason_codes: ["target_definition_required"] }),
+  ] });
+  assert.deepEqual(actions.map((entry) => [entry.target_lifecycle, entry.availability]), [
+    ["backlog", "available"], ["todo", "unknown"],
+  ]);
+});

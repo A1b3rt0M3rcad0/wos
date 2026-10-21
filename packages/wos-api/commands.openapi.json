@@ -2107,6 +2107,10 @@
           "description": {
             "type": "string"
           },
+          "objective_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
           "scope": {
             "additionalProperties": false,
             "properties": {
@@ -2140,6 +2144,7 @@
         },
         "required": [
           "scope",
+          "objective_id",
           "title",
           "severity"
         ],
@@ -5115,6 +5120,10 @@
           "description": {
             "type": "string"
           },
+          "objective_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+            "type": "string"
+          },
           "observed_outcome_revision": {
             "pattern": "^(0|[1-9][0-9]{0,19})$",
             "type": "string"
@@ -5159,6 +5168,7 @@
         },
         "required": [
           "scope",
+          "objective_id",
           "title",
           "severity",
           "blocked_ref",
@@ -9160,6 +9170,10 @@
                   ],
                   "type": "object"
                 },
+                "target_lifecycle": {
+                  "maxLength": 65536,
+                  "type": "string"
+                },
                 "transport": {
                   "maxLength": 65536,
                   "type": "string"
@@ -9330,6 +9344,51 @@
                   },
                   "open_tasks": {
                     "type": "integer"
+                  },
+                  "pending_issue_refs": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "kind": {
+                          "maxLength": 65536,
+                          "type": "string"
+                        },
+                        "namespace_id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        },
+                        "outcome_id": {
+                          "maxLength": 65536,
+                          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "namespace_id",
+                        "outcome_id",
+                        "kind",
+                        "id"
+                      ],
+                      "type": "object"
+                    },
+                    "maxItems": 10000,
+                    "type": "array"
+                  },
+                  "pending_issues": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "required_open_work": {
                     "items": {
@@ -10733,6 +10792,14 @@
                                   "reason_code": {
                                     "maxLength": 65536,
                                     "type": "string"
+                                  },
+                                  "reason_codes": {
+                                    "items": {
+                                      "maxLength": 65536,
+                                      "type": "string"
+                                    },
+                                    "maxItems": 10000,
+                                    "type": "array"
                                   },
                                   "related_refs": {
                                     "items": {
@@ -13035,6 +13102,14 @@
           "reason_code": {
             "maxLength": 65536,
             "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "maxLength": 65536,
+              "type": "string"
+            },
+            "maxItems": 10000,
+            "type": "array"
           },
           "related_refs": {
             "items": {
@@ -15532,6 +15607,12 @@
               "value": {
                 "additionalProperties": false,
                 "properties": {
+                  "completion_cycle": {
+                    "type": "integer"
+                  },
+                  "completion_mode": {
+                    "type": "string"
+                  },
                   "conclusion": {
                     "additionalProperties": false,
                     "properties": {

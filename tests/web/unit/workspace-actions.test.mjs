@@ -18,3 +18,14 @@ test('workspace capabilities retain blocked reason and explicit transport withou
   assert.deepEqual(actions[0].reason_codes,['missing_required_criterion']);
   assert.equal(workspaceActionName('RegisterEvidenceWithLinks'),'register_evidence_with_links');
 });
+
+test('work item creation preserves lifecycle variants and labels the selected target', () => {
+  const actions = workspaceActions({ capabilities: [
+    {action_id:'CreateWorkItem',target_lifecycle:'backlog',availability:'available',transport:'browser_command'},
+    {action_id:'CreateWorkItem',target_lifecycle:'todo',availability:'unknown',reason_codes:['target_definition_required'],transport:'browser_command'},
+  ] }, [{name:'create_work_item',label:'New Task'}]);
+  assert.deepEqual(actions.map(({name,target_lifecycle,label,availability}) => [name,target_lifecycle,label,availability]), [
+    ['create_work_item','backlog','New task · Backlog','available'],
+    ['create_work_item','todo','New task · To do','unknown'],
+  ]);
+});

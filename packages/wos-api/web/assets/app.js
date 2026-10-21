@@ -3498,14 +3498,18 @@ function workspaceAction(action, capability) {
     loadWorkspaceFullRecord(section, state.workspaceView.subject.ref, state.detailGeneration, {executionOnly:true});
     section.tabIndex = -1; section.focus(); return;
   }
-  if (capability?.availability && capability.availability !== "available") {
+  const targetDefinitionPending = name === "create_work_item"
+    && capability?.target_lifecycle === "todo"
+    && capability?.availability === "unknown"
+    && capability.reason_codes?.includes("target_definition_required");
+  if (capability?.availability && capability.availability !== "available" && !targetDefinitionPending) {
     showPreparation({ message: copy.text.workspaceActionUnavailable, details: {
       reason_code: capability.reason_codes?.[0], related_refs: capability.related_refs,
       remedies: capability.remedies,
     } });
     return;
   }
-  openCommands(name);
+  openCommands(name, undefined, capability?.target_lifecycle);
 }
 $("close-detail").onclick = () => {
   closeDetail();
@@ -4108,7 +4112,7 @@ function projectCommand(name, value) {
     Object.entries(value).filter(([key]) => key in allowed),
   ), schema);
 }
-function openCommands(name, menuTarget) {
+function openCommands(name, menuTarget, targetLifecycle) {
   if (state.submitting) {
     notice(copy.text.waitForTheCurrentChangeToFinishBeforeStarting, true);
     return;
@@ -4156,7 +4160,7 @@ function openCommands(name, menuTarget) {
         notice(copy.text.workspaceNewData, true); return;
       }
       state.contractView = { contract: result.entity };
-      openCommands(name, menuTarget);
+      openCommands(name, menuTarget, targetLifecycle);
     }).catch((error) => {
       if (generation === state.generation && detailGeneration === state.detailGeneration
         && selected === state.selected) report(error);
@@ -4175,7 +4179,7 @@ function openCommands(name, menuTarget) {
         if (!view.conclusion_impact) throw Error(copy.text.formConclusionImpactUnavailable);
         state.workspaceView = view;
         state.selected = { ...view.entity, id: ref.id, version: view.entity_version, _kind: ref.kind };
-        openCommands(name, menuTarget);
+        openCommands(name, menuTarget, targetLifecycle);
       }).catch((error) => {
         if (generation === state.generation && detailGeneration === state.detailGeneration
           && selected === (state.selected || state.outcome)) report(error);
@@ -4189,7 +4193,7 @@ function openCommands(name, menuTarget) {
     "record_criterion_assessment", "replace_external_context", "replace_roadmap_draft",
     "open_roadmap_draft", "publish_roadmap_draft", "discard_roadmap_draft",
     "activate_roadmap_revision", "deactivate_roadmap_revision", "archive_roadmap", "reopen_roadmap"]);
-  if (fullRecordForms.has(name) && hydrateSelectedForForm(() => openCommands(name, menuTarget))) return;
+  if (fullRecordForms.has(name) && hydrateSelectedForForm(() => openCommands(name, menuTarget, targetLifecycle))) return;
   const context =
     name === "create_outcome"
       ? "workspace"
@@ -4242,6 +4246,7 @@ function openCommands(name, menuTarget) {
     eligibility: state.workspaceRules,
     workspaceView: state.workspaceView,
     note: state.correctionNote,
+    targetLifecycle,
   });
   state.correctionNote = null;
   formGetter = state.humanForm.get;

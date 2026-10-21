@@ -19,6 +19,7 @@ const (
 	ReadinessReasonObjectiveAncestryCorrupt    ReadinessReason = "objective_ancestry_corrupt"
 	ReadinessReasonObjectiveAncestryIncomplete ReadinessReason = "objective_ancestry_incomplete"
 	ReadinessReasonOperationalProfileUnknown   ReadinessReason = "operational_profile_unknown"
+	ReadinessReasonTargetDefinitionRequired    ReadinessReason = "target_definition_required"
 	ReadinessReasonBlocked                     ReadinessReason = "blocked"
 	ReadinessReasonHardDependencyUnsatisfied   ReadinessReason = "hard_dependency_unsatisfied"
 	ReadinessReasonNotBefore                   ReadinessReason = "not_before"

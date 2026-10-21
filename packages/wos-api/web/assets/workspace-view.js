@@ -24,13 +24,21 @@ export function workspaceActions(view) {
     if (!humanActions[name] && !signedOperations.has(name)) continue;
     if (!["browser_command", "signed_host"].includes(capability.transport)) continue;
     if (!sameSubject(capability.subject, view.subject)) continue;
-    const existing = result.get(name);
+    const key = name === "create_work_item" && capability.target_lifecycle
+      ? `${name}:${capability.target_lifecycle}` : name;
+    const existing = result.get(key);
     if (!existing || (capability.presentation_priority ?? 100) < (existing.presentation_priority ?? 100))
-      result.set(name, capability);
+      result.set(key, capability);
   }
   return [...result.values()].sort((a, b) =>
     (a.presentation_priority ?? 100) - (b.presentation_priority ?? 100)
-    || workspaceCommandName(a.action_id).localeCompare(workspaceCommandName(b.action_id)));
+    || workspaceCommandName(a.action_id).localeCompare(workspaceCommandName(b.action_id))
+    || String(a.target_lifecycle || "").localeCompare(String(b.target_lifecycle || "")));
+}
+
+function actionLabel(capability, name) {
+  if (name !== "create_work_item" || !capability.target_lifecycle) return humanActions[name]?.label;
+  return `${humanActions[name]?.label} · ${capability.target_lifecycle === "todo" ? "To do" : "Backlog"}`;
 }
 
 function actionButton(label, handler, actionId, className = "quiet") {
@@ -48,16 +56,22 @@ export function renderWorkspaceActions(host, {
   for (const [index, capability] of actions.slice(0, primaryAlreadyPresent ? 2 : 3).entries()) {
     const name = workspaceCommandName(capability.action_id);
     const signed = capability.transport === "signed_host";
-    const label = signed ? copy.text.workspaceSignedAction : humanActions[name]?.label;
+    const targetDefinitionPending = name === "create_work_item"
+      && capability.target_lifecycle === "todo"
+      && capability.availability === "unknown"
+      && capability.reason_codes?.includes("target_definition_required");
+    const label = signed ? copy.text.workspaceSignedAction : actionLabel(capability, name);
     if (!label) continue;
     const control = actionButton(label, () => {
-      if (capability.availability !== "available" && onBlocked) onBlocked(capability);
+      if (capability.availability !== "available" && !targetDefinitionPending && onBlocked) onBlocked(capability);
       else onAction?.(capability.action_id, capability);
     }, name, index === 0 && !primaryAlreadyPresent ? "workspace-primary-action" : "quiet");
     control.dataset.availability = capability.availability;
-    if (capability.availability !== "available") {
+    if (capability.availability !== "available" && !targetDefinitionPending) {
       control.append(el("small", copy.text.workspaceBlockedAction));
       control.setAttribute("aria-description", copy.text.workspaceBlockedAction);
+    } else if (targetDefinitionPending) {
+      control.setAttribute("aria-description", copy.text.workspaceDefineTaskForToDo);
     } else if (signed) control.setAttribute("aria-description", copy.text.workspaceSignedHelp);
     host.append(control);
   }
@@ -107,7 +121,13 @@ export function renderWorkspaceView(host, {
   const kind = view.subject.kind === "criterion" ? "criterion" : subject.kind;
   const record = view.entity || {};
   const actions = workspaceActions(view);
-  const capabilities = new Map(actions.map((value) => [workspaceCommandName(value.action_id), value]));
+  const capabilities = new Map();
+  for (const value of actions) {
+    const name = workspaceCommandName(value.action_id);
+    // Generic contextual buttons continue to create planned work. The compact
+    // action list exposes explicit lifecycle-target variants separately.
+    if (!capabilities.has(name)) capabilities.set(name, value);
+  }
   const headers = new Map((view.relationships?.nodes || []).filter((item) => scoped(item.ref, subject))
     .map((item) => [`${item.ref.kind}/${item.ref.id}`, item]));
   const contextHeaders = [view.placement?.outcome, view.placement?.parent, ...(view.placement?.path || [])];

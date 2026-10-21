@@ -339,10 +339,11 @@ func operationalReadinessError(readiness domain.Readiness, prefix string) error 
 		reason = readiness.Reasons[0]
 	}
 	message := prefix + ": " + strings.Join(readinessReasonStrings(readiness.Reasons), ",")
-	remedies := readinessRemedies(reason, readiness)
+	remedies := readinessRemediesForReasons(readiness)
 	subject := readiness.Ref
 	return domain.NewDetailedError(domain.ErrorCodePreconditionFailed, message, domain.ErrorDetails{
-		ReasonCode: string(reason), SubjectRef: &subject, RelatedRefs: append([]domain.EntityRef(nil), readiness.RelatedRefs...), Remedies: remedies,
+		ReasonCode: string(reason), ReasonCodes: readinessReasonStrings(readiness.Reasons), SubjectRef: &subject,
+		RelatedRefs: authorizedReadinessRefs(readiness.Ref.Scope, readiness.RelatedRefs), Remedies: remedies,
 	})
 }
 
@@ -382,4 +383,66 @@ func readinessRemedies(reason domain.ReadinessReason, readiness domain.Readiness
 	default:
 		return nil
 	}
+}
+
+func readinessRemediesForReasons(readiness domain.Readiness) []domain.ErrorRemedy {
+	result := make([]domain.ErrorRemedy, 0)
+	for _, reason := range readiness.Reasons {
+		for _, remedy := range readinessRemedies(reason, readiness) {
+			if !remedyAllowedInScope(readiness.Ref.Scope, remedy) {
+				continue
+			}
+			duplicate := false
+			for _, existing := range result {
+				if existing.ActionID == remedy.ActionID && equalEntityRefPointer(existing.SubjectRef, remedy.SubjectRef) && equalIDPointer(existing.CriterionID, remedy.CriterionID) {
+					duplicate = true
+					break
+				}
+			}
+			if !duplicate {
+				result = append(result, remedy)
+			}
+		}
+	}
+	return result
+}
+
+func authorizedReadinessRefs(scope domain.Scope, values []domain.EntityRef) []domain.EntityRef {
+	result := make([]domain.EntityRef, 0, len(values))
+	seen := make(map[domain.EntityRef]struct{}, len(values))
+	for _, ref := range values {
+		if ref.Scope != scope || ref.Validate() != nil {
+			continue
+		}
+		if _, exists := seen[ref]; exists {
+			continue
+		}
+		seen[ref] = struct{}{}
+		result = append(result, ref)
+	}
+	return result
+}
+
+func remedyAllowedInScope(scope domain.Scope, remedy domain.ErrorRemedy) bool {
+	if remedy.ActionID == "" {
+		return false
+	}
+	if remedy.SubjectRef != nil && (remedy.SubjectRef.Scope != scope || remedy.SubjectRef.Validate() != nil) {
+		return false
+	}
+	return remedy.CriterionID == nil || remedy.CriterionID.Validate() == nil
+}
+
+func equalEntityRefPointer(left, right *domain.EntityRef) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	return *left == *right
+}
+
+func equalIDPointer(left, right *domain.ID) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	return *left == *right
 }
