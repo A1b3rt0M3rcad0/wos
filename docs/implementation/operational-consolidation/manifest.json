@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "0e47810ee0b0fc83de117fd4de1fc8265ffff375",
+  "execution_head_sha": "3cbbc2fa71537cac7bda582ad8b87f74efe11fb2",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -63,16 +63,23 @@
     {
       "id": "E03",
       "title": "Preparar fixtures operacionais e testes de caracterização",
-      "state": "in_progress",
+      "state": "verified",
       "depends_on": [
         "E01",
         "E02"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "3cbbc2fa71537cac7bda582ad8b87f74efe11fb2",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E03.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOPROXY=direct go test ./packages/wos-core/application ./packages/wos-core/domain -count=1 — pass",
+        "node --check tests/web/fixtures/operational-policy.mjs — pass",
+        "XDG_CACHE_HOME=/tmp/wos-xdg-cache WOS_TEST_CHROMIUM_PATH=/usr/bin/chromium npx playwright test --config playwright.config.mjs operational-policy-fixture.spec.mjs contracts.spec.mjs signed.spec.mjs — 4 passed",
+        "gofmt and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Real PostgreSQL acceptance — WOS_TEST_POSTGRES_DSN was unset; Application fixture uses memory and browser fixture uses SQLite."
+      ]
     },
     {
       "id": "E04",
@@ -1609,5 +1616,5 @@
       "evidence": "pending in consolidated plan"
     }
   ],
-  "execution_copy_sha256": "19a6bd7e18973258d2b9471c0ee8451a69faffd09a991ca7c249c86b27a60545"
+  "execution_copy_sha256": "6b85802a38dfd5086677bb597c9536ecc72332f8b0c88130812aff5d8eb300bf"
 }
