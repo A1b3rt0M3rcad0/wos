@@ -1,0 +1,23 @@
+.workspace-preparation,
+.workspace-handoff,
+.workspace-full-note {
+  padding: 1rem;
+  margin-block: .75rem;
+  border: 1px solid var(--wos-border);
+  border-inline-start: 2px solid var(--wos-copper);
+  background: var(--wos-workspace);
+  display: grid;
+  align-content: start;
+  gap: .75rem;
+  min-width: 0;
+}
+.workspace-preparation h3,
+.workspace-handoff h3,
+.workspace-full-note h3 { margin: 0; font: inherit; font-weight: 600; }
+.workspace-preparation p,
+.workspace-handoff p,
+.workspace-full-note p { margin: 0; overflow-wrap: anywhere; }
+.workspace-full-note .authored-text { white-space: pre-wrap; }
+.workspace-preparation button { justify-self: start; min-height: 44px; }
+.workspace-criteria-editor .workspace-criterion-row { min-width: 0; }
+.workspace-criteria-editor .human-field { min-width: 0; }

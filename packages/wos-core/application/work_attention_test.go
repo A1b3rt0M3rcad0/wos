@@ -94,3 +94,20 @@ func TestAttentionReviewIsAnObligationWithoutExpiredExecutionAuthority(t *testin
 		t.Fatal("terminal Task readiness was presented as unfinished work")
 	}
 }
+
+func TestAttentionExplainsLegacyHardDependencyOnOwnObjective(t *testing.T) {
+	id := d.MustParseID("0199a555-0000-7000-8000-000000000001")
+	parent := d.MustParseID("0199a555-0000-7000-8000-000000000002")
+	scope := d.Scope{NamespaceID: id, OutcomeID: id}
+	work := d.WorkItem{ID: id, Scope: scope, ObjectiveID: &parent, Criteria: d.NewCriterionSet()}
+	relation := d.Relation{ID: parent, Scope: scope, SourceRef: work.Ref(), TargetRef: d.EntityRef{Scope: scope, Kind: d.EntityKindObjective, ID: parent}, RelationType: d.RelationTypeDependsOn, Strength: d.DependencyStrengthHard, Lifecycle: d.RelationLifecycleActive}
+	context := WorkContext{Work: work, Dependencies: []d.Relation{relation}, Omitted: map[string]int{}}
+	attention := projectWorkAttention(context)
+	if len(attention.Obligations) != 1 || attention.Obligations[0].ReasonCode != "own_objective_hard_dependency" {
+		t.Fatal("legacy configuration was not explained", attention)
+	}
+	context.Dependencies[0].Strength = d.DependencyStrengthAdvisory
+	if got := projectWorkAttention(context); len(got.Obligations) != 0 {
+		t.Fatal("advisory membership relation became an execution block", got)
+	}
+}

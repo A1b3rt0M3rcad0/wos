@@ -69,7 +69,7 @@ func TestWorkContractLoadMatrix(t *testing.T) {
 					t.Fatal(e)
 				}
 				item.ContractsEnabled = true
-				if e = tx.WorkItems().Insert(ctx, item); e != nil {
+				if e = insertWorkItemFixture(ctx, tx.Objectives(), tx.WorkItems(), &item); e != nil {
 					t.Fatal(e)
 				}
 				if i < 50 {

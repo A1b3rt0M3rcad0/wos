@@ -12,41 +12,46 @@ import (
 )
 
 type Store struct {
-	serverIdentity           *domain.ServerIdentity
-	issuerHistory            map[domain.ID]domain.ServerIdentity
-	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
-	workActivities           map[domain.ID]domain.WorkActivity
-	signedContracts          map[string]domain.WorkContract
-	signedCheckpoints        map[string]domain.WorkCheckpoint
-	signedSubmissions        map[string]domain.WorkSubmission
-	signedReview             memorySignedReviewState
-	security                 memorySecurityState
-	mu                       sync.Mutex
-	outcomes                 map[string]domain.Outcome
-	objectives               map[string]domain.Objective
-	workItems                map[string]domain.WorkItem
-	protocols                map[domain.ID]domain.NamespaceWorkProtocol
-	contracts                map[string]domain.WorkContract
-	checkpoints              map[string]domain.WorkCheckpoint
-	submissions              map[string]domain.WorkSubmission
-	relations                map[string]domain.Relation
-	issues                   map[string]domain.Issue
-	blockers                 map[string]domain.Blocker
-	artifacts                map[string]domain.Artifact
-	evidence                 map[string]domain.Evidence
-	evidenceLinks            map[string]domain.EvidenceLink
-	decisions                map[string]domain.Decision
-	triggers                 map[string]domain.Trigger
-	endpoints                map[string]ports.WebhookEndpoint
-	firings                  map[string]ports.TriggerFiring
-	deliveries               map[string]ports.Delivery
-	externalContexts         map[string][]domain.ExternalReference
-	roadmaps                 map[string]domain.Roadmap
-	roadmapSlots             map[string]domain.RoadmapActiveSlot
-	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
-	revisions                map[string]domain.OutcomeRevision
-	events                   []domain.DomainEvent
-	idempotency              map[string]idempotencyRecord
+	serverIdentity                 *domain.ServerIdentity
+	issuerHistory                  map[domain.ID]domain.ServerIdentity
+	issuerRecoveries               map[domain.ID]domain.IssuerRecovery
+	entityNotes                    map[domain.ID]domain.EntityNote
+	workActivities                 map[domain.ID]domain.WorkActivity
+	signedContracts                map[string]domain.WorkContract
+	signedCheckpoints              map[string]domain.WorkCheckpoint
+	signedSubmissions              map[string]domain.WorkSubmission
+	signedReview                   memorySignedReviewState
+	security                       memorySecurityState
+	mu                             sync.Mutex
+	outcomes                       map[string]domain.Outcome
+	objectives                     map[string]domain.Objective
+	workItems                      map[string]domain.WorkItem
+	protocols                      map[domain.ID]domain.NamespaceWorkProtocol
+	contracts                      map[string]domain.WorkContract
+	checkpoints                    map[string]domain.WorkCheckpoint
+	submissions                    map[string]domain.WorkSubmission
+	taskDeliveries                 map[string]domain.TaskDelivery
+	taskDeliveryDecisions          map[string]domain.TaskDeliveryDecision
+	taskDeliveryWithdrawals        map[string]domain.TaskDeliveryWithdrawal
+	relations                      map[string]domain.Relation
+	issues                         map[string]domain.Issue
+	blockers                       map[string]domain.Blocker
+	artifacts                      map[string]domain.Artifact
+	evidence                       map[string]domain.Evidence
+	evidenceLinks                  map[string]domain.EvidenceLink
+	decisions                      map[string]domain.Decision
+	triggers                       map[string]domain.Trigger
+	endpoints                      map[string]ports.WebhookEndpoint
+	firings                        map[string]ports.TriggerFiring
+	deliveries                     map[string]ports.Delivery
+	externalContexts               map[string][]domain.ExternalReference
+	roadmaps                       map[string]domain.Roadmap
+	roadmapSlots                   map[string]domain.RoadmapActiveSlot
+	roadmapActivationHistory       map[string][]domain.RoadmapActivationRecord
+	objectiveCompletionAuthorities map[string][]domain.ObjectiveCompletionAuthority
+	revisions                      map[string]domain.OutcomeRevision
+	events                         []domain.DomainEvent
+	idempotency                    map[string]idempotencyRecord
 }
 
 type idempotencyRecord struct {
@@ -58,34 +63,39 @@ type idempotencyRecord struct {
 
 func New() *Store {
 	return &Store{
+		entityNotes:     make(map[domain.ID]domain.EntityNote),
 		workActivities:  make(map[domain.ID]domain.WorkActivity),
 		signedContracts: make(map[string]domain.WorkContract), signedCheckpoints: make(map[string]domain.WorkCheckpoint), signedSubmissions: make(map[string]domain.WorkSubmission), signedReview: newMemorySignedReviewState(),
-		security:                 newMemorySecurityState(),
-		outcomes:                 make(map[string]domain.Outcome),
-		objectives:               make(map[string]domain.Objective),
-		workItems:                make(map[string]domain.WorkItem),
-		protocols:                make(map[domain.ID]domain.NamespaceWorkProtocol),
-		contracts:                make(map[string]domain.WorkContract),
-		checkpoints:              make(map[string]domain.WorkCheckpoint),
-		submissions:              make(map[string]domain.WorkSubmission),
-		relations:                make(map[string]domain.Relation),
-		issues:                   make(map[string]domain.Issue),
-		blockers:                 make(map[string]domain.Blocker),
-		artifacts:                make(map[string]domain.Artifact),
-		evidence:                 make(map[string]domain.Evidence),
-		evidenceLinks:            make(map[string]domain.EvidenceLink),
-		decisions:                make(map[string]domain.Decision),
-		triggers:                 make(map[string]domain.Trigger),
-		endpoints:                make(map[string]ports.WebhookEndpoint),
-		firings:                  make(map[string]ports.TriggerFiring),
-		deliveries:               make(map[string]ports.Delivery),
-		externalContexts:         make(map[string][]domain.ExternalReference),
-		roadmaps:                 make(map[string]domain.Roadmap),
-		roadmapSlots:             make(map[string]domain.RoadmapActiveSlot),
-		roadmapActivationHistory: make(map[string][]domain.RoadmapActivationRecord),
-		revisions:                make(map[string]domain.OutcomeRevision),
-		events:                   make([]domain.DomainEvent, 0),
-		idempotency:              make(map[string]idempotencyRecord),
+		security:                       newMemorySecurityState(),
+		outcomes:                       make(map[string]domain.Outcome),
+		objectives:                     make(map[string]domain.Objective),
+		workItems:                      make(map[string]domain.WorkItem),
+		protocols:                      make(map[domain.ID]domain.NamespaceWorkProtocol),
+		contracts:                      make(map[string]domain.WorkContract),
+		checkpoints:                    make(map[string]domain.WorkCheckpoint),
+		submissions:                    make(map[string]domain.WorkSubmission),
+		taskDeliveries:                 make(map[string]domain.TaskDelivery),
+		taskDeliveryDecisions:          make(map[string]domain.TaskDeliveryDecision),
+		taskDeliveryWithdrawals:        make(map[string]domain.TaskDeliveryWithdrawal),
+		relations:                      make(map[string]domain.Relation),
+		issues:                         make(map[string]domain.Issue),
+		blockers:                       make(map[string]domain.Blocker),
+		artifacts:                      make(map[string]domain.Artifact),
+		evidence:                       make(map[string]domain.Evidence),
+		evidenceLinks:                  make(map[string]domain.EvidenceLink),
+		decisions:                      make(map[string]domain.Decision),
+		triggers:                       make(map[string]domain.Trigger),
+		endpoints:                      make(map[string]ports.WebhookEndpoint),
+		firings:                        make(map[string]ports.TriggerFiring),
+		deliveries:                     make(map[string]ports.Delivery),
+		externalContexts:               make(map[string][]domain.ExternalReference),
+		roadmaps:                       make(map[string]domain.Roadmap),
+		roadmapSlots:                   make(map[string]domain.RoadmapActiveSlot),
+		roadmapActivationHistory:       make(map[string][]domain.RoadmapActivationRecord),
+		objectiveCompletionAuthorities: make(map[string][]domain.ObjectiveCompletionAuthority),
+		revisions:                      make(map[string]domain.OutcomeRevision),
+		events:                         make([]domain.DomainEvent, 0),
+		idempotency:                    make(map[string]idempotencyRecord),
 	}
 }
 
@@ -98,37 +108,42 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 
 	tx := &transaction{
 		store:           s,
+		entityNotes:     cloneEntityNotes(s.entityNotes),
 		workActivities:  cloneWorkActivities(s.workActivities),
 		signedContracts: cloneContractMap(s.signedContracts), signedCheckpoints: cloneCheckpointMap(s.signedCheckpoints), signedSubmissions: cloneSubmissionMap(s.signedSubmissions), signedReview: cloneSignedReview(s.signedReview),
-		serverIdentity:           cloneServerIdentity(s.serverIdentity),
-		issuerHistory:            cloneIssuerHistory(s.issuerHistory),
-		issuerRecoveries:         cloneIssuerRecoveries(s.issuerRecoveries),
-		security:                 cloneMemorySecurityState(s.security),
-		outcomes:                 cloneOutcomes(s.outcomes),
-		objectives:               cloneObjectives(s.objectives),
-		workItems:                cloneWorkItems(s.workItems),
-		protocols:                cloneProtocols(s.protocols),
-		contracts:                cloneContractMap(s.contracts),
-		checkpoints:              cloneCheckpointMap(s.checkpoints),
-		submissions:              cloneSubmissionMap(s.submissions),
-		relations:                cloneRelations(s.relations),
-		issues:                   cloneIssues(s.issues),
-		blockers:                 cloneBlockers(s.blockers),
-		artifacts:                cloneArtifacts(s.artifacts),
-		evidence:                 cloneEvidence(s.evidence),
-		evidenceLinks:            cloneEvidenceLinks(s.evidenceLinks),
-		decisions:                cloneDecisions(s.decisions),
-		triggers:                 cloneTriggers(s.triggers),
-		endpoints:                cloneEndpoints(s.endpoints),
-		firings:                  cloneFirings(s.firings),
-		deliveries:               cloneDeliveries(s.deliveries),
-		externalContexts:         cloneContexts(s.externalContexts),
-		roadmaps:                 cloneRoadmaps(s.roadmaps),
-		roadmapSlots:             cloneRoadmapSlots(s.roadmapSlots),
-		roadmapActivationHistory: cloneRoadmapActivationHistory(s.roadmapActivationHistory),
-		revisions:                cloneRevisions(s.revisions),
-		events:                   cloneEvents(s.events),
-		idempotency:              cloneIdempotency(s.idempotency),
+		serverIdentity:                 cloneServerIdentity(s.serverIdentity),
+		issuerHistory:                  cloneIssuerHistory(s.issuerHistory),
+		issuerRecoveries:               cloneIssuerRecoveries(s.issuerRecoveries),
+		security:                       cloneMemorySecurityState(s.security),
+		outcomes:                       cloneOutcomes(s.outcomes),
+		objectives:                     cloneObjectives(s.objectives),
+		workItems:                      cloneWorkItems(s.workItems),
+		protocols:                      cloneProtocols(s.protocols),
+		contracts:                      cloneContractMap(s.contracts),
+		checkpoints:                    cloneCheckpointMap(s.checkpoints),
+		submissions:                    cloneSubmissionMap(s.submissions),
+		taskDeliveries:                 cloneTaskDeliveryMap(s.taskDeliveries),
+		taskDeliveryDecisions:          cloneTaskDeliveryDecisionMap(s.taskDeliveryDecisions),
+		taskDeliveryWithdrawals:        cloneTaskDeliveryWithdrawalMap(s.taskDeliveryWithdrawals),
+		relations:                      cloneRelations(s.relations),
+		issues:                         cloneIssues(s.issues),
+		blockers:                       cloneBlockers(s.blockers),
+		artifacts:                      cloneArtifacts(s.artifacts),
+		evidence:                       cloneEvidence(s.evidence),
+		evidenceLinks:                  cloneEvidenceLinks(s.evidenceLinks),
+		decisions:                      cloneDecisions(s.decisions),
+		triggers:                       cloneTriggers(s.triggers),
+		endpoints:                      cloneEndpoints(s.endpoints),
+		firings:                        cloneFirings(s.firings),
+		deliveries:                     cloneDeliveries(s.deliveries),
+		externalContexts:               cloneContexts(s.externalContexts),
+		roadmaps:                       cloneRoadmaps(s.roadmaps),
+		roadmapSlots:                   cloneRoadmapSlots(s.roadmapSlots),
+		roadmapActivationHistory:       cloneRoadmapActivationHistory(s.roadmapActivationHistory),
+		objectiveCompletionAuthorities: cloneObjectiveCompletionAuthorities(s.objectiveCompletionAuthorities),
+		revisions:                      cloneRevisions(s.revisions),
+		events:                         cloneEvents(s.events),
+		idempotency:                    cloneIdempotency(s.idempotency),
 	}
 	tx.outcomeRepo = outcomeRepository{tx: tx}
 	tx.objectiveRepo = objectiveRepository{tx: tx}
@@ -142,6 +157,7 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 	tx.decisionRepo = decisionRepository{tx: tx}
 	tx.roadmapRepo = roadmapRepository{tx: tx}
 	tx.roadmapActivations = roadmapActivationStore{tx: tx}
+	tx.objectiveCompletionAuthorityRepo = objectiveCompletionAuthorityRepository{tx: tx}
 	tx.coordination = coordinationStore{tx: tx}
 	tx.eventLog = eventLog{tx: tx}
 	tx.idempotencyStore = idempotencyStore{tx: tx}
@@ -149,58 +165,64 @@ func (s *Store) Begin(ctx context.Context) (ports.UnitOfWork, error) {
 }
 
 type transaction struct {
-	serverIdentity           *domain.ServerIdentity
-	issuerHistory            map[domain.ID]domain.ServerIdentity
-	issuerRecoveries         map[domain.ID]domain.IssuerRecovery
-	workActivities           map[domain.ID]domain.WorkActivity
-	signedContracts          map[string]domain.WorkContract
-	signedCheckpoints        map[string]domain.WorkCheckpoint
-	signedSubmissions        map[string]domain.WorkSubmission
-	signedReview             memorySignedReviewState
-	security                 memorySecurityState
-	store                    *Store
-	closed                   bool
-	outcomes                 map[string]domain.Outcome
-	objectives               map[string]domain.Objective
-	workItems                map[string]domain.WorkItem
-	protocols                map[domain.ID]domain.NamespaceWorkProtocol
-	contracts                map[string]domain.WorkContract
-	checkpoints              map[string]domain.WorkCheckpoint
-	submissions              map[string]domain.WorkSubmission
-	relations                map[string]domain.Relation
-	issues                   map[string]domain.Issue
-	blockers                 map[string]domain.Blocker
-	artifacts                map[string]domain.Artifact
-	evidence                 map[string]domain.Evidence
-	evidenceLinks            map[string]domain.EvidenceLink
-	decisions                map[string]domain.Decision
-	triggers                 map[string]domain.Trigger
-	endpoints                map[string]ports.WebhookEndpoint
-	firings                  map[string]ports.TriggerFiring
-	deliveries               map[string]ports.Delivery
-	externalContexts         map[string][]domain.ExternalReference
-	roadmaps                 map[string]domain.Roadmap
-	roadmapSlots             map[string]domain.RoadmapActiveSlot
-	roadmapActivationHistory map[string][]domain.RoadmapActivationRecord
-	revisions                map[string]domain.OutcomeRevision
-	events                   []domain.DomainEvent
-	idempotency              map[string]idempotencyRecord
+	serverIdentity                 *domain.ServerIdentity
+	issuerHistory                  map[domain.ID]domain.ServerIdentity
+	issuerRecoveries               map[domain.ID]domain.IssuerRecovery
+	entityNotes                    map[domain.ID]domain.EntityNote
+	workActivities                 map[domain.ID]domain.WorkActivity
+	signedContracts                map[string]domain.WorkContract
+	signedCheckpoints              map[string]domain.WorkCheckpoint
+	signedSubmissions              map[string]domain.WorkSubmission
+	signedReview                   memorySignedReviewState
+	security                       memorySecurityState
+	store                          *Store
+	closed                         bool
+	outcomes                       map[string]domain.Outcome
+	objectives                     map[string]domain.Objective
+	workItems                      map[string]domain.WorkItem
+	protocols                      map[domain.ID]domain.NamespaceWorkProtocol
+	contracts                      map[string]domain.WorkContract
+	checkpoints                    map[string]domain.WorkCheckpoint
+	submissions                    map[string]domain.WorkSubmission
+	taskDeliveries                 map[string]domain.TaskDelivery
+	taskDeliveryDecisions          map[string]domain.TaskDeliveryDecision
+	taskDeliveryWithdrawals        map[string]domain.TaskDeliveryWithdrawal
+	relations                      map[string]domain.Relation
+	issues                         map[string]domain.Issue
+	blockers                       map[string]domain.Blocker
+	artifacts                      map[string]domain.Artifact
+	evidence                       map[string]domain.Evidence
+	evidenceLinks                  map[string]domain.EvidenceLink
+	decisions                      map[string]domain.Decision
+	triggers                       map[string]domain.Trigger
+	endpoints                      map[string]ports.WebhookEndpoint
+	firings                        map[string]ports.TriggerFiring
+	deliveries                     map[string]ports.Delivery
+	externalContexts               map[string][]domain.ExternalReference
+	roadmaps                       map[string]domain.Roadmap
+	roadmapSlots                   map[string]domain.RoadmapActiveSlot
+	roadmapActivationHistory       map[string][]domain.RoadmapActivationRecord
+	objectiveCompletionAuthorities map[string][]domain.ObjectiveCompletionAuthority
+	revisions                      map[string]domain.OutcomeRevision
+	events                         []domain.DomainEvent
+	idempotency                    map[string]idempotencyRecord
 
-	outcomeRepo        outcomeRepository
-	objectiveRepo      objectiveRepository
-	workItemRepo       workItemRepository
-	relationRepo       relationRepository
-	issueRepo          issueRepository
-	blockerRepo        blockerRepository
-	artifactRepo       artifactRepository
-	evidenceRepo       evidenceRepository
-	evidenceLinkRepo   evidenceLinkRepository
-	decisionRepo       decisionRepository
-	roadmapRepo        roadmapRepository
-	roadmapActivations roadmapActivationStore
-	coordination       coordinationStore
-	eventLog           eventLog
-	idempotencyStore   idempotencyStore
+	outcomeRepo                      outcomeRepository
+	objectiveRepo                    objectiveRepository
+	workItemRepo                     workItemRepository
+	relationRepo                     relationRepository
+	issueRepo                        issueRepository
+	blockerRepo                      blockerRepository
+	artifactRepo                     artifactRepository
+	evidenceRepo                     evidenceRepository
+	evidenceLinkRepo                 evidenceLinkRepository
+	decisionRepo                     decisionRepository
+	roadmapRepo                      roadmapRepository
+	roadmapActivations               roadmapActivationStore
+	objectiveCompletionAuthorityRepo objectiveCompletionAuthorityRepository
+	coordination                     coordinationStore
+	eventLog                         eventLog
+	idempotencyStore                 idempotencyStore
 }
 
 func (tx *transaction) Outcomes() ports.OutcomeRepository           { return tx.outcomeRepo }
@@ -217,14 +239,21 @@ func (tx *transaction) Roadmaps() ports.RoadmapRepository           { return tx.
 func (tx *transaction) RoadmapActivations() ports.RoadmapActivationStore {
 	return tx.roadmapActivations
 }
+func (tx *transaction) ObjectiveCompletionAuthorities() ports.ObjectiveCompletionAuthorityRepository {
+	return tx.objectiveCompletionAuthorityRepo
+}
 func (tx *transaction) Coordination() ports.CoordinationStore { return tx.coordination }
 func (tx *transaction) Events() ports.DomainEventLog          { return tx.eventLog }
 func (tx *transaction) Idempotency() ports.IdempotencyStore   { return tx.idempotencyStore }
+func (tx *transaction) TaskDeliveries() ports.TaskDeliveryRepository {
+	return taskDeliveryRepository{tx: tx}
+}
 
 func (tx *transaction) Commit() error {
 	if tx.closed {
 		return domain.NewError(domain.ErrorCodeInvalidTransition, "transaction already closed")
 	}
+	tx.store.entityNotes = cloneEntityNotes(tx.entityNotes)
 	tx.store.workActivities = cloneWorkActivities(tx.workActivities)
 	tx.store.signedContracts = cloneContractMap(tx.signedContracts)
 	tx.store.signedCheckpoints = cloneCheckpointMap(tx.signedCheckpoints)
@@ -238,6 +267,9 @@ func (tx *transaction) Commit() error {
 	tx.store.contracts = cloneContractMap(tx.contracts)
 	tx.store.checkpoints = cloneCheckpointMap(tx.checkpoints)
 	tx.store.submissions = cloneSubmissionMap(tx.submissions)
+	tx.store.taskDeliveries = cloneTaskDeliveryMap(tx.taskDeliveries)
+	tx.store.taskDeliveryDecisions = cloneTaskDeliveryDecisionMap(tx.taskDeliveryDecisions)
+	tx.store.taskDeliveryWithdrawals = cloneTaskDeliveryWithdrawalMap(tx.taskDeliveryWithdrawals)
 	tx.store.outcomes = cloneOutcomes(tx.outcomes)
 	tx.store.objectives = cloneObjectives(tx.objectives)
 	tx.store.workItems = cloneWorkItems(tx.workItems)
@@ -256,6 +288,7 @@ func (tx *transaction) Commit() error {
 	tx.store.roadmaps = cloneRoadmaps(tx.roadmaps)
 	tx.store.roadmapSlots = cloneRoadmapSlots(tx.roadmapSlots)
 	tx.store.roadmapActivationHistory = cloneRoadmapActivationHistory(tx.roadmapActivationHistory)
+	tx.store.objectiveCompletionAuthorities = cloneObjectiveCompletionAuthorities(tx.objectiveCompletionAuthorities)
 	tx.store.revisions = cloneRevisions(tx.revisions)
 	tx.store.events = cloneEvents(tx.events)
 	tx.store.idempotency = cloneIdempotency(tx.idempotency)
@@ -533,6 +566,13 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	); err != nil {
 		return err
 	}
+	for _, objective := range r.tx.objectives {
+		if objective.Scope == outcome.Scope() {
+			if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+				return err
+			}
+		}
+	}
 	r.tx.outcomes[key] = cloneOutcome(outcome)
 	return nil
 }
@@ -550,6 +590,9 @@ func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id dom
 	if !ok {
 		return domain.Objective{}, domain.NewError(domain.ErrorCodeNotFound, "objective not found")
 	}
+	if err := r.validateCompletionConfiguration(ctx, value); err != nil {
+		return domain.Objective{}, err
+	}
 	return cloneObjective(value), nil
 }
 
@@ -563,6 +606,9 @@ func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Sco
 	items := make([]domain.Objective, 0)
 	for _, item := range r.tx.objectives {
 		if item.Scope == scope {
+			if err := r.validateCompletionConfiguration(ctx, item); err != nil {
+				return nil, err
+			}
 			items = append(items, cloneObjective(item))
 		}
 	}
@@ -578,6 +624,9 @@ func (r objectiveRepository) Insert(ctx context.Context, objective domain.Object
 		return err
 	}
 	if err := objective.Validate(); err != nil {
+		return err
+	}
+	if err := r.validateCompletionConfiguration(ctx, objective); err != nil {
 		return err
 	}
 	key := entityKey(objective.Scope, objective.ID)
@@ -596,6 +645,9 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 		return err
 	}
 	if err := objective.Validate(); err != nil {
+		return err
+	}
+	if err := r.validateCompletionConfiguration(ctx, objective); err != nil {
 		return err
 	}
 	key := entityKey(objective.Scope, objective.ID)
@@ -623,6 +675,20 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	return nil
 }
 
+func (r objectiveRepository) validateCompletionConfiguration(ctx context.Context, objective domain.Objective) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	outcome, ok := r.tx.outcomes[outcomeKey(objective.Scope.NamespaceID, objective.Scope.OutcomeID)]
+	if !ok {
+		if objective.CompletionMode.Effective() == domain.ObjectiveCompletionModeAutomatic {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "automatic objective completion requires a persisted owning Outcome")
+		}
+		return nil
+	}
+	return objective.ValidateCompletionConfiguration(outcome)
+}
+
 type workItemRepository struct{ tx *transaction }
 
 func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.WorkItem, error) {
@@ -635,6 +701,9 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	value, ok := r.tx.workItems[entityKey(scope, id)]
 	if !ok {
 		return domain.WorkItem{}, domain.NewError(domain.ErrorCodeNotFound, "work item not found")
+	}
+	if err := validateTaskDeliveryNavigation(value, r.tx); err != nil {
+		return domain.WorkItem{}, err
 	}
 	return cloneWorkItem(value), nil
 }
@@ -649,6 +718,9 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	items := make([]domain.WorkItem, 0)
 	for _, item := range r.tx.workItems {
 		if item.Scope == scope {
+			if err := validateTaskDeliveryNavigation(item, r.tx); err != nil {
+				return nil, err
+			}
 			items = append(items, cloneWorkItem(item))
 		}
 	}
@@ -664,6 +736,9 @@ func (r workItemRepository) Insert(ctx context.Context, item domain.WorkItem) er
 		return err
 	}
 	if err := item.Validate(); err != nil {
+		return err
+	}
+	if err := validateTaskDeliveryNavigation(item, r.tx); err != nil {
 		return err
 	}
 	key := entityKey(item.Scope, item.ID)
@@ -682,6 +757,9 @@ func (r workItemRepository) Save(ctx context.Context, item domain.WorkItem, expe
 		return err
 	}
 	if err := item.Validate(); err != nil {
+		return err
+	}
+	if err := validateTaskDeliveryNavigation(item, r.tx); err != nil {
 		return err
 	}
 	key := entityKey(item.Scope, item.ID)
@@ -826,6 +904,68 @@ func (r issueRepository) ListByOutcome(ctx context.Context, scope domain.Scope) 
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i].ID.String() < items[j].ID.String() })
 	return items, nil
+}
+
+func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, false)
+}
+
+func (r issueRepository) ListDuplicateIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, true)
+}
+
+func (r issueRepository) listIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int, duplicateOnly bool) ([]domain.Issue, int, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := r.tx.ensureOpen(); err != nil {
+		return nil, 0, err
+	}
+	if err := scope.Validate(); err != nil {
+		return nil, 0, err
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid Objective ID", err)
+	}
+	if limit < 1 || limit > 101 {
+		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid Objective Issue page limit")
+	}
+	if after != "" {
+		if _, err := domain.ParseID(after); err != nil {
+			return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor: invalid Issue key")
+		}
+	}
+
+	items := make([]domain.Issue, 0)
+	total := 0
+	for _, item := range r.tx.issues {
+		if item.Scope != scope || item.ObjectiveID == nil || *item.ObjectiveID != objectiveID {
+			continue
+		}
+		matchesLifecycle := item.Lifecycle == domain.IssueLifecycleOpen || item.Lifecycle == domain.IssueLifecycleInvestigating
+		if duplicateOnly {
+			matchesLifecycle = item.Lifecycle == domain.IssueLifecycleDuplicate
+		}
+		if !matchesLifecycle {
+			continue
+		}
+		total++
+		if item.ID.String() <= after {
+			continue
+		}
+		// Keep at most one page detached from the transaction state. The
+		// in-memory adapter has no SQL index, but must not clone all matches.
+		index := sort.Search(len(items), func(index int) bool { return items[index].ID > item.ID })
+		if index >= limit {
+			continue
+		}
+		if len(items) < limit {
+			items = append(items, domain.Issue{})
+		}
+		copy(items[index+1:], items[index:])
+		items[index] = cloneIssue(item)
+	}
+	return items, total, nil
 }
 
 func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
@@ -1826,6 +1966,10 @@ func cloneDecision(v domain.Decision) domain.Decision {
 
 func cloneIssue(v domain.Issue) domain.Issue {
 	v.AffectedRefs = append([]domain.EntityRef(nil), v.AffectedRefs...)
+	if v.AssigneeRef != nil {
+		actor := *v.AssigneeRef
+		v.AssigneeRef = &actor
+	}
 	if v.DuplicateOfIssueID != nil {
 		id := *v.DuplicateOfIssueID
 		v.DuplicateOfIssueID = &id
@@ -1875,6 +2019,20 @@ func cloneObjective(v domain.Objective) domain.Objective {
 }
 
 func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
+	for _, field := range []struct {
+		source *domain.ID
+		target **domain.ID
+	}{
+		{v.PendingDeliveryID, &v.PendingDeliveryID},
+		{v.LatestDeliveryID, &v.LatestDeliveryID},
+		{v.LatestDeliveryDecisionID, &v.LatestDeliveryDecisionID},
+		{v.LatestDeliveryWithdrawalID, &v.LatestDeliveryWithdrawalID},
+	} {
+		if field.source != nil {
+			id := *field.source
+			*field.target = &id
+		}
+	}
 	if v.CurrentContractID != nil {
 		id := *v.CurrentContractID
 		v.CurrentContractID = &id
@@ -1897,6 +2055,10 @@ func cloneWorkItem(v domain.WorkItem) domain.WorkItem {
 	}
 	if v.CurrentLease != nil {
 		lease := *v.CurrentLease
+		if v.CurrentLease.SessionCredentialID != nil {
+			sessionCredentialID := *v.CurrentLease.SessionCredentialID
+			lease.SessionCredentialID = &sessionCredentialID
+		}
 		v.CurrentLease = &lease
 	}
 	return v
@@ -1922,6 +2084,10 @@ func cloneAssessment(v domain.CriterionAssessment) domain.CriterionAssessment {
 	if v.SubmissionID != nil {
 		id := *v.SubmissionID
 		v.SubmissionID = &id
+	}
+	if v.TaskDeliveryRef != nil {
+		ref := *v.TaskDeliveryRef
+		v.TaskDeliveryRef = &ref
 	}
 	v.EvidenceIDs = append([]domain.ID(nil), v.EvidenceIDs...)
 	if v.EvaluatorRef != nil {

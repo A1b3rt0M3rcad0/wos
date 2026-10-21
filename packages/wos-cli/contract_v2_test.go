@@ -13,6 +13,10 @@ import (
 )
 
 func contractFixtureV2(t *testing.T) (ProfileV2, ContractFileV2) {
+	return contractFixtureV2WithFloor(t, d.AcceptanceDirect)
+}
+
+func contractFixtureV2WithFloor(t *testing.T, acceptanceFloor d.AcceptanceMode) (ProfileV2, ContractFileV2) {
 	t.Helper()
 	project, profile, _ := profileFixtureV2(t, "executor_a")
 	contract := d.MustParseID("0199ac10-0000-7000-8000-000000000008")
@@ -33,7 +37,7 @@ func contractFixtureV2(t *testing.T) (ProfileV2, ContractFileV2) {
 		return doc
 	}
 	spec := document(signing.ContractSpec, payload)
-	authority := document(signing.ContractAuthority, signing.AuthorityPayload{Binding: binding, ContractKind: "execution", ContractID: contract.String(), WorkItemID: work.String(), ExecutionID: contract.String(), FencingToken: 9007199254741003, ContractVersion: 1, LeaseVersion: 1, SpecDigest: signing.Digest(spec.Payload), PolicyRevision: 1, AllowedSigningKeyIDs: []string{profile.Signing.KeyID.String()}})
+	authority := document(signing.ContractAuthority, signing.AuthorityPayload{Binding: binding, ContractKind: "execution", ContractID: contract.String(), WorkItemID: work.String(), ExecutionID: contract.String(), FencingToken: 9007199254741003, ContractVersion: 1, LeaseVersion: 1, SpecDigest: signing.Digest(spec.Payload), AcceptanceMode: string(acceptanceFloor), PolicyRevision: 1, AllowedSigningKeyIDs: []string{profile.Signing.KeyID.String()}})
 	return profile, ContractFileV2{SchemaVersion: 2, Kind: "WOSContractFile", Issued: IssuedDocumentsV2{spec, authority}, Execution: &ExecutionDraftV2{CompletionIntent: "complete", Material: a.SignedReturnMaterial{Result: d.SignedResultMaterial{ContractID: contract, WorkItemID: work, SpecDigest: signing.Digest(spec.Payload), Summary: "Targeted result"}}}, Local: ContractLocalV2{SchemaVersion: 1, Profile: profile.Name, WorkItemVersion: 9007199254741005}}
 }
 

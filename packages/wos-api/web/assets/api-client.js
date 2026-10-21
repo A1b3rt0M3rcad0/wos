@@ -18,6 +18,8 @@ export async function request(path, options = {}) {
     );
     error.code = data.error?.code;
     error.status = response.status;
+    error.details = data.error?.details;
+    error.retryable = data.error?.retryable;
     throw error;
   }
   return data;

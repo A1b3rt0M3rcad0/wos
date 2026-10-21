@@ -35,7 +35,7 @@ func run(args []string) int {
 	}
 	if len(args) > 0 {
 		switch args[0] {
-		case "init", "auth", "capabilities", "work", "contract", "outcome", "objective", "roadmap", "review", "profile", "project", "workspace", "protocol", "doctor":
+		case "init", "auth", "capabilities", "work", "contract", "outcome", "objective", "roadmap", "review", "profile", "project", "workspace", "protocol", "doctor", "inspect", "planning":
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 			return cli.Run(ctx, args, os.Stdout, os.Stderr)

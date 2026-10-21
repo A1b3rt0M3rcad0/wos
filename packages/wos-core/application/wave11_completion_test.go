@@ -252,7 +252,7 @@ func TestWave11ReplanningAndLiveCancellationDoNotRewriteHistory(t *testing.T) {
 	}
 	outcome := created.Value
 	workResult, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "Live work", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()), Title: "Live work", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {

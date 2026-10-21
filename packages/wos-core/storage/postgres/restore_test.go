@@ -54,7 +54,7 @@ func restoreIntegrationFixture(t *testing.T, source *Store) *Store {
 			return
 		}
 		defer admin.Close()
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
 		defer cancel()
 		if _, err := admin.db.ExecContext(ctx, "DROP DATABASE "+targetDatabase+" WITH (FORCE)"); err != nil {
 			t.Errorf("drop restored database: %v", err)

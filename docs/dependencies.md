@@ -1,7 +1,7 @@
 # WOS Dependency Inventory
 
-**Last reviewed:** 2026-10-15
-**Active implementation wave:** Signed contracts P07 workspace foundation
+**Last reviewed:** 2026-10-19
+**Active implementation wave:** Contextual Kanbans and strict-work completion
 
 This document records dependencies that are actually present in the repository. Planned dependencies from the architecture specification are not treated as installed or approved until the implementation wave that needs them.
 
@@ -88,3 +88,10 @@ The human workspace accessibility gate uses test-only `@axe-core/playwright` 4.1
 ## Embedded workspace typography
 
 The editorial workspace vendors Instrument Serif regular/italic Latin WOFF2 from `@fontsource/instrument-serif@5.3.0` and DM Sans variable-weight normal Latin WOFF2 from `@fontsource-variable/dm-sans@5.3.0`. Both use SIL Open Font License 1.1, with their notices retained next to the font files. These are static web assets, not new Go or npm runtime package dependencies. They are served locally under the existing CSP; no font CDN is required. See [design and provenance](design/editorial/README.md) and its asset hashes.
+
+## Local product-design guidance
+
+The MIT-licensed `product-design-and-ux` skill is installed under
+`.agents/skills/product-design-and-ux/`, with original references/templates, upstream
+license and source revision. It is development guidance, not an application runtime
+dependency. Contextual Kanbans add no frontend framework, Go module or service.

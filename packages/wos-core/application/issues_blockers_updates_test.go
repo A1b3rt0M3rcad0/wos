@@ -13,8 +13,10 @@ func TestIssueAndBlockerEditableFieldsUseVersionedNoOpSemantics(t *testing.T) {
 	service, store := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	work := createTodoWork(t, service, outcome.Scope(), "editable issue target")
+	owner := issueObjectiveForTest(t, service, outcome.Scope())
 	reported, err := service.ReportIssueWithBlocker(ctx, commandContext(), application.ReportIssueWithBlockerCommand{
 		Scope:              outcome.Scope(),
+		ObjectiveID:        owner,
 		Title:              "Original issue",
 		Description:        "original details",
 		Severity:           domain.IssueSeverityMinor,

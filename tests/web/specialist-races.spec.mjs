@@ -83,9 +83,10 @@ function permissionBarrier(hold, scope) {
 async function openSpecialist(page, wos, outcome, area) {
   await wos.login(page);
   await openOutcome(page, outcome.title, { area });
-  await expect(page.locator("#notice")).toHaveText(
-    /Shared state refreshed|Partial view/,
-  );
+  // Collection readiness is represented by its rendered heading and records;
+  // routine Board feedback no longer creates a second persistent status row.
+  await expect(page.locator("#content .content-heading h2")).toBeVisible();
+  await expect(page.locator("#notice")).not.toHaveClass(/error/);
   await expect(
     page.locator(`#area-tabs [data-area="${area}"]`),
   ).toHaveAttribute("aria-pressed", "true");
@@ -173,6 +174,7 @@ test("a delayed Board page cannot append obsolete records after a same-Outcome r
     "Refresh preserves the Board's current page boundary",
   );
   const tasks = [];
+  const objective = await wos.command("create_objective", { scope, title: "Queued work Objective", priority: "normal" });
   for (let index = 0; index < 26; index++)
     tasks.push(
       await wos.command("create_work_item", {
@@ -180,6 +182,7 @@ test("a delayed Board page cannot append obsolete records after a same-Outcome r
         title: `Queued work ${String(index + 1).padStart(2, "0")}`,
         priority: "normal",
         lifecycle: "backlog",
+        objective_id: objective.id,
       }),
     );
   const writes = trackBrowserWrites(page);

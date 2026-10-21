@@ -2,11 +2,12 @@ package commands
 
 import (
 	"encoding/json"
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
 func FuzzPublicCommandRoundTrip(f *testing.F) {
@@ -34,6 +35,25 @@ func FuzzPublicCommandRoundTrip(f *testing.F) {
 			t.Fatal(err)
 		}
 	})
+}
+
+func TestPermissionListSchemasPublishThe128ValueLimit(t *testing.T) {
+	assertMaxItems := func(label string, schema map[string]any, want int) {
+		t.Helper()
+		got, ok := schema["maxItems"].(int)
+		if !ok || got != want {
+			t.Fatalf("%s maxItems=%v, want %d", label, schema["maxItems"], want)
+		}
+	}
+	adminSchema := Schema(reflect.TypeFor[application.AdministrativeIntent]())
+	adminProps := adminSchema["properties"].(map[string]any)
+	assertMaxItems("administrative permissions", adminProps["permissions"].(map[string]any), domain.MaxPermissionValues)
+
+	signingSchema := Schema(reflect.TypeFor[application.SigningSecurityIntent]())
+	signingProps := signingSchema["properties"].(map[string]any)
+	policySchema := signingProps["credential_policy"].(map[string]any)
+	policyProps := policySchema["properties"].(map[string]any)
+	assertMaxItems("credential permitted_operations", policyProps["permitted_operations"].(map[string]any), domain.MaxPermissionValues)
 }
 
 func TestEvidenceOptionalMetadataPreservesCoreSerialization(t *testing.T) {

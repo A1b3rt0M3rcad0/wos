@@ -38,7 +38,9 @@ func signedCLILegacyMigrationJourney(t *testing.T, destination, origin string, s
 	}
 	operator, e := sdk.New(origin, token, nil)
 	must(e)
-	task, e := operator.CreateWorkItem(ctx, "migration-legacy-task-0001", a.CreateWorkItemCommand{Scope: scope, Title: "Preserve a legacy draft", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+	objective, e := operator.CreateObjective(ctx, "migration-legacy-owner-0001", a.CreateObjectiveCommand{Scope: scope, Title: "Migration task owner", Priority: d.PriorityNormal})
+	must(e)
+	task, e := operator.CreateWorkItem(ctx, "migration-legacy-task-0001", a.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: "Preserve a legacy draft", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 	must(e)
 	run(source, "init", "--server", origin, "--namespace", scope.NamespaceID.String(), "--outcome", scope.OutcomeID.String(), "--credential-env", "WOS_CLI_CUTOVER_TOKEN")
 	acquired := run(source, "work", "checkout", task.Value.ID.String(), "--version", strconv.FormatUint(uint64(task.Value.Version), 10))

@@ -1,0 +1,2848 @@
+{
+  "source": "57e76f4741c4e483c304cf35c648550c0349c460",
+  "complete_browser": {
+    "source": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "stats": {
+      "startTime": "2026-10-20T04:33:31.247Z",
+      "duration": 821642.7810000001,
+      "expected": 220,
+      "skipped": 0,
+      "unexpected": 2,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "title": "axe checks login, six-area overview, common Task form and server combobox",
+        "file": "accessibility.spec.mjs",
+        "line": 22,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "390px mobile creates Outcome and Task with a usable searched reference",
+        "file": "accessibility.spec.mjs",
+        "line": 50,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "200% equivalent reflow retains fields, focus and confirmation",
+        "file": "accessibility.spec.mjs",
+        "line": 79,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "400% equivalent reflow retains fields, focus and confirmation",
+        "file": "accessibility.spec.mjs",
+        "line": 79,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keyboard opens, searches, selects, confirms and restores focus without a pointer",
+        "file": "accessibility.spec.mjs",
+        "line": 104,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "compound Issue resolution explicitly releases selected impacts atomically",
+        "file": "accessibility.spec.mjs",
+        "line": 140,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "typed external context preserves scalar types without changing permission",
+        "file": "accessibility.spec.mjs",
+        "line": 181,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "typed participants are documentary and never acquire execution authority",
+        "file": "accessibility.spec.mjs",
+        "line": 206,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "read-only membership hides mutation and settings affordances",
+        "file": "authority.spec.mjs",
+        "line": 20,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "revoked credential cannot retrieve references or dispatch edits",
+        "file": "authority.spec.mjs",
+        "line": 34,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late failed Outcome read cannot replace the selected Outcome or its notice",
+        "file": "authority.spec.mjs",
+        "line": 80,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "revocation prevents replay dispatch of an already frozen uncertain intent",
+        "file": "authority.spec.mjs",
+        "line": 115,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a subtree Issue previews actual affected work and atomically rejects a stale blocking scope",
+        "file": "blocker-impact.spec.mjs",
+        "line": 4,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Evidence actions remain compact and contextual at 2560 x 1440",
+        "file": "board-action-layout.spec.mjs",
+        "line": 37,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Evidence actions remain compact and contextual at 390 x 844",
+        "file": "board-action-layout.spec.mjs",
+        "line": 37,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Evidence actions remain compact and contextual at 360 x 640",
+        "file": "board-action-layout.spec.mjs",
+        "line": 37,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome actions group real available commands and keep the final actions reachable",
+        "file": "board-action-layout.spec.mjs",
+        "line": 75,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Dismissing global Outcome actions preserves the selected Evidence and its command scope",
+        "file": "board-action-layout.spec.mjs",
+        "line": 103,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Native action dialog keeps grouped commands readable at 1280 x 900",
+        "file": "board-action-layout.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Native action dialog keeps grouped commands readable at 390 x 844",
+        "file": "board-action-layout.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Partial map coverage stays in the footer and other feedback never covers inspection actions",
+        "file": "board-action-layout.spec.mjs",
+        "line": 171,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a failed Outcome transition from Board keeps its error in the original visible live region",
+        "file": "board-feedback-transitions.spec.mjs",
+        "line": 44,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Workspace selection reset after Board exposes read errors beside the empty-workspace state",
+        "file": "board-feedback-transitions.spec.mjs",
+        "line": 64,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Board cards cross the original origin, survive refresh and resize, and fit their real extents",
+        "file": "board-movement.spec.mjs",
+        "line": 67,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "trackpad, background drag and keyboard pan freely without changing cards or stealing native scroll",
+        "file": "board-movement.spec.mjs",
+        "line": 154,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a fresh card press immediately after dragging opens inspection without selecting the drag",
+        "file": "board-movement.spec.mjs",
+        "line": 219,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Task context keeps source text and presents dependencies, Blockers and evidence without accepting work",
+        "file": "canvas-context.spec.mjs",
+        "line": 31,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "bounded summaries declare local and server omissions and replace stale context",
+        "file": "canvas-context.spec.mjs",
+        "line": 83,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Evidence form submits the canonical context stance through its normal typed picker",
+        "file": "canvas-context.spec.mjs",
+        "line": 111,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "the default work map exposes records deliberately and preserves local positions and authority distinctions",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 217,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native canvas controls preserve selection, keyboard focus and explicit command boundaries",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 264,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "canvas search paginates and deduplicates without reopening stale queries or scopes",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 369,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "viewport growth preserves map scale and mobile has a native list alternative",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 464,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "overview zoom preserves accessible controls through item selection and the list alternative",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 500,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a planning card remains selected when its inspector opens the real Roadmap",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 535,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "discarded callback failures stay silent while current failures remain announced",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 596,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "all map cards display the original supplied paper behind live accessible content",
+        "file": "canvas-interactions.spec.mjs",
+        "line": 640,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late form restoration preserves edge keyboard focus and exact authorized removal",
+        "file": "canvas-races.spec.mjs",
+        "line": 63,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late Task focal read cannot reopen a closed inspector or report an obsolete revision error",
+        "file": "canvas-races.spec.mjs",
+        "line": 113,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late comparison for Task A cannot replace Task B's draft or introduce an old-target save",
+        "file": "canvas-races.spec.mjs",
+        "line": 144,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an earlier successful refresh cannot restore private Canvas content after a genuine access denial",
+        "file": "canvas-races.spec.mjs",
+        "line": 184,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an obsolete Task history transport failure cannot replace the current Task or its notice",
+        "file": "canvas-races.spec.mjs",
+        "line": 220,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Escape during deep-link graph restoration persists dismissal and Back reopens the record",
+        "file": "canvas-races.spec.mjs",
+        "line": 257,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 1280 x 720",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 1366 x 768",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 1024 x 768",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 390 x 844",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 360 x 640",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact login fits its complete default composition at 320 x 740",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 16,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Expanded local login and enlarged text keep natural scrolling and whole controls",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 38,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1280 x 720",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 281,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1366 x 768",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 281,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 1920 x 1080",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 281,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board uses the available desktop workspace at 2560 x 1440",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 281,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Views and Outcome context stay progressive, keyboard accessible and separate from verification",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 350,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 320 x 740",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 432,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 390 x 844",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 432,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 517,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable",
+        "file": "canvas-workspace-layout.spec.mjs",
+        "line": 552,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board is the default operational view without a Roadmap and keeps contextual deep links",
+        "file": "canvas.spec.mjs",
+        "line": 72,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual creation and editing reuse the real form and preserve Objective association",
+        "file": "canvas.spec.mjs",
+        "line": 147,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "real connections distinguish hierarchy, dependency strength and Evidence stance; Issue resolution retains its Blocker",
+        "file": "canvas.spec.mjs",
+        "line": 170,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "large Outcomes declare partial data, load incrementally and find authorized off-page Tasks",
+        "file": "canvas.spec.mjs",
+        "line": 209,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "authorized dependency editing persists advisory links, refuses cycles and explicitly removes the selected relation",
+        "file": "canvas.spec.mjs",
+        "line": 228,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "read-only Outcome Board has usable keyboard and mobile views while zoom and layout never mutate state",
+        "file": "canvas.spec.mjs",
+        "line": 262,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "inline conflicts preserve local edits and uncertain retries keep their exact bytes and key",
+        "file": "canvas.spec.mjs",
+        "line": 353,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Roadmap Draft, immutable publication and activation stay separate from operational dependency",
+        "file": "canvas.spec.mjs",
+        "line": 397,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "concluding parents reviews actual open work, rejects stale impact and preserves children at 2560px",
+        "file": "conclusion-impact.spec.mjs",
+        "line": 31,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "concluding parents reviews actual open work, rejects stale impact and preserves children at 390px",
+        "file": "conclusion-impact.spec.mjs",
+        "line": 31,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector",
+        "file": "conclusion-impact.spec.mjs",
+        "line": 159,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "strict cancellation acknowledgement in the browser persists its exact excluded scope",
+        "file": "contextual-kanban-guards.spec.mjs",
+        "line": 8,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "real credential revocation closes an open Kanban and clears its private content",
+        "file": "contextual-kanban-guards.spec.mjs",
+        "line": 37,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "refresh keeps the selected detail coherent and rejects newer isolated reads",
+        "file": "contextual-kanban-guards.spec.mjs",
+        "line": 51,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1440x900",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 143,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "criteria verification is separate from acceptance and cancelled work remains historical",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 290,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "creation in Objective Kanban preserves parent and returns to the same context",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 328,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "activity history is loaded on demand and material choices retain their meaning",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 371,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 433,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an authorized waiver is an explicit exception and never completes the Task",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 488,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "partial Kanban pages preserve column scroll and reject stale continuation",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 578,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "specialist inspection retains one native dialog without Board-only modal launchers",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 634,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "All item actions reuse the canonical surface within the same Kanban",
+        "file": "contextual-kanban.spec.mjs",
+        "line": 665,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "explicit cutover, contract progress, human review and privileged revocation",
+        "file": "contracts.spec.mjs",
+        "line": 21,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "operational density stays bounded across desktop, tablet and phone viewports",
+        "file": "editorial.spec.mjs",
+        "line": 141,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "buttons keep legible padded states across the workspace, dialogs and touch navigation",
+        "file": "editorial.spec.mjs",
+        "line": 245,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "paper stays fixed behind scrolling content and the editorial sidebar remains usable",
+        "file": "editorial.spec.mjs",
+        "line": 403,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "editorial chapters keep all six areas, real records and illustration assets",
+        "file": "editorial.spec.mjs",
+        "line": 523,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "editorial layout reflows, respects reduced motion and survives missing fonts and images",
+        "file": "editorial.spec.mjs",
+        "line": 635,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "static sign-in keeps its narrative and explains the no-JavaScript fallback",
+        "file": "editorial.spec.mjs",
+        "line": 709,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Woobe colors distinguish interaction copper, primary charcoal and semantic states",
+        "file": "editorial.spec.mjs",
+        "line": 738,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "all modal families share matte workspace paper on desktop and mobile",
+        "file": "editorial.spec.mjs",
+        "line": 780,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "WOS uses the supplied hand-drawn logo alone and real browser icons",
+        "file": "editorial.spec.mjs",
+        "line": 880,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "forms preserve whole controls and save actions through nested editors, compact screens and larger text",
+        "file": "editorial.spec.mjs",
+        "line": 1027,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "relationships communicate placement, evidence and real blocking at 2560 x 1440",
+        "file": "entity-communication.spec.mjs",
+        "line": 83,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "relationships communicate placement, evidence and real blocking at 390 x 844",
+        "file": "entity-communication.spec.mjs",
+        "line": 83,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "specialist entity details use the same canonical relationships without depending on a loaded Board index",
+        "file": "entity-communication.spec.mjs",
+        "line": 190,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late bounded graph expansion preserves coherent relationship pages, keyboard focus and disclosure state",
+        "file": "entity-communication.spec.mjs",
+        "line": 212,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "quick creation keeps its named parent, creates planned work and supports a title-only intent",
+        "file": "human-forms.spec.mjs",
+        "line": 55,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Objective obligations and criterion review mode are explicit human defaults",
+        "file": "human-forms.spec.mjs",
+        "line": 73,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a full Task form makes availability a separate explicit choice",
+        "file": "human-forms.spec.mjs",
+        "line": 91,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "replacement setters preserve exact versions and send explicit date, list and parent clears",
+        "file": "human-forms.spec.mjs",
+        "line": 102,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a documentary note contains authenticated-context inputs rather than a state transition",
+        "file": "human-forms.spec.mjs",
+        "line": 119,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual evidence fixes the criterion and uses one explicit compound intent without assessment",
+        "file": "human-forms.spec.mjs",
+        "line": 133,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "EvidenceLink search and blocking scope consume server-defined eligibility",
+        "file": "human-forms.spec.mjs",
+        "line": 154,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contextual Artifact and Decision drafts carry canonical documentary relationships",
+        "file": "human-forms.spec.mjs",
+        "line": 171,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "batch preview is explicit, editable and cannot silently accept a changed title list",
+        "file": "human-forms.spec.mjs",
+        "line": 190,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F01: save a persisted Draft without command names, UUIDs or Advanced; setup never activates it",
+        "file": "human.spec.mjs",
+        "line": 6,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F02/F03: add an Objective and scoped Task with readable list instructions",
+        "file": "human.spec.mjs",
+        "line": 29,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F04: visual Roadmap draft, publish and activation are distinct; replan retains revision one",
+        "file": "human.spec.mjs",
+        "line": 65,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F05: register proof then assess its exact criterion revision; Evidence alone does not certify",
+        "file": "human.spec.mjs",
+        "line": 165,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F06: reporting an Issue and blocking work are explicit; resolving the Issue does not release impact",
+        "file": "human.spec.mjs",
+        "line": 203,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F08: conflict retains local edits, compares latest state and requires a new confirmed intent",
+        "file": "human.spec.mjs",
+        "line": 246,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "F08: lost response retries the committed command with identical bytes and key",
+        "file": "human.spec.mjs",
+        "line": 295,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "reference picker searches 1,001 authorized Tasks and Evidence beyond the first page with duplicate context",
+        "file": "human.spec.mjs",
+        "line": 344,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "reference picker keyboard navigation selects duplicate titles using IDs and parent context",
+        "file": "human.spec.mjs",
+        "line": 381,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "stale reference cursor asks for reload and retains selections without silent replacement",
+        "file": "human.spec.mjs",
+        "line": 416,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "human plans, agent executes by MCP, human certifies, new browser resumes after restart",
+        "file": "journey.spec.mjs",
+        "line": 13,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "human reviews evidence, resolves blockers, reconciles conflict and preserves contested history",
+        "file": "journey.spec.mjs",
+        "line": 418,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 1280px",
+        "file": "kanban-operations.spec.mjs",
+        "line": 48,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 2560px",
+        "file": "kanban-operations.spec.mjs",
+        "line": 48,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 3840px",
+        "file": "kanban-operations.spec.mjs",
+        "line": 48,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "create, assign, acquire, prove, assess and conclude in one Kanban at 390px",
+        "file": "kanban-operations.spec.mjs",
+        "line": 48,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "drag and single-pointer moves prepare actual operations; blocked and read-only work never moves",
+        "file": "kanban-operations.spec.mjs",
+        "line": 115,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "embedded forms preserve conflicting input and recover the same uncertain creation intent",
+        "file": "kanban-operations.spec.mjs",
+        "line": 139,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
+        "file": "kanban-operations.spec.mjs",
+        "line": 167,
+        "status": "unexpected",
+        "results": [
+          {
+            "status": "failed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "contract-backed movement stays an explicit external handoff without browser acquisition or delivery",
+        "file": "kanban-operations.spec.mjs",
+        "line": 181,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
+        "file": "kanban-operations.spec.mjs",
+        "line": 196,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an already acquired contract has a direct readonly continuation without a parallel browser workflow",
+        "file": "kanban-operations.spec.mjs",
+        "line": 215,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt outcome trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 239,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "delayed origin restoration returns focus to the rebuilt task trigger",
+        "file": "kanban-operations.spec.mjs",
+        "line": 239,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 1280",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 2560",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Kanban is a workspace with persistent lanes and one actual operation modal at 390",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Backlog to In progress requires two explicit confirmed commands and a fresh projection",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 61,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Objectives use planned, started and achieved lanes without a fabricated review queue",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 82,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an eligible planned Objective is achieved directly without an invented Start command",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 90,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native Backlog drag prepares activation without writing and the real modal retains keyboard focus",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 107,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a confirmed command with a failed refresh retries reads without duplicating the write",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 117,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a contract v1 submission does not invent a signed review fact or a Verification lifecycle",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 133,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "blocked achievement can add its criterion and assessment in context before explicit acceptance",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 149,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "emulated touch can use the card action menu without drag or hover",
+        "file": "kanban-workspace.spec.mjs",
+        "line": 171,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "expanded local login stays reachable at 1280x720",
+        "file": "login-viewport.spec.mjs",
+        "line": 89,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "expanded local login stays reachable at 390x667",
+        "file": "login-viewport.spec.mjs",
+        "line": 89,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "file": "login-viewport.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Outcome Board and six specialist areas retain the persisted Draft checklist without automatic activation",
+        "file": "navigation.spec.mjs",
+        "line": 2,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "deep links restore area and scoped item through reload, back and forward",
+        "file": "navigation.spec.mjs",
+        "line": 30,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "all Task search and priority filter find an off-page item in 1,001 records",
+        "file": "navigation.spec.mjs",
+        "line": 60,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "queued search cannot discard a page after explicit status navigation",
+        "file": "navigation.spec.mjs",
+        "line": 84,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 320px",
+        "file": "nested-task-density.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 390px",
+        "file": "nested-task-density.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 430px",
+        "file": "nested-task-density.spec.mjs",
+        "line": 25,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "An empty workspace keeps bounded headings and reachable navigation/settings",
+        "file": "operational-density.spec.mjs",
+        "line": 272,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "file": "operational-density.spec.mjs",
+        "line": 131,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "progressive planning, specification, update and criterion Evidence persist at 2560px",
+        "file": "operational-workspace.spec.mjs",
+        "line": 53,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "progressive planning, specification, update and criterion Evidence persist at 390px",
+        "file": "operational-workspace.spec.mjs",
+        "line": 53,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "one contextual evidence intention preserves its receipt when the request is repeated",
+        "file": "operational-workspace.spec.mjs",
+        "line": 159,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a preparation remedy retains the conclusion draft and never substitutes assessment or automatic acceptance",
+        "file": "operational-workspace.spec.mjs",
+        "line": 190,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a mixed planning preview creates two Objectives and four scoped backlog Tasks in one visible intention",
+        "file": "operational-workspace.spec.mjs",
+        "line": 240,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "sidebar search debounces typing, submits Enter immediately and never mutates Outcomes",
+        "file": "outcome-navigation.spec.mjs",
+        "line": 50,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late sidebar response cannot overwrite a newer query or its accessible status",
+        "file": "outcome-navigation.spec.mjs",
+        "line": 86,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "changing a live query discards its old page cursor and keeps current pagination unique",
+        "file": "outcome-navigation.spec.mjs",
+        "line": 105,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "mobile specialist views retain local Refresh and immediate Outcome filters",
+        "file": "outcome-navigation.spec.mjs",
+        "line": 136,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "specialist areas show real documentary records, section-aware filters and mobile alternatives",
+        "file": "presentation.spec.mjs",
+        "line": 85,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+        "file": "presentation.spec.mjs",
+        "line": 176,
+        "status": "unexpected",
+        "results": [
+          {
+            "status": "failed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "entry, empty sections, pending reads and recoverable read errors remain usable at 320px",
+        "file": "presentation.spec.mjs",
+        "line": 253,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native conflict review and uncertain response preserve the exact recoverable intent on mobile",
+        "file": "presentation.spec.mjs",
+        "line": 318,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native Artifact and Decision creation use canonical commands and return to their real section",
+        "file": "presentation.spec.mjs",
+        "line": 364,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "opening and saving an existing Roadmap Draft retains child phases and immutable publication",
+        "file": "presentation.spec.mjs",
+        "line": 401,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "quick Task Enter repeats the same placement, Save inspects the result, and Escape never creates a draft",
+        "file": "progressive-entry.spec.mjs",
+        "line": 30,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a criterion deep link reloads the typed subject and retains its real Task owner",
+        "file": "progressive-entry.spec.mjs",
+        "line": 79,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "choosing a reference cancels a queued debounce and fences older results that still arrive",
+        "file": "reference-picker.spec.mjs",
+        "line": 47,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "Escape cancels queued and in-flight suggestions without clearing the search or reopening the popup",
+        "file": "reference-picker.spec.mjs",
+        "line": 76,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "multiple selection keeps its explicit fresh suggestion search and does not replay an old timer",
+        "file": "reference-picker.spec.mjs",
+        "line": 104,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "signed work shows accepted delivery, independent review and protected profile actions: approved",
+        "file": "signed.spec.mjs",
+        "line": 34,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "signed work shows accepted delivery, independent review and protected profile actions: changes_requested",
+        "file": "signed.spec.mjs",
+        "line": 34,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an old Roadmap list cannot refill a new snapshot's cache while refresh permissions are pending",
+        "file": "specialist-races.spec.mjs",
+        "line": 95,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a delayed Board page cannot append obsolete records after a same-Outcome refresh",
+        "file": "specialist-races.spec.mjs",
+        "line": 169,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a Task move previews real inherited blocking, rejects a stale revision and preserves its recorded identity and proof",
+        "file": "structural-move.spec.mjs",
+        "line": 4,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a move requires a coherent named before/after impact and acknowledgement before emitting exact versions",
+        "file": "structural-preview.spec.mjs",
+        "line": 74,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "bounded Objective impact is explicit and a blocked destination never becomes a command",
+        "file": "structural-preview.spec.mjs",
+        "line": 104,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a late preview for a different destination or scope cannot restore an acknowledged command",
+        "file": "structural-preview.spec.mjs",
+        "line": 119,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "one coherent Task inspector exposes its information facets inside two progressive groups without granting authority or accepting linked proof",
+        "file": "workspace-inspector-view.spec.mjs",
+        "line": 45,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "an Issue names its affected work without treating the association itself as blocking",
+        "file": "workspace-inspector-view.spec.mjs",
+        "line": 84,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "the same typed inspector explains documentary entities and actual blocking in specialist views",
+        "file": "workspace-inspector-view.spec.mjs",
+        "line": 93,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "the shared inspector retains readable content and reachable keyboard controls across CSS viewports",
+        "file": "workspace-inspector-view.spec.mjs",
+        "line": 113,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "resolving an Issue releases only the explicitly selected recorded impact",
+        "file": "workspace-inspector-view.spec.mjs",
+        "line": 149,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "inline surfaces preserve exact form nodes, listeners and uncertain draft state",
+        "file": "workspace-inspector.spec.mjs",
+        "line": 58,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "local Escape returns from actions and forms to details, then to the canvas trigger",
+        "file": "workspace-inspector.spec.mjs",
+        "line": 103,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "autocomplete and nested dialogs keep their Escape without hiding the inspector",
+        "file": "workspace-inspector.spec.mjs",
+        "line": 130,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "enabling declines an open native modal without changing its top layer or firing close",
+        "file": "workspace-inspector.spec.mjs",
+        "line": 170,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "fresh canvas inspector preserves real lease authority for explicit completion and release",
+        "file": "workspace-lease.spec.mjs",
+        "line": 49,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "fresh work inspector preserves real lease authority for explicit completion and release",
+        "file": "workspace-lease.spec.mjs",
+        "line": 49,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "editing Issue, Blocker and Criterion preserves descriptions beyond their inspector preview",
+        "file": "workspace-lease.spec.mjs",
+        "line": 99,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "criterion preparation targets a required definition beyond the first inspector page",
+        "file": "workspace-lease.spec.mjs",
+        "line": 142,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "a delayed preparation lookup cannot replace a newer form after the original closes",
+        "file": "workspace-lease.spec.mjs",
+        "line": 190,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "privileged v1 revocation hydrates the actual contract without requiring the technical record",
+        "file": "workspace-lease.spec.mjs",
+        "line": 235,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "workspace mutations remain unavailable until the real authenticated identity finishes loading",
+        "file": "workspace-ready.spec.mjs",
+        "line": 5,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "native Escape invalidates a genuine pending criterion read instead of reopening its closed dialog",
+        "file": "workspace-ready.spec.mjs",
+        "line": 62,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "workspace summary, scoped list, operational board, pagination and real human action",
+        "file": "workspace.spec.mjs",
+        "line": 13,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      }
+    ],
+    "report_sha256": "34ba8d6826719b9b088fac77f6d0381a1caa5def29ac443f91b767dbca498ae6"
+  },
+  "binary": {
+    "built_at": "unknown",
+    "commit": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2,
+    "sha256": "ced8ff977352f8e508c8dc0729026bca9b4d632bf0c771122f964e3e4ad56e4a"
+  },
+  "javascript_units": {
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0,
+    "log_sha256": "9efe1293f6037c0b6e7b5a7824b583f1b3a599d9f4c31be22f9977b690675699"
+  },
+  "go": {
+    "command": "go test -json ./packages/wos-api/web ./packages/wos-core/application",
+    "results": {
+      "pass": 114,
+      "skip": 3
+    },
+    "package_results": {
+      "pass": 2
+    },
+    "skips": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts/postgres"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime/postgres"
+      }
+    ],
+    "log_sha256": "7e574576a1ead9704877f7ae65bb4b71aed60dfc35103092ec959b9b3e15f28f",
+    "boundary": "Default local environment; tests requiring PostgreSQL remain skipped locally. Hosted CI provides actual PostgreSQL."
+  },
+  "screenshots": {
+    "count": 16,
+    "manifest": "screenshots/manifest.json",
+    "source": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "clean_runtime_source": true
+  },
+  "baseline": {
+    "source": "75a56fe43ddd20ff55835fd2ba22ca8af9588d1c",
+    "full_task_journeys": 4,
+    "gallery": "before-workspace-mode/README.md"
+  },
+  "historical_evidence": "https://github.com/A1b3rt0M3rcad0/wos/blob/75a56fe43ddd20ff55835fd2ba22ca8af9588d1c/docs/ux/operational-kanban/test-results.json",
+  "hosted_checks": "https://github.com/A1b3rt0M3rcad0/wos/pull/116/checks",
+  "manual_limits": [
+    "Physical touch-device operation",
+    "Manual screen-reader/browser combinations",
+    "Independent participant comprehension"
+  ],
+  "counts": "Focused and historical runs overlap these 222 cases and must not be added to the complete-suite total.",
+  "corrected_browser": {
+    "tests_source": "d7cb2286fec8b81186ae6ca179b58af40de8e3c0",
+    "runtime_source": "57e76f4741c4e483c304cf35c648550c0349c460",
+    "qualifying_cases": [
+      {
+        "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
+        "file": "kanban-operations.spec.mjs",
+        "line": 167,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      },
+      {
+        "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+        "file": "presentation.spec.mjs",
+        "line": 176,
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "retry": 0
+          }
+        ]
+      }
+    ],
+    "diagnostic_run": {
+      "stats": {
+        "startTime": "2026-10-20T04:49:14.010Z",
+        "duration": 99734.67000000001,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 1,
+        "flaky": 0
+      },
+      "cases": [
+        {
+          "title": "Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
+          "file": "kanban-operations.spec.mjs",
+          "line": 167,
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0
+            }
+          ]
+        },
+        {
+          "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+          "file": "presentation.spec.mjs",
+          "line": 176,
+          "status": "unexpected",
+          "results": [
+            {
+              "status": "failed",
+              "retry": 0
+            }
+          ]
+        }
+      ],
+      "report_sha256": "954a16d0314ec06f5d77a3120837b069b2bf67c6c205cf900127d7bd873097eb"
+    },
+    "administrative_untraced_run": {
+      "stats": {
+        "startTime": "2026-10-20T04:52:03.774Z",
+        "duration": 35833.136,
+        "expected": 1,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "cases": [
+        {
+          "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+          "file": "presentation.spec.mjs",
+          "line": 176,
+          "status": "expected",
+          "results": [
+            {
+              "status": "passed",
+              "retry": 0
+            }
+          ]
+        }
+      ],
+      "report_sha256": "9035c67466fc388790458979980327dc221ca4f66f2d14b6ade841ee6b2d7ca6"
+    }
+  },
+  "qualification": {
+    "distinct_cases": 222,
+    "passing_in_full_run": 220,
+    "passing_targeted_cases": 2,
+    "single_all_green_local_full_run": false,
+    "production_assets_unchanged_between_runs": true,
+    "note": "The full run is retained with both failures. Targeted runs verify the corrected requirements-modal assertion and the unchanged administrative focus case. The traced diagnostic retains an administrative interruption; the separate untraced one-worker run passes. No timeout/assertion was weakened. Hosted CI remains the final all-case gate."
+  }
+}

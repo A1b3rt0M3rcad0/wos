@@ -26,7 +26,7 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 	outcome := created.Value
 
 	firstResult, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "Prerequisite", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()), Title: "Prerequisite", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {
@@ -34,7 +34,7 @@ func TestWave11PublicationAppliesDependencyChangesAtomically(t *testing.T) {
 	}
 	first := firstResult.Value
 	secondResult, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "Dependent", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()), Title: "Dependent", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {

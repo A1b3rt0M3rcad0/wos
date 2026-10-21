@@ -13,9 +13,11 @@ func TestReportIssueWithBlockerIsAtomicAndEmitsPerAggregateEvents(t *testing.T) 
 	service, store := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	work := createTodoWork(t, service, outcome.Scope(), "blocked atomically")
+	owner := issueObjectiveForTest(t, service, outcome.Scope())
 
 	result, err := service.ReportIssueWithBlocker(ctx, commandContext(), application.ReportIssueWithBlockerCommand{
 		Scope:              outcome.Scope(),
+		ObjectiveID:        owner,
 		Title:              "Dependency unavailable",
 		Description:        "The external dependency is not usable.",
 		Severity:           domain.IssueSeverityMajor,
@@ -68,9 +70,11 @@ func TestResolveIssueAndBlockersRollsBackEveryAggregateOnConflict(t *testing.T) 
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	work := createTodoWork(t, service, outcome.Scope(), "compound rollback")
+	owner := issueObjectiveForTest(t, service, outcome.Scope())
 
 	reported, err := service.ReportIssueWithBlocker(ctx, commandContext(), application.ReportIssueWithBlockerCommand{
 		Scope:              outcome.Scope(),
+		ObjectiveID:        owner,
 		Title:              "Root cause",
 		Severity:           domain.IssueSeverityCritical,
 		AffectedRefs:       []domain.EntityRef{work.Ref()},
@@ -133,8 +137,10 @@ func TestResolveIssueAndBlockersRequiresExplicitReleaseAndOnlyResolvesListedBloc
 	service, _ := newService(t)
 	outcome := setupActiveOutcome(t, service)
 	work := createTodoWork(t, service, outcome.Scope(), "explicit release")
+	owner := issueObjectiveForTest(t, service, outcome.Scope())
 	reported, err := service.ReportIssueWithBlocker(ctx, commandContext(), application.ReportIssueWithBlockerCommand{
 		Scope:              outcome.Scope(),
+		ObjectiveID:        owner,
 		Title:              "Explicit root cause",
 		Severity:           domain.IssueSeverityMajor,
 		BlockedRef:         work.Ref(),

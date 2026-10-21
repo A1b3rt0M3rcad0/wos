@@ -16,21 +16,23 @@ type memoryReceipt struct {
 	Payload     json.RawMessage
 }
 type memorySecurityState struct {
-	Namespaces  map[d.ID]ports.Namespace
-	Versions    map[d.ID]d.Version
-	Credentials map[string]ports.Credential
-	Grants      map[string]ports.NamespaceGrant
-	Keys        map[string]d.SigningKey
-	Enrollments map[string]d.SigningEnrollment
-	Policies    map[string]d.CredentialPolicy
-	Acceptance  map[string]d.WorkAcceptancePolicy
-	Groups      map[string]string
-	Receipts    map[string]memoryReceipt
-	Audit       map[d.ID][]ports.SecurityAudit
+	Namespaces            map[d.ID]ports.Namespace
+	Versions              map[d.ID]d.Version
+	Credentials           map[string]ports.Credential
+	Grants                map[string]ports.NamespaceGrant
+	Keys                  map[string]d.SigningKey
+	Enrollments           map[string]d.SigningEnrollment
+	Policies              map[string]d.CredentialPolicy
+	Metadata              map[string]ports.CredentialMetadata
+	Acceptance            map[string]d.WorkAcceptancePolicy
+	Groups                map[string]string
+	Receipts              map[string]memoryReceipt
+	CompatibilityReceipts map[string]memoryReceipt
+	Audit                 map[d.ID][]ports.SecurityAudit
 }
 
 func newMemorySecurityState() memorySecurityState {
-	return memorySecurityState{Namespaces: map[d.ID]ports.Namespace{}, Versions: map[d.ID]d.Version{}, Credentials: map[string]ports.Credential{}, Grants: map[string]ports.NamespaceGrant{}, Keys: map[string]d.SigningKey{}, Enrollments: map[string]d.SigningEnrollment{}, Policies: map[string]d.CredentialPolicy{}, Acceptance: map[string]d.WorkAcceptancePolicy{}, Groups: map[string]string{}, Receipts: map[string]memoryReceipt{}, Audit: map[d.ID][]ports.SecurityAudit{}}
+	return memorySecurityState{Namespaces: map[d.ID]ports.Namespace{}, Versions: map[d.ID]d.Version{}, Credentials: map[string]ports.Credential{}, Grants: map[string]ports.NamespaceGrant{}, Keys: map[string]d.SigningKey{}, Enrollments: map[string]d.SigningEnrollment{}, Policies: map[string]d.CredentialPolicy{}, Metadata: map[string]ports.CredentialMetadata{}, Acceptance: map[string]d.WorkAcceptancePolicy{}, Groups: map[string]string{}, Receipts: map[string]memoryReceipt{}, CompatibilityReceipts: map[string]memoryReceipt{}, Audit: map[d.ID][]ports.SecurityAudit{}}
 }
 func deepCopy[T any](v T) T {
 	raw, _ := json.Marshal(v)
@@ -183,6 +185,9 @@ func (r signingIdentityRepository) SaveCredentialPolicy(ctx context.Context, p d
 	old, exists := r.tx.security.Policies[key]
 	if (exists && expected == 0) || (!exists && expected > 0) || p.Version != expected+1 || (exists && old.Version != expected) {
 		return d.NewError(d.ErrorCodeVersionConflict, "policy version changed")
+	}
+	if (exists && p.PermissionCompatibilityVersion != old.PermissionCompatibilityVersion) || (!exists && p.PermissionCompatibilityVersion != 0) {
+		return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
 	}
 	r.tx.security.Policies[key] = deepCopy(p)
 	return ctx.Err()

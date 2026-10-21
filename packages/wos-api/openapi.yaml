@@ -23,6 +23,32 @@ tags:
 - name: Criteria
 - name: Roadmaps
 paths:
+  /api/v1/commands/append_entity_note:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_entity_note
+  /api/v1/commands/create_plan_items:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1create_plan_items
+  /api/v1/commands/set_work_item_execution_spec:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_execution_spec
+  /api/v1/commands/set_work_item_not_before:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_not_before
+  /api/v1/commands/set_work_item_objective:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_work_item_objective
+  /api/v1/commands/set_objective_parent:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1set_objective_parent
+  /api/v1/commands/register_evidence_with_links:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1register_evidence_with_links
+  /api/v1/commands/register_artifact_in_context:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1register_artifact_in_context
+  /api/v1/commands/propose_decision_in_context:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1propose_decision_in_context
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-view:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-view
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-cards:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-cards
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/workspace-timeline:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1workspace-timeline
+  /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/entity-notes/{note_id}:
+    $ref: ./commands.openapi.json#/paths/~1api~1v1~1namespaces~1{namespace_id}~1outcomes~1{outcome_id}~1entity-notes~1{note_id}
   /api/v1/commands/append_work_activity:
     $ref: ./commands.openapi.json#/paths/~1api~1v1~1commands~1append_work_activity
   /api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-activity:
@@ -5785,7 +5811,7 @@ paths:
   /api/v1/namespaces/{namespace_id}/administration:
     get:
       description: Namespace version, grants, credential metadata and last 100 audit entries; explicit truncated
-        flag. Requires namespace:admin.
+        flag. Requires credentials:read and audit:read.
       parameters:
       - name: namespace_id
         in: path
@@ -5843,8 +5869,12 @@ paths:
                   minimum: 1
                 permissions:
                   type: array
+                  maxItems: 128
                   items:
                     type: string
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               - permissions
@@ -5852,7 +5882,11 @@ paths:
   /api/v1/namespaces/{namespace_id}/credentials:
     post:
       description: Atomic Namespace CAS, receipt and audit. Credential secret appears only on initial issue; replay
-        omits token, requiring explicit replacement if lost.
+        omits token, requiring explicit replacement if lost. An omitted permissions/template selection freezes the
+        target Principal's current Namespace grant; omitted Outcome scope is unrestricted within
+        that frozen permission set. An omitted or empty signing-key scope allows no signing keys until enrollment
+        explicitly adds a key to the credential policy. Prefer this receipt-capable operation with an Idempotency-Key for retryable
+        issuance; replay returns safe credential metadata and omits the token.
       parameters:
       - name: namespace_id
         in: path
@@ -5885,6 +5919,43 @@ paths:
                 expires_at:
                   type: string
                   format: date-time
+                credential_name:
+                  type: string
+                  maxLength: 100
+                credential_description:
+                  type: string
+                  maxLength: 1000
+                role_template_id:
+                  type: string
+                  maxLength: 64
+                  description: Exact versioned permission template to freeze at issuance.
+                role_template_version:
+                  type: integer
+                  minimum: 1
+                permissions:
+                  type: array
+                  maxItems: 128
+                  uniqueItems: true
+                  description: Optional custom frozen permission set, intersected with the target Principal's grant.
+                  items:
+                    type: string
+                allowed_outcome_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  description: Optional Outcome restriction; omitted means unrestricted within permitted operations.
+                  items:
+                    $ref: '#/components/schemas/ID'
+                allowed_signing_key_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  description: Optional signing-key allowlist; omitted or empty means no signing keys are allowed. Enrollment can add a key to the credential policy.
+                  items:
+                    $ref: '#/components/schemas/ID'
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               - principal_id
@@ -5924,9 +5995,33 @@ paths:
                 expected_namespace_version:
                   type: integer
                   minimum: 1
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               additionalProperties: false
+  /api/v1/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke-preview:
+    get:
+      description: Authorized, read-only impact preview. Counts persisted child sessions and active signed contracts; legacy unbound leases may be unattributed and external processes are not stopped by revocation.
+      parameters:
+      - name: namespace_id
+        in: path
+        required: true
+        schema: *id001
+      - name: credential_id
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Safe impact counts and explicit limitations.
+        '401':
+          description: Credential required.
+        '403':
+          description: Scope or permission denied.
+        '404':
+          description: Credential not found.
   /session:
     post:
       description: Exchange an integration token for a separately revocable HttpOnly SameSite=Strict browser session,
@@ -5972,8 +6067,11 @@ paths:
     post:
       operationId: administerNamespace
       summary: Apply guarded administrative intent
-      description: Requires namespace:admin, Idempotency-Key and expected_namespace_version. A credential token
-        is returned once; replay preserves the receipt and omits the token.
+      description: Requires the operation-specific credentials:issue, credentials:revoke, permissions:manage,
+        or namespace:admin permission, Idempotency-Key and expected_namespace_version. A credential token is
+        returned once; replay preserves the receipt and omits the token. Newly issued root credentials receive
+        a frozen CredentialPolicy and safe metadata in the same transaction. A custom permissions list or an
+        exact role_template_id/version may be supplied; either is intersected with the target Principal's grant.
       parameters:
       - name: Idempotency-Key
         in: header
@@ -6011,6 +6109,7 @@ paths:
                   type: string
                 permissions:
                   type: array
+                  maxItems: 128
                   items:
                     type: string
                 actor_ref:
@@ -6023,6 +6122,34 @@ paths:
                   format: uuid
                 namespace_name:
                   type: string
+                reason:
+                  type: string
+                  maxLength: 500
+                credential_name:
+                  type: string
+                  maxLength: 100
+                credential_description:
+                  type: string
+                  maxLength: 1000
+                role_template_id:
+                  type: string
+                  maxLength: 64
+                  description: Exact versioned template to materialize at issuance.
+                role_template_version:
+                  type: integer
+                  minimum: 1
+                allowed_outcome_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  items:
+                    $ref: '#/components/schemas/ID'
+                allowed_signing_key_ids:
+                  type: array
+                  maxItems: 100
+                  uniqueItems: true
+                  items:
+                    $ref: '#/components/schemas/ID'
       responses:
         '200':
           description: Administrative receipt and optional one-time token

@@ -1,0 +1,170 @@
+package sqlite
+
+import (
+	"context"
+	"errors"
+	"path/filepath"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+)
+
+type workspaceProofAuthorizer struct{}
+
+func (workspaceProofAuthorizer) Authorize(context.Context, ports.AuthorizationRequest) error {
+	return nil
+}
+
+func TestWorkspaceRetractedProofAgreesAcrossAttentionCriteriaCardsAndConclusionsAfterRestart(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			path := filepath.Join(t.TempDir(), "workspace-proof.db")
+			var store ports.TransactionManager = memory.New()
+			var sqlStore *Store
+			if backend == "sql" {
+				sqlStore = openTestStore(t, path)
+				store = sqlStore
+				defer func() { _ = sqlStore.Close() }()
+			}
+			must := func(err error) {
+				t.Helper()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			service, err := a.NewServiceWithAuthorizer(store, portClock{now}, &portIDs{}, workspaceProofAuthorizer{})
+			must(err)
+			next := 100
+			cc := func() d.CommandContext {
+				next++
+				return sqliteCommandContext(portID(next).String(), "")
+			}
+			definition := []a.InitialCriterion{{Title: "A current observation supports the result", Required: true, VerificationMode: d.VerificationModeEvidenceReview}}
+			out, err := service.CreateOutcome(ctx, cc(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Consistent current proof", DesiredState: "A retraction never silently passes a new conclusion", Priority: d.PriorityNormal, InitialCriteria: definition})
+			must(err)
+			scope := out.Value.Scope()
+			reader := sqliteCommandContext(portID(99).String(), "")
+			ctx = a.WithIdentity(ctx, a.Identity{NamespaceID: scope.NamespaceID, PrincipalID: reader.PrincipalID, Actor: reader.Actor})
+			evidence, err := service.RegisterEvidence(ctx, cc(), a.RegisterEvidenceCommand{Scope: scope, EvidenceType: d.EvidenceTypeInspection, Description: "A participant's recorded inspection", SourceRef: d.SourceReference{Provider: "fixture", ID: "inspection"}, CapturedAt: now})
+			must(err)
+			assess := func(owner d.EntityRef, version d.Version, criterion d.SuccessCriterion) d.ID {
+				t.Helper()
+				result, err := service.RecordCriterionAssessment(ctx, cc(), a.RecordCriterionAssessmentCommand{Owner: owner, ExpectedVersion: version, CriterionID: criterion.ID, CriterionRevision: criterion.Revision, Result: d.AssessmentResultMet, Rationale: "Reviewed the recorded observation", EvidenceIDs: []d.ID{evidence.Value.ID}})
+				must(err)
+				return result.Value.ID
+			}
+			outAssessment := assess(out.Value.Ref(), out.Value.Version, out.Value.Criteria.Items[0])
+			currentOut, err := service.GetOutcome(ctx, scope)
+			must(err)
+			active, err := service.ActivateOutcome(ctx, cc(), a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: currentOut.Value.Version})
+			must(err)
+			objective, err := service.CreateObjective(ctx, cc(), a.CreateObjectiveCommand{Scope: scope, Title: "A condition to verify", Priority: d.PriorityNormal, InitialCriteria: definition})
+			must(err)
+			objectiveAssessment := assess(objective.Value.Ref(), objective.Value.Version, objective.Value.Criteria.Items[0])
+			work, err := service.CreateWorkItem(ctx, cc(), a.CreateWorkItemCommand{Scope: scope, ObjectiveID: &objective.Value.ID, Title: "A delivery to verify", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo, InitialCriteria: definition})
+			must(err)
+			claimed, err := service.ClaimWorkItem(ctx, cc(), a.ClaimWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: work.Value.Version, TTL: 5 * time.Minute})
+			must(err)
+			workAssessment := assess(work.Value.Ref(), claimed.Value.Version, work.Value.Criteria.Items[0])
+			_, err = service.RetractEvidence(ctx, cc(), a.RetractEvidenceCommand{Scope: scope, EvidenceID: evidence.Value.ID, ExpectedVersion: evidence.Value.Version, Reason: "The recorded inspection was invalidated"})
+			must(err)
+			if sqlStore != nil {
+				sqlStore = reopenIntegrationFixture(t, sqlStore, path)
+				store = sqlStore
+				service, err = a.NewServiceWithAuthorizer(store, portClock{now}, &portIDs{next: 2000}, workspaceProofAuthorizer{})
+				must(err)
+			}
+			view, err := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: work.Value.Ref()}})
+			must(err)
+			if len(view.Criteria) != 1 || view.Criteria[0].AssessmentApplicable || view.Criteria[0].Assessment == nil || view.Criteria[0].Assessment.ID != workAssessment {
+				t.Fatalf("retraction erased history or remained applicable: %+v", view.Criteria)
+			}
+			assertPending := func(attention *a.WorkAttention) {
+				t.Helper()
+				if attention == nil {
+					t.Fatal("missing current attention")
+				}
+				found := false
+				for _, obligation := range attention.Obligations {
+					if obligation.Kind == "criterion" {
+						found = true
+						if obligation.Status == "satisfied" {
+							t.Fatalf("retracted proof still satisfied current attention: %+v", obligation)
+						}
+					}
+				}
+				if !found {
+					t.Fatal("required criterion disappeared from attention")
+				}
+			}
+			assertPending(view.Attention)
+			for _, subject := range []d.EntityRef{out.Value.Ref(), objective.Value.Ref(), work.Value.Ref()} {
+				current, err := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: subject}})
+				must(err)
+				command := map[d.EntityKind]string{d.EntityKindOutcome: "AchieveOutcome", d.EntityKindObjective: "AchieveObjective", d.EntityKindWorkItem: "CompleteWorkItem"}[subject.Kind]
+				found := false
+				for _, capability := range current.Capabilities {
+					if capability.ActionID == command {
+						found = true
+						if capability.Availability != "blocked" || len(capability.ReasonCodes) != 1 || capability.ReasonCodes[0] != "evidence_retracted" {
+							t.Fatalf("conclusion capability disagrees with current proof: %+v", capability)
+						}
+					}
+				}
+				if !found {
+					t.Fatalf("missing conclusion capability for %s", subject.Kind)
+				}
+			}
+			attention, err := service.GetWorkAttention(ctx, scope, work.Value.ID)
+			must(err)
+			assertPending(&attention)
+			cards, err := service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: []d.EntityRef{out.Value.Ref(), objective.Value.Ref(), work.Value.Ref()}})
+			must(err)
+			for _, card := range cards.Items {
+				if card.Criteria == nil || card.Criteria.Pending != 1 || card.Criteria.Met != 0 {
+					t.Fatalf("card disagrees with current proof: %+v", card)
+				}
+			}
+			currentWork, err := service.GetWorkItem(ctx, scope, work.Value.ID)
+			must(err)
+			currentObjective, err := service.GetObjective(ctx, scope, objective.Value.ID)
+			must(err)
+			before, err := service.GetOutcome(ctx, scope)
+			must(err)
+			assertRejected := func(err error) {
+				t.Helper()
+				var detail *d.Error
+				if !errors.As(err, &detail) || detail.Code != d.ErrorCodePreconditionFailed || detail.Details == nil || detail.Details.ReasonCode != "evidence_retracted" {
+					t.Fatalf("new conclusion did not reject retracted proof with a remedy: %v", err)
+				}
+			}
+			_, err = service.AchieveOutcome(ctx, cc(), a.AchieveOutcomeCommand{Scope: scope, ExpectedVersion: active.Value.Version, Reason: "Attempt with invalid current proof"})
+			assertRejected(err)
+			_, err = service.AchieveObjective(ctx, cc(), a.AchieveObjectiveCommand{Scope: scope, ObjectiveID: objective.Value.ID, ExpectedVersion: currentObjective.Value.Version, Reason: "Attempt with invalid current proof"})
+			assertRejected(err)
+			lease := currentWork.Value.CurrentLease
+			_, err = service.CompleteWorkItem(ctx, cc(), a.CompleteWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: currentWork.Value.Version, ClaimID: lease.ClaimID, FencingToken: lease.FencingToken, ResultSummary: "A declaration cannot restore retracted proof", Reason: "Attempt with invalid current proof"})
+			assertRejected(err)
+			_, err = service.AdministrativeCompleteWorkItem(ctx, cc(), a.AdministrativeCompleteWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: currentWork.Value.Version, ResultSummary: "An authorized lease override does not restore proof", Reason: "Explicit administrative attempt with invalid proof"})
+			assertRejected(err)
+			after, err := service.GetOutcome(ctx, scope)
+			must(err)
+			if after.OutcomeRevision != before.OutcomeRevision || after.Value.Lifecycle != d.OutcomeLifecycleActive || after.Value.Criteria.CurrentAssessments[out.Value.Criteria.Items[0].ID].ID != outAssessment {
+				t.Fatal("rejected conclusions changed Outcome revision, lifecycle or assessment history")
+			}
+			persistedObjective, err := service.GetObjective(ctx, scope, objective.Value.ID)
+			must(err)
+			persistedWork, err := service.GetWorkItem(ctx, scope, work.Value.ID)
+			must(err)
+			if persistedObjective.Value.Criteria.CurrentAssessments[objective.Value.Criteria.Items[0].ID].ID != objectiveAssessment || persistedObjective.Value.Lifecycle != d.ObjectiveLifecyclePlanned || persistedWork.Value.Lifecycle != d.WorkItemLifecycleInProgress || persistedWork.Value.Criteria.CurrentAssessments[work.Value.Criteria.Items[0].ID].ID != workAssessment {
+				t.Fatal("proof revalidation rewrote historical assessments or lifecycle")
+			}
+		})
+	}
+}

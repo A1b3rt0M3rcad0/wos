@@ -265,8 +265,8 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 		// These are decision-owned observations; never rewrite executor material.
 		cv, lv, rv, wv := contract.Version, contract.LeaseVersion, review.Version, work.Version
 		if request.Decision == "approved" {
-			for _, permission := range []ports.Permission{ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
-				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID); err != nil {
+			for _, permission := range []ports.Permission{ports.PermissionTaskAccept, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
+				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID, legacyPermissionForCommand("ReturnSignedReview", permission)); err != nil {
 					return zero, 0, err
 				}
 			}
@@ -309,6 +309,10 @@ func (s *Service) ReturnSignedReview(ctx context.Context, cc d.CommandContext, c
 			}
 			disposition = "review_approved"
 		case "changes_requested":
+			// A reviewer must be able to close an active review with a valid
+			// correction decision even if execution is temporarily blocked. The
+			// correction cannot acquire new signed authority until the normal
+			// Objective/readiness/blocker gates pass in signed acquisition.
 			if err = review.Decide(contract, d.ReviewChangesRequested, identity.PrincipalID, reason, now); err != nil {
 				return zero, 0, err
 			}

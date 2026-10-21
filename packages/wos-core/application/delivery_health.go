@@ -43,7 +43,7 @@ func (s *Service) GetDeliveryHealth(ctx context.Context, q DeliveryHealthQuery) 
 	if !ok || identity.NamespaceID != scope.NamespaceID || identity.CredentialDigest == "" {
 		return zero, d.NewError(d.ErrorCodeForbidden, "authenticated scoped administrator required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionNamespaceAdmin}
+	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionAuditRead}
 	if s.requireIdentity {
 		if e := s.authorizer.Authorize(ctx, request); e != nil {
 			return zero, e

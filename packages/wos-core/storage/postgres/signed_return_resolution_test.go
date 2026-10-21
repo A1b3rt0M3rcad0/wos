@@ -67,8 +67,8 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 	must(err)
 	adminCtx := a.WithIdentity(ctx, admin)
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+	must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+	must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 	credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 	must(err)
 	identity, err := sec.Authenticate(ctx, token)
@@ -97,8 +97,8 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 	must(err)
 	foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 	must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-	must(registry.SaveCredentialPolicy(ctx, policy, 0))
+	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(registry.SaveCredentialPolicy(ctx, policy, 1))
 	outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 	must(err)
 	outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -113,7 +113,7 @@ func newResolutionFixtureTTL(t *testing.T, backend string, ttl int) resolutionFi
 		if hasCriteria {
 			must(w.Criteria.Add(criterion))
 		}
-		must(uow.WorkItems().Insert(ctx, w))
+		must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 		works = append(works, w)
 	}
 	protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

@@ -7,7 +7,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
-const focalWorkColumns = `id,version,title,description,objective_id,lifecycle,priority,not_before,result_summary,COALESCE(fencing_token_decimal,CAST(last_fencing_token AS TEXT)),lease_claim_id,lease_principal_id,lease_actor_json,lease_acquired_at,lease_expires_at,created_at,updated_at,contracts_enabled,current_contract_id,execution_spec_json,pending_review_case_id,latest_review_case_id,correction_review_case_id`
+const focalWorkColumns = `work_items.id,work_items.version,work_items.title,work_items.description,work_items.objective_id,work_items.lifecycle,work_items.priority,work_items.not_before,work_items.result_summary,COALESCE(work_items.fencing_token_decimal,CAST(work_items.last_fencing_token AS TEXT)),work_items.lease_claim_id,work_items.lease_principal_id,work_items.lease_actor_json,work_items.lease_acquired_at,work_items.lease_expires_at,work_items.created_at,work_items.updated_at,work_items.contracts_enabled,work_items.current_contract_id,work_items.execution_spec_json,work_items.pending_review_case_id,work_items.latest_review_case_id,work_items.correction_review_case_id,work_items.lease_credential_binding_version,work_items.lease_holder_credential_id,work_items.lease_session_credential_id,delivery_state.pending_delivery_id,delivery_state.latest_delivery_id,delivery_state.latest_decision_id,delivery_state.latest_withdrawal_id,delivery_state.delivery_round,delivery_state.replan_authorized`
 
 func (r continuityReadRepository) CurrentWork(ctx context.Context, scope d.Scope, id d.ID) (ports.FocalCurrentWork, error) {
 	var result ports.FocalCurrentWork
@@ -17,7 +17,7 @@ func (r continuityReadRepository) CurrentWork(ctx context.Context, scope d.Scope
 	if e := id.Validate(); e != nil {
 		return result, e
 	}
-	work, e := scanWorkItem(r.row(ctx, "SELECT "+focalWorkColumns+" FROM work_items WHERE namespace_id=? AND outcome_id=? AND id=?", scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	work, e := scanWorkItem(r.row(ctx, "SELECT "+focalWorkColumns+" FROM work_items LEFT JOIN task_delivery_work_state AS delivery_state ON delivery_state.namespace_id=work_items.namespace_id AND delivery_state.outcome_id=work_items.outcome_id AND delivery_state.work_item_id=work_items.id WHERE work_items.namespace_id=? AND work_items.outcome_id=? AND work_items.id=?", scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
 	if e != nil {
 		return result, e
 	}
@@ -43,9 +43,16 @@ func (r continuityReadRepository) CurrentObjective(ctx context.Context, scope d.
 	if e := id.Validate(); e != nil {
 		return result, e
 	}
-	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	v, e := scanObjective(r.row(ctx, `SELECT id,version,title,description,parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
 	if e != nil {
 		return result, e
+	}
+	owner, e := r.u.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if e != nil {
+		return result, e
+	}
+	if e = v.ValidateCompletionConfiguration(owner); e != nil {
+		return result, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", e)
 	}
 	criteria, current, history, e := r.currentOwnerProof(ctx, v.Ref())
 	if e != nil {
@@ -67,13 +74,13 @@ func (r continuityReadRepository) FocalOutcome(ctx context.Context, scope d.Scop
 		return result, e
 	}
 	var version d.Version
-	var title, life, priority string
+	var title, life, priority, completionPolicy, operationalProfile string
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,completion_policy,operational_profile FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &life, &priority, &archived, &completionPolicy, &operationalProfile)
 	if e != nil {
 		return result, mapSQLError("read focal Outcome metadata", e)
 	}
-	result = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
+	result = d.Outcome{CompletionPolicy: d.CompletionPolicy(completionPolicy), OperationalProfile: d.OperationalProfile(operationalProfile), ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(life), Priority: d.Priority(priority)}
 	if archived.Valid {
 		at := decodeTime(archived.Int64)
 		result.ArchivedAt = &at
@@ -122,7 +129,7 @@ func (r continuityReadRepository) currentOwnerProof(ctx context.Context, owner d
 	// Owner selection is resolved before touching assessment history. IN uses the
 	// indexed criterion/current-assessment IDs even before planner statistics warm.
 	scopedArgs := []any{owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), owner.Kind.String()}
-	rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result,a.rationale,a.principal_id,a.actor_json,a.assessed_at,a.evaluator_ref_json,a.supersedes_assessment_id,a.submission_id,a.submission_digest FROM criterion_assessments a WHERE a.namespace_id=? AND a.outcome_id=? AND a.id IN(SELECT p.assessment_id FROM criterion_current_assessments p WHERE p.namespace_id=? AND p.outcome_id=? AND p.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY a.assessed_at,a.id`, scopedArgs...)
+	rows, e = r.rows(ctx, `SELECT a.id,a.criterion_id,a.criterion_revision,a.result,a.rationale,a.principal_id,a.actor_json,a.assessed_at,a.evaluator_ref_json,a.supersedes_assessment_id,a.submission_id,a.submission_digest,a.task_delivery_id,a.task_delivery_digest,a.task_delivery_round FROM criterion_assessments a WHERE a.namespace_id=? AND a.outcome_id=? AND a.id IN(SELECT p.assessment_id FROM criterion_current_assessments p WHERE p.namespace_id=? AND p.outcome_id=? AND p.criterion_id IN(SELECT c.id FROM success_criteria c WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id=? AND c.owner_kind=?)) ORDER BY a.assessed_at,a.id`, scopedArgs...)
 	if e != nil {
 		return set, nil, counts, e
 	}

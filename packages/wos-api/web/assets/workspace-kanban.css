@@ -1,0 +1,148 @@
+/* Contextual workspace: the spatial map stays mounted at its original geometry. */
+
+.workspace-kanban {
+  position: fixed; inset: 0; margin: auto; padding: 0;
+  width: calc(100vw - 32px); max-width: 1800px; height: calc(100dvh - 32px); max-height: none;
+  border: 1px solid var(--wos-border); flex-direction: column;
+  min-width: 0; min-height: 0; overflow: hidden;
+  color: var(--wos-foreground); background: var(--wos-canvas);
+}
+.workspace-kanban:not([open]), .workspace-kanban[hidden] { display: none; }
+.workspace-kanban[open] { display: flex; }
+.workspace-kanban::backdrop, .workspace-kanban-operation::backdrop { background: color-mix(in srgb, var(--wos-foreground) 35%, transparent); }
+.workspace-kanban-context { flex-basis: 100%; margin: 0; font-size: 12px; color: var(--wos-muted); overflow-wrap: anywhere; }
+.workspace-kanban-controls > label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.workspace-kanban-controls > label select { width: auto; }
+/* Parent operations live in this workspace; hidden map inspectors cannot own them. */
+html[data-kanban-active="true"] :is(#actions, #outcome-tools, #canvas-context) { display: none; }
+.workspace-kanban-header, .workspace-kanban-controls, .workspace-kanban-footer {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 8px 12px; flex-shrink: 0; border-bottom: 1px solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+.workspace-kanban-header h2 { font: 400 24px var(--display); margin: 0 auto 0 0; }
+.workspace-kanban-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.workspace-kanban-breadcrumb button { max-width: 36ch; overflow-wrap: anywhere; white-space: normal; }
+.workspace-kanban-controls > input { flex: 1 1 180px; min-width: 0; width: auto; max-width: 480px; }
+.workspace-kanban-controls { max-height: 35%; overflow-y: auto; }
+.workspace-kanban-controls .workspace-primary-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.workspace-kanban-controls .workspace-primary-actions > button { flex: none; width: auto; }
+.workspace-kanban-status { flex-shrink: 0; font-size: 12px; margin: 0; padding: 6px 12px; }
+.workspace-kanban-body { display: flex; flex: 1; min-width: 0; min-height: 150px; position: relative; overflow: hidden; }
+.workspace-kanban-columns { flex: 1; display: flex; gap: 10px; padding: 8px 12px; overflow-x: auto; min-width: 0; min-height: 0; }
+.workspace-kanban-column { position: relative; flex: 1 0 245px; min-width: 245px; max-width: 420px; padding: 10px; overflow-y: auto; border: 1px solid var(--wos-border); background: var(--wos-workspace); }
+.workspace-kanban h3 { font: 400 21px var(--display); margin: 0 0 10px; overflow-wrap: anywhere; }
+.workspace-kanban-card-shell { position: relative; margin-bottom: 10px; }
+.workspace-kanban-card {
+  display: flex; flex-direction: column; align-items: stretch; text-align: left;
+  width: 100%; padding: 12px 36px 12px 12px; gap: 5px; margin: 0;
+  white-space: normal; overflow-wrap: anywhere;
+  color: var(--wos-foreground); border: 1px solid var(--wos-border); background: var(--wos-surface); cursor: grab;
+}
+.workspace-kanban-card > * { color: inherit; }
+.workspace-kanban-card strong { font: 400 19px var(--display); }
+.workspace-kanban-card small, .workspace-kanban-card span { font-size: 12px; }
+.workspace-kanban-card:is(:hover,:focus-visible), .workspace-kanban-card[aria-pressed="true"] { background: var(--wos-selected); border-color: var(--wos-copper); color: var(--wos-foreground); }
+.workspace-drag-handle { position: absolute; right: 12px; top: 44px; color: var(--wos-muted); }
+.workspace-kanban-column[data-drop-intent] { border-color: var(--wos-copper); }
+.workspace-drop-meaning { position: absolute; inset: 0 0 auto; z-index: 2; margin: 0; pointer-events: none; font-size: 12px; padding: 8px; background: var(--wos-surface); border-left: 2px solid var(--wos-copper); }
+.workspace-kanban-inspection { z-index: 3; flex: 0 0 clamp(400px, 26vw, 480px); width: clamp(400px, 26vw, 480px); padding: 14px; border-left: 1px solid var(--wos-border); background: var(--wos-workspace); overflow-y: auto; min-width: 0; }
+.workspace-kanban-inspection-header { position: sticky; top: -14px; z-index: 4; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin: -14px -14px 8px; padding: 10px 12px 8px; border-bottom: 1px solid var(--wos-border); background: var(--wos-workspace); }
+.workspace-kanban-inspection-header > h3 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: clamp(18px, 1.25vw, 22px); overflow-wrap: anywhere; }
+.workspace-kanban-inspection-header > button { flex: 0 0 auto; width: auto; white-space: nowrap; }
+.workspace-next-operation { padding: 12px; margin-block: 12px; border-left: 2px solid var(--wos-copper); background: var(--wos-surface); }
+.workspace-next-operation h4 { margin: 0 0 6px; }
+.workspace-next-operation p { margin: 0 0 8px; font-size: 13px; }
+.workspace-operational-view > details, .workspace-operation-groups { border-top: 1px solid var(--wos-border); padding-block: 6px; }
+.workspace-operational-view > details > summary, .workspace-operation-groups > summary { min-height: 44px; padding: 10px; cursor: pointer; }
+.workspace-operational-view > .workspace-primary-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.workspace-operational-view > .workspace-primary-actions > button { width: auto; flex: 0 1 auto; }
+.workspace-operation-groups button { display: flex; flex-wrap: wrap; gap: 6px; text-align: left; white-space: normal; }
+.workspace-operation-groups small { font-size: 12px; }
+.workspace-kanban-footer:empty, .workspace-kanban-footer[hidden], .workspace-kanban-controls[hidden] { display: none; }
+.workspace-kanban-footer { border-top: 1px solid var(--wos-border); border-bottom: 0; }
+.workspace-kanban-filters { position: relative; }
+.workspace-kanban-filters > summary { min-height: 44px; padding: 10px; cursor: pointer; }
+.workspace-kanban-filters > div { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; }
+.workspace-kanban-filters select { width: auto; min-width: 150px; max-width: 240px; }
+.workspace-kanban :is(button,input,select) { min-height: 44px; }
+.workspace-material-wizard, .workspace-review-checklist { min-width: min(400px, 90%); max-width: 700px; padding: 16px; overflow-y: auto; }
+.workspace-review-checklist .workspace-criterion { padding-block: 12px; border-bottom: 1px solid var(--wos-border); }
+.workspace-material-wizard button { display: block; margin-block: 8px; }
+
+/* The only modal is an operation; canonical nodes and their handlers are moved. */
+dialog.workspace-kanban-operation { width: min(800px, calc(100vw - 24px)); max-width: none; height: min(860px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px); padding: 0; background: var(--wos-canvas); color: var(--wos-foreground); border: 1px solid var(--wos-border); }
+dialog.workspace-kanban-operation[open] { display: flex; flex-direction: column; overflow: hidden; }
+.workspace-transition-header { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 14px; background: var(--wos-workspace); border-bottom: 1px solid var(--wos-border); flex-shrink: 0; }
+.workspace-transition-header h2 { font: 400 24px var(--display); margin: 0 auto 0 0; }
+.workspace-transition-header p { flex-basis: 100%; margin: 0; font-size: 12px; }
+.workspace-transition-body { padding: 14px; min-height: 0; overflow-y: auto; }
+.workspace-transition-remedies { display: flex; flex-direction: column; align-items: start; gap: 8px; }
+.workspace-remedy-actions > summary { min-height: 44px; padding: 10px; cursor: pointer; }
+.workspace-move-feedback { padding: 12px; border-left: 2px solid var(--wos-copper); background: var(--wos-surface); }
+.workspace-kanban-operation #canvas-details { position: static; inset: auto; flex: 1; width: 100%; height: auto; min-height: 0; max-height: none; overflow: hidden; border: 0; visibility: visible; }
+.workspace-kanban-operation .canvas-inspector-slot { height: 100%; max-height: none; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.workspace-kanban-operation .canvas-inspector-slot[hidden] { display: none; }
+.workspace-kanban-operation .canvas-inspector-slot > .dialog-form { display: flex; flex-direction: column; height: 100%; min-height: 0; max-height: 100%; }
+.workspace-kanban-operation :is(.dialog-body,.action-options) { flex: 1; min-height: 0; overflow: auto; }
+.workspace-kanban-operation .dialog-form > footer { position: static; flex-shrink: 0; }
+.workspace-kanban-operation .canvas-inspector-detail > footer { max-height: 35%; overflow: auto; }
+@media (max-width: 1650px) {
+  .workspace-kanban-inspection { position: absolute; inset: 0 0 0 auto; width: min(440px, 100%); box-shadow: -4px 0 12px color-mix(in srgb, var(--wos-foreground) 8%, transparent); }
+}
+@media (max-width: 600px) {
+  .workspace-kanban-inspection { width: 100%; }
+  .workspace-kanban-header, .workspace-kanban-controls { padding: 6px; gap: 4px; }
+  .workspace-kanban-header h2 { font-size: 22px; }
+  .workspace-kanban-breadcrumb { flex-basis: 100%; }
+  .workspace-kanban-breadcrumb button { max-width: 100%; }
+  .workspace-transition-header { padding: 6px 10px; }
+}
+@media (max-height: 560px) {
+  .workspace-kanban { overflow-y: auto; }
+  .workspace-kanban-controls { max-height: none; }
+  .workspace-kanban-body { flex: 1 0 280px; min-height: 280px; }
+  dialog.workspace-kanban-operation[open] { overflow-y: auto; }
+  .workspace-kanban-operation #canvas-details { flex: 1 0 220px; }
+}
+@media (prefers-reduced-motion: reduce) { .workspace-kanban *, .workspace-kanban-operation * { scroll-behavior: auto; transition: none; animation: none; } }
+.workspace-compact > details {
+  border-top: 1px solid var(--wos-border);
+  padding: 12px 0;
+}
+.workspace-compact > details > summary {
+  padding: 8px 12px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.workspace-compact-intro {
+  display: grid;
+  gap: 12px;
+}
+.workspace-compact-intro .detail-description {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-compact .workspace-kanban-open {
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 12px;
+}
+.workspace-compact-intro [data-workspace-facet="attention"] {
+  padding: 0;
+  border: 0;
+}
+.workspace-compact-intro [data-workspace-facet="attention"] h3 {
+  font-size: 16px;
+}
+
+@media (max-width: 600px) { .workspace-kanban { width: calc(100vw - 12px); height: calc(100dvh - 12px); } }
+
+.workspace-proof-work, .workspace-proof-checklist { padding-block: 8px; }
+.workspace-proof-work h3, .workspace-proof-checklist h3 { font: 400 24px var(--display); margin: 0 0 12px; }
+.workspace-proof-criterion { padding: 14px 0; border-top: 1px solid var(--wos-border); }
+.workspace-proof-criterion > small { display: block; }
+.workspace-proof-check { display: flex; gap: 10px; text-align: left; white-space: normal; min-height: 44px; }
+.workspace-proof-check::before { content: '□'; font-size: 22px; }
+.workspace-proof-check[aria-checked=true]::before { content: '✓'; }
+.workspace-proof-criterion > button { min-height: 44px; }

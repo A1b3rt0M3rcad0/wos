@@ -2,6 +2,7 @@ import {
   test, expect, openOutcome, chooseArea, openViews, openCanvasContext,
 } from "./ux-fixture.mjs";
 import { seedCanvas, seedCanvasRoadmap } from "./canvas-fixture.mjs";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -129,7 +130,7 @@ async function verifyCaptureAssets(page, wos) {
 }
 async function controls(page) {
   await fullyVisible(page.locator('#area-tabs [data-area="canvas"]'));
-  await fullyVisible(page.locator("#outcome-views > summary"));
+  await fullyVisible(page.locator('#area-tabs [data-area=overview]'));
   await fullyVisible(canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true }));
   for (const name of ["Zoom in", "Zoom out", "Center view", "Fit view"]) {
     const button = canvas(page).getByRole("button", { name, exact: true });
@@ -368,10 +369,10 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await openViews(page);
   for (const key of ["overview", "plan", "work", "issues", "evidence", "activity"])
     await fullyVisible(page.locator(`#area-tabs [data-area="${key}"]`));
-  await capture(page, "canvas-views", { state: "expanded specialist Views navigation" });
+  await capture(page, "canvas-views", { state: "specialist navigation from direct Overview" });
   await page.keyboard.press("Escape");
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
   for (const area of ["overview", "plan", "work", "issues", "evidence", "activity"]) {
     await chooseArea(page, area);
     await expect(page.locator(".sidebar")).toBeVisible();
@@ -410,15 +411,18 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
   await workspaceBounds(page);
   await chooseArea(page, "work");
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toHaveAttribute("aria-current","page");
   await page.goBack();
   await expect(viewport(page)).toBeVisible();
   await workspaceBounds(page);
   const search = canvas(page).getByRole("combobox", { name: "Search Outcome Board", exact: true });
   await search.fill(data.evidence[0].description);
   await canvas(page).getByRole("option").filter({ hasText: data.evidence[0].description }).first().click();
-  await expect(panel(page).locator("#detail-title")).toHaveText(data.evidence[0].description);
+  await expect(panel(page).locator("#detail-title")).toHaveText("Evidence");
+  await expect(panel(page).locator(".detail-description")).toHaveText(data.evidence[0].description);
   const persisted = await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}`);
   expect(persisted.value.lifecycle).toBe("active");
   expect(mutations).toEqual([]);
@@ -429,10 +433,16 @@ test("Views and Outcome context stay progressive, keyboard accessible and separa
 for (const [width, height] of [[320, 740], [390, 844]]) {
   test(`Compact Outcome Board keeps its own list and inspector scroll at ${width} x ${height}`, async ({ page, wos }) => {
     await page.setViewportSize({ width, height });
-    const data = await seedCanvas(wos, { extraTasks: 35 });
+    const data = await seedCanvas(wos, { extraTasks: 35, planningTasks:true });
     await openCanvas(page, wos, data);
     await expect(canvas(page).getByRole("button", { name: "List view", exact: true })).toHaveAttribute("aria-pressed", "true");
     const list = canvas(page).locator(".canvas-list");
+    // Large projections intentionally collapse Objective groups so the list
+    // does not open as an unbounded wall of child records. Expand the group
+    // containing the target Task before asserting nested scroll and selection.
+    await list.locator(`[data-canvas-list-node="objective:${data.objective.id}"]`)
+      .getByRole("button", { name: `Expand ${data.objective.title}`, exact: true })
+      .click();
     await fullyVisible(list);
     const before = await list.evaluate((element) => ({ top: element.scrollTop, overflow: element.scrollHeight - element.clientHeight }));
     expect(before.overflow).toBeGreaterThan(0);
@@ -447,10 +457,13 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await fullyVisible(panel(page));
     await capture(page, `canvas-${width}x${height}-inspector`, { state: "selected Task, initial context" });
     await inspectorActionsRemainReachable(page);
-    await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+    await clickRecordAction(page, "Edit task");
     await expect(panel(page).locator("#command-form")).toBeVisible();
     const body = panel(page).locator("#fields");
     await body.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+    // Narrow/short inspectors scroll as one surface; native focus must reveal
+    // the submit action there as well as in the independently scrolling body.
+    await panel(page).locator("#submit-command").focus();
     await fullyVisible(panel(page).locator("#submit-command"));
     await workspaceBounds(page);
     await capture(page, `canvas-${width}x${height}-form`, { state: "contextual form with independent scroll" });
@@ -485,7 +498,7 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
       await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.unscoped.title);
       await fullyVisible(panel(page));
       const detailSlot = panel(page).locator(".canvas-inspector-detail");
-      const reading = panel(page).getByRole("heading", { name: "Operational readiness", exact: true });
+      const reading = panel(page).getByRole("heading", { name: "What needs attention", exact: true });
       await reading.scrollIntoViewIfNeeded();
       await fullyVisible(reading);
       expect(await detailSlot.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
@@ -541,5 +554,81 @@ test("native browser zoom at 125% and 150% preserves Outcome Board controls and 
       await expect(task(page, data.tasks.ready)).toBeFocused();
       await workspaceBounds(page);
     }
+  } finally { await browser.close(); }
+});
+
+test("native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable", async ({ wos }) => {
+  const data = await seedCanvas(wos);
+  const browser = await nativeZoomBrowser({ width: 1366, height: 768 });
+  try {
+    const page = browser.page;
+    async function nativeArtifact(name) {
+      const session = await page.context().newCDPSession(page);
+      try {
+        const shot = await session.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, fromSurface: true });
+        const path = test.info().outputPath(`${name}.png`);
+        await writeFile(path, Buffer.from(shot.data, "base64"));
+        await test.info().attach(name, { path, contentType: "image/png" });
+      } finally { await session.detach(); }
+      const geometry = await page.evaluate(() => {
+        const bounds = (element) => {
+          const r = element.getBoundingClientRect(), s = getComputedStyle(element);
+          return { class: element.className, x: r.x, y: r.y, width: r.width, height: r.height, flex: s.flex,
+            minWidth: s.minWidth, padding: s.padding, font: s.font };
+        };
+        return {
+          viewport: { width: innerWidth, height: innerHeight, devicePixelRatio },
+          chrome: Object.fromEntries([".topbar", ".outcome-heading", ".canvas-toolbar", ".canvas-footer", ".canvas-stage"].map((selector) => [selector, bounds(document.querySelector(selector))])),
+          toolbar: [...document.querySelector(".canvas-toolbar").children].map(bounds),
+        };
+      });
+      const path = test.info().outputPath(`${name}-geometry.json`);
+      await writeFile(path, JSON.stringify(geometry, null, 2));
+      await test.info().attach(`${name}-geometry`, { path, contentType: "application/json" });
+    }
+    await openCanvas(page, wos, data);
+    await browser.setZoom(2);
+    // Native zoom gives a real 683 x 384 CSS viewport. Explicit Map remains
+    // usable alongside the automatically selected narrow-screen List view.
+    await canvas(page).getByRole("button", { name: "Map view", exact: true }).click();
+    await controls(page);
+    const geometry = await workspaceBounds(page);
+    await nativeArtifact("native-200-board");
+    expect(geometry.viewport.devicePixelRatio).toBe(2);
+    expect(geometry.viewport.visualViewportScale).toBe(1);
+    expect(geometry.height).toBeGreaterThan(100);
+    for (const name of ["Map layers", "Connections"]) {
+      const select = canvas(page).getByRole("combobox", { name, exact: true });
+      await fullyVisible(select);
+      const measurement = await select.evaluate((element) => {
+        const style = getComputedStyle(element), bounds = element.getBoundingClientRect();
+        const drawing = document.createElement("canvas").getContext("2d");
+        drawing.font = style.font;
+        return {
+          width: bounds.width, height: bounds.height,
+          optionTextWidth: Math.max(...[...element.options].map((option) => drawing.measureText(option.textContent).width)),
+          // Chromium's native select retains an internal text inset in
+          // addition to CSS padding. Leave room for that native decoration.
+          availableTextWidth: element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 12,
+        };
+      });
+      expect(measurement.width).toBeGreaterThanOrEqual(44);
+      expect(measurement.height).toBeGreaterThanOrEqual(44);
+      expect(measurement.optionTextWidth).toBeLessThanOrEqual(measurement.availableTextWidth + 1);
+    }
+    await fullyVisible(canvas(page).getByRole("button", { name: "Auto-layout", exact: true }));
+    await task(page, data.tasks.ready).focus();
+    await page.keyboard.press("Enter");
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await fullyVisible(panel(page));
+    await nativeArtifact("native-200-inspector");
+    const attention = panel(page).getByRole("heading", { name: "What needs attention", exact: true }).first();
+    await attention.scrollIntoViewIfNeeded();
+    await fullyVisible(attention);
+    await panel(page).locator("#close-detail").scrollIntoViewIfNeeded();
+    await fullyVisible(panel(page).locator("#close-detail"));
+    await panel(page).locator("#close-detail").click();
+    await expect(task(page, data.tasks.ready)).toBeFocused();
+    await workspaceBounds(page);
   } finally { await browser.close(); }
 });

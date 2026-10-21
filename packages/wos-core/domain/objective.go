@@ -15,21 +15,23 @@ const (
 )
 
 type Objective struct {
-	ID                 ID                 `json:"id"`
-	Scope              Scope              `json:"scope"`
-	Version            Version            `json:"version"`
-	Title              string             `json:"title"`
-	Description        string             `json:"description,omitempty"`
-	ParentObjectiveID  *ID                `json:"parent_objective_id,omitempty"`
-	Lifecycle          ObjectiveLifecycle `json:"lifecycle"`
-	Priority           Priority           `json:"priority"`
-	OwnerRefs          []ActorRef         `json:"owner_refs,omitempty"`
-	RequiredForOutcome bool               `json:"required_for_outcome"`
-	Criteria           CriterionSet       `json:"criteria"`
-	CurrentConclusion  *Conclusion        `json:"conclusion,omitempty"`
-	ConclusionHistory  []Conclusion       `json:"conclusion_history,omitempty"`
-	CreatedAt          time.Time          `json:"created_at"`
-	UpdatedAt          time.Time          `json:"updated_at"`
+	ID                 ID                      `json:"id"`
+	Scope              Scope                   `json:"scope"`
+	Version            Version                 `json:"version"`
+	Title              string                  `json:"title"`
+	Description        string                  `json:"description,omitempty"`
+	ParentObjectiveID  *ID                     `json:"parent_objective_id,omitempty"`
+	Lifecycle          ObjectiveLifecycle      `json:"lifecycle"`
+	Priority           Priority                `json:"priority"`
+	OwnerRefs          []ActorRef              `json:"owner_refs,omitempty"`
+	RequiredForOutcome bool                    `json:"required_for_outcome"`
+	Criteria           CriterionSet            `json:"criteria"`
+	CurrentConclusion  *Conclusion             `json:"conclusion,omitempty"`
+	ConclusionHistory  []Conclusion            `json:"conclusion_history,omitempty"`
+	CreatedAt          time.Time               `json:"created_at"`
+	UpdatedAt          time.Time               `json:"updated_at"`
+	CompletionMode     ObjectiveCompletionMode `json:"completion_mode,omitempty"`
+	CompletionCycle    uint64                  `json:"completion_cycle,omitempty"`
 }
 
 func NewObjective(id ID, scope Scope, title, description string, priority Priority, requiredForOutcome bool, createdAt time.Time) (Objective, error) {
@@ -57,6 +59,9 @@ func (o Objective) Ref() EntityRef {
 }
 
 func (o Objective) Validate() error {
+	if !o.CompletionMode.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid objective completion_mode")
+	}
 	if err := o.ID.Validate(); err != nil {
 		return err
 	}
@@ -94,8 +99,8 @@ func (o Objective) Validate() error {
 }
 
 func (o *Objective) AddCriterion(c SuccessCriterion, now time.Time) error {
-	if o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on terminal objective")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if c.OwnerRef != o.Ref() {
 		return NewError(ErrorCodeCriterion, "criterion owner does not match objective")
@@ -107,8 +112,8 @@ func (o *Objective) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (o *Objective) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
-	if o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal objective")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Revise(id, title, description, required, mode); err != nil {
 		return err
@@ -117,8 +122,8 @@ func (o *Objective) ReviseCriterion(id ID, title, description string, required b
 }
 
 func (o *Objective) RetireCriterion(id ID, now time.Time) error {
-	if o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal objective")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Retire(id); err != nil {
 		return err
@@ -141,19 +146,16 @@ func (o *Objective) AssessCriterionAttestation(a CriterionAssessment, now time.T
 }
 
 func (o *Objective) Start(now time.Time) error {
-	if o.Lifecycle != ObjectiveLifecyclePlanned {
-		return NewError(ErrorCodeInvalidTransition, "only planned objective can start")
-	}
-	if !o.Criteria.HasRequiredActive() {
-		return NewError(ErrorCodePreconditionFailed, "objective requires at least one required active criterion")
+	if err := o.CheckStart(); err != nil {
+		return err
 	}
 	o.Lifecycle = ObjectiveLifecycleInProgress
 	return o.touch(now)
 }
 
 func (o *Objective) Achieve(conclusion Conclusion, now time.Time) error {
-	if o.Lifecycle != ObjectiveLifecyclePlanned && o.Lifecycle != ObjectiveLifecycleInProgress {
-		return NewError(ErrorCodeInvalidTransition, "objective cannot be achieved from current lifecycle")
+	if err := o.CheckAchievement(); err != nil {
+		return err
 	}
 	refs, err := o.Criteria.RequiredSatisfied()
 	if err != nil {
@@ -165,7 +167,8 @@ func (o *Objective) Achieve(conclusion Conclusion, now time.Time) error {
 		return err
 	}
 	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
-		RequiredCriteria: o.Criteria.RequiredObligations(),
+		AcknowledgedCancelledWork: append([]EntityRef(nil), conclusion.Obligations.AcknowledgedCancelledWork...),
+		RequiredCriteria:          o.Criteria.RequiredObligations(),
 	}); err != nil {
 		return err
 	}
@@ -198,11 +201,19 @@ func (o *Objective) Reopen(reason string, now time.Time) error {
 	if strings.TrimSpace(reason) == "" {
 		return NewError(ErrorCodeInvalidArgument, "reopen reason is required")
 	}
+	nextCycle, err := nextObjectiveCompletionCycle(o.EffectiveCompletionCycle())
+	if err != nil {
+		return err
+	}
+	if _, err := nextVersion(o.Version); err != nil {
+		return err
+	}
 	if o.CurrentConclusion != nil {
 		o.ConclusionHistory = append(o.ConclusionHistory, *o.CurrentConclusion)
 		o.CurrentConclusion = nil
 	}
 	o.Lifecycle = ObjectiveLifecyclePlanned
+	o.CompletionCycle = nextCycle
 	return o.touch(now)
 }
 

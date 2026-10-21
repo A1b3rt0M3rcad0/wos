@@ -97,26 +97,29 @@ func (e SigningEnrollment) Validate() error {
 }
 
 type CredentialPolicy struct {
-	NamespaceID              ID             `json:"namespace_id"`
-	CredentialID             ID             `json:"credential_id"`
-	PrincipalID              string         `json:"principal_id"`
-	Version                  Version        `json:"revision,string"`
-	PermittedOperations      []string       `json:"permitted_operations"`
-	AcceptanceFloor          AcceptanceMode `json:"acceptance_floor"`
-	AllowedOutcomeIDs        []ID           `json:"allowed_outcome_ids"`
-	AllowedSigningKeyIDs     []ID           `json:"allowed_signing_key_ids"`
-	MaxActiveWorkContracts   int            `json:"max_active_work_contracts"`
-	MaxActiveReviewContracts int            `json:"max_active_review_contracts"`
-	UpdatedAt                time.Time      `json:"updated_at"`
+	NamespaceID                    ID             `json:"namespace_id"`
+	CredentialID                   ID             `json:"credential_id"`
+	PrincipalID                    string         `json:"principal_id"`
+	Version                        Version        `json:"revision,string"`
+	PermittedOperations            []string       `json:"permitted_operations"`
+	PermissionCompatibilityVersion uint32         `json:"permission_compatibility_version,omitempty"`
+	AcceptanceFloor                AcceptanceMode `json:"acceptance_floor"`
+	AllowedOutcomeIDs              []ID           `json:"allowed_outcome_ids"`
+	AllowedSigningKeyIDs           []ID           `json:"allowed_signing_key_ids"`
+	MaxActiveWorkContracts         int            `json:"max_active_work_contracts"`
+	MaxActiveReviewContracts       int            `json:"max_active_review_contracts"`
+	UpdatedAt                      time.Time      `json:"updated_at"`
 }
 
+const PermissionCompatibilityLegacyV1 uint32 = 1
+
 func (p CredentialPolicy) Validate() error {
-	if p.NamespaceID.Validate() != nil || p.CredentialID.Validate() != nil || p.Version.Validate() != nil || p.PrincipalID == "" || !p.AcceptanceFloor.Valid() || len(p.PermittedOperations) > 32 || len(p.AllowedOutcomeIDs) > 100 || len(p.AllowedSigningKeyIDs) > 100 || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 {
+	if p.NamespaceID.Validate() != nil || p.CredentialID.Validate() != nil || p.Version.Validate() != nil || p.PrincipalID == "" || !p.AcceptanceFloor.Valid() || len(p.PermittedOperations) > MaxPermissionValues || len(p.AllowedOutcomeIDs) > 100 || len(p.AllowedSigningKeyIDs) > 100 || p.MaxActiveWorkContracts < 1 || p.MaxActiveWorkContracts > 100 || p.MaxActiveReviewContracts < 1 || p.MaxActiveReviewContracts > 100 || (p.PermissionCompatibilityVersion != 0 && p.PermissionCompatibilityVersion != PermissionCompatibilityLegacyV1) {
 		return NewError(ErrorCodeInvalidArgument, "invalid credential policy")
 	}
 	seen := map[string]bool{}
 	for _, op := range p.PermittedOperations {
-		if op == "" || seen[op] {
+		if !PermissionOperationValid(op) || seen[op] {
 			return NewError(ErrorCodeInvalidArgument, "duplicate/empty permitted operation")
 		}
 		seen[op] = true
@@ -132,10 +135,17 @@ func (p CredentialPolicy) Validate() error {
 	}
 	return nil
 }
+
 func (p CredentialPolicy) Permits(operation string, outcome ID) bool {
+	return p.PermitsWithCompatibility(operation, "", outcome)
+}
+
+// PermitsWithCompatibility accepts a finite legacy alias only after the
+// credential policy was explicitly migrated under that compatibility version.
+func (p CredentialPolicy) PermitsWithCompatibility(operation, legacyOperation string, outcome ID) bool {
 	allowed := false
 	for _, op := range p.PermittedOperations {
-		allowed = allowed || op == operation
+		allowed = allowed || op == operation || (legacyOperation != "" && p.PermissionCompatibilityVersion == PermissionCompatibilityLegacyV1 && op == legacyOperation)
 	}
 	if !allowed {
 		return false

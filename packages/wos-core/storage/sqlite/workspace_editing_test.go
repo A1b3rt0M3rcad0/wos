@@ -1,0 +1,136 @@
+package sqlite
+
+import (
+	"context"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+)
+
+func TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "editing.db")
+	store, err := Open(path, Options{MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}
+	service, err := a.NewService(store, clock, &sqliteSequenceIDs{prefix: "0199ee31", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc := sqliteCommandContext("0199ee30-0000-7000-8000-000000000001", "")
+	out, err := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: d.MustParseID("0199ee30-0000-7000-8000-000000000002"), Title: "Persistent planning", DesiredState: "Definition remains editable without fabricated authority", Priority: d.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := out.Value.Scope()
+	first, err := service.CreateObjective(ctx, cc, a.CreateObjectiveCommand{Scope: scope, Title: "First", Priority: d.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := service.CreateObjective(ctx, cc, a.CreateObjectiveCommand{Scope: scope, Title: "Second", Priority: d.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	created, err := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "Minimal Task", Priority: d.PriorityNormal, ObjectiveID: &first.Value.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work := created.Value
+	editCC := sqliteCommandContext("0199ee30-0000-7000-8000-000000000003", "persist-spec-intent")
+	editCmd := a.SetWorkItemExecutionSpecCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: work.Version, ExecutionSpec: &d.ExecutionSpec{Instructions: []string{"Implement the requested change"}, Deliverables: []string{"A reviewable patch"}, ContextRefs: []d.EntityRef{first.Value.Ref()}}}
+	edited, err := service.SetWorkItemExecutionSpec(ctx, editCC, editCmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	when := clock.now.Add(time.Hour)
+	scheduled, err := service.SetWorkItemNotBefore(ctx, cc, a.SetWorkItemNotBeforeCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: edited.Value.Version, NotBefore: &when})
+	if err != nil {
+		t.Fatal(err)
+	}
+	moved, err := service.SetWorkItemObjective(ctx, cc, a.SetWorkItemObjectiveCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: scheduled.Value.Version, ObjectiveID: &second.Value.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if moved.Value.Lifecycle != d.WorkItemLifecycleBacklog || moved.Value.CurrentLease != nil || moved.Value.ID != work.ID {
+		t.Fatal("editing changed execution or identity")
+	}
+	if err := store.Close(); err != nil {
+		t.Fatal(err)
+	}
+	store, err = Open(path, Options{MigrateOnOpen: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close()
+	service, err = a.NewService(store, clock, &sqliteSequenceIDs{prefix: "0199ee32", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := service.GetWorkItem(ctx, scope, work.ID)
+	if err != nil || loaded.Value.ExecutionSpec == nil || loaded.Value.ExecutionSpec.Deliverables[0] != "A reviewable patch" || loaded.Value.NotBefore == nil || *loaded.Value.ObjectiveID != second.Value.ID {
+		t.Fatalf("restart lost definition: %#v %v", loaded, err)
+	}
+	replay, err := service.SetWorkItemExecutionSpec(ctx, editCC, editCmd)
+	if err != nil || !replay.IdempotentReplay || replay.Value.Version != edited.Value.Version {
+		t.Fatal("restart lost durable receipt", err)
+	}
+	eventsBeforeUnparent, err := store.SnapshotDomainEvents(ctx, scope)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = service.SetWorkItemObjective(ctx, cc, a.SetWorkItemObjectiveCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: loaded.Value.Version, ObjectiveID: nil})
+	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodePreconditionFailed {
+		t.Fatalf("explicit null did not reject direct membership: %v", err)
+	}
+	retained, err := service.GetWorkItem(ctx, scope, work.ID)
+	if err != nil || retained.Value.Version != loaded.Value.Version || retained.Value.ObjectiveID == nil || *retained.Value.ObjectiveID != second.Value.ID {
+		t.Fatal("rejected unparenting changed Task or version", err)
+	}
+	eventsAfterUnparent, err := store.SnapshotDomainEvents(ctx, scope)
+	if err != nil || len(eventsAfterUnparent) != len(eventsBeforeUnparent) {
+		t.Fatal("rejected unparenting changed history", err)
+	}
+	clearedDate, err := service.SetWorkItemNotBefore(ctx, cc, a.SetWorkItemNotBeforeCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: retained.Value.Version, NotBefore: nil})
+	if err != nil || clearedDate.Value.NotBefore != nil {
+		t.Fatal("explicit null did not clear scheduling", err)
+	}
+	_, err = service.SetWorkItemExecutionSpec(ctx, cc, a.SetWorkItemExecutionSpecCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: clearedDate.Value.Version, ExecutionSpec: nil})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Two explicit moves under the same Outcome coordination guard may not
+	// validate opposite edges against independently stale hierarchy snapshots.
+	var wg sync.WaitGroup
+	results := make(chan error, 2)
+	for i, pair := range [][2]d.Objective{{first.Value, second.Value}, {second.Value, first.Value}} {
+		wg.Add(1)
+		go func(i int, pair [2]d.Objective) {
+			defer wg.Done()
+			moveCC := sqliteCommandContext("0199ee30-0000-7000-8000-000000000004", "first-parent-move-intent")
+			if i == 1 {
+				moveCC = sqliteCommandContext("0199ee30-0000-7000-8000-000000000005", "second-parent-move-intent")
+			}
+			_, err := service.SetObjectiveParent(ctx, moveCC, a.SetObjectiveParentCommand{Scope: scope, ObjectiveID: pair[0].ID, ExpectedVersion: pair[0].Version, ParentObjectiveID: &pair[1].ID})
+			results <- err
+		}(i, pair)
+	}
+	wg.Wait()
+	close(results)
+	winners := 0
+	for err := range results {
+		if err == nil {
+			winners++
+		} else {
+			t.Logf("reparent result: %v", err)
+		}
+	}
+	if winners != 1 {
+		t.Fatalf("opposite reparent winners: %d", winners)
+	}
+}

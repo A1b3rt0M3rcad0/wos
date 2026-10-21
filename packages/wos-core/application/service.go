@@ -42,6 +42,14 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.Outcome]{}, err
 	}
+	if len(cmd.InitialCriteria) > 0 {
+		if err := validateInitialCriteria(cmd.InitialCriteria); err != nil {
+			return MutationResult[domain.Outcome]{}, err
+		}
+		if err := boundedWorkspaceCommand(cmd); err != nil {
+			return MutationResult[domain.Outcome]{}, err
+		}
+	}
 	id, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.Outcome]{}, err
@@ -52,12 +60,19 @@ func (s *Service) CreateOutcome(ctx context.Context, commandContext domain.Comma
 		return MutationResult[domain.Outcome]{}, err
 	}
 
+	outcome.CompletionPolicy = cmd.CompletionPolicy.Effective()
+	if !outcome.CompletionPolicy.Valid() {
+		return MutationResult[domain.Outcome]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid completion_policy")
+	}
 	outcome.ExternalContext = cmd.ExternalContext.Clone()
 	if err := outcome.ExternalContext.Validate(); err != nil {
 		return MutationResult[domain.Outcome]{}, err
 	}
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Outcome, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, outcome.Scope()); err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		if err := s.initialCriteria(ctx, uow, outcome.Ref(), cmd.InitialCriteria, now, outcome.AddCriterion); err != nil {
 			return domain.Outcome{}, 0, err
 		}
 		if err := uow.Outcomes().Insert(ctx, outcome); err != nil {
@@ -119,12 +134,19 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 
 	waiverAuthorized := false
 	if cmd.Result == domain.AssessmentResultWaived {
-		if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
-			NamespaceID: cmd.Owner.Scope.NamespaceID,
-			PrincipalID: commandContext.PrincipalID,
-			Permission:  ports.PermissionAssessmentWaive,
-		}); err != nil {
-			return MutationResult[domain.CriterionAssessment]{}, err
+		permissions, registered := CommandAuthorizationPermissions("RecordCriterionAssessment", cmd)
+		if !registered || len(permissions) < 2 {
+			return MutationResult[domain.CriterionAssessment]{}, domain.NewError(domain.ErrorCodeForbidden, "waiver authorization requirement is not registered")
+		}
+		for _, permission := range permissions[1:] {
+			if err := s.authorizer.Authorize(ctx, ports.AuthorizationRequest{
+				NamespaceID:      cmd.Owner.Scope.NamespaceID,
+				PrincipalID:      commandContext.PrincipalID,
+				Permission:       permission,
+				LegacyPermission: legacyPermissionForCommand("RecordCriterionAssessment", permission),
+			}); err != nil {
+				return MutationResult[domain.CriterionAssessment]{}, err
+			}
 		}
 		waiverAuthorized = true
 	}
@@ -145,13 +167,14 @@ func (s *Service) RecordCriterionAssessment(ctx context.Context, commandContext 
 		PrincipalID:       commandContext.PrincipalID,
 		Actor:             commandContext.Actor,
 		AssessedAt:        now,
+		TaskDeliveryRef:   cloneTaskDeliveryAssessmentRef(cmd.TaskDeliveryRef),
 	}
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
-		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, cmd.TaskDeliveryRef, &assessment); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
@@ -186,13 +209,14 @@ func (s *Service) AttestCriterion(ctx context.Context, commandContext domain.Com
 		PrincipalID:       commandContext.PrincipalID,
 		Actor:             commandContext.Actor,
 		AssessedAt:        now,
+		TaskDeliveryRef:   cloneTaskDeliveryAssessmentRef(cmd.TaskDeliveryRef),
 	}
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.CriterionAssessment, domain.OutcomeRevision, error) {
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Owner.Scope); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
-		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, &assessment); err != nil {
+		if err := bindSubmissionAssessment(ctx, uow, cmd.Owner, cmd.SubmissionID, cmd.TaskDeliveryRef, &assessment); err != nil {
 			return domain.CriterionAssessment{}, 0, err
 		}
 		if err := s.requireIndependentReview(ctx, uow, cmd.Owner.Scope, commandContext.PrincipalID); err != nil {
@@ -248,30 +272,21 @@ func (s *Service) AchieveOutcome(ctx context.Context, commandContext domain.Comm
 		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
-			return domain.Outcome{}, 0, err
-		}
 		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		if err := requireNotBlocked(ctx, uow, outcome.Ref()); err != nil {
-			return domain.Outcome{}, 0, err
-		}
-		objectives, err := uow.Objectives().ListByOutcome(ctx, cmd.Scope)
+		requiredObjectiveIDs, err := s.checkOutcomeAchievement(ctx, uow, outcome, commandContext.PrincipalID, cmd.AcknowledgedCancelledWork)
 		if err != nil {
 			return domain.Outcome{}, 0, err
 		}
-		requiredObjectiveIDs := make([]domain.ID, 0)
-		for _, objective := range objectives {
-			if !objective.RequiredForOutcome {
-				continue
-			}
-			if objective.Lifecycle != domain.ObjectiveLifecycleAchieved {
-				return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodePreconditionFailed, "required objective is not achieved")
-			}
-			requiredObjectiveIDs = append(requiredObjectiveIDs, objective.ID)
+		if len(cmd.AcknowledgedCancelledWork) > 0 && cmd.ObservedOutcomeRevision == nil {
+			return domain.Outcome{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "cancellation acknowledgement requires observed_outcome_revision")
 		}
+		if err := validateConclusionImpactPreview(ctx, uow, outcome.Ref(), cmd.ObservedOutcomeRevision); err != nil {
+			return domain.Outcome{}, 0, err
+		}
+		conclusion.Obligations.AcknowledgedCancelledWork = append([]domain.EntityRef(nil), cmd.AcknowledgedCancelledWork...)
 		if err := outcome.AchieveWithObligations(conclusion, requiredObjectiveIDs, now); err != nil {
 			return domain.Outcome{}, 0, err
 		}
@@ -287,6 +302,14 @@ func (s *Service) CreateObjective(ctx context.Context, commandContext domain.Com
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.Objective]{}, err
 	}
+	if len(cmd.InitialCriteria) > 0 {
+		if err := validateInitialCriteria(cmd.InitialCriteria); err != nil {
+			return MutationResult[domain.Objective]{}, err
+		}
+		if err := boundedWorkspaceCommand(cmd); err != nil {
+			return MutationResult[domain.Objective]{}, err
+		}
+	}
 	id, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.Objective]{}, err
@@ -299,22 +322,7 @@ func (s *Service) CreateObjective(ctx context.Context, commandContext domain.Com
 	objective.ParentObjectiveID = cloneIDPtr(cmd.ParentObjectiveID)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.Objective, domain.OutcomeRevision, error) {
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
-			return domain.Objective{}, 0, err
-		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
-		if err != nil {
-			return domain.Objective{}, 0, err
-		}
-		if outcome.IsArchived() || outcome.Lifecycle == domain.OutcomeLifecycleAchieved || outcome.Lifecycle == domain.OutcomeLifecycleFailed || outcome.Lifecycle == domain.OutcomeLifecycleAbandoned {
-			return domain.Objective{}, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "cannot create objective in archived or terminal outcome")
-		}
-		if cmd.ParentObjectiveID != nil {
-			if _, err := uow.Objectives().Get(ctx, cmd.Scope, *cmd.ParentObjectiveID); err != nil {
-				return domain.Objective{}, 0, err
-			}
-		}
-		if err := uow.Objectives().Insert(ctx, objective); err != nil {
+		if err := s.insertObjectiveCreation(ctx, uow, cmd, &objective, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -363,23 +371,21 @@ func (s *Service) AchieveObjective(ctx context.Context, commandContext domain.Co
 		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return domain.Objective{}, 0, err
 		}
-		if err := s.requireIndependentReview(ctx, uow, cmd.Scope, commandContext.PrincipalID); err != nil {
-			return domain.Objective{}, 0, err
-		}
 		objective, err := uow.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
 		if err != nil {
 			return domain.Objective{}, 0, err
 		}
-		if err := requireNotBlocked(ctx, uow, objective.Ref()); err != nil {
+		if err := s.checkObjectiveAchievement(ctx, uow, objective, commandContext.PrincipalID, cmd.AcknowledgedCancelledWork); err != nil {
 			return domain.Objective{}, 0, err
 		}
-		if err := requireHardDependenciesSatisfied(ctx, uow, objective.Ref()); err != nil {
+		if len(cmd.AcknowledgedCancelledWork) > 0 && cmd.ObservedOutcomeRevision == nil {
+			return domain.Objective{}, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "cancellation acknowledgement requires observed_outcome_revision")
+		}
+		if err := validateConclusionImpactPreview(ctx, uow, objective.Ref(), cmd.ObservedOutcomeRevision); err != nil {
 			return domain.Objective{}, 0, err
 		}
-		if err := objective.Achieve(conclusion, now); err != nil {
-			return domain.Objective{}, 0, err
-		}
-		if err := uow.Objectives().Save(ctx, objective, cmd.ExpectedVersion); err != nil {
+		conclusion.Obligations.AcknowledgedCancelledWork = append([]domain.EntityRef(nil), cmd.AcknowledgedCancelledWork...)
+		if err := achieveObjectiveInUnit(ctx, uow, &objective, cmd.ExpectedVersion, conclusion, now); err != nil {
 			return domain.Objective{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -391,53 +397,30 @@ func (s *Service) CreateWorkItem(ctx context.Context, commandContext domain.Comm
 	if err := commandContext.Validate(); err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
+	if cmd.ObjectiveID == nil {
+		return MutationResult[domain.WorkItem]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
+	if len(cmd.InitialCriteria) > 0 {
+		if err := validateInitialCriteria(cmd.InitialCriteria); err != nil {
+			return MutationResult[domain.WorkItem]{}, err
+		}
+		if err := boundedWorkspaceCommand(cmd); err != nil {
+			return MutationResult[domain.WorkItem]{}, err
+		}
+	}
 	id, err := s.ids.NewID()
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
 	now := s.clock.Now().UTC()
-	item, err := domain.NewWorkItem(id, cmd.Scope, cmd.Title, cmd.Description, cmd.Priority, cmd.Lifecycle, now)
+	item, err := domain.NewWorkItemForObjective(id, cmd.Scope, cmd.ObjectiveID, cmd.Title, cmd.Description, cmd.Priority, cmd.Lifecycle, now)
 	if err != nil {
 		return MutationResult[domain.WorkItem]{}, err
 	}
-	item.ObjectiveID = cloneIDPtr(cmd.ObjectiveID)
 	item.NotBefore = cloneTimePtrUTC(cmd.NotBefore)
 
 	return transactCommand(ctx, s, commandContext, cmd, func(uow ports.UnitOfWork) (domain.WorkItem, domain.OutcomeRevision, error) {
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
-			return domain.WorkItem{}, 0, err
-		}
-		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
-		if err != nil {
-			return domain.WorkItem{}, 0, err
-		}
-		if outcome.IsArchived() || outcome.Lifecycle == domain.OutcomeLifecycleAchieved || outcome.Lifecycle == domain.OutcomeLifecycleFailed || outcome.Lifecycle == domain.OutcomeLifecycleAbandoned {
-			return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "cannot create work in archived or terminal outcome")
-		}
-		if cmd.ObjectiveID != nil {
-			objective, err := uow.Objectives().Get(ctx, cmd.Scope, *cmd.ObjectiveID)
-			if err != nil {
-				return domain.WorkItem{}, 0, err
-			}
-			if objective.Lifecycle == domain.ObjectiveLifecycleAchieved || objective.Lifecycle == domain.ObjectiveLifecycleCancelled {
-				return domain.WorkItem{}, 0, domain.NewError(domain.ErrorCodeInvalidTransition, "cannot attach new work to terminal objective")
-			}
-		}
-		if repo, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
-			p, e := repo.WorkProtocol().Lock(ctx, cmd.Scope.NamespaceID, false)
-			if e != nil {
-				return domain.WorkItem{}, 0, e
-			}
-			item.ContractsEnabled = p.Phase == domain.WorkProtocolContracts || p.Phase == domain.WorkProtocolSigned || p.Phase == domain.WorkProtocolSignedDraining
-		}
-		if cmd.ExecutionSpec != nil {
-			if err := cmd.ExecutionSpec.Validate(); err != nil {
-				return domain.WorkItem{}, 0, err
-			}
-			spec := *cmd.ExecutionSpec
-			item.ExecutionSpec = &spec
-		}
-		if err := uow.WorkItems().Insert(ctx, item); err != nil {
+		if err := s.insertWorkItemCreation(ctx, uow, cmd, &item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -459,6 +442,13 @@ func (s *Service) ActivateWorkItem(ctx context.Context, commandContext domain.Co
 			return domain.WorkItem{}, 0, err
 		}
 		if err := item.Activate(now); err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		readiness, err := evaluateTaskActivation(ctx, uow, item, now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := operationalReadinessError(readiness, "Task cannot be activated"); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
@@ -492,7 +482,16 @@ func (s *Service) ClaimWorkItem(ctx context.Context, commandContext domain.Comma
 		if err := requireWorkItemReady(ctx, uow, item, now); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
-		if err := item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now); err != nil {
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "ClaimWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if authority != nil {
+			err = item.ClaimForCredential(claimID, commandContext.PrincipalID, authority.holderID, authority.sessionID, commandContext.Actor, cmd.TTL, now)
+		} else {
+			err = item.Claim(claimID, commandContext.PrincipalID, commandContext.Actor, cmd.TTL, now)
+		}
+		if err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
@@ -530,7 +529,22 @@ func (s *Service) CompleteWorkItem(ctx context.Context, commandContext domain.Co
 			return domain.WorkItem{}, 0, err
 		}
 		conclusion := conclusionFromContext(conclusionID, commandContext, cmd.Reason, now)
-		if err := item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now); err != nil {
+		authority, err := s.resolveLeaseCredentialAuthority(ctx, uow, commandContext, cmd.Scope, item.CurrentLease, "CompleteWorkItem", now)
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := requireTaskDeliveryReviewForCompletion(ctx, uow, cmd.Scope, item.ID); err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if authority != nil {
+			err = item.CompleteForCredential(commandContext.PrincipalID, authority.holderID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now)
+		} else {
+			err = item.Complete(commandContext.PrincipalID, cmd.ClaimID, cmd.FencingToken, cmd.ResultSummary, conclusion, now)
+		}
+		if err != nil {
+			return domain.WorkItem{}, 0, err
+		}
+		if err := validateRequiredAssessmentProof(ctx, uow, item.Ref(), item.Criteria); err != nil {
 			return domain.WorkItem{}, 0, err
 		}
 		if err := uow.WorkItems().Save(ctx, item, cmd.ExpectedVersion); err != nil {
@@ -736,6 +750,14 @@ func recordCriterionAssessment(
 }
 
 func cloneEvaluatorRef(value *domain.EvaluatorRef) *domain.EvaluatorRef {
+	if value == nil {
+		return nil
+	}
+	copyValue := *value
+	return &copyValue
+}
+
+func cloneTaskDeliveryAssessmentRef(value *domain.TaskDeliveryAssessmentRef) *domain.TaskDeliveryAssessmentRef {
 	if value == nil {
 		return nil
 	}

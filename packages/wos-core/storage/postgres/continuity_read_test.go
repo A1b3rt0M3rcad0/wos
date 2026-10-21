@@ -52,14 +52,15 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		title := fmt.Sprintf("%d & %s", i, strings.Repeat("界", 180))
 		base := 100 + i*20
-		work, e := d.NewWorkItem(portID(base), scope, title, "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
-		must(e)
-		must(u.WorkItems().Insert(ctx, work))
-		works = append(works, work)
 		objective, e := d.NewObjective(portID(base+1), scope, title, "", d.PriorityNormal, false, now)
 		must(e)
 		must(u.Objectives().Insert(ctx, objective))
-		issue, e := d.NewIssue(portID(base+2), scope, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+		work, e := d.NewWorkItem(portID(base), scope, title, "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+		must(e)
+		work.ObjectiveID = &objective.ID
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
+		works = append(works, work)
+		issue, e := d.NewIssueForObjective(portID(base+2), scope, &objective.ID, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
 		must(e)
 		must(issues.Issues().Insert(ctx, issue))
 		cause := issue.Ref()
@@ -140,7 +141,7 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
-	store, e := openTestPostgres(filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
+	store, e := openTestPostgres(t, filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -168,7 +169,16 @@ func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	if e = u.Outcomes().Insert(ctx, out); e != nil {
+	// Build the historical fixture with its own schema, not the current
+	// repository writer (which legitimately requires migration 0033).
+	tx := u.(*unitOfWork).tx
+	for _, err := range []error{ensureNamespace(ctx, tx, out.NamespaceID), ensureCoordinationRow(ctx, tx, out.Scope()), insertEntityRef(ctx, tx, out.Ref())} {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, e = tx.ExecContext(ctx, `INSERT INTO outcomes(id,namespace_id,outcome_id,kind,version,created_at,updated_at,title,description,priority,desired_state,lifecycle) VALUES($1,$2,$3,'outcome',1,$4,$5,$6,$7,$8,$9, 'draft')`, out.ID.String(), out.NamespaceID.String(), out.ID.String(), encodeTime(now), encodeTime(now), out.Title, out.Description, string(out.Priority), out.DesiredState)
+	if e != nil {
 		t.Fatal(e)
 	}
 	if e = u.Commit(); e != nil {

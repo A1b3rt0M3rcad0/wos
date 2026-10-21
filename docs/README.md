@@ -9,8 +9,11 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Install the service, sign in, or troubleshoot setup | [Getting started](getting-started.md)                                  |
 | Run one complete isolated workflow                  | [Unsigned local example](../examples/quickstart/README.md)             |
 | Create Outcomes, plan, execute, and assess work     | [Workspace guide](workspace-ux.md)                                     |
+| Use contextual Objectives/Tasks Kanbans, compact inspection and strict completion | [Contextual Kanbans](ux/operational-kanban/README.md) |
+| Use progressive creation and the shared contextual inspector | [Operational workspace](ux/operational-workspace/README.md) |
+| Connect Objectives, Tasks, Evidence and problems without confusing completion with acceptance | [Understand the relationships](workspace-relationships.md) |
 | Find Outcomes through live search and filters      | [Outcome discovery](workspace-ux.md#find-another-outcome)               |
-| View the current desktop and mobile interface       | [Outcome Board workspace and screenshots](design/operational-canvas/canvas-first/README.md) |
+| View the current desktop and mobile interface       | [Current Board and Kanban screenshots](ux/operational-kanban/screenshots/focused-modal/README.md) |
 | Inspect earlier specialist pages, native forms and recovery states | [Earlier complete workspace gallery](design/operational-canvas/workspace/README.md) |
 | Understand the shared human/agent workflow          | [How it works](../README.md#how-it-works)                              |
 | See real navigation through the earlier interface   | [Recorded workspace tour](images/workspace-tour.md)                    |
@@ -31,6 +34,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 | Use HTTP or connect MCP                            | [HTTP](http.md), [MCP contracts](contracts.md), and [OpenAPI](../packages/wos-api/openapi.yaml)     |
 | Integrate a consumer and reconcile receipts        | [Client qualification](client-qualification.md)                                                     |
 | Consume events and webhooks                        | [Integration events](integration-events.md)                                                         |
+| Integrate contextual notes, atomic plans and coherent workspace queries | [Operational workspace API](operational-workspace-api.md) |
 
 ## Operate the server
 
@@ -50,7 +54,7 @@ Start with the [project README](../README.md) to understand the purpose, run the
 - [Architecture decisions](adr/): accepted choices and rationale.
 - [Dependencies](dependencies.md): toolchain and libraries.
 - [Licensing](licensing.md): production/application use, platform-resale restrictions, brand rights, earlier grants and distribution notices.
-- [Current interface validation](design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance): source-pinned Outcome Board checks, captures and limitations; [earlier operational Canvas](design/operational-canvas/validation.md) and [editorial baselines](design/editorial/validation.md) remain dated separately.
+- [Current interface validation](ux/operational-workspace/qualification.md): source-bound automated checks, migrations, performance, captures and remaining acceptance; [earlier operational Canvas](design/operational-canvas/validation.md) and [editorial baselines](design/editorial/validation.md) remain dated separately.
 
 Maintained product copy and user guides use English. Original owner-supplied specifications, style packages, authored user content, and historical evidence retain their source language.
 

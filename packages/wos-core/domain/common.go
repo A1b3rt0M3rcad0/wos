@@ -43,12 +43,24 @@ func (o CriterionObligationSnapshot) Validate() error {
 }
 
 type ConclusionObligations struct {
-	RequiredCriteria      []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
-	RequiredObjectiveIDs  []ID                          `json:"required_objective_ids,omitempty"`
-	ResultSummaryRequired bool                          `json:"result_summary_required,omitempty"`
+	AcknowledgedCancelledWork []EntityRef                   `json:"acknowledged_cancelled_work,omitempty"`
+	RequiredCriteria          []CriterionObligationSnapshot `json:"required_criteria,omitempty"`
+	RequiredObjectiveIDs      []ID                          `json:"required_objective_ids,omitempty"`
+	ResultSummaryRequired     bool                          `json:"result_summary_required,omitempty"`
 }
 
 func (o ConclusionObligations) Validate() error {
+	seen := map[EntityRef]bool{}
+	for _, ref := range o.AcknowledgedCancelledWork {
+		if err := ref.Validate(); err != nil {
+			return err
+		}
+		if seen[ref] {
+			return NewError(ErrorCodeInvalidArgument, "duplicate cancelled work acknowledgement")
+		}
+		seen[ref] = true
+	}
+
 	criteria := make(map[ID]struct{}, len(o.RequiredCriteria))
 	for _, criterion := range o.RequiredCriteria {
 		if err := criterion.Validate(); err != nil {
@@ -73,21 +85,28 @@ func (o ConclusionObligations) Validate() error {
 }
 
 type Conclusion struct {
-	SubmissionID     *ID                      `json:"submission_id,omitempty"`
-	SubmissionDigest string                   `json:"submission_digest,omitempty"`
-	ID               ID                       `json:"id,omitempty"`
-	PrincipalID      string                   `json:"principal_id"`
-	Actor            ActorRef                 `json:"actor_ref"`
-	Reason           string                   `json:"reason"`
-	ConcludedAt      time.Time                `json:"concluded_at"`
-	Assessments      []CriterionAssessmentRef `json:"assessments,omitempty"`
-	OwnerRef         *EntityRef               `json:"owner_ref,omitempty"`
-	OwnerVersion     *Version                 `json:"owner_version,omitempty"`
-	LifecycleResult  string                   `json:"lifecycle_result,omitempty"`
-	Obligations      ConclusionObligations    `json:"obligations"`
+	SubmissionID      *ID                            `json:"submission_id,omitempty"`
+	SubmissionDigest  string                         `json:"submission_digest,omitempty"`
+	ID                ID                             `json:"id,omitempty"`
+	PrincipalID       string                         `json:"principal_id"`
+	Actor             ActorRef                       `json:"actor_ref"`
+	Reason            string                         `json:"reason"`
+	ConcludedAt       time.Time                      `json:"concluded_at"`
+	Assessments       []CriterionAssessmentRef       `json:"assessments,omitempty"`
+	OwnerRef          *EntityRef                     `json:"owner_ref,omitempty"`
+	OwnerVersion      *Version                       `json:"owner_version,omitempty"`
+	LifecycleResult   string                         `json:"lifecycle_result,omitempty"`
+	Obligations       ConclusionObligations          `json:"obligations"`
+	DerivedCompletion *ObjectiveCompletionDerivation `json:"derived_completion,omitempty"`
 }
 
 func (c Conclusion) Validate() error {
+	for _, ref := range c.Obligations.AcknowledgedCancelledWork {
+		if c.OwnerRef != nil && (ref.Scope != c.OwnerRef.Scope || (ref.Kind != EntityKindObjective && ref.Kind != EntityKindWorkItem)) {
+			return NewError(ErrorCodeInvalidArgument, "cancelled work must belong to the conclusion scope")
+		}
+	}
+
 	if c.SubmissionID != nil {
 		if err := c.SubmissionID.Validate(); err != nil {
 			return err
@@ -118,6 +137,15 @@ func (c Conclusion) Validate() error {
 	}
 	if err := c.Obligations.Validate(); err != nil {
 		return err
+	}
+	if c.DerivedCompletion != nil {
+		if err := c.DerivedCompletion.Validate(); err != nil {
+			return err
+		}
+		if c.OwnerRef == nil || c.OwnerRef.Kind != EntityKindObjective || c.DerivedCompletion.Scope != c.OwnerRef.Scope ||
+			c.PrincipalID != ObjectiveCompletionAutomationPrincipalID || c.Actor != ObjectiveCompletionAutomationActor() {
+			return NewError(ErrorCodeInvalidArgument, "derived Objective conclusion provenance differs from its owner or automation identity")
+		}
 	}
 	bound := c.OwnerRef != nil || c.OwnerVersion != nil || strings.TrimSpace(c.LifecycleResult) != ""
 	if bound {

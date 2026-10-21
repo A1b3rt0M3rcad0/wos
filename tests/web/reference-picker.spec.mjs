@@ -37,8 +37,11 @@ async function fixture(page, { multiple = false } = {}) {
     });
     document.querySelector("#picker").append(window.picker.node);
   }, { multiple });
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  const instant = new Date("2026-10-19T12:00:00Z");
+  await page.clock.install({ time: instant });
+  // Pause ahead of the installed time so transport/runner scheduling cannot
+  // turn this deterministic debounce fixture into a backwards clock jump.
+  await page.clock.pauseAt(new Date(instant.getTime() + 60_000));
 }
 
 test("choosing a reference cancels a queued debounce and fences older results that still arrive", async ({ page }) => {

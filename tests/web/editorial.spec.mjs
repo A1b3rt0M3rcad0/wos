@@ -2,11 +2,7 @@ import { test, expect, openOutcome, intent, save, chooseArea, openViews, outcome
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { interactionAudit } from "./interaction-audit.mjs";
-import {
-  dimensions,
-  expectProportional,
-  expectOriginalPixels,
-} from "./responsive-audit.mjs";
+import { dimensions, expectStableMetrics } from "./responsive-audit.mjs";
 
 // Documentation captures use an isolated, explicitly illustrative database.
 // Every displayed record is created through the public command API.
@@ -84,6 +80,7 @@ async function seed(wos) {
   });
   const issue = await wos.command("create_issue", {
     scope,
+    objective_id: objective.id,
     title: "The release checklist needs an independent review",
     description:
       "Keep publication on hold until a reviewer confirms the checklist.",
@@ -142,11 +139,11 @@ async function capture(page, name) {
   });
 }
 
-test("large viewports scale the reference composition without rearranging it", async ({
+test("operational density stays bounded across desktop, tablet and phone viewports", async ({
   page,
   wos,
 }) => {
-  test.setTimeout(180000);
+  test.setTimeout(240000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await seed(wos);
   for (const title of [
@@ -160,167 +157,90 @@ test("large viewports scale the reference composition without rearranging it", a
       priority: "normal",
     });
 
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto(wos.url + "/app/");
-  await page.evaluate(() => document.fonts.ready);
-  await expectOriginalPixels(page);
-  const loginTargets = [
-    ".topbar",
-    ".brand-logo",
-    ".login-layout",
-    ".login-story h1",
-    ".login-panel",
-    "#token",
-    "#login button",
+  // Monitor pixels are not CSS viewport pixels. These are actual CSS viewport
+  // sizes; browser/DPR zoom has separate coverage in the Board layout journeys.
+  const viewports = [
+    [320, 740], [390, 844], [768, 1024], [1280, 800], [1440, 1000],
+    [1920, 1080], [2560, 1440], [3840, 2160], [5120, 2880],
   ];
-  await page.setViewportSize({ width: 1440, height: 810 });
-  const loginReference = await dimensions(page, loginTargets);
-  for (const [width, height] of [
-    [1920, 1080],
-    [2560, 1440],
-    [3840, 2160],
-  ]) {
+  await page.goto(wos.url + "/app/");
+  for (const [width, height] of viewports) {
     await page.setViewportSize({ width, height });
-    expectProportional(
-      await dimensions(page, loginTargets),
-      loginReference,
-      width / 1440,
-    );
+    const login = await dimensions(page, ["html", ".topbar", ".brand-logo", "#token", "#login button"]);
+    expect(login.html.fontSize, `root type at ${width}px`).toBeCloseTo(14, 2);
+    expect(login[".topbar"].height, `entry header at ${width}px`).toBeCloseTo(56, 0);
+    expect(login[".brand-logo"].width).toBeLessThanOrEqual(120);
+    for (const selector of ["#token", "#login button"]) {
+      expect(login[selector].height, `${selector} target at ${width}px`).toBeGreaterThanOrEqual(44);
+      expect(login[selector].height, `${selector} bounded height at ${width}px`).toBeLessThanOrEqual(48);
+      expect(login[selector].fontSize, `${selector} bounded type at ${width}px`).toBeLessThanOrEqual(16.1);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `entry reflow at ${width}px`).toBe(true);
   }
 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await wos.login(page);
   await openOutcome(page, "Ship a calmer workspace");
-  await page.evaluate(() => document.fonts.ready);
-  for (const [width, height, font] of [
-    [1440, 1000, ""],
-    [1280, 800, ""],
-    [768, 1024, "28px"],
-    [390, 844, ""],
-    [320, 740, ""],
-  ]) {
-    await page.setViewportSize({ width, height });
-    await page.evaluate((font) => {
-      document.documentElement.style.fontSize = font;
-    }, font);
-    await expectOriginalPixels(page);
-    await intent(page, "New task");
-    await expectOriginalPixels(page);
-    await page.keyboard.press("Escape");
-  }
-
-  await page.setViewportSize({ width: 1440, height: 810 });
-  await page.evaluate(() => scrollTo(0, 0));
-  const targets = [
-    ".topbar",
-    ".brand-logo",
-    ".sidebar",
-    ".workspace-main",
-    "#title",
-    "#outcome-views > summary",
-    ".area-intro",
-    "#area-title",
-    ".area-vignette img",
-    "#metrics",
-    ".metric",
-    ".metric-label",
-    ".summary-grid",
-    ".summary-purpose-card",
-    ".summary-purpose",
-    ".summary-quick button",
-    ".status-chart",
-    ".chart-total",
+  const operationalTargets = [
+    ".topbar", ".brand-logo", ".sidebar", "#title", '#area-tabs [data-area=overview]',
+    "#area-title", ".metric-label", ".summary-purpose", ".summary-quick button",
   ];
-  const reference = await dimensions(page, targets);
+  const desktopReference = await dimensions(page, operationalTargets);
   await intent(page, "New task");
   const formTargets = [
-    "#command-dialog",
-    "#command-dialog .dialog-heading",
-    "#command-dialog .dialog-body",
-    "#command-dialog footer",
-    '#command-dialog input[type="text"]',
-    "#fields select",
-    "#submit-command",
+    "#command-dialog", "#command-dialog .dialog-heading", "#command-dialog .dialog-body",
+    "#command-dialog footer", '#command-dialog input[type="text"]', "#fields select", "#submit-command",
   ];
   const formReference = await dimensions(page, formTargets);
   await page.keyboard.press("Escape");
+  const families = Object.fromEntries(Object.entries(desktopReference).map(([key, value]) => [key, value.fontFamily]));
 
-  for (const [width, height, name] of [
-    [1440, 1000, "27-scale-reference"],
-    [1920, 1080, "28-scale-full-hd"],
-    [2560, 1440, "29-scale-2k"],
-    [3840, 2160, "30-scale-4k"],
-  ]) {
-    const factor = width / 1440;
+  for (const [width, height] of viewports) {
     await page.setViewportSize({ width, height });
     await page.evaluate(() => scrollTo(0, 0));
-    // Sidebar height follows the actual viewport; compare the 16:9 matrix.
-    if (width > 1440)
-      expectProportional(await dimensions(page, targets), reference, factor);
-    await page.evaluate((factor) => scrollTo(0, 173 * factor), factor);
-    await page.emulateMedia({ reducedMotion: "no-preference" });
-    await page.mouse.move(0, 0);
-    await page.evaluate(() => document.activeElement?.blur());
-    await capture(page, name);
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.evaluate(() => scrollTo(0, 0));
+    await chooseArea(page, "overview");
+    const layout = await dimensions(page, operationalTargets);
+    const mobile = width <= 760;
+    expect(layout[".topbar"].height, `workspace header at ${width}px`).toBeCloseTo(56, 0);
+    expect(layout["#title"].fontSize, `Outcome title at ${width}px`).toBeCloseTo(mobile ? 28 : 32, 1);
+    expect(layout["#area-title"].fontSize, `area title at ${width}px`).toBeCloseTo(mobile ? 24 : 28, 1);
+    expect(layout[".summary-purpose"].fontSize, `desired Outcome at ${width}px`).toBeCloseTo(mobile ? 20 : 24, 1);
+    if (!mobile)
+      expect(layout[".sidebar"].width, `sidebar at ${width}px`).toBeCloseTo(width <= 1200 ? 220 : 244, 0);
+    for (const [selector, family] of Object.entries(families))
+      expect(layout[selector].fontFamily, `${selector} identity at ${width}px`).toBe(family);
+    if (width >= 1280)
+      expectStableMetrics(layout, desktopReference, ["fontSize", "paddingTop", "paddingLeft"]);
+    expect(layout[".summary-quick button"].height).toBeGreaterThanOrEqual(44);
+    await capture(page, `density-${width}x${height}-overview`);
+
     await intent(page, "New task");
-    if (width > 1440)
-      expectProportional(
-        await dimensions(page, formTargets),
-        formReference,
-        factor,
-      );
-    await expectWholeControl(page.getByLabel("Initial state", { exact: true }));
+    if (width >= 1440)
+      expectStableMetrics(await dimensions(page, formTargets), formReference, ["fontSize", "paddingTop", "paddingLeft", "width"]);
+    await page.getByText("Details and success conditions", { exact: true }).click();
+    await expectWholeControl(page.locator("#command-dialog").getByLabel("Priority", { exact: true }));
     await expect(page.locator("#submit-command")).toBeInViewport();
-    if (width === 2560) await capture(page, "31-scale-2k-task-form");
+    expect(await page.locator("#submit-command").evaluate((element) => element.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
+    if (width === 2560) await capture(page, "density-2560x1440-task-form");
     await page.keyboard.press("Escape");
-    for (const area of [
-      "overview",
-      "plan",
-      "work",
-      "issues",
-      "evidence",
-      "activity",
-    ]) {
+
+    for (const area of ["overview", "plan", "work", "issues", "evidence", "activity"]) {
       await chooseArea(page, area);
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-        `${area} at ${width}px`,
-      ).toBe(true);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${area} reflow at ${width}px`).toBe(true);
+      expect(await page.locator("#area-title").evaluate((element) => parseFloat(getComputedStyle(element).fontSize)), `${area} heading at ${width}px`).toBeCloseTo(mobile ? 24 : 28, 1);
     }
     await chooseArea(page, "work");
-    await page.locator('[data-view="board"]').click();
-    expect(
-      await page
-        .locator(".board")
-        .evaluate(
-          (element) =>
-            getComputedStyle(element).gridTemplateColumns.split(" ").length,
-        ),
-    ).toBe(5);
+    await page.locator('#view-tabs [data-view="board"]').click();
+    expect(await page.locator(".board").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length), `Task Board columns at ${width}px`).toBe(mobile ? 1 : 5);
+    await expect(page.locator(".board .item")).toHaveCount(5);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Task Board reflow at ${width}px`).toBe(true);
     if (width === 2560) {
       await page.locator(".board").scrollIntoViewIfNeeded();
-      await page.mouse.move(0, 0);
-      await page.evaluate(() => document.activeElement?.blur());
-      await capture(page, "32-scale-2k-work-board");
+      await capture(page, "density-2560x1440-work-board");
     }
+    await page.locator('#view-tabs [data-view="list"]').click();
     await chooseArea(page, "overview");
   }
-  // The upper bound stops component growth even beyond a 4K-wide viewport.
-  await page.setViewportSize({ width: 5120, height: 2880 });
-  expect(
-    await page
-      .locator(".sidebar")
-      .evaluate((element) => element.getBoundingClientRect().width),
-  ).toBeCloseTo((244 * 3840) / 1440, 0);
-  expect(
-    await page
-      .locator("html")
-      .evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
-  ).toBeCloseTo((14 * 3840) / 1440, 1);
 });
 
 test("buttons keep legible padded states across the workspace, dialogs and touch navigation", async ({
@@ -371,7 +291,6 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
       .evaluate((element) => getComputedStyle(element).color),
   );
   await capture(page, "22-area-tab-hover");
-  await page.locator("#outcome-views > summary").click();
   const board = page.locator('#view-tabs button[data-view="board"]');
   await board.hover();
   await capture(page, "23-view-switch-hover");
@@ -389,14 +308,15 @@ test("buttons keep legible padded states across the workspace, dialogs and touch
   await desktop.audit(page.locator("#detail-dialog"));
   await page.keyboard.press("Escape");
   await intent(page, "New task");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   const add = page.getByRole("button", {
     name: "Add instructions item",
     exact: true,
   });
   await add.click();
+  await page.locator("#command-dialog").getByRole("button", { name: "Choose Objective", exact: true }).click();
   const objective = page.getByRole("combobox", {
-    name: "Objective",
+    name: "New placement",
     exact: true,
   });
   await objective.fill("A clear path");
@@ -690,7 +610,7 @@ test("editorial chapters keep all six areas, real records and illustration asset
   await page.keyboard.press("Escape");
   await intent(page, "New task");
   await capture(page, "10-task-form");
-  await page.getByText("Execution instructions", { exact: true }).click();
+  await page.getByText("Details and success conditions", { exact: true }).click();
   await page
     .getByRole("button", { name: "Add instructions item", exact: true })
     .click();
@@ -917,7 +837,7 @@ test("all modal families share matte workspace paper on desktop and mobile", asy
     await page.keyboard.press("Escape");
 
     await intent(page, "New task");
-    await page.getByText("Execution instructions", { exact: true }).click();
+    await page.getByText("Details and success conditions", { exact: true }).click();
     await page
       .getByRole("button", { name: "Add instructions item", exact: true })
       .click();
@@ -1127,27 +1047,27 @@ test("forms preserve whole controls and save actions through nested editors, com
     await page
       .getByLabel("Task title", { exact: true })
       .fill(`Form review ${width}`);
-    await dialog.getByLabel("Priority", { exact: true }).selectOption("high");
-    const lifecycle = page.getByLabel("Initial state", { exact: true });
-    await lifecycle.selectOption("backlog");
+    await dialog.getByText("Details and success conditions", { exact: true }).click();
+    const priority = dialog.getByLabel("Priority", { exact: true });
+    await priority.selectOption("high");
     await page.keyboard.press("Tab");
-    await expectWholeControl(lifecycle);
+    await expectWholeControl(priority);
     await expect(page.locator("#submit-command")).toBeInViewport();
-    await page.getByText("Execution instructions", { exact: true }).click();
     await page
       .getByRole("button", { name: "Add instructions item", exact: true })
       .click();
     const instruction = page.getByLabel("Instructions item", { exact: true });
     await instruction.fill("Keep the selected values and attach scoped proof.");
     await expectWholeControl(instruction);
+    await dialog.getByRole("button", { name: "Choose Objective", exact: true }).click();
     const picker = page.getByRole("combobox", {
-      name: "Objective",
+      name: "New placement",
       exact: true,
     });
     await picker.fill("A clear path");
     await expect(
       dialog
-        .getByRole("listbox", { name: "Objective", exact: true })
+        .getByRole("listbox", { name: "New placement", exact: true })
         .getByRole("option"),
     ).toHaveCount(1);
     await picker.press("ArrowDown");
@@ -1157,8 +1077,12 @@ test("forms preserve whole controls and save actions through nested editors, com
     );
     await expectWholeControl(picker);
     await dialog.getByText("Advanced", { exact: true }).click();
+    const available = page.getByLabel("Create as available", { exact: true });
+    await expect(available).not.toBeChecked();
+    await available.focus();
+    await expect(available).toBeInViewport();
     await expectWholeControl(dialog.locator('input[type="datetime-local"]'));
-    await expect(lifecycle).toHaveValue("backlog");
+    await expect(priority).toHaveValue("high");
     await save(page);
     await expect(page.locator("#notice")).not.toHaveClass(/error/);
     await expect(page.locator("#detail-dialog")).toBeVisible();

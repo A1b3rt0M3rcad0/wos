@@ -26,6 +26,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 	)
 	outcome := createdOutcome.Value.Value
 	outcomeURL := base + "/" + outcome.ID.String()
+	objective := createHTTPTestObjective(t, client, outcomeURL, "wave06-owner-create-0001")
 
 	criterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t, client, http.MethodPost, outcomeURL+"/criteria",
@@ -52,7 +53,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 	createWork := func(title, key string) decodedResponse[application.MutationResult[domain.WorkItem]] {
 		return doJSON[application.MutationResult[domain.WorkItem]](
 			t, client, http.MethodPost, outcomeURL+"/work-items",
-			[]byte(`{"title":"`+title+`","priority":"normal","lifecycle":"todo"}`),
+			testWorkItemBody(objective.ID, title, "backlog"),
 			map[string]string{"Idempotency-Key": key},
 			http.StatusCreated,
 		)
@@ -97,6 +98,11 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 		t.Fatalf("read relation id = %s, want %s", readRelation.Value.Value.ID, relation.ID)
 	}
 
+	activateWork := func(work domain.WorkItem, etag, key string) decodedResponse[application.MutationResult[domain.WorkItem]] {
+		return doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, outcomeURL+"/work-items/"+work.ID.String()+"/actions/activate", []byte(`{}`), map[string]string{"Idempotency-Key": key, "If-Match": etag}, http.StatusOK)
+	}
+	activateWork(target, targetResponse.Header.Get("ETag"), "wave06-target-activate")
+	sourceActivated := activateWork(source, sourceResponse.Header.Get("ETag"), "wave06-source-activate")
 	ready := doJSON[application.ReadyWork](
 		t, client, http.MethodGet, outcomeURL+"/ready-work", nil, nil, http.StatusOK,
 	)
@@ -110,6 +116,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 		t.Fatalf("ready-work Cache-Control = %q, want no-store", ready.Header.Get("Cache-Control"))
 	}
 
+	sourceDeferred := doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, outcomeURL+"/work-items/"+source.ID.String()+"/actions/defer", []byte(`{}`), map[string]string{"Idempotency-Key": "wave06-source-defer", "If-Match": sourceActivated.Header.Get("ETag")}, http.StatusOK)
 	removed := doJSON[application.MutationResult[domain.Relation]](
 		t, client, http.MethodPost, outcomeURL+"/relations/"+relation.ID.String()+"/actions/remove",
 		[]byte(`{"reason":"dependency removed"}`),
@@ -123,6 +130,7 @@ func TestWave06DependencyAndReadyWorkHTTPContract(t *testing.T) {
 		t.Fatalf("removed relation lifecycle = %q", removed.Value.Value.Lifecycle)
 	}
 
+	activateWork(source, sourceDeferred.Header.Get("ETag"), "wave06-source-reactivate")
 	readyAfterRemoval := doJSON[application.ReadyWork](
 		t, client, http.MethodGet, outcomeURL+"/ready-work", nil, nil, http.StatusOK,
 	)

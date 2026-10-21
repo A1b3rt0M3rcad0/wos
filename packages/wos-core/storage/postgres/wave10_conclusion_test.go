@@ -11,11 +11,11 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
 
-func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
+func TestPostgresWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,11 +124,11 @@ func TestSQLiteWave10ConclusionObligationsSurviveRestart(t *testing.T) {
 	}
 }
 
-func TestSQLiteWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
+func TestPostgresWave10ImmutableValidationHistorySurvivesRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

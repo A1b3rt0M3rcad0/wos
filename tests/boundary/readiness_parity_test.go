@@ -129,13 +129,17 @@ func runReadinessScenario(t *testing.T, tx ports.TransactionManager, clock *read
 		t.Fatal(err)
 	}
 	outcome = activated.Value
+	objective, err := service.CreateObjective(ctx, commands.Context(), application.CreateObjectiveCommand{Scope: outcome.Scope(), Title: "Readiness work owner", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	createWork := func(title string, notBefore *time.Time) domain.WorkItem {
 		result, err := service.CreateWorkItem(ctx, commands.Context(), application.CreateWorkItemCommand{
-			Scope:     outcome.Scope(),
+			Scope: outcome.Scope(), ObjectiveID: &objective.Value.ID,
 			Title:     title,
 			Priority:  domain.PriorityNormal,
-			Lifecycle: domain.WorkItemLifecycleTodo,
+			Lifecycle: domain.WorkItemLifecycleBacklog,
 			NotBefore: notBefore,
 		})
 		if err != nil {
@@ -163,6 +167,14 @@ func runReadinessScenario(t *testing.T, tx ports.TransactionManager, clock *read
 		Strength: domain.DependencyStrengthAdvisory,
 	}); err != nil {
 		t.Fatal(err)
+	}
+
+	for _, work := range []*domain.WorkItem{&target, &hardSource, &advisorySource, &future, &atBoundary} {
+		activated, err := service.ActivateWorkItem(ctx, commands.Context(), application.ActivateWorkItemCommand{Scope: work.Scope, WorkItemID: work.ID, ExpectedVersion: work.Version})
+		if err != nil {
+			t.Fatal(err)
+		}
+		*work = activated.Value
 	}
 
 	before, err := service.ListReadyWork(ctx, outcome.Scope())

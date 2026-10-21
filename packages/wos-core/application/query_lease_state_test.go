@@ -52,7 +52,7 @@ func TestOutcomeStateProjectsExpiredLeaseWithoutMutatingWorkItem(t *testing.T) {
 	outcome = activated.Value
 
 	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()),
 		Title:     "expiring work",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,

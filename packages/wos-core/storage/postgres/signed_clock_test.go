@@ -35,7 +35,7 @@ func TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T
 	admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 	must(err)
 	adminCtx := a.WithIdentity(ctx, admin)
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+	must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionTaskRenew, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 	credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 	must(err)
 	identity, err := sec.Authenticate(ctx, token)
@@ -58,8 +58,8 @@ func TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T
 	must(err)
 	registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 	must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-	must(registry.SaveCredentialPolicy(ctx, policy, 0))
+	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionTaskRenew), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(registry.SaveCredentialPolicy(ctx, policy, 1))
 	outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 	must(err)
 	outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -69,7 +69,7 @@ func TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew(t *testing.T
 		w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 		must(e)
 		w.ContractsEnabled = true
-		must(uow.WorkItems().Insert(ctx, w))
+		must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 		works = append(works, w)
 	}
 	protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()

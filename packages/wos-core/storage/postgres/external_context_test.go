@@ -81,7 +81,7 @@ func TestBrowserSessionRevokedWithParentCredential(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = security.RevokeCredential(application.WithIdentity(ctx, original), ns, credential.ID); err != nil {
+	if err = security.Store.RevokeCredential(application.WithIdentity(ctx, original), credential.ID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = security.Authenticate(ctx, sessionToken); err == nil {

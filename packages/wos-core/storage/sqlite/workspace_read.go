@@ -1,0 +1,825 @@
+package sqlite
+
+import (
+	"context"
+	"database/sql"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strconv"
+	"strings"
+)
+
+func (r continuityReadRepository) WorkspaceOutcome(ctx context.Context, scope d.Scope) (d.Outcome, error) {
+	v, e := r.FocalOutcome(ctx, scope)
+	if e != nil {
+		return v, e
+	}
+	var created, updated int64
+	e = r.row(ctx, `SELECT description,desired_state,created_at,updated_at,completion_policy,operational_profile FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&v.Description, &v.DesiredState, &created, &updated, &v.CompletionPolicy, &v.OperationalProfile)
+	if e != nil {
+		return v, e
+	}
+	v.CreatedAt = decodeTime(created)
+	v.UpdatedAt = decodeTime(updated)
+	v.Criteria, v.CurrentConclusion, _, e = r.currentOwnerProof(ctx, v.Ref())
+	if e != nil {
+		return v, e
+	}
+	v.OwnerRefs, e = loadActorLinks(ctx, r.u.tx, v.Ref(), "owner")
+	return v, e
+}
+
+// WorkspaceRevision reads the counter in the caller's serializable snapshot.
+// It does not create coordination state or acquire the command's write guard.
+func (r continuityReadRepository) WorkspaceRevision(ctx context.Context, scope d.Scope) (d.OutcomeRevision, error) {
+	if e := scope.Validate(); e != nil {
+		return 0, e
+	}
+	var revision d.OutcomeRevision
+	e := r.row(ctx, `SELECT state_revision FROM outcome_coordination WHERE namespace_id=? AND outcome_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&revision)
+	return revision, mapSQLError("read workspace revision", e)
+}
+
+func (r continuityReadRepository) WorkspaceObjectiveHeader(ctx context.Context, scope d.Scope, id d.ID) (d.Objective, error) {
+	if e := validateGraphRefs(scope, []d.EntityRef{{Scope: scope, Kind: d.EntityKindObjective, ID: id}}, 1); e != nil {
+		return d.Objective{}, e
+	}
+	value, e := scanObjective(r.row(ctx, `SELECT id,version,title,substr(description,1,1024),parent_objective_id,lifecycle,priority,required_for_outcome,created_at,updated_at,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()), scope)
+	if e != nil {
+		return d.Objective{}, e
+	}
+	owner, e := r.u.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if e != nil {
+		return d.Objective{}, e
+	}
+	if e = value.ValidateCompletionConfiguration(owner); e != nil {
+		return d.Objective{}, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", e)
+	}
+	return value, nil
+}
+
+// These exact expressions match migration0032. Strip the fractional component
+// before converting seconds: SQLite otherwise rounds .999999999 into the next
+// second. Store nanoseconds separately to preserve the full RFC3339Nano order.
+const workspaceExecutionSeconds = `CAST(strftime('%s',substr(json_extract(state_json,'$.acquired_at'),1,19)||(CASE WHEN substr(json_extract(state_json,'$.acquired_at'),-1)='Z' THEN 'Z' ELSE substr(json_extract(state_json,'$.acquired_at'),-6) END)) AS INTEGER)`
+const workspaceExecutionNanos = `CASE WHEN substr(json_extract(state_json,'$.acquired_at'),20,1)='.' THEN CAST(substr(substr(json_extract(state_json,'$.acquired_at'),21,length(json_extract(state_json,'$.acquired_at'))-20-(CASE WHEN substr(json_extract(state_json,'$.acquired_at'),-1)='Z' THEN 1 ELSE 6 END))||'000000000',1,9) AS INTEGER) ELSE 0 END`
+
+func (r continuityReadRepository) WorkspaceLastExecution(ctx context.Context, scope d.Scope, id d.ID) (*d.WorkContract, error) {
+	if e := validateGraphRefs(scope, []d.EntityRef{{Scope: scope, Kind: d.EntityKindWorkItem, ID: id}}, 1); e != nil {
+		return nil, e
+	}
+	var latest *d.WorkContract
+	// Each branch is an indexed TOP1; neither contract specs nor history are hydrated.
+	for _, table := range []string{"work_contracts", "signed_work_contracts"} {
+		query := `SELECT state_json FROM ` + table + ` WHERE namespace_id=? AND outcome_id=? AND work_item_id=? ORDER BY (` + workspaceExecutionSeconds + `) DESC,(` + workspaceExecutionNanos + `) DESC,id DESC LIMIT 1`
+		var raw string
+		e := r.row(ctx, query, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&raw)
+		if e == sql.ErrNoRows {
+			continue
+		}
+		if e != nil {
+			return nil, e
+		}
+		var header d.WorkContract
+		if e = unmarshalJSON(raw, &header); e != nil {
+			return nil, e
+		}
+		if latest == nil || header.AcquiredAt.After(latest.AcquiredAt) || header.AcquiredAt.Equal(latest.AcquiredAt) && header.ID > latest.ID {
+			latest = &header
+		}
+	}
+	return latest, nil
+}
+
+func (r continuityReadRepository) WorkspaceGuardWork(ctx context.Context, scope d.Scope, objective *d.ID) ([]d.WorkItem, error) {
+	if e := scope.Validate(); e != nil {
+		return nil, e
+	}
+	query := `SELECT w.id,w.current_contract_id,w.pending_review_case_id FROM work_items w WHERE w.namespace_id=? AND w.outcome_id=? AND (w.current_contract_id IS NOT NULL OR w.pending_review_case_id IS NOT NULL OR EXISTS(SELECT 1 FROM work_review_cases c WHERE c.namespace_id=w.namespace_id AND c.outcome_id=w.outcome_id AND c.work_item_id=w.id AND c.status IN ('pending','in_review')))`
+	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+	if objective != nil {
+		query += " AND w.objective_id=?"
+		args = append(args, objective.String())
+	}
+	query += " ORDER BY w.id"
+	rows, e := r.rows(ctx, query, args...)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	result := []d.WorkItem{}
+	for rows.Next() {
+		var id string
+		var contract, review sql.NullString
+		if e = rows.Scan(&id, &contract, &review); e != nil {
+			return nil, e
+		}
+		wid, e := d.ParseID(id)
+		if e != nil {
+			return nil, e
+		}
+		w := d.WorkItem{ID: wid, Scope: scope}
+		if contract.Valid {
+			cid, e := d.ParseID(contract.String)
+			if e != nil {
+				return nil, e
+			}
+			w.CurrentContractID = &cid
+		}
+		if review.Valid {
+			rid, e := d.ParseID(review.String)
+			if e != nil {
+				return nil, e
+			}
+			w.PendingReviewCaseID = &rid
+		}
+		if objective != nil {
+			oid := *objective
+			w.ObjectiveID = &oid
+		}
+		result = append(result, w)
+	}
+	return result, rows.Err()
+}
+func (r continuityReadRepository) WorkspaceRequiredObjectives(ctx context.Context, scope d.Scope) ([]d.Objective, error) {
+	if e := scope.Validate(); e != nil {
+		return nil, e
+	}
+	rows, e := r.rows(ctx, `SELECT id,lifecycle,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	result := []d.Objective{}
+	for rows.Next() {
+		var id, life, mode, cycle string
+		if e = rows.Scan(&id, &life, &mode, &cycle); e != nil {
+			return nil, e
+		}
+		oid, e := d.ParseID(id)
+		if e != nil {
+			return nil, e
+		}
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, e
+		}
+		result = append(result, d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life), RequiredForOutcome: true, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle})
+	}
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, e
+	}
+	return r.validateObjectiveCompletionList(ctx, result)
+}
+
+func (r continuityReadRepository) WorkspaceRequiredObjectivePage(ctx context.Context, scope d.Scope, after string, limit int) ([]d.Objective, int, error) {
+	if e := scope.Validate(); e != nil {
+		return nil, 0, e
+	}
+	if limit < 1 || limit > 101 {
+		return nil, 0, d.NewError(d.ErrorCodeInvalidArgument, "invalid required Objective page limit")
+	}
+	var total int
+	if e := r.row(ctx, `SELECT count(*) FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&total); e != nil {
+		return nil, 0, e
+	}
+	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND required_for_outcome=1 AND id>? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), after, limit)
+	if e != nil {
+		return nil, 0, e
+	}
+	defer rows.Close()
+	result := []d.Objective{}
+	for rows.Next() {
+		var v d.Objective
+		var id, life, priority, mode, cycle string
+		if e = rows.Scan(&id, &v.Version, &v.Title, &life, &priority, &mode, &cycle); e != nil {
+			return nil, 0, e
+		}
+		v.ID, e = d.ParseID(id)
+		if e != nil {
+			return nil, 0, e
+		}
+		v.Scope = scope
+		v.Lifecycle = d.ObjectiveLifecycle(life)
+		v.Priority = d.Priority(priority)
+		v.RequiredForOutcome = true
+		v.CompletionMode = d.ObjectiveCompletionMode(mode)
+		v.CompletionCycle, e = parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, 0, e
+		}
+		result = append(result, v)
+	}
+	if e = rows.Err(); e != nil {
+		return nil, 0, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, 0, e
+	}
+	result, e = r.validateObjectiveCompletionList(ctx, result)
+	return result, total, e
+}
+
+func (r continuityReadRepository) WorkspaceStructure(ctx context.Context, scope d.Scope, limit int) ([]d.Objective, []d.WorkItem, error) {
+	if e := scope.Validate(); e != nil {
+		return nil, nil, e
+	}
+	if limit < 1 || limit > d.DefaultDependencyGraphLimit+1 {
+		return nil, nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid structural validation limit")
+	}
+	objectives := []d.Objective{}
+	rows, e := r.rows(ctx, `SELECT id,parent_objective_id,lifecycle,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), limit)
+	if e != nil {
+		return nil, nil, e
+	}
+	for rows.Next() {
+		var id, life, mode, cycle string
+		var parent sql.NullString
+		if e = rows.Scan(&id, &parent, &life, &mode, &cycle); e != nil {
+			rows.Close()
+			return nil, nil, e
+		}
+		oid, e := d.ParseID(id)
+		if e != nil {
+			rows.Close()
+			return nil, nil, e
+		}
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			rows.Close()
+			return nil, nil, e
+		}
+		o := d.Objective{ID: oid, Scope: scope, Lifecycle: d.ObjectiveLifecycle(life), CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle}
+		if parent.Valid {
+			pid, e := d.ParseID(parent.String)
+			if e != nil {
+				rows.Close()
+				return nil, nil, e
+			}
+			o.ParentObjectiveID = &pid
+		}
+		objectives = append(objectives, o)
+	}
+	if e = rows.Err(); e != nil {
+		rows.Close()
+		return nil, nil, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, nil, e
+	}
+	objectives, e = r.validateObjectiveCompletionList(ctx, objectives)
+	if e != nil {
+		return nil, nil, e
+	}
+	e = rows.Err()
+	rows.Close()
+	if e != nil {
+		return nil, nil, e
+	}
+	items := []d.WorkItem{}
+	rows, e = r.rows(ctx, `SELECT w.id,w.objective_id,w.lifecycle,w.current_contract_id,COALESCE(w.pending_review_case_id,c.id),w.lease_acquired_at,w.lease_expires_at FROM work_items w LEFT JOIN work_review_cases c ON c.namespace_id=w.namespace_id AND c.outcome_id=w.outcome_id AND c.work_item_id=w.id AND c.status IN ('pending','in_review') WHERE w.namespace_id=? AND w.outcome_id=? ORDER BY w.id LIMIT ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), limit)
+	if e != nil {
+		return nil, nil, e
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, life string
+		var parent, contract, review sql.NullString
+		var acquired, expires sql.NullInt64
+		if e = rows.Scan(&id, &parent, &life, &contract, &review, &acquired, &expires); e != nil {
+			return nil, nil, e
+		}
+		wid, e := d.ParseID(id)
+		if e != nil {
+			return nil, nil, e
+		}
+		w := d.WorkItem{ID: wid, Scope: scope, Lifecycle: d.WorkItemLifecycle(life)}
+		for text, target := range map[*sql.NullString]**d.ID{&parent: &w.ObjectiveID, &contract: &w.CurrentContractID, &review: &w.PendingReviewCaseID} {
+			if text.Valid {
+				parsed, e := d.ParseID(text.String)
+				if e != nil {
+					return nil, nil, e
+				}
+				*target = &parsed
+			}
+		}
+		if acquired.Valid && expires.Valid {
+			w.CurrentLease = &d.WorkLease{AcquiredAt: decodeTime(acquired.Int64), ExpiresAt: decodeTime(expires.Int64)}
+		}
+		items = append(items, w)
+	}
+	return objectives, items, rows.Err()
+}
+
+func (r continuityReadRepository) validateObjectiveCompletionList(ctx context.Context, objectives []d.Objective) ([]d.Objective, error) {
+	if len(objectives) == 0 {
+		return objectives, nil
+	}
+	owner, err := r.u.outcomes.Get(ctx, objectives[0].Scope.NamespaceID, objectives[0].Scope.OutcomeID)
+	if err != nil {
+		return nil, err
+	}
+	for _, objective := range objectives {
+		if err := objective.ValidateCompletionConfiguration(owner); err != nil {
+			return nil, d.WrapError(d.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", err)
+		}
+	}
+	return objectives, nil
+}
+
+func (r continuityReadRepository) WorkspaceRoadmap(ctx context.Context, scope d.Scope, id d.ID, revision uint64) (d.Roadmap, error) {
+	v := d.Roadmap{ID: id, Scope: scope}
+	if e := validateGraphRefs(scope, []d.EntityRef{{Scope: scope, Kind: d.EntityKindRoadmap, ID: id}}, 1); e != nil {
+		return v, e
+	}
+	var kind, scopeID string
+	var created, updated int64
+	var archived sql.NullInt64
+	e := r.row(ctx, `SELECT version,plan_scope_kind,plan_scope_id,title,lifecycle,created_at,updated_at,archived_at FROM roadmaps WHERE namespace_id=? AND outcome_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&v.Version, &kind, &scopeID, &v.Title, &v.Lifecycle, &created, &updated, &archived)
+	if e != nil {
+		return v, mapSQLError("workspace Roadmap metadata", e)
+	}
+	pid, e := d.ParseID(scopeID)
+	if e != nil {
+		return v, e
+	}
+	v.PlanScope = d.RoadmapPlanScope{Kind: d.RoadmapScopeKind(kind), ID: pid}
+	v.CreatedAt = decodeTime(created)
+	v.UpdatedAt = decodeTime(updated)
+	if archived.Valid {
+		at := decodeTime(archived.Int64)
+		v.ArchivedAt = &at
+	}
+	var draft d.RoadmapDraft
+	var draftBase sql.NullInt64
+	var draftCreated, draftUpdated int64
+	e = r.row(ctx, `SELECT draft_version,base_revision_number,lifecycle,reason,created_at,updated_at FROM roadmap_drafts WHERE namespace_id=? AND outcome_id=? AND roadmap_id=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String()).Scan(&draft.DraftVersion, &draftBase, &draft.Lifecycle, &draft.Reason, &draftCreated, &draftUpdated)
+	if e != nil && e != sql.ErrNoRows {
+		return v, e
+	}
+	if e == nil {
+		draft.CreatedAt = decodeTime(draftCreated)
+		draft.UpdatedAt = decodeTime(draftUpdated)
+		if draftBase.Valid {
+			base := uint64(draftBase.Int64)
+			draft.BaseRevisionNumber = &base
+		}
+		v.Draft = &draft
+	}
+	if revision > 0 {
+		header := d.RoadmapRevision{RevisionNumber: revision}
+		var actor string
+		var published int64
+		e = r.row(ctx, `SELECT content_hash,published_by_json,published_at FROM roadmap_revisions WHERE namespace_id=? AND outcome_id=? AND roadmap_id=? AND revision_number=?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(), revision).Scan(&header.ContentHash, &actor, &published)
+		if e != nil {
+			return v, mapSQLError("workspace Roadmap revision metadata", e)
+		}
+		if e = unmarshalJSON(actor, &header.PublishedBy); e != nil {
+			return v, e
+		}
+		header.PublishedAt = decodeTime(published)
+		v.Revisions = []d.RoadmapRevision{header}
+	} else {
+		rows, e := r.rows(ctx, `SELECT revision_number,content_hash,published_by_json,published_at FROM roadmap_revisions WHERE namespace_id=? AND outcome_id=? AND roadmap_id=? ORDER BY revision_number DESC LIMIT 21`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+		if e != nil {
+			return v, e
+		}
+		defer rows.Close()
+		v.Revisions = []d.RoadmapRevision{}
+		for rows.Next() {
+			var header d.RoadmapRevision
+			var actor string
+			var published int64
+			if e = rows.Scan(&header.RevisionNumber, &header.ContentHash, &actor, &published); e != nil {
+				return v, e
+			}
+			if e = unmarshalJSON(actor, &header.PublishedBy); e != nil {
+				return v, e
+			}
+			header.PublishedAt = decodeTime(published)
+			v.Revisions = append(v.Revisions, header)
+		}
+		if e = rows.Err(); e != nil {
+			return v, e
+		}
+	}
+	return v, nil
+}
+func (r continuityReadRepository) WorkspaceChildren(ctx context.Context, scope d.Scope, parent d.EntityRef, after string, limit int) ([]d.EntityRef, error) {
+	if e := validateGraphRefs(scope, []d.EntityRef{parent}, 1); e != nil {
+		return nil, e
+	}
+	if (parent.Kind != d.EntityKindOutcome && parent.Kind != d.EntityKindObjective) || limit < 1 || limit > 101 {
+		return nil, d.NewError(d.ErrorCodeInvalidArgument, "invalid structural page")
+	}
+	conditionO, conditionW := "parent_objective_id=?", "objective_id=?"
+	if parent.Kind == d.EntityKindOutcome {
+		conditionO = "parent_objective_id IS NULL"
+		conditionW = "objective_id IS NULL"
+	}
+	args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+	if parent.Kind == d.EntityKindObjective {
+		args = append(args, parent.ID.String())
+	}
+	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
+	if parent.Kind == d.EntityKindObjective {
+		args = append(args, parent.ID.String())
+	}
+	args = append(args, after, limit)
+	q := "SELECT kind,id FROM (SELECT 'objective' AS kind,id,'objective:'||id AS page_key FROM objectives WHERE namespace_id=? AND outcome_id=? AND " + conditionO + " UNION ALL SELECT 'work_item' AS kind,id,'work_item:'||id AS page_key FROM work_items WHERE namespace_id=? AND outcome_id=? AND " + conditionW + ") direct_children WHERE page_key>? ORDER BY page_key LIMIT ?"
+	rows, e := r.rows(ctx, q, args...)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	result := []d.EntityRef{}
+	for rows.Next() {
+		var kind, id string
+		if e = rows.Scan(&kind, &id); e != nil {
+			return nil, e
+		}
+		parsed, e := d.ParseID(id)
+		if e != nil {
+			return nil, e
+		}
+		result = append(result, d.EntityRef{Scope: scope, Kind: d.EntityKind(kind), ID: parsed})
+	}
+	return result, rows.Err()
+}
+
+func (r continuityReadRepository) WorkspaceCards(ctx context.Context, scope d.Scope, refs []d.EntityRef) ([]ports.WorkspaceCardFacts, error) {
+	if e := validateGraphRefs(scope, refs, 100); e != nil {
+		return nil, e
+	}
+	result := make([]ports.WorkspaceCardFacts, len(refs))
+	byID := map[d.ID]int{}
+	ids := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+	marks := make([]string, len(refs))
+	for i, ref := range refs {
+		result[i] = ports.WorkspaceCardFacts{Ref: ref, Actors: []d.ActorRef{}, Criteria: []ports.WorkspaceCriterionFact{}}
+		byID[ref.ID] = i
+		marks[i] = "?"
+		ids = append(ids, ref.ID.String())
+	}
+	in := "(" + strings.Join(marks, ",") + ")"
+	// Two indexed structural queries, regardless of the number of cards. The
+	// parent and short description are presentation context, never authority.
+	for _, kind := range []d.EntityKind{d.EntityKindObjective, d.EntityKindWorkItem} {
+		table, parent, extra := "objectives", "parent_objective_id", "required_for_outcome,0,0"
+		if kind == d.EntityKindWorkItem {
+			table = "work_items"
+			parent = "objective_id"
+			extra = "0,CASE WHEN pending_review_case_id IS NULL THEN 0 ELSE 1 END,CASE WHEN correction_review_case_id IS NULL THEN 0 ELSE 1 END"
+		}
+		rows, e := r.rows(ctx, "SELECT id,"+parent+",substr(description,1,240),"+extra+" FROM "+table+" WHERE namespace_id=? AND outcome_id=? AND id IN "+in, ids...)
+		if e != nil {
+			return nil, e
+		}
+		for rows.Next() {
+			var id, description string
+			var parentID sql.NullString
+			var required, review, correction int
+			if e = rows.Scan(&id, &parentID, &description, &required, &review, &correction); e != nil {
+				rows.Close()
+				return nil, e
+			}
+			parsed, e := d.ParseID(id)
+			if e != nil {
+				rows.Close()
+				return nil, e
+			}
+			i, ok := byID[parsed]
+			if !ok || result[i].Ref.Kind != kind {
+				continue
+			}
+			f := &result[i]
+			f.Description = description
+			f.RequiredForOutcome = required == 1
+			f.PendingReview = review == 1
+			f.CorrectionRequired = correction == 1
+			p := d.EntityRef{Scope: scope, Kind: d.EntityKindOutcome, ID: scope.OutcomeID}
+			if parentID.Valid {
+				p.Kind = d.EntityKindObjective
+				p.ID, e = d.ParseID(parentID.String)
+				if e != nil {
+					rows.Close()
+					return nil, e
+				}
+			}
+			f.ParentRef = &p
+		}
+		e = rows.Err()
+		rows.Close()
+		if e != nil {
+			return nil, e
+		}
+	}
+	rows, e := r.rows(ctx, "SELECT entity_id,actor_json FROM entity_actor_links WHERE namespace_id=? AND outcome_id=? AND entity_id IN "+in+" ORDER BY entity_id,role,actor_kind,actor_provider,actor_id", ids...)
+	if e != nil {
+		return nil, e
+	}
+	for rows.Next() {
+		var id, actor string
+		if e = rows.Scan(&id, &actor); e != nil {
+			rows.Close()
+			return nil, e
+		}
+		parsed, e := d.ParseID(id)
+		if e != nil {
+			rows.Close()
+			return nil, e
+		}
+		i, ok := byID[parsed]
+		if !ok {
+			continue
+		}
+		var a d.ActorRef
+		if e = unmarshalJSON(actor, &a); e != nil {
+			rows.Close()
+			return nil, e
+		}
+		result[i].Actors = append(result[i].Actors, a)
+	}
+	e = rows.Err()
+	rows.Close()
+	if e != nil {
+		return nil, e
+	}
+	// Read only the current contract header (Spec is stored separately), then
+	// resolve exact current submission IDs in one batch. No signed bytes escape.
+	type binding struct {
+		contracted   bool
+		submission   *d.ID
+		digest       string
+		nativeID     string
+		nativeDigest string
+		nativeRound  string
+	}
+	bindings := map[d.ID]binding{}
+	latest := map[d.ID]d.ID{}
+	rows, e = r.rows(ctx, "SELECT w.id,w.contracts_enabled,COALESCE(sc.state_json,lc.state_json,''),COALESCE(c.submission_id,''),COALESCE(c.submission_digest,''),COALESCE(td.id,''),COALESCE(td.delivery_digest,''),COALESCE(td.delivery_round,'0') FROM work_items w LEFT JOIN signed_work_contracts sc ON sc.namespace_id=w.namespace_id AND sc.outcome_id=w.outcome_id AND sc.id=w.current_contract_id LEFT JOIN work_contracts lc ON lc.namespace_id=w.namespace_id AND lc.outcome_id=w.outcome_id AND lc.id=w.current_contract_id LEFT JOIN aggregate_current_conclusions p ON p.namespace_id=w.namespace_id AND p.outcome_id=w.outcome_id AND p.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id LEFT JOIN task_delivery_work_state ds ON ds.namespace_id=w.namespace_id AND ds.outcome_id=w.outcome_id AND ds.work_item_id=w.id LEFT JOIN task_deliveries td ON td.namespace_id=ds.namespace_id AND td.outcome_id=ds.outcome_id AND td.work_item_id=ds.work_item_id AND td.id=ds.latest_delivery_id WHERE w.namespace_id=? AND w.outcome_id=? AND w.id IN "+in, ids...)
+	if e != nil {
+		return nil, e
+	}
+	for rows.Next() {
+		var id, state, submission, digest, nativeID, nativeDigest, nativeRound string
+		var enabled int
+		if e = rows.Scan(&id, &enabled, &state, &submission, &digest, &nativeID, &nativeDigest, &nativeRound); e != nil {
+			rows.Close()
+			return nil, e
+		}
+		wid, e := d.ParseID(id)
+		if e != nil {
+			rows.Close()
+			return nil, e
+		}
+		b := binding{contracted: enabled == 1, nativeID: nativeID, nativeDigest: nativeDigest, nativeRound: nativeRound}
+		if state != "" {
+			var c d.WorkContract
+			if e = unmarshalJSON(state, &c); e != nil {
+				rows.Close()
+				return nil, e
+			}
+			if c.LatestSubmissionID != nil {
+				latest[*c.LatestSubmissionID] = wid
+				b.submission = c.LatestSubmissionID
+			}
+		} else if submission != "" {
+			sid, e := d.ParseID(submission)
+			if e != nil {
+				rows.Close()
+				return nil, e
+			}
+			b.submission = &sid
+			b.digest = digest
+		}
+		bindings[wid] = b
+	}
+	e = rows.Err()
+	rows.Close()
+	if e != nil {
+		return nil, e
+	}
+	if len(latest) > 0 {
+		args := []any{scope.NamespaceID.String(), scope.OutcomeID.String()}
+		m := []string{}
+		for id := range latest {
+			m = append(m, "?")
+			args = append(args, id.String())
+		}
+		for _, table := range []string{"signed_work_contract_submissions", "work_contract_submissions"} {
+			rows, e = r.rows(ctx, "SELECT id,submission_digest FROM "+table+" WHERE namespace_id=? AND outcome_id=? AND id IN ("+strings.Join(m, ",")+")", args...)
+			if e != nil {
+				return nil, e
+			}
+			for rows.Next() {
+				var id, digest string
+				if e = rows.Scan(&id, &digest); e != nil {
+					rows.Close()
+					return nil, e
+				}
+				sid, e := d.ParseID(id)
+				if e != nil {
+					rows.Close()
+					return nil, e
+				}
+				wid := latest[sid]
+				b := bindings[wid]
+				b.digest = digest
+				bindings[wid] = b
+			}
+			e = rows.Err()
+			rows.Close()
+			if e != nil {
+				return nil, e
+			}
+		}
+	}
+	query := `SELECT c.owner_id,c.owner_kind,c.id,c.criterion_revision,c.status,r.required,COALESCE(a.result,''),COALESCE(a.criterion_revision,0),COALESCE(a.submission_id,''),COALESCE(a.submission_digest,''),COALESCE(a.task_delivery_id,''),COALESCE(a.task_delivery_digest,''),COALESCE(a.task_delivery_round,'0'),CASE WHEN a.id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM criterion_assessment_evidence x LEFT JOIN evidence e ON e.namespace_id=x.namespace_id AND e.outcome_id=x.outcome_id AND e.id=x.evidence_id WHERE x.namespace_id=a.namespace_id AND x.outcome_id=a.outcome_id AND x.assessment_id=a.id AND (e.id IS NULL OR e.lifecycle!='registered')) THEN 1 ELSE 0 END,CASE WHEN EXISTS(SELECT 1 FROM evidence_links el WHERE el.namespace_id=c.namespace_id AND el.outcome_id=c.outcome_id AND el.target_kind=c.owner_kind AND el.target_id=c.owner_id AND el.criterion_id=c.id AND el.lifecycle='active') THEN 1 ELSE 0 END
+FROM success_criteria c JOIN criterion_revisions r ON r.namespace_id=c.namespace_id AND r.outcome_id=c.outcome_id AND r.criterion_id=c.id AND r.criterion_revision=c.criterion_revision
+LEFT JOIN criterion_current_assessments p ON p.namespace_id=c.namespace_id AND p.outcome_id=c.outcome_id AND p.criterion_id=c.id LEFT JOIN criterion_assessments a ON a.namespace_id=p.namespace_id AND a.outcome_id=p.outcome_id AND a.id=p.assessment_id
+WHERE c.namespace_id=? AND c.outcome_id=? AND c.owner_id IN ` + in + ` ORDER BY c.owner_id,c.id`
+	rows, e = r.rows(ctx, query, ids...)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var owner, kind, id, status, assessmentResult, submission, digest, taskDeliveryID, taskDeliveryDigest, taskDeliveryRound string
+		var revision, assessmentRevision d.CriterionRevision
+		var required, valid, linked int
+		if e = rows.Scan(&owner, &kind, &id, &revision, &status, &required, &assessmentResult, &assessmentRevision, &submission, &digest, &taskDeliveryID, &taskDeliveryDigest, &taskDeliveryRound, &valid, &linked); e != nil {
+			return nil, e
+		}
+		oid, e := d.ParseID(owner)
+		if e != nil {
+			return nil, e
+		}
+		i, ok := byID[oid]
+		if !ok || resultKind(result[i].Ref.Kind) != kind {
+			continue
+		}
+		cid, e := d.ParseID(id)
+		if e != nil {
+			return nil, e
+		}
+		applies := valid == 1 && assessmentRevision == revision
+		if result[i].Ref.Kind == d.EntityKindWorkItem {
+			if taskDeliveryID != "" {
+				round, parseErr := strconv.ParseUint(taskDeliveryRound, 10, 64)
+				b := bindings[oid]
+				nativeRound, nativeParseErr := strconv.ParseUint(b.nativeRound, 10, 64)
+				applies = applies && b.nativeID != "" && parseErr == nil && nativeParseErr == nil && taskDeliveryRound == strconv.FormatUint(round, 10) && b.nativeRound == strconv.FormatUint(nativeRound, 10) && b.nativeID == taskDeliveryID && b.nativeDigest == taskDeliveryDigest && round == nativeRound
+			} else if b, ok := bindings[oid]; ok && b.nativeID != "" {
+				applies = false
+			} else if b, ok := bindings[oid]; ok && b.contracted {
+				applies = applies && b.submission != nil && submission == b.submission.String() && digest != "" && digest == b.digest
+			}
+		} else if b, ok := bindings[oid]; ok && b.contracted {
+			applies = applies && b.submission != nil && submission == b.submission.String() && digest != "" && digest == b.digest
+		}
+		result[i].Criteria = append(result[i].Criteria, ports.WorkspaceCriterionFact{ID: cid, Revision: revision, Required: required == 1, Status: d.CriterionStatus(status), AssessmentResult: d.AssessmentResult(assessmentResult), AssessmentApplicable: applies, EvidenceLinked: linked == 1})
+	}
+	return result, rows.Err()
+}
+func resultKind(kind d.EntityKind) string { return kind.String() }
+
+var _ ports.WorkspaceReadRepository = continuityReadRepository{}
+
+// WorkspaceConclusionImpact counts current open descendants and returns only a
+// bounded metadata sample. Recursion walks terminal parents too; UNION dedupes
+// persisted legacy cycles. The CTE materializes IDs, never proof or history.
+func (r continuityReadRepository) WorkspaceConclusionImpact(ctx context.Context, scope d.Scope, subject d.EntityRef, limit int) (ports.WorkspaceConclusionImpactFacts, error) {
+	zero := ports.WorkspaceConclusionImpactFacts{Items: []ports.ContinuitySummary{}}
+	if e := validateGraphRefs(scope, []d.EntityRef{subject}, 1); e != nil {
+		return zero, e
+	}
+	if limit < 1 || limit > 20 {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "conclusion impact sample limit must be between 1 and 20")
+	}
+	if subject.Kind != d.EntityKindOutcome && subject.Kind != d.EntityKindObjective {
+		return zero, d.NewError(d.ErrorCodeInvalidArgument, "only Outcome and Objective have conclusion scope impacts")
+	}
+	if subject.Kind == d.EntityKindOutcome {
+		if subject.ID != scope.OutcomeID {
+			return zero, d.NewError(d.ErrorCodeInvalidScope, "conclusion impact Outcome does not match scope")
+		}
+		if _, e := r.Outcome(ctx, scope); e != nil {
+			return zero, e
+		}
+	} else if _, e := r.WorkspaceObjectiveHeader(ctx, scope, subject.ID); e != nil {
+		return zero, e
+	}
+	prefix := "WITH "
+	objectiveFilter := ""
+	workFilter := ""
+	args := []any{}
+	if subject.Kind == d.EntityKindObjective {
+		prefix = `WITH RECURSIVE descendants(id) AS (SELECT ? UNION SELECT o.id FROM objectives o JOIN descendants p ON o.parent_objective_id=p.id WHERE o.namespace_id=? AND o.outcome_id=?), `
+		args = append(args, subject.ID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+		objectiveFilter = " AND id IN (SELECT id FROM descendants) AND id<>?"
+		workFilter = " AND objective_id IN (SELECT id FROM descendants)"
+	}
+	query := prefix + `open_refs AS (SELECT 'objective' AS kind,id FROM objectives WHERE namespace_id=? AND outcome_id=? AND lifecycle NOT IN ('achieved','cancelled')` + objectiveFilter + ` UNION ALL SELECT 'work_item' AS kind,id FROM work_items WHERE namespace_id=? AND outcome_id=? AND lifecycle NOT IN ('done','cancelled')` + workFilter + `), totals AS (SELECT count(CASE WHEN kind='objective' THEN 1 END) AS open_objectives,count(CASE WHEN kind='work_item' THEN 1 END) AS open_tasks FROM open_refs), sample AS (SELECT kind,id FROM open_refs ORDER BY kind,id LIMIT ?), headers AS (SELECT s.kind,o.id,o.version,substr(o.title,1,512) AS title,o.lifecycle,o.priority FROM sample s JOIN objectives o ON s.kind='objective' AND o.id=s.id WHERE o.namespace_id=? AND o.outcome_id=? UNION ALL SELECT s.kind,w.id,w.version,substr(w.title,1,512) AS title,w.lifecycle,w.priority FROM sample s JOIN work_items w ON s.kind='work_item' AND w.id=s.id WHERE w.namespace_id=? AND w.outcome_id=?) SELECT t.open_objectives,t.open_tasks,h.kind,h.id,h.version,h.title,h.lifecycle,h.priority FROM totals t LEFT JOIN headers h ON 1=1 ORDER BY h.kind,h.id`
+	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
+	if subject.Kind == d.EntityKindObjective {
+		args = append(args, subject.ID.String())
+	}
+	args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String(), limit, scope.NamespaceID.String(), scope.OutcomeID.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, query, args...)
+	if e != nil {
+		return zero, e
+	}
+	defer rows.Close()
+	result := zero
+	for rows.Next() {
+		var kind, id, title, life, priority sql.NullString
+		var version sql.Null[d.Version]
+		if e = rows.Scan(&result.OpenObjectives, &result.OpenWorkItems, &kind, &id, &version, &title, &life, &priority); e != nil {
+			return zero, e
+		}
+		if !kind.Valid {
+			continue
+		}
+		parsed, e := d.ParseID(id.String)
+		if e != nil {
+			return zero, e
+		}
+		ref := d.EntityRef{Scope: scope, Kind: d.EntityKind(kind.String), ID: parsed}
+		result.Items = append(result.Items, ports.Summarize(ref, version.V, title.String, life.String, d.Priority(priority.String)))
+	}
+	return result, rows.Err()
+}
+
+// Two metadata scans, independent of the amount of history on each child.
+func (r continuityReadRepository) CompletionWork(ctx context.Context, scope d.Scope) ([]d.WorkItem, []d.Objective, error) {
+	if err := scope.Validate(); err != nil {
+		return nil, nil, err
+	}
+	tasks := []d.WorkItem{}
+	objectives := []d.Objective{}
+	for _, kind := range []d.EntityKind{d.EntityKindObjective, d.EntityKindWorkItem} {
+		table, parent := "objectives", "parent_objective_id"
+		policyColumns := ",w.completion_mode,w.completion_cycle"
+		if kind == d.EntityKindWorkItem {
+			table, parent = "work_items", "objective_id"
+			policyColumns = ""
+		}
+		rows, err := r.rows(ctx, "SELECT w.id,w."+parent+",w.lifecycle,c.rationale"+policyColumns+" FROM "+table+" w LEFT JOIN aggregate_current_conclusions a ON a.namespace_id=w.namespace_id AND a.outcome_id=w.outcome_id AND a.owner_id=w.id LEFT JOIN conclusions c ON c.namespace_id=a.namespace_id AND c.outcome_id=a.outcome_id AND c.id=a.conclusion_id WHERE w.namespace_id=? AND w.outcome_id=? ORDER BY w.id", scope.NamespaceID.String(), scope.OutcomeID.String())
+		if err != nil {
+			return nil, nil, err
+		}
+		for rows.Next() {
+			var id, life string
+			var mode, cycle string
+			var parentID, reason sql.NullString
+			if kind == d.EntityKindObjective {
+				err = rows.Scan(&id, &parentID, &life, &reason, &mode, &cycle)
+			} else {
+				err = rows.Scan(&id, &parentID, &life, &reason)
+			}
+			if err != nil {
+				rows.Close()
+				return nil, nil, err
+			}
+			parsed, err := d.ParseID(id)
+			if err != nil {
+				rows.Close()
+				return nil, nil, err
+			}
+			var parentRef *d.ID
+			if parentID.Valid {
+				value, err := d.ParseID(parentID.String)
+				if err != nil {
+					rows.Close()
+					return nil, nil, err
+				}
+				parentRef = &value
+			}
+			var conclusion *d.Conclusion
+			if reason.Valid {
+				conclusion = &d.Conclusion{Reason: reason.String}
+			}
+			if kind == d.EntityKindWorkItem {
+				tasks = append(tasks, d.WorkItem{ID: parsed, Scope: scope, ObjectiveID: parentRef, Lifecycle: d.WorkItemLifecycle(life), CurrentConclusion: conclusion})
+			} else {
+				completionCycle, err := parseObjectiveCompletionCycle(cycle)
+				if err != nil {
+					rows.Close()
+					return nil, nil, err
+				}
+				objectives = append(objectives, d.Objective{ID: parsed, Scope: scope, ParentObjectiveID: parentRef, Lifecycle: d.ObjectiveLifecycle(life), CurrentConclusion: conclusion, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle})
+			}
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	objectives, err := r.validateObjectiveCompletionList(ctx, objectives)
+	return tasks, objectives, err
+}

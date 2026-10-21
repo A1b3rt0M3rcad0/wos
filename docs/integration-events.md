@@ -23,3 +23,14 @@ Names and required envelope semantics remain stable within v1. New types and opt
 Delivery is at least once. Verify the signature and timestamp, then persist deduplication by `integration_event_id` atomically with consumer side effects. Acknowledge only after that consumer transaction commits. Network retries can repeat delivery even after successful processing. See [operations](operations.md) for signature, lease, retry and retention limits.
 
 The CI check `python3 tools/eventcatalog/check.py` rejects a mapping/catalogue mismatch. The catalogue describes available types; it does not certify the complete failure/delivery acceptance matrix.
+
+The operational workspace extension adds `entity_note.recorded`,
+`objective.parent_changed`, `work_item.objective_changed`,
+`work_item.execution_spec_changed` and `work_item.not_before_changed`.
+`issue.assigned` and `issue.unassigned` record explicit responsibility changes;
+they do not grant authority over affected Tasks or change their leases.
+`outcome.operational_profile_configured` records the explicit migration of one
+Outcome to an operational profile. A documentary note is not contracted
+execution or acceptance. Structural events record explicit placement changes;
+local Board card movement emits none. Existing subscriptions and persisted
+facts retain their original v1 semantics.

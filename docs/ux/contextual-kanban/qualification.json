@@ -1,0 +1,2867 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-19T22:42:32.430626+00:00",
+  "status": "automated_checks_passed_with_explicit_skips_and_pending_manual_acceptance",
+  "source_commit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+  "browser": {
+    "report_sha256": "2d8505b6f49848a3f9a33ff4191b223b38bee5cbd9e7675086417da1caec8d3f",
+    "stats": {
+      "startTime": "2026-10-19T22:30:33.893Z",
+      "duration": 471628.32899999997,
+      "expected": 193,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "axe checks login, six-area overview, common Task form and server combobox",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 18603
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "390px mobile creates Outcome and Task with a usable searched reference",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8350
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "200% equivalent reflow retains fields, focus and confirmation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4928
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "400% equivalent reflow retains fields, focus and confirmation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4038
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "keyboard opens, searches, selects, confirms and restores focus without a pointer",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4207
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "compound Issue resolution explicitly releases selected impacts atomically",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4789
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "typed external context preserves scalar types without changing permission",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6208
+      },
+      {
+        "file": "tests/web/accessibility.spec.mjs",
+        "title": "typed participants are documentary and never acquire execution authority",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6797
+      },
+      {
+        "file": "tests/web/authority.spec.mjs",
+        "title": "read-only membership hides mutation and settings affordances",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7062
+      },
+      {
+        "file": "tests/web/authority.spec.mjs",
+        "title": "revoked credential cannot retrieve references or dispatch edits",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4591
+      },
+      {
+        "file": "tests/web/authority.spec.mjs",
+        "title": "a late failed Outcome read cannot replace the selected Outcome or its notice",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2963
+      },
+      {
+        "file": "tests/web/authority.spec.mjs",
+        "title": "revocation prevents replay dispatch of an already frozen uncertain intent",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5478
+      },
+      {
+        "file": "tests/web/blocker-impact.spec.mjs",
+        "title": "a subtree Issue previews actual affected work and atomically rejects a stale blocking scope",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8754
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Evidence actions remain compact and contextual at 2560 x 1440",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8123
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Evidence actions remain compact and contextual at 390 x 844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5842
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Evidence actions remain compact and contextual at 360 x 640",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6026
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Outcome actions group real available commands and keep the final actions reachable",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4691
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Dismissing global Outcome actions preserves the selected Evidence and its command scope",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7622
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Native action dialog keeps grouped commands readable at 1280 x 900",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4561
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Native action dialog keeps grouped commands readable at 390 x 844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5423
+      },
+      {
+        "file": "tests/web/board-action-layout.spec.mjs",
+        "title": "Partial map coverage stays in the footer and other feedback never covers inspection actions",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6513
+      },
+      {
+        "file": "tests/web/board-feedback-transitions.spec.mjs",
+        "title": "a failed Outcome transition from Board keeps its error in the original visible live region",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4179
+      },
+      {
+        "file": "tests/web/board-feedback-transitions.spec.mjs",
+        "title": "Workspace selection reset after Board exposes read errors beside the empty-workspace state",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3647
+      },
+      {
+        "file": "tests/web/board-movement.spec.mjs",
+        "title": "Board cards cross the original origin, survive refresh and resize, and fit their real extents",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7479
+      },
+      {
+        "file": "tests/web/board-movement.spec.mjs",
+        "title": "trackpad, background drag and keyboard pan freely without changing cards or stealing native scroll",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7251
+      },
+      {
+        "file": "tests/web/canvas-context.spec.mjs",
+        "title": "Task context keeps source text and presents dependencies, Blockers and evidence without accepting work",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1593
+      },
+      {
+        "file": "tests/web/canvas-context.spec.mjs",
+        "title": "bounded summaries declare local and server omissions and replace stale context",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1290
+      },
+      {
+        "file": "tests/web/canvas-context.spec.mjs",
+        "title": "Evidence form submits the canonical context stance through its normal typed picker",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1291
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "the default work map exposes records deliberately and preserves local positions and authority distinctions",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3563
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "native canvas controls preserve selection, keyboard focus and explicit command boundaries",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2724
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "canvas search paginates and deduplicates without reopening stale queries or scopes",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5363
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "viewport growth preserves map scale and mobile has a native list alternative",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2419
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "overview zoom preserves accessible controls through item selection and the list alternative",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5113
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "a planning card remains selected when its inspector opens the real Roadmap",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2645
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "discarded callback failures stay silent while current failures remain announced",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1605
+      },
+      {
+        "file": "tests/web/canvas-interactions.spec.mjs",
+        "title": "all map cards display the original supplied paper behind live accessible content",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9791
+      },
+      {
+        "file": "tests/web/canvas-races.spec.mjs",
+        "title": "a late form restoration preserves edge keyboard focus and exact authorized removal",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7075
+      },
+      {
+        "file": "tests/web/canvas-races.spec.mjs",
+        "title": "a late Task focal read cannot reopen a closed inspector or report an obsolete revision error",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6425
+      },
+      {
+        "file": "tests/web/canvas-races.spec.mjs",
+        "title": "a late comparison for Task A cannot replace Task B's draft or introduce an old-target save",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8352
+      },
+      {
+        "file": "tests/web/canvas-races.spec.mjs",
+        "title": "an earlier successful refresh cannot restore private Canvas content after a genuine access denial",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5722
+      },
+      {
+        "file": "tests/web/canvas-races.spec.mjs",
+        "title": "an obsolete Task history transport failure cannot replace the current Task or its notice",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8536
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 1280 x 720",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5199
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 1366 x 768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3033
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 1024 x 768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4656
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 390 x 844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4071
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 360 x 640",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4447
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact login fits its complete default composition at 320 x 740",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5019
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Expanded local login and enlarged text keep natural scrolling and whole controls",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3796
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Outcome Board uses the available desktop workspace at 1280 x 720",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10948
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Outcome Board uses the available desktop workspace at 1366 x 768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 13121
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Outcome Board uses the available desktop workspace at 1920 x 1080",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10062
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Outcome Board uses the available desktop workspace at 2560 x 1440",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9679
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Views and Outcome context stay progressive, keyboard accessible and separate from verification",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 15901
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 320 x 740",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9594
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "Compact Outcome Board keeps its own list and inspector scroll at 390 x 844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8042
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 13707
+      },
+      {
+        "file": "tests/web/canvas-workspace-layout.spec.mjs",
+        "title": "native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 11707
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "Outcome Board is the default operational view without a Roadmap and keeps contextual deep links",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 12390
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "contextual creation and editing reuse the real form and preserve Objective association",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10586
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "real connections distinguish hierarchy, dependency strength and Evidence stance; Issue resolution retains its Blocker",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10264
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "large Outcomes declare partial data, load incrementally and find authorized off-page Tasks",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7695
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "authorized dependency editing persists advisory links, refuses cycles and explicitly removes the selected relation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9785
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "read-only Outcome Board has usable keyboard and mobile views while zoom and layout never mutate state",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 16442
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "inline conflicts preserve local edits and uncertain retries keep their exact bytes and key",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6023
+      },
+      {
+        "file": "tests/web/canvas.spec.mjs",
+        "title": "Roadmap Draft, immutable publication and activation stay separate from operational dependency",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10227
+      },
+      {
+        "file": "tests/web/conclusion-impact.spec.mjs",
+        "title": "concluding parents reviews actual open work, rejects stale impact and preserves children at 2560px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 14165
+      },
+      {
+        "file": "tests/web/conclusion-impact.spec.mjs",
+        "title": "concluding parents reviews actual open work, rejects stale impact and preserves children at 390px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 12070
+      },
+      {
+        "file": "tests/web/conclusion-impact.spec.mjs",
+        "title": "a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7802
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10975
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7101
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7254
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7140
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7712
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6315
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6482
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6132
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6097
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "criteria verification is separate from acceptance and cancelled work remains historical",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4698
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "creation in Objective Kanban preserves parent and returns to the same context",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5556
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "activity history is loaded on demand and material choices retain their meaning",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4507
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban remains operable at native browser zoom 125%, 150% and 200%",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 16208
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "an authorized waiver is an explicit exception and never completes the Task",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5202
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "partial Kanban pages preserve column scroll and reject stale continuation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6017
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "specialist inspection retains one native dialog without Board-only modal launchers",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5106
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "More actions leaves the modal for the canonical inspector and can return",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5181
+      },
+      {
+        "file": "tests/web/contracts.spec.mjs",
+        "title": "explicit cutover, contract progress, human review and privileged revocation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8088
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "operational density stays bounded across desktop, tablet and phone viewports",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 47875
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "buttons keep legible padded states across the workspace, dialogs and touch navigation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 134444
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "paper stays fixed behind scrolling content and the editorial sidebar remains usable",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8391
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "editorial chapters keep all six areas, real records and illustration assets",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 10859
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "editorial layout reflows, respects reduced motion and survives missing fonts and images",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 26075
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "static sign-in keeps its narrative and explains the no-JavaScript fallback",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2806
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "Woobe colors distinguish interaction copper, primary charcoal and semantic states",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7398
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "all modal families share matte workspace paper on desktop and mobile",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 16479
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "WOS uses the supplied hand-drawn logo alone and real browser icons",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4754
+      },
+      {
+        "file": "tests/web/editorial.spec.mjs",
+        "title": "forms preserve whole controls and save actions through nested editors, compact screens and larger text",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 20066
+      },
+      {
+        "file": "tests/web/entity-communication.spec.mjs",
+        "title": "relationships communicate placement, evidence and real blocking at 2560 x 1440",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9000
+      },
+      {
+        "file": "tests/web/entity-communication.spec.mjs",
+        "title": "relationships communicate placement, evidence and real blocking at 390 x 844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9920
+      },
+      {
+        "file": "tests/web/entity-communication.spec.mjs",
+        "title": "specialist entity details use the same canonical relationships without depending on a loaded Board index",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5601
+      },
+      {
+        "file": "tests/web/entity-communication.spec.mjs",
+        "title": "a late bounded graph expansion preserves coherent relationship pages, keyboard focus and disclosure state",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7122
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "quick creation keeps its named parent, creates planned work and supports a title-only intent",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1645
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "Objective obligations and criterion review mode are explicit human defaults",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2444
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "a full Task form makes availability a separate explicit choice",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1636
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "replacement setters preserve exact versions and send explicit date, list and parent clears",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2140
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "a documentary note contains authenticated-context inputs rather than a state transition",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1160
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "contextual evidence fixes the criterion and uses one explicit compound intent without assessment",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1504
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "EvidenceLink search and blocking scope consume server-defined eligibility",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1670
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "contextual Artifact and Decision drafts carry canonical documentary relationships",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2603
+      },
+      {
+        "file": "tests/web/human-forms.spec.mjs",
+        "title": "batch preview is explicit, editable and cannot silently accept a changed title list",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1397
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F01: save a persisted Draft without command names, UUIDs or Advanced; setup never activates it",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3558
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F02/F03: add an Objective and scoped Task with readable list instructions",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8429
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F04: visual Roadmap draft, publish and activation are distinct; replan retains revision one",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 17678
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F05: register proof then assess its exact criterion revision; Evidence alone does not certify",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9637
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F06: reporting an Issue and blocking work are explicit; resolving the Issue does not release impact",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8447
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F08: conflict retains local edits, compares latest state and requires a new confirmed intent",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4142
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "F08: lost response retries the committed command with identical bytes and key",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4535
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "reference picker searches 1,001 authorized Tasks and Evidence beyond the first page with duplicate context",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 33305
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "reference picker keyboard navigation selects duplicate titles using IDs and parent context",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4905
+      },
+      {
+        "file": "tests/web/human.spec.mjs",
+        "title": "stale reference cursor asks for reload and retains selections without silent replacement",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4951
+      },
+      {
+        "file": "tests/web/journey.spec.mjs",
+        "title": "human plans, agent executes by MCP, human certifies, new browser resumes after restart",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 32499
+      },
+      {
+        "file": "tests/web/journey.spec.mjs",
+        "title": "human reviews evidence, resolves blockers, reconciles conflict and preserves contested history",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 44723
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "expanded local login stays reachable at 1280x720",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2881
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "expanded local login stays reachable at 390x667",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2615
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2259
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2015
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2497
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2236
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2095
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1961
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1850
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1857
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1785
+      },
+      {
+        "file": "tests/web/login-viewport.spec.mjs",
+        "title": "centers the complete composition below the actual header and preserves accessible overflow",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2015
+      },
+      {
+        "file": "tests/web/navigation.spec.mjs",
+        "title": "Outcome Board and six specialist areas retain the persisted Draft checklist without automatic activation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4379
+      },
+      {
+        "file": "tests/web/navigation.spec.mjs",
+        "title": "deep links restore area and scoped item through reload, back and forward",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4909
+      },
+      {
+        "file": "tests/web/navigation.spec.mjs",
+        "title": "all Task search and priority filter find an off-page item in 1,001 records",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 15785
+      },
+      {
+        "file": "tests/web/navigation.spec.mjs",
+        "title": "queued search cannot discard a page after explicit status navigation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5857
+      },
+      {
+        "file": "tests/web/nested-task-density.spec.mjs",
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 320px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7368
+      },
+      {
+        "file": "tests/web/nested-task-density.spec.mjs",
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 390px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4938
+      },
+      {
+        "file": "tests/web/nested-task-density.spec.mjs",
+        "title": "a nested Task initially exposes authored prose and retains reachable actions at 430px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4476
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "An empty workspace keeps bounded headings and reachable navigation/settings",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5003
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5639
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7740
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7932
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8597
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9317
+      },
+      {
+        "file": "tests/web/operational-density.spec.mjs",
+        "title": "keeps readable controls and bounded inspection without enlarging the whole interface",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8226
+      },
+      {
+        "file": "tests/web/operational-workspace.spec.mjs",
+        "title": "progressive planning, specification, update and criterion Evidence persist at 2560px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 21752
+      },
+      {
+        "file": "tests/web/operational-workspace.spec.mjs",
+        "title": "progressive planning, specification, update and criterion Evidence persist at 390px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 21680
+      },
+      {
+        "file": "tests/web/operational-workspace.spec.mjs",
+        "title": "one contextual evidence intention preserves its receipt when the request is repeated",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 374
+      },
+      {
+        "file": "tests/web/operational-workspace.spec.mjs",
+        "title": "a preparation remedy retains the conclusion draft and never substitutes assessment or automatic acceptance",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5076
+      },
+      {
+        "file": "tests/web/operational-workspace.spec.mjs",
+        "title": "a mixed planning preview creates two Objectives and four scoped backlog Tasks in one visible intention",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6341
+      },
+      {
+        "file": "tests/web/outcome-navigation.spec.mjs",
+        "title": "sidebar search debounces typing, submits Enter immediately and never mutates Outcomes",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5119
+      },
+      {
+        "file": "tests/web/outcome-navigation.spec.mjs",
+        "title": "a late sidebar response cannot overwrite a newer query or its accessible status",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3921
+      },
+      {
+        "file": "tests/web/outcome-navigation.spec.mjs",
+        "title": "changing a live query discards its old page cursor and keeps current pagination unique",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5991
+      },
+      {
+        "file": "tests/web/outcome-navigation.spec.mjs",
+        "title": "mobile specialist views retain local Refresh and immediate Outcome filters",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8963
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "specialist areas show real documentary records, section-aware filters and mobile alternatives",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 106784
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 32568
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "entry, empty sections, pending reads and recoverable read errors remain usable at 320px",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8525
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "native conflict review and uncertain response preserve the exact recoverable intent on mobile",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4332
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "native Artifact and Decision creation use canonical commands and return to their real section",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3166
+      },
+      {
+        "file": "tests/web/presentation.spec.mjs",
+        "title": "opening and saving an existing Roadmap Draft retains child phases and immutable publication",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4134
+      },
+      {
+        "file": "tests/web/progressive-entry.spec.mjs",
+        "title": "quick Task Enter repeats the same placement, Save inspects the result, and Escape never creates a draft",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6153
+      },
+      {
+        "file": "tests/web/progressive-entry.spec.mjs",
+        "title": "a criterion deep link reloads the typed subject and retains its real Task owner",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6297
+      },
+      {
+        "file": "tests/web/reference-picker.spec.mjs",
+        "title": "choosing a reference cancels a queued debounce and fences older results that still arrive",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1270
+      },
+      {
+        "file": "tests/web/reference-picker.spec.mjs",
+        "title": "Escape cancels queued and in-flight suggestions without clearing the search or reopening the popup",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1578
+      },
+      {
+        "file": "tests/web/reference-picker.spec.mjs",
+        "title": "multiple selection keeps its explicit fresh suggestion search and does not replay an old timer",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1790
+      },
+      {
+        "file": "tests/web/signed.spec.mjs",
+        "title": "signed work shows accepted delivery, independent review and protected profile actions: approved",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 20003
+      },
+      {
+        "file": "tests/web/signed.spec.mjs",
+        "title": "signed work shows accepted delivery, independent review and protected profile actions: changes_requested",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 15670
+      },
+      {
+        "file": "tests/web/specialist-races.spec.mjs",
+        "title": "an old Roadmap list cannot refill a new snapshot's cache while refresh permissions are pending",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6294
+      },
+      {
+        "file": "tests/web/specialist-races.spec.mjs",
+        "title": "a delayed Board page cannot append obsolete records after a same-Outcome refresh",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7571
+      },
+      {
+        "file": "tests/web/structural-move.spec.mjs",
+        "title": "a Task move previews real inherited blocking, rejects a stale revision and preserves its recorded identity and proof",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8226
+      },
+      {
+        "file": "tests/web/structural-preview.spec.mjs",
+        "title": "a move requires a coherent named before/after impact and acknowledgement before emitting exact versions",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2297
+      },
+      {
+        "file": "tests/web/structural-preview.spec.mjs",
+        "title": "bounded Objective impact is explicit and a blocked destination never becomes a command",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1793
+      },
+      {
+        "file": "tests/web/structural-preview.spec.mjs",
+        "title": "a late preview for a different destination or scope cannot restore an acknowledged command",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2360
+      },
+      {
+        "file": "tests/web/workspace-inspector-view.spec.mjs",
+        "title": "one coherent Task inspector exposes its information facets inside two progressive groups without granting authority or accepting linked proof",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6128
+      },
+      {
+        "file": "tests/web/workspace-inspector-view.spec.mjs",
+        "title": "an Issue names its affected work without treating the association itself as blocking",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5649
+      },
+      {
+        "file": "tests/web/workspace-inspector-view.spec.mjs",
+        "title": "the same typed inspector explains documentary entities and actual blocking in specialist views",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7156
+      },
+      {
+        "file": "tests/web/workspace-inspector-view.spec.mjs",
+        "title": "the shared inspector retains readable content and reachable keyboard controls across CSS viewports",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 12660
+      },
+      {
+        "file": "tests/web/workspace-inspector-view.spec.mjs",
+        "title": "resolving an Issue releases only the explicitly selected recorded impact",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5790
+      },
+      {
+        "file": "tests/web/workspace-inspector.spec.mjs",
+        "title": "inline surfaces preserve exact form nodes, listeners and uncertain draft state",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1007
+      },
+      {
+        "file": "tests/web/workspace-inspector.spec.mjs",
+        "title": "local Escape returns from actions and forms to details, then to the canvas trigger",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1176
+      },
+      {
+        "file": "tests/web/workspace-inspector.spec.mjs",
+        "title": "autocomplete and nested dialogs keep their Escape without hiding the inspector",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1349
+      },
+      {
+        "file": "tests/web/workspace-inspector.spec.mjs",
+        "title": "enabling declines an open native modal without changing its top layer or firing close",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1005
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "fresh canvas inspector preserves real lease authority for explicit completion and release",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 9135
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "fresh work inspector preserves real lease authority for explicit completion and release",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8534
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "editing Issue, Blocker and Criterion preserves descriptions beyond their inspector preview",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7744
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "criterion preparation targets a required definition beyond the first inspector page",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5108
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "a delayed preparation lookup cannot replace a newer form after the original closes",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6338
+      },
+      {
+        "file": "tests/web/workspace-lease.spec.mjs",
+        "title": "privileged v1 revocation hydrates the actual contract without requiring the technical record",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5318
+      },
+      {
+        "file": "tests/web/workspace-ready.spec.mjs",
+        "title": "workspace mutations remain unavailable until the real authenticated identity finishes loading",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2989
+      },
+      {
+        "file": "tests/web/workspace-ready.spec.mjs",
+        "title": "native Escape invalidates a genuine pending criterion read instead of reopening its closed dialog",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4135
+      },
+      {
+        "file": "tests/web/workspace.spec.mjs",
+        "title": "workspace summary, scoped list, operational board, pagination and real human action",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 18570
+      }
+    ],
+    "source_commit": "198fa43dc0066af7e36da5353a845dc9b15e8607"
+  },
+  "final_contextual_browser": {
+    "source_commit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+    "report_sha256": "8c904f9dc88927839abbd9ca40914e995c921f6d352f63bbd534a868f53a4e31",
+    "stats": {
+      "startTime": "2026-10-19T22:41:04.071Z",
+      "duration": 79747.22399999999,
+      "expected": 20,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "file": "tests/web/contextual-kanban-guards.spec.mjs",
+        "title": "strict cancellation acknowledgement in the browser persists its exact excluded scope",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3748
+      },
+      {
+        "file": "tests/web/contextual-kanban-guards.spec.mjs",
+        "title": "real credential revocation closes an open Kanban and clears its private content",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2265
+      },
+      {
+        "file": "tests/web/contextual-kanban-guards.spec.mjs",
+        "title": "refresh keeps the selected detail coherent and rejects newer isolated reads",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3271
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 7659
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5149
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4671
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4933
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4936
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6754
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4943
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4590
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5104
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "criteria verification is separate from acceptance and cancelled work remains historical",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3550
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "creation in Objective Kanban preserves parent and returns to the same context",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2995
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "activity history is loaded on demand and material choices retain their meaning",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 4608
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "contextual Kanban remains operable at native browser zoom 125%, 150% and 200%",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 8367
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "an authorized waiver is an explicit exception and never completes the Task",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2319
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "partial Kanban pages preserve column scroll and reject stale continuation",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 3060
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "specialist inspection retains one native dialog without Board-only modal launchers",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 1827
+      },
+      {
+        "file": "tests/web/contextual-kanban.spec.mjs",
+        "title": "More actions leaves the modal for the canonical inspector and can return",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 2240
+      }
+    ]
+  },
+  "go_default_environment": {
+    "log_sha256": "a707ca2f6fcc21ca7f7f3bcac35e268c7961d7ab6080dc916696bfa6c6a62a50",
+    "test_and_subtest_results": {
+      "pass": 1124,
+      "skip": 126
+    },
+    "skips": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "test": "TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x1/100",
+        "details": "=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x1/100\n    load_test.go:145: real PostgreSQL required\n--- SKIP: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x1/100 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "test": "TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x4/100",
+        "details": "=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x4/100\n    load_test.go:145: real PostgreSQL required\n--- SKIP: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/1x4/100 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "test": "TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/100",
+        "details": "=== RUN   TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/100\n    load_test.go:145: real PostgreSQL required\n--- SKIP: TestDeliveryBoundedConcurrencyReplicaFairnessAndACKLoss/postgres/2x2/100 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "test": "TestDeliveryWorkerCrashChild",
+        "details": "=== RUN   TestDeliveryWorkerCrashChild\n    process_death_test.go:24: owned child process only\n--- SKIP: TestDeliveryWorkerCrashChild (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+        "test": "TestDeliveryWorkerProcessDeathReclaimsPersistedLease/postgres",
+        "details": "=== RUN   TestDeliveryWorkerProcessDeathReclaimsPersistedLease/postgres\n    process_death_test.go:49: real PostgreSQL required\n--- SKIP: TestDeliveryWorkerProcessDeathReclaimsPersistedLease/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness/postgres",
+        "details": "=== RUN   TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestDeliveryHealthDisabledBacklogDoesNotChangeAPIReadiness/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust/postgres",
+        "details": "=== RUN   TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestExplicitHostIssuerRecoveryRestartsAndExposesBoundedPublicTrust/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating/postgres",
+        "details": "=== RUN   TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestHostIssuerRecoveryRefusesIncompatibleSchemaWithoutMigrating/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship/postgres",
+        "details": "=== RUN   TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestRealMCPClientSharesDurableStateWithHTTP/postgres",
+        "details": "=== RUN   TestRealMCPClientSharesDurableStateWithHTTP/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestRealMCPClientSharesDurableStateWithHTTP/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestReleaseVerificationModesTransportStorageMatrix/postgres",
+        "details": "=== RUN   TestReleaseVerificationModesTransportStorageMatrix/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestReleaseVerificationModesTransportStorageMatrix/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestReleaseLostHTTPResponseReconcilesThroughMCP/postgres",
+        "details": "=== RUN   TestReleaseLostHTTPResponseReconcilesThroughMCP/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestReleaseLostHTTPResponseReconcilesThroughMCP/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema/postgres",
+        "details": "=== RUN   TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog/postgres",
+        "details": "=== RUN   TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestIndependentSDKConsumerContinuesAfterRestart/postgres",
+        "details": "=== RUN   TestIndependentSDKConsumerContinuesAfterRestart/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestIndependentSDKConsumerContinuesAfterRestart/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory/postgres",
+        "details": "=== RUN   TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement/postgres",
+        "details": "=== RUN   TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestSignedServerIdentityPersistsAndRejectsSilentKeyReplacement/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+        "test": "TestBrowserSessionCatalogAndRevocation/postgres",
+        "details": "=== RUN   TestBrowserSessionCatalogAndRevocation/postgres\n    storage_matrix_test.go:28: real PostgreSQL required: CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestBrowserSessionCatalogAndRevocation/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits",
+        "details": "=== RUN   TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits\n    workspace_frame_postgres_test.go:33: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI supplies it\n--- SKIP: TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts/postgres",
+        "details": "=== RUN   TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts/postgres\n    workspace_placement_test.go:56: real PostgreSQL required; CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+        "test": "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime/postgres",
+        "details": "=== RUN   TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime/postgres\n    workspace_time_test.go:50: real PostgreSQL required; CI supplies WOS_TEST_POSTGRES_DSN\n--- SKIP: TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteAdministrativeCompletionIsDurableAndAudited",
+        "details": "=== RUN   TestSQLiteAdministrativeCompletionIsDurableAndAudited\n    administrative_override_test.go:36: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteAdministrativeCompletionIsDurableAndAudited (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDenseAssessmentOwnerHistoryIndexPlan",
+        "details": "=== RUN   TestDenseAssessmentOwnerHistoryIndexPlan\n    assessment_plan_fixture_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDenseAssessmentOwnerHistoryIndexPlan (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestBulkCollectionsPreserveSingleAggregateHistory",
+        "details": "=== RUN   TestBulkCollectionsPreserveSingleAggregateHistory\n    bulk_history_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestBulkCollectionsPreserveSingleAggregateHistory (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestActivePlanProjectsLiveStateWithoutRewritingPublication",
+        "details": "=== RUN   TestActivePlanProjectsLiveStateWithoutRewritingPublication\n    bulk_history_test.go:93: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestActivePlanProjectsLiveStateWithoutRewritingPublication (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew",
+        "details": "=== RUN   TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew\n    clock_test.go:17: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestRemoteLeasesUseDatabaseAuthorityDespiteReplicaClockSkew (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestRemoteContractsUseDatabaseAuthorityDespiteReplicaClockSkew",
+        "details": "=== RUN   TestRemoteContractsUseDatabaseAuthorityDespiteReplicaClockSkew\n    clock_test.go:77: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestRemoteContractsUseDatabaseAuthorityDespiteReplicaClockSkew (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement",
+        "details": "=== RUN   TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement\n    completion_policy_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet",
+        "details": "=== RUN   TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet\n    completion_policy_test.go:144: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestIndexedExternalContextPreservesTypeAndRestart",
+        "details": "=== RUN   TestIndexedExternalContextPreservesTypeAndRestart\n    context_contract_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestIndexedExternalContextPreservesTypeAndRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuationFromDiscoverySnapshotAndCursors",
+        "details": "=== RUN   TestContinuationFromDiscoverySnapshotAndCursors\n    continuity_contract_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuationFromDiscoverySnapshotAndCursors (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWave11UpgradeExistingVersionSevenDatabase",
+        "details": "=== RUN   TestWave11UpgradeExistingVersionSevenDatabase\n    continuity_contract_test.go:114: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWave11UpgradeExistingVersionSevenDatabase (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuityDirectLegacyCursorAndNoHydration",
+        "details": "=== RUN   TestContinuityDirectLegacyCursorAndNoHydration\n    continuity_cursor_test.go:63: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuityDirectLegacyCursorAndNoHydration (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuityProjectionLeaseExpiryAndFrozenCursor",
+        "details": "=== RUN   TestContinuityProjectionLeaseExpiryAndFrozenCursor\n    continuity_projection_test.go:22: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuityProjectionLeaseExpiryAndFrozenCursor (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction",
+        "details": "=== RUN   TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction\n    continuity_projection_test.go:91: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuityProjectedBlockingLegacyCursorAndByteBudget",
+        "details": "=== RUN   TestContinuityProjectedBlockingLegacyCursorAndByteBudget\n    continuity_projection_test.go:163: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuityProjectedBlockingLegacyCursorAndByteBudget (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestContinuityMetadataPagesMatchLegacySerializedSections",
+        "details": "=== RUN   TestContinuityMetadataPagesMatchLegacySerializedSections\n    continuity_read_test.go:31: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestContinuityMetadataPagesMatchLegacySerializedSections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestExternalContinuityKeysBackfillFromPublishedSchema",
+        "details": "=== RUN   TestExternalContinuityKeysBackfillFromPublishedSchema\n    continuity_read_test.go:141: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestExternalContinuityKeysBackfillFromPublishedSchema (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation",
+        "details": "=== RUN   TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation\n    delivery_health_test.go:21: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDeliveryRecoverySkipsLockedExpiredDelivery",
+        "details": "=== RUN   TestDeliveryRecoverySkipsLockedExpiredDelivery\n    delivery_recovery_lock_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDeliveryRecoverySkipsLockedExpiredDelivery (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDependencyAndNotBeforeSurviveSQLiteRestart",
+        "details": "=== RUN   TestDependencyAndNotBeforeSurviveSQLiteRestart\n    dependencies_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDependencyAndNotBeforeSurviveSQLiteRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave09DocumentaryHistorySurvivesRestart",
+        "details": "=== RUN   TestSQLiteWave09DocumentaryHistorySurvivesRestart\n    documentary_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave09DocumentaryHistorySurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteConcurrentDecisionSupersessionHasSingleWinner",
+        "details": "=== RUN   TestSQLiteConcurrentDecisionSupersessionHasSingleWinner\n    documentary_test.go:176: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteConcurrentDecisionSupersessionHasSingleWinner (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart",
+        "details": "=== RUN   TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart\n    entity_notes_test.go:20: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceEmptyConclusionIdentitySurvivesArchiveReopenAndRejectsRewrite",
+        "details": "=== RUN   TestWorkspaceEmptyConclusionIdentitySurvivesArchiveReopenAndRejectsRewrite\n    entity_notes_test.go:151: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceEmptyConclusionIdentitySurvivesArchiveReopenAndRejectsRewrite (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable",
+        "details": "=== RUN   TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable\n    external_context_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestExternalReferenceDiscoveryIsNamespaceScopedAndDurable (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestBrowserSessionRevokedWithParentCredential",
+        "details": "=== RUN   TestBrowserSessionRevokedWithParentCredential\n    external_context_test.go:57: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestBrowserSessionRevokedWithParentCredential (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestFocalCurrentProofDenseHistoryAndHiddenDependency",
+        "details": "=== RUN   TestFocalCurrentProofDenseHistoryAndHiddenDependency\n    focal_graph_read_test.go:71: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestFocalCurrentProofDenseHistoryAndHiddenDependency (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors",
+        "details": "=== RUN   TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors\n    focal_graph_read_test.go:145: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing",
+        "details": "=== RUN   TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing\n    integration_contract_test.go:17: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDurableSignalsAtomicRollbackRestartAndDeliveryFencing (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestDeliveryCrashBudgetRequiresExplicitRedelivery",
+        "details": "=== RUN   TestDeliveryCrashBudgetRequiresExplicitRedelivery\n    integration_contract_test.go:175: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestDeliveryCrashBudgetRequiresExplicitRedelivery (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore",
+        "details": "=== RUN   TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore\n    issuer_recovery_test.go:21: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestHostIssuerRecoveryPreservesHistoryIdentityAndReceiptAcrossRestore (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestIssueBlockerStateSurvivesSQLiteRestart",
+        "details": "=== RUN   TestIssueBlockerStateSurvivesSQLiteRestart\n    issues_blockers_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestIssueBlockerStateSurvivesSQLiteRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteLeaseRenewAndReclaimSurviveRestart",
+        "details": "=== RUN   TestSQLiteLeaseRenewAndReclaimSurviveRestart\n    leases_test.go:98: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteLeaseRenewAndReclaimSurviveRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteConcurrentReclaimAllowsSingleWinner",
+        "details": "=== RUN   TestSQLiteConcurrentReclaimAllowsSingleWinner\n    leases_test.go:255: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteConcurrentReclaimAllowsSingleWinner (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestFutureDatabaseSchemaRefusesStartupAndMigrationWithoutRewritingHistory",
+        "details": "=== RUN   TestFutureDatabaseSchemaRefusesStartupAndMigrationWithoutRewritingHistory\n    migration_compatibility_test.go:13: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestFutureDatabaseSchemaRefusesStartupAndMigrationWithoutRewritingHistory (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestPrincipalQuotasAdminCASAndConcurrentCredentials",
+        "details": "=== RUN   TestPrincipalQuotasAdminCASAndConcurrentCredentials\n    principal_quota_test.go:18: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestPrincipalQuotasAdminCASAndConcurrentCredentials (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent",
+        "details": "=== RUN   TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent\n    principal_quota_test.go:177: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings",
+        "details": "=== RUN   TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings\n    principal_review_quota_test.go:17: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestReleaseConcurrentActiveSlotsOnSeparateConnections",
+        "details": "=== RUN   TestReleaseConcurrentActiveSlotsOnSeparateConnections\n    release_concurrency_test.go:75: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestReleaseConcurrentActiveSlotsOnSeparateConnections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestReleaseConcurrentIdempotencyOnSeparateConnections",
+        "details": "=== RUN   TestReleaseConcurrentIdempotencyOnSeparateConnections\n    release_concurrency_test.go:119: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestReleaseConcurrentIdempotencyOnSeparateConnections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestReleaseConcurrentAssessmentsOnSeparateConnections",
+        "details": "=== RUN   TestReleaseConcurrentAssessmentsOnSeparateConnections\n    release_concurrency_test.go:149: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestReleaseConcurrentAssessmentsOnSeparateConnections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestReleaseConcurrentClaimsOnSeparateConnections",
+        "details": "=== RUN   TestReleaseConcurrentClaimsOnSeparateConnections\n    release_concurrency_test.go:180: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestReleaseConcurrentClaimsOnSeparateConnections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites",
+        "details": "=== RUN   TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites\n    release_concurrency_test.go:226: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestReleaseSnapshotIsCoherentDuringSeparateConnectionWrites (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave02ScenarioSurvivesRestart",
+        "details": "=== RUN   TestSQLiteWave02ScenarioSurvivesRestart\n    restart_test.go:45: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave02ScenarioSurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteIdempotentReplaySurvivesRestart",
+        "details": "=== RUN   TestSQLiteIdempotentReplaySurvivesRestart\n    restart_test.go:320: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteIdempotentReplaySurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSecurityAdministrationCASReceiptsSecretsAndRevocation",
+        "details": "=== RUN   TestSecurityAdministrationCASReceiptsSecretsAndRevocation\n    security_admin_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSecurityAdministrationCASReceiptsSecretsAndRevocation (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestNamespaceCreationCopiesOnlyGrantedPermissions",
+        "details": "=== RUN   TestNamespaceCreationCopiesOnlyGrantedPermissions\n    security_admin_test.go:119: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestNamespaceCreationCopiesOnlyGrantedPermissions (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestPermissionRevokedWhileAwaitingTransactionCannotMutate",
+        "details": "=== RUN   TestPermissionRevokedWhileAwaitingTransactionCannotMutate\n    security_admin_test.go:169: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestPermissionRevokedWhileAwaitingTransactionCannotMutate (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestScopedCredentialsRevocationAndIdempotentReplay",
+        "details": "=== RUN   TestScopedCredentialsRevocationAndIdempotentReplay\n    security_contract_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestScopedCredentialsRevocationAndIdempotentReplay (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota",
+        "details": "=== RUN   TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota\n    signed_acquisition_test.go:40: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew",
+        "details": "=== RUN   TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew\n    signed_clock_test.go:19: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedContractsUseDatabaseAuthorityDespiteReplicaClockSkew (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore",
+        "details": "=== RUN   TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore\n    signed_contracts_test.go:22: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt",
+        "details": "=== RUN   TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt\n    signed_cutover_test.go:19: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedWorkReviewLoadMatrix",
+        "details": "=== RUN   TestSignedWorkReviewLoadMatrix\n    signed_load_test.go:35: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedWorkReviewLoadMatrix (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor",
+        "details": "=== RUN   TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor\n    signed_next_test.go:24: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedNextSearchDurablyReplaysEmptyAndPreservesScanCursor (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation",
+        "details": "=== RUN   TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation\n    signed_query_scope_test.go:32: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnResolutionRepository",
+        "details": "=== RUN   TestSignedReturnResolutionRepository\n    signed_return_resolution_test.go:166: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnResolutionRepository (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnTerminalResolution",
+        "details": "=== RUN   TestSignedReturnTerminalResolution\n    signed_return_resolution_test.go:242: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnTerminalResolution (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnResolutionRaces",
+        "details": "=== RUN   TestSignedReturnResolutionRaces\n    signed_return_resolution_test.go:348: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnResolutionRaces (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnResolutionRevalidatesAuthority",
+        "details": "=== RUN   TestSignedReturnResolutionRevalidatesAuthority\n    signed_return_resolution_test.go:413: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnResolutionRevalidatesAuthority (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnResolutionSurvivesCleanRestore",
+        "details": "=== RUN   TestSignedReturnResolutionSurvivesCleanRestore\n    signed_return_resolution_test.go:509: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnResolutionSurvivesCleanRestore (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReturnResolutionRejectsActualExpiredLease",
+        "details": "=== RUN   TestSignedReturnResolutionRejectsActualExpiredLease\n    signed_return_resolution_test.go:552: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReturnResolutionRejectsActualExpiredLease (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedAtomicReturnAndDurableAcceptance",
+        "details": "=== RUN   TestSignedAtomicReturnAndDurableAcceptance\n    signed_return_test.go:24: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedAtomicReturnAndDurableAcceptance (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedReviewCorrectionJourneyWithoutExecutorAuthority",
+        "details": "=== RUN   TestSignedReviewCorrectionJourneyWithoutExecutorAuthority\n    signed_review_journey_test.go:23: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSignedReviewCorrectionJourneyWithoutExecutorAuthority (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSigningIdentityEnrollmentRotationPolicyAndRevocation",
+        "details": "=== RUN   TestSigningIdentityEnrollmentRotationPolicyAndRevocation\n    signing_identity_test.go:22: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSigningIdentityEnrollmentRotationPolicyAndRevocation (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave10AssessmentEvidenceSurvivesRestart",
+        "details": "=== RUN   TestSQLiteWave10AssessmentEvidenceSurvivesRestart\n    wave10_assessment_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave10AssessmentEvidenceSurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave10ConclusionObligationsSurviveRestart",
+        "details": "=== RUN   TestSQLiteWave10ConclusionObligationsSurviveRestart\n    wave10_conclusion_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave10ConclusionObligationsSurviveRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave10ImmutableValidationHistorySurvivesRestart",
+        "details": "=== RUN   TestSQLiteWave10ImmutableValidationHistorySurvivesRestart\n    wave10_conclusion_test.go:128: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave10ImmutableValidationHistorySurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWave10SQLiteRejectsHistoricalAssessmentRewrite",
+        "details": "=== RUN   TestWave10SQLiteRejectsHistoricalAssessmentRewrite\n    wave10_immutability_test.go:14: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWave10SQLiteRejectsHistoricalAssessmentRewrite (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart",
+        "details": "=== RUN   TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart\n    wave11_roadmap_restart_test.go:15: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave11RoadmapPlanningHistorySurvivesRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations",
+        "details": "=== RUN   TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations\n    wave11_roadmap_restart_test.go:161: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestSQLiteWave11PublishedSnapshotsIgnoreLaterLiveMutations (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkActivityStorageChronologyImmutabilityScopeAndRestore",
+        "details": "=== RUN   TestWorkActivityStorageChronologyImmutabilityScopeAndRestore\n    work_activity_test.go:24: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkActivityStorageChronologyImmutabilityScopeAndRestore (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractLoadMatrix",
+        "details": "=== RUN   TestWorkContractLoadMatrix\n    work_contract_load_test.go:46: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkContractLoadMatrix (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractStorageRestartPrecisionAndExpiry",
+        "details": "=== RUN   TestWorkContractStorageRestartPrecisionAndExpiry\n    work_contract_test.go:52: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkContractStorageRestartPrecisionAndExpiry (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractStorageConcurrentIndependentConnections",
+        "details": "=== RUN   TestWorkContractStorageConcurrentIndependentConnections\n    work_contract_test.go:113: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkContractStorageConcurrentIndependentConnections (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractStorageUnsignedMaximum",
+        "details": "=== RUN   TestWorkContractStorageUnsignedMaximum\n    work_contract_test.go:159: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkContractStorageUnsignedMaximum (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractFinalizationProofSurvivesRestore",
+        "details": "=== RUN   TestWorkContractFinalizationProofSurvivesRestore\n    work_contract_test.go:186: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkContractFinalizationProofSurvivesRestore (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestNamespaceProtocolCutoverAndRestart",
+        "details": "=== RUN   TestNamespaceProtocolCutoverAndRestart\n    work_protocol_test.go:14: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestNamespaceProtocolCutoverAndRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites",
+        "details": "=== RUN   TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites\n    workspace_compound_test.go:17: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren",
+        "details": "=== RUN   TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren\n    workspace_conclusion_test.go:20: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound",
+        "details": "=== RUN   TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound\n    workspace_conclusion_test.go:162: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically",
+        "details": "=== RUN   TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically\n    workspace_editing_test.go:16: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceDefinitionEditingSurvivesRestartAndReparentsAtomically (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime",
+        "details": "=== RUN   TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime\n    workspace_execution_time_test.go:20: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceLastExecutionUsesCanonicalAcquisitionTime (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceLastExecutionUsesScopedTimestampIndexes",
+        "details": "=== RUN   TestWorkspaceLastExecutionUsesScopedTimestampIndexes\n    workspace_execution_time_test.go:119: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceLastExecutionUsesScopedTimestampIndexes (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand",
+        "details": "=== RUN   TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand\n    workspace_lease_test.go:17: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceObservationProvenanceComesFromActualNote",
+        "details": "=== RUN   TestWorkspaceObservationProvenanceComesFromActualNote\n    workspace_observation_test.go:19: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceObservationProvenanceComesFromActualNote (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceRetractedProofAgreesAcrossAttentionCriteriaCardsAndConclusionsAfterRestart",
+        "details": "=== RUN   TestWorkspaceRetractedProofAgreesAcrossAttentionCriteriaCardsAndConclusionsAfterRestart\n    workspace_proof_test.go:24: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceRetractedProofAgreesAcrossAttentionCriteriaCardsAndConclusionsAfterRestart (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration",
+        "details": "=== RUN   TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration\n    workspace_read_test.go:28: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence",
+        "details": "=== RUN   TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence\n    workspace_read_test.go:123: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities",
+        "details": "=== RUN   TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities\n    workspace_read_test.go:206: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope",
+        "details": "=== RUN   TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope\n    workspace_scope_preview_test.go:103: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting",
+        "details": "=== RUN   TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting\n    workspace_scope_preview_test.go:173: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceNotesAndTimelinePreserveDeclarationsReplayCorrectionsAndFrozenPages",
+        "details": "=== RUN   TestWorkspaceNotesAndTimelinePreserveDeclarationsReplayCorrectionsAndFrozenPages\n    workspace_timeline_test.go:18: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceNotesAndTimelinePreserveDeclarationsReplayCorrectionsAndFrozenPages (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkspaceTimelineSameCommitOrderingActivityDedupCriteriaAndDescendantOrigin",
+        "details": "=== RUN   TestWorkspaceTimelineSameCommitOrderingActivityDedupCriteriaAndDescendantOrigin\n    workspace_timeline_test.go:199: real PostgreSQL required: set WOS_TEST_POSTGRES_DSN; CI always supplies it\n--- SKIP: TestWorkspaceTimelineSameCommitOrderingActivityDedupCriteriaAndDescendantOrigin (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestSignedWorkReviewLoadMatrix",
+        "details": "=== RUN   TestSignedWorkReviewLoadMatrix\n    signed_load_test.go:35: opt-in signed workload; set WOS_SIGNED_LOAD=1\n--- SKIP: TestSignedWorkReviewLoadMatrix (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+        "test": "TestWorkContractLoadMatrix",
+        "details": "=== RUN   TestWorkContractLoadMatrix\n    work_contract_load_test.go:47: opt-in measured fixture; set WOS_CONTRACT_LOAD=1\n--- SKIP: TestWorkContractLoadMatrix (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestClientEvidenceCommitLossRotationAndExplicitAchievement/postgres",
+        "details": "=== RUN   TestClientEvidenceCommitLossRotationAndExplicitAchievement/postgres\n    client_evidence_qualification_test.go:50: real PostgreSQL required\n--- SKIP: TestClientEvidenceCommitLossRotationAndExplicitAchievement/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/postgres",
+        "details": "=== RUN   TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/postgres\n    signed_transport_test.go:70: real PostgreSQL required\n--- SKIP: TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+        "test": "TestHTTPAcquisitionMCPResumeAndSDKReceipts/postgres",
+        "details": "=== RUN   TestHTTPAcquisitionMCPResumeAndSDKReceipts/postgres\n    work_contract_protocol_test.go:55: real PostgreSQL required\n--- SKIP: TestHTTPAcquisitionMCPResumeAndSDKReceipts/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+        "test": "TestConcurrentOppositeDependencyEdgesCannotCreateCycle/postgres",
+        "details": "=== RUN   TestConcurrentOppositeDependencyEdgesCannotCreateCycle/postgres\n    dependency_concurrency_test.go:52: real PostgreSQL required\n--- SKIP: TestConcurrentOppositeDependencyEdgesCannotCreateCycle/postgres (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestReceiptCleanupRecoversRealFullDisk",
+        "details": "=== RUN   TestReceiptCleanupRecoversRealFullDisk\n    full_disk_linux_test.go:17: requires isolated capacity-limited filesystem\n--- SKIP: TestReceiptCleanupRecoversRealFullDisk (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestNativeOSKeyringProtectedProfileV2",
+        "details": "=== RUN   TestNativeOSKeyringProtectedProfileV2\n    native_keyring_v2_test.go:53: requires actual OS credential service; platform CI sets WOS_TEST_NATIVE_KEYRING=1\n--- SKIP: TestNativeOSKeyringProtectedProfileV2 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestNativeOSKeyringChildV2",
+        "details": "=== RUN   TestNativeOSKeyringChildV2\n    native_keyring_v2_test.go:91: native child fixture only\n--- SKIP: TestNativeOSKeyringChildV2 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestReturnResolutionCleanupRecoversRealFullDisk",
+        "details": "=== RUN   TestReturnResolutionCleanupRecoversRealFullDisk\n    return_resolution_full_disk_test.go:13: requires an explicitly isolated capacity-limited filesystem\n--- SKIP: TestReturnResolutionCleanupRecoversRealFullDisk (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+        "test": "TestAuthorizedReferenceSearchStores/postgres",
+        "details": "=== RUN   TestAuthorizedReferenceSearchStores/postgres\n    reference_search_test.go:38: real PostgreSQL requires WOS_TEST_POSTGRES_DSN\n--- SKIP: TestAuthorizedReferenceSearchStores/postgres (0.00s)\n"
+      }
+    ],
+    "package_results": {
+      "skip": 10,
+      "pass": 20
+    },
+    "test_target": "./..."
+  },
+  "postgres_storage": {
+    "log_sha256": "fe31375c1b69b61959639433d117e904fc4ecb387438bcf0bb66b2f2c8245f19",
+    "test_and_subtest_results": {
+      "pass": 450,
+      "skip": 2
+    },
+    "skips": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestSignedWorkReviewLoadMatrix",
+        "details": "=== RUN   TestSignedWorkReviewLoadMatrix\n    signed_load_test.go:37: opt-in signed workload; set WOS_SIGNED_LOAD=1\n--- SKIP: TestSignedWorkReviewLoadMatrix (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+        "test": "TestWorkContractLoadMatrix",
+        "details": "=== RUN   TestWorkContractLoadMatrix\n    work_contract_load_test.go:48: opt-in measured fixture; set WOS_CONTRACT_LOAD=1\n--- SKIP: TestWorkContractLoadMatrix (0.00s)\n"
+      }
+    ],
+    "package_results": {
+      "pass": 1
+    },
+    "test_target": "./packages/wos-core/storage/postgres"
+  },
+  "targeted_core_race": {
+    "log_sha256": "ca5633fa2f023632ea52bb3543db770f3336d0abd988577d8879f5bf2c9ebce3",
+    "test_and_subtest_results": {
+      "pass": 7
+    },
+    "skips": [],
+    "package_results": {
+      "pass": 2
+    },
+    "test_scope": "Application stage precedence and SQLite strict completion, including memory/SQL cases"
+  },
+  "source_binding": {
+    "go_sql_module_files": 786,
+    "go_sql_module_sha256": "90cb4c5ac4fee5f98545a45391cf59657ea2ccc78024fcb6f02da568c4a28e5c",
+    "served_assets_sha256": {
+      "workspace-canvas.js": "f211323447fa2b37ea028689ba436026982d590819ba1ff51e2a9d0a18fb720b",
+      "workspace-card-summary.js": "e7cb8e8f8a50a1dc6aae00b286a3d0bd7c0a8f9fed9c46b6ed44b24f589321b9",
+      "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+      "workspace-view.js": "c7dbc95a120384bd46c4e19f2fe7bb60b853f79db1919c739210378d4b0bb99c",
+      "workspace-actions.js": "9ebfcb9ed80485a7223686023c892aa7ac02e3aae69996298738f6773483992b",
+      "roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+      "colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+      "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
+      "human-forms.js": "ea71340642be9561af6910e782a75cac63c424966a9eb603aa19e15064f22f12",
+      "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
+      "structural-form-preview.js": "291bfe28bd3b8f969551b242a4438501c882edae61eb7e2ec29e3ae2224ee50f",
+      "workspace-compact.js": "288da1f968f78f9b552c543bf65fe559f30f2fb9bf6b99c63be40ddf24baa69b",
+      "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
+      "ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+      "intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+      "workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+      "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
+      "reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+      "style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+      "editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+      "workspace-blocking-form.js": "862512b9a83819a643e0bb95972879607449594677d08365ed32840c8f6f063e",
+      "index.html": "23dd44d7c24a69c086f76efad60c8283d2c49e6122f3c862f77b206a628de14d",
+      "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
+      "workspace-kanban.css": "e6db9b24df67eb748c24bf5052d6a5bd3e9839e4b8db4447ed8ae85cd3c93b14",
+      "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
+      "workspace-action-menu.js": "7567a791bc82a2b0ef455b77df2e30bf97413d7c16cea55274c3867a6324dd27",
+      "navigation.js": "46b0ed04e300445801930046a9443dd723b6cf912b7b845c6752494305fb2a8a",
+      "workspace-entity-context.js": "54381fd34bb28411cb12d6efdd542586195c72a954b66ef4156b94a40d7aeb69",
+      "editorial.css": "fe3e1facdf46fe70cd20b9857e36cf1bda71b1b019be2025a897a91260fae84f",
+      "workspace-workflows.css": "3a3e7f8d9ff9bf516c7e4d623d1cb7671df9aac334a8edc5212aadb5f31888ca",
+      "actions.js": "c61398fe3200a4319f16ce4e758cfec426b2441a450d3298b41eb81583aaa1b7",
+      "workspace-board.css": "af969d574d3f7b9fd675e66b62e7818f1699d57159035811506531d309fbbf28",
+      "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
+      "workspace-evidence-form.js": "fb7ee146a9e446ff7030aea5749984a7dd9f251e81d796b717ce57c03e060032",
+      "en-US.js": "5df5ceceb73b464a04636717763da53dd18671ad1eaab27fd03c744b4b2ec8b6",
+      "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+      "canvas.css": "3b5bb9b0391772d0a8bc023180cc275824711470f2d5151f899e175e88e62187",
+      "contracts-view.js": "c0dae57cc5b566b1e68e6f9d294540ad44c4a752894e0b90c70ed691b7a6b839",
+      "workspace-entry.css": "872f0b6827f8d90d96e713a076a16abe55592efc5e2d9401d2d612d056cb1293",
+      "workspace-kanban.js": "9e872b81d89c52f3c888ec59ce6850e799fff181eedddb23395526960d3008a2",
+      "app.js": "d1818df064f279398f1b2a09ff5442101d191d7ba1fb73ebc0b353a1555e0396",
+      "presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+      "workspace-conclusion-form.js": "15f1e7f9eaca264ea0aa03efea7af40f2d29f283a2ee39c489290a75655e8c79"
+    },
+    "screenshots_source_commit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+    "screenshot_ui_identical_to_qualified_ui": true,
+    "screenshot_count": 29,
+    "note": "The complete 193-case browser baseline is recorded at 198fa43. The final 20-case contextual suite and 29 captures qualify the later read-coherence correction, limited to workspace-kanban.js. Their overlapping cases are not added. PostgreSQL/core race use unchanged production Go/SQL; the separate CLI fixture correction is race-qualified.",
+    "unchanged_production_go_sql_since": "cbbeb09",
+    "later_go_change": "Test-only synchronization in packages/wos-cli/workspace_planning_test.go; qualified by repeated and full local CLI race checks."
+  },
+  "binary": {
+    "built_at": "2026-10-19T22:40:55.458128+00:00",
+    "commit": "356c5e650027d7e5ca703fa3c4494133ccb87e30",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "1.1.0",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2
+  },
+  "cli_full_race": {
+    "log_sha256": "7f928dfc89c6c694ea94f272d5fceabe1f84bd7e46cb636d43992a82d29f0b51",
+    "test_and_subtest_results": {
+      "pass": 121,
+      "skip": 4
+    },
+    "skips": [
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestReceiptCleanupRecoversRealFullDisk",
+        "details": "=== RUN   TestReceiptCleanupRecoversRealFullDisk\n    full_disk_linux_test.go:17: requires isolated capacity-limited filesystem\n--- SKIP: TestReceiptCleanupRecoversRealFullDisk (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestNativeOSKeyringProtectedProfileV2",
+        "details": "=== RUN   TestNativeOSKeyringProtectedProfileV2\n    native_keyring_v2_test.go:53: requires actual OS credential service; platform CI sets WOS_TEST_NATIVE_KEYRING=1\n--- SKIP: TestNativeOSKeyringProtectedProfileV2 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestNativeOSKeyringChildV2",
+        "details": "=== RUN   TestNativeOSKeyringChildV2\n    native_keyring_v2_test.go:91: native child fixture only\n--- SKIP: TestNativeOSKeyringChildV2 (0.00s)\n"
+      },
+      {
+        "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+        "test": "TestReturnResolutionCleanupRecoversRealFullDisk",
+        "details": "=== RUN   TestReturnResolutionCleanupRecoversRealFullDisk\n    return_resolution_full_disk_test.go:13: requires an explicitly isolated capacity-limited filesystem\n--- SKIP: TestReturnResolutionCleanupRecoversRealFullDisk (0.00s)\n"
+      }
+    ],
+    "package_results": {
+      "pass": 1
+    },
+    "test_target": "./packages/wos-cli"
+  },
+  "checks": {
+    "javascript_units": {
+      "passed": 74,
+      "failed": 0,
+      "log_sha256": "29a2b205c2dd84647023e8f2ef61d12a261691e3b120aef99e68e8b4b33ad89a"
+    },
+    "package_release_skill_compatibility": {
+      "passed": 32,
+      "failed": 0,
+      "log_sha256": "e40ec07aaf4fa223f40db08249d7acf3e0cd17d8b0714bcdc689f0e2cca5ef34"
+    },
+    "cli_recovery_race": {
+      "command": "go test -race -count=10 ./packages/wos-cli -run ^TestWorkspacePlanningRecoveryFreezesNoteAndProtectsProfile$",
+      "log_sha256": "fd022bdbfc0579ef717c982735da673006cb2b7c70b93de92e0df933aa6627d1"
+    },
+    "vet": {
+      "command": "go vet ./...",
+      "status": "passed"
+    },
+    "generated_parity": {
+      "status": "passed",
+      "scope": "signed storage, PostgreSQL adapter, HTTP catalog, MCP, SDK and event catalog"
+    },
+    "documentation_links": {
+      "files": 22,
+      "valid_local_targets": 417,
+      "broken": 0,
+      "external_links_not_checked": 35,
+      "receipt_sha256": "7b6333b6c9338b44ccc022f0bd694b16c31bfc7d5072d278bd78d9544214a09b"
+    }
+  },
+  "historical_development_runs": [
+    {
+      "browser_report": "wos-kanban-browser-full-suite.json",
+      "stats": {
+        "startTime": "2026-10-19T21:59:38.640Z",
+        "duration": 537364.399,
+        "expected": 172,
+        "skipped": 0,
+        "unexpected": 19,
+        "flaky": 0
+      }
+    },
+    {
+      "browser_report": "wos-kanban-corrected-journeys.json",
+      "stats": {
+        "startTime": "2026-10-19T22:12:25.762Z",
+        "duration": 96594.861,
+        "expected": 14,
+        "skipped": 0,
+        "unexpected": 7,
+        "flaky": 0
+      }
+    },
+    {
+      "browser_report": "wos-kanban-final-browser.json",
+      "stats": {
+        "startTime": "2026-10-19T22:20:10.895Z",
+        "duration": 578116.218,
+        "expected": 191,
+        "skipped": 0,
+        "unexpected": 2,
+        "flaky": 0
+      }
+    }
+  ],
+  "pending": [
+    "Independent five-participant comprehension study; no participants or findings invented.",
+    "Physical-device keyboard/touch and manual screen-reader/browser combinations.",
+    "Reference-environment large-Kanban latency and SQL query-count profiling; no production SLO claimed.",
+    "A dedicated aggregate workspace-kanban endpoint is deferred using the owner-approved bounded V1."
+  ],
+  "environment": {
+    "go": "go version go1.27.2 linux/amd64",
+    "node": "v24.19.0",
+    "browser": "154.0.8037.57",
+    "gomaxprocs": 2,
+    "full_suite_browser_workers": 4,
+    "final_contextual_browser_workers": 2,
+    "cpu_max": "400000 100000",
+    "memory_max": "34359738368",
+    "postgres": "Real local Docker PostgreSQL; connection credentials omitted."
+  },
+  "additional_browser_guards": {
+    "source_commit": "528223798dd1490d44a42d9216d82da8f930ec4c",
+    "report_sha256": "e66da91c10f88122a9514f464d336a868febbcbd01b06a31b0e417ac24548991",
+    "stats": {
+      "startTime": "2026-10-19T22:34:40.008Z",
+      "duration": 15216.383000000002,
+      "expected": 2,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "cases": [
+      {
+        "file": "tests/web/contextual-kanban-guards.spec.mjs",
+        "title": "strict cancellation acknowledgement in the browser persists its exact excluded scope",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 6320
+      },
+      {
+        "file": "tests/web/contextual-kanban-guards.spec.mjs",
+        "title": "real credential revocation closes an open Kanban and clears its private content",
+        "status": "expected",
+        "attempt_statuses": [
+          "passed"
+        ],
+        "duration_ms": 5603
+      }
+    ]
+  },
+  "findings": [
+    {
+      "finding": "Selected detail could retain a previous revision after refreshing columns",
+      "initial_regression_failed": true,
+      "initial_log_sha256": "a0d4695e7b4a9251f696f8f582a2a92505a76cd6d49b1f123314e9a858e930de",
+      "resolution": "Parent, child page and selected detail are revision-matched; criterion/history reads are fenced. The final targeted suite includes the regression."
+    },
+    {
+      "finding": "Candidate exact OpenAPI fingerprint stale after reviewed optional fields",
+      "initial_package_result": {
+        "passed": 31,
+        "failed": 1
+      },
+      "resolution": "Review documented; current candidate fingerprint only refreshed. Historical schema/shape guards and eight CLI digests retained."
+    },
+    {
+      "finding": "Native CI detected a test-handler data race in CLI planning recovery",
+      "resolution": "Protect both request count and key-set observations with one mutex; repeated -race and full local CLI race checks pass."
+    }
+  ]
+}

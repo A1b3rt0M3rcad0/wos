@@ -35,6 +35,10 @@ func main() {
 	}
 	paths := map[string]any{}
 	workActivityContracts(paths, schemas)
+	workspaceContracts(paths, schemas)
+	for name, schema := range commands.OperationalReadSchemas() {
+		schemas[name] = schema
+	}
 	schemas["DeliveryHealthQuery"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthQuery]())
 	schemas["DeliveryHealthResult"] = commands.SignedSchema(reflect.TypeFor[application.DeliveryHealthResult]())
 	paths["/api/v1/namespaces/{namespace_id}/operations/delivery-health"] = map[string]any{"get": map[string]any{"operationId": "getDeliveryHealth", "description": "Current authenticated Namespace administration required. Optional outcome_id enforces exact credential Scope. Durable counts/ages and process worker status are separate from API readiness; no URLs, secrets or payloads. At-least-once delivery requires consumer deduplication.", "parameters": []any{map[string]any{"name": "namespace_id", "in": "path", "required": true, "schema": map[string]any{"type": "string", "format": "uuid"}}, map[string]any{"name": "outcome_id", "in": "query", "schema": map[string]any{"type": "string", "format": "uuid"}}}, "responses": map[string]any{"200": map[string]any{"description": "Scoped queue and worker diagnostic", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/DeliveryHealthResult"}}}}, "403": map[string]any{"description": "Current Namespace administrative access denied"}}}}
@@ -58,10 +62,20 @@ func main() {
 	schemas["SignedStateResultV2"] = commands.SignedSchema(reflect.TypeFor[application.SignedStateResult]())
 
 	header := map[string]any{"name": "Idempotency-Key", "in": "header", "required": true, "schema": map[string]any{"type": "string", "minLength": 16, "maxLength": 128}}
+	commandMetadata := map[string]any{}
 	for _, d := range commands.NewCatalog(nil, nil).Descriptors() {
 		name := "Catalog_" + d.Name
 		schemas[name] = d.Schema
 		paths["/api/v1/commands/"+d.Name] = map[string]any{"post": map[string]any{"operationId": "command_" + d.Name, "description": "Application command. Retry an uncertain result with identical intent/key; reconcile stale versions before a new intent. Payload cap 256 KiB.", "parameters": []any{header}, "requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"type": "object", "required": []string{"command"}, "additionalProperties": false, "properties": map[string]any{"command": map[string]any{"$ref": "#/components/schemas/" + name}}}}}}, "responses": map[string]any{"200": map[string]any{"description": "Persisted result or commit receipt (result_omitted=true); includes command_id, outcome_revision and idempotent_replay."}, "400": map[string]any{"description": "Invalid intent or key."}, "401": map[string]any{"description": "Credential absent, revoked or expired."}, "403": map[string]any{"description": "Namespace or permission denied."}, "409": map[string]any{"description": "Version, transaction, idempotency or lease conflict; never silently change intent/version."}, "413": map[string]any{"description": "Payload exceeds byte limit."}}}}
+		commandMetadata[d.Name] = map[string]any{"description": d.Description, "authorization": d.Authorization, "transport": d.Transport}
+		switch d.Name {
+		case "submit_task_for_review", "accept_task_delivery", "request_task_delivery_changes", "withdraw_task_delivery", "set_objective_completion_mode":
+			operation := paths["/api/v1/commands/"+d.Name].(map[string]any)["post"].(map[string]any)
+			operation["description"] = d.Description
+		}
+		if _, ok := schemas["Result_"+d.Name]; ok {
+			paths["/api/v1/commands/"+d.Name].(map[string]any)["post"].(map[string]any)["responses"].(map[string]any)["200"] = map[string]any{"description": "Persisted result or explicit compact commit receipt; retry preserves the original IDs and intent.", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/Result_" + d.Name}}}}
+		}
 	}
 	paths["/api/v1/security/signing-commands"] = map[string]any{"post": map[string]any{"description": "Transactional signing identity administration; one-use enrollment and possession proof are mandatory for registration. Versions are quoted decimal strings. No private key is transmitted.", "parameters": []any{header}, "requestBody": map[string]any{"required": true, "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/SigningSecurityIntentV2"}}}}, "responses": map[string]any{"200": map[string]any{"description": "Persisted signing identity result or exact idempotent replay."}, "403": map[string]any{"description": "Current credential, policy or proof denied."}, "409": map[string]any{"description": "CAS or intent mismatch."}}}}
 	for _, path := range []string{"/api/v1/security/signing-identity", "/api/v1/namespaces/{namespace_id}/signed-trust", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/signed-state/{resource}/{entity_id}", "/api/v1/capabilities", "/api/v1/namespaces/{namespace_id}/commands/{command_id}", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/spec", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/checkpoints", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-contracts/{contract_id}/submissions", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/work-submissions/{submission_id}", "/api/v1/namespaces/{namespace_id}/outcomes/{outcome_id}/available-work"} {
@@ -81,6 +95,7 @@ func main() {
 	}
 	paths["/api/v1/security/signing-identity"].(map[string]any)["get"].(map[string]any)["responses"].(map[string]any)["200"] = map[string]any{"description": "Current credential public identity, own Principal activity and independent Principal/credential/Namespace quota ceilings; no other Principal contract list.", "content": map[string]any{"application/json": map[string]any{"schema": map[string]any{"$ref": "#/components/schemas/SigningIdentityViewV2"}}}}
 	document := map[string]any{"openapi": "3.1.0", "info": map[string]any{"title": "WOS generated command catalog", "version": strings.TrimSpace(string(version))}, "paths": paths, "security": []any{map[string]any{"bearerAuth": []string{}}, map[string]any{"browserSession": []string{}}}, "components": map[string]any{"schemas": schemas, "securitySchemes": map[string]any{"bearerAuth": map[string]any{"type": "http", "scheme": "bearer"}, "browserSession": map[string]any{"type": "apiKey", "in": "cookie", "name": "wos_session"}}}}
+	document["x-wos-command-metadata"] = commandMetadata
 	b, err := json.MarshalIndent(document, "", "  ")
 	if err != nil {
 		panic(err)

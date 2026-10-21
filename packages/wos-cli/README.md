@@ -3,7 +3,12 @@
 The `wos` CLI is the operational interface for agents. It discovers and acquires one WorkItem, exposes bounded context, records activity and proof, prepares delivery, and reconciles interrupted operations. The Server owns authorization and durable shared state; the external runtime executes work.
 
 > [!NOTE]
-> This README describes `feat/central-agent-workflow`. Published `wosctl` v0.4.2 does not include the new central commands. Build this branch to use them; `npm install -g wosctl@latest` installs the published release and can differ. The historical `wosctl` executable remains a compatibility alias.
+> This README describes the current source branch. Published `wosctl` can differ; check `wos version`, `wos catalog` and server capabilities. The historical `wosctl` executable remains a compatibility alias.
+
+For coherent inspectors, card summaries, documentary notes and atomic planning,
+see [operational workspace contracts](../../docs/operational-workspace-api.md).
+The `inspect` and restricted `planning apply` / `planning recover` groups use the
+same authenticated API while signed execution and review keep their own channels.
 
 ```sh
 go build -o ./bin/wos ./packages/wos-api/cmd/wos

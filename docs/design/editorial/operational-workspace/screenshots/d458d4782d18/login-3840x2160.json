@@ -1,0 +1,192 @@
+{
+  "sourceCommit": "d458d4782d1813b75df4264605606837c9aff73d",
+  "binary": {
+    "built_at": "2026-10-19T19:30:56Z",
+    "commit": "d458d4782d1813b75df4264605606837c9aff73d",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "1.1.0",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2,
+    "sha256": "81ede45bc98ca52360fcc87a82e1eabacd184f60b8fc57c8eaf2b06d7410e0a8"
+  },
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/154.0.8037.57",
+    "revision": "@73c14f6228d7cd537c855007e8f88678969cc0eb",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+    "jsVersion": "15.4.80.11"
+  },
+  "servedAssetsSha256": {
+    "actions.js": "c61398fe3200a4319f16ce4e758cfec426b2441a450d3298b41eb81583aaa1b7",
+    "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
+    "app.js": "c6c65283c99e6f93d839c469cda25a3924643b2b5c243016d1f56b257b9fd272",
+    "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
+    "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
+    "canvas.css": "3b5bb9b0391772d0a8bc023180cc275824711470f2d5151f899e175e88e62187",
+    "colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "contracts-view.js": "c0dae57cc5b566b1e68e6f9d294540ad44c4a752894e0b90c70ed691b7a6b839",
+    "editorial.css": "fe3e1facdf46fe70cd20b9857e36cf1bda71b1b019be2025a897a91260fae84f",
+    "editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "en-US.js": "5df5ceceb73b464a04636717763da53dd18671ad1eaab27fd03c744b4b2ec8b6",
+    "human-forms.js": "e4f974d51e96271aefa224a4f6a009dd38b0d28456b5f8ffe03cc04a4f4d141f",
+    "index.html": "d57db3dda55ca591dd3eacd2f0c3a7cc6bafa2087e134bdd5503746ba29731e2",
+    "intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "navigation.js": "46b0ed04e300445801930046a9443dd723b6cf912b7b845c6752494305fb2a8a",
+    "presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "structural-form-preview.js": "291bfe28bd3b8f969551b242a4438501c882edae61eb7e2ec29e3ae2224ee50f",
+    "style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "workspace-action-menu.js": "7567a791bc82a2b0ef455b77df2e30bf97413d7c16cea55274c3867a6324dd27",
+    "workspace-actions.js": "9ebfcb9ed80485a7223686023c892aa7ac02e3aae69996298738f6773483992b",
+    "workspace-blocking-form.js": "862512b9a83819a643e0bb95972879607449594677d08365ed32840c8f6f063e",
+    "workspace-board.css": "af969d574d3f7b9fd675e66b62e7818f1699d57159035811506531d309fbbf28",
+    "workspace-canvas.js": "f211323447fa2b37ea028689ba436026982d590819ba1ff51e2a9d0a18fb720b",
+    "workspace-card-summary.js": "e7cb8e8f8a50a1dc6aae00b286a3d0bd7c0a8f9fed9c46b6ed44b24f589321b9",
+    "workspace-conclusion-form.js": "9d568367f3a991f3ab25aa1b4d49fdcdb380baddfdf653076c52433674ec77fe",
+    "workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "workspace-entity-context.js": "54381fd34bb28411cb12d6efdd542586195c72a954b66ef4156b94a40d7aeb69",
+    "workspace-entry.css": "47c407ac06c8a60318dd9aa25ec6f52a0520bf14dab687f7787153fb0e6fb31f",
+    "workspace-evidence-form.js": "fb7ee146a9e446ff7030aea5749984a7dd9f251e81d796b717ce57c03e060032",
+    "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
+    "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
+    "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
+    "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
+    "workspace-view.js": "ba429f4e67f704e27779daa1df21bc571cec7c28df8fb61389cec716797586cb",
+    "workspace-workflows.css": "3a3e7f8d9ff9bf516c7e4d623d1cb7671df9aac334a8edc5212aadb5f31888ca"
+  },
+  "fixtureSourcesSha256": {
+    "tests/web/operational-gallery.spec.mjs": "dfca429462ba04fc9f5a5c6d8283a678c59dc90a0267328582c74216d4e22248",
+    "tests/web/ux-fixture.mjs": "a13b533e61ef9b21fa1a44a23f56dc0be42d4fdb840c452e085c25fd5d8fd1b8",
+    "tests/web/workspace-action-fixture.mjs": "3e920d3561513fbb44ffca6a3c2bb25d47ef8d559f40160616e47d05e9b75868",
+    "tests/web/canvas-fixture.mjs": "b5ae1e378ee268f164ee1994f57ef44304836605ac58cd17b1833dbe3ffc95a0",
+    "tests/web/native-browser-zoom.mjs": "3d061ae6b70c73744bb9820cd1bcbbe17089aeff7e89e0f485e3f04e952af690"
+  },
+  "fixtureScope": {
+    "namespace_id": "01a11992-0000-7000-8000-000000000001",
+    "outcome_id": "01a155a6-1a70-758e-b4f9-f6f76bbe0c5b"
+  },
+  "fixtureKind": "Representative records created through authenticated public commands; not a user study",
+  "state": "Credential login before any secret is entered",
+  "image": "login-3840x2160.png",
+  "screenshotSha256": "05055b7d96a305aa52453d7d0cc6424324ec8f15617aae80add13090c880e73e",
+  "capturedAt": "2026-10-19T19:31:53.032Z",
+  "captureMethod": "Playwright visible viewport; no image resizing or content masking",
+  "pixelSize": {
+    "width": 3840,
+    "height": 2160
+  },
+  "url": "http://127.0.0.1:37473/app/",
+  "viewport": {
+    "width": 3840,
+    "height": 2160,
+    "devicePixelRatio": 1,
+    "visualViewportScale": 1
+  },
+  "document": {
+    "width": 3840,
+    "height": 2160,
+    "scrollX": 0,
+    "scrollY": 0
+  },
+  "elements": {
+    ".topbar": {
+      "x": 0,
+      "y": 0,
+      "width": 3840,
+      "height": 56,
+      "right": 3840,
+      "bottom": 56,
+      "clientHeight": 55,
+      "scrollHeight": 55,
+      "scrollTop": 0,
+      "fontSize": 14,
+      "fontFamily": "\"DM Sans\", ui-sans-serif, system-ui, sans-serif",
+      "lineHeight": null
+    },
+    ".sidebar": null,
+    ".outcome-heading": null,
+    ".canvas-toolbar": null,
+    ".canvas-viewport": null,
+    ".canvas-footer": null,
+    "#canvas-details": null,
+    "#detail-title": null,
+    "#detail-content": null,
+    "#detail-actions": null,
+    ".workspace-state": null,
+    ".workspace-primary-actions": null,
+    ".canvas-inspector-detail": null,
+    ".canvas-inspector-slot": null,
+    ".workspace-path": null,
+    ".detail-description": null,
+    "#command-form": null,
+    "#command-form .dialog-body": null,
+    "#fields": null,
+    "#submit-command": null,
+    "#area-title": null,
+    "#content": null,
+    "#notice": null,
+    ".login-panel": {
+      "x": 2130.703125,
+      "y": 88,
+      "width": 525.296875,
+      "height": 468.375,
+      "right": 2656,
+      "bottom": 556.375,
+      "clientHeight": 466,
+      "scrollHeight": 477,
+      "scrollTop": 0,
+      "fontSize": 14,
+      "fontFamily": "\"DM Sans\", ui-sans-serif, system-ui, sans-serif",
+      "lineHeight": null
+    },
+    "#token": {
+      "x": 2155.703125,
+      "y": 249.59375,
+      "width": 475.296875,
+      "height": 44,
+      "right": 2631,
+      "bottom": 293.59375,
+      "clientHeight": 42,
+      "scrollHeight": 42,
+      "scrollTop": 0,
+      "fontSize": 12,
+      "fontFamily": "\"DM Sans\", ui-sans-serif, system-ui, sans-serif",
+      "lineHeight": 17.9999
+    },
+    "#login button": {
+      "x": 2155.703125,
+      "y": 331.734375,
+      "width": 475.296875,
+      "height": 46,
+      "right": 2631,
+      "bottom": 377.734375,
+      "clientHeight": 44,
+      "scrollHeight": 44,
+      "scrollTop": 0,
+      "fontSize": 14,
+      "fontFamily": "\"DM Sans\", ui-sans-serif, system-ui, sans-serif",
+      "lineHeight": 19.6
+    }
+  },
+  "canvas": {
+    "zoom": 0,
+    "nodeKinds": []
+  },
+  "inspectorFacets": [],
+  "activeControl": {
+    "tag": "BUTTON",
+    "id": "",
+    "action": null
+  }
+}

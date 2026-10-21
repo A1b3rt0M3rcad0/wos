@@ -83,7 +83,19 @@ export function readRoute(search) {
       throw Error(copy.text.thisWorkspaceLinkHasAnInvalidItem);
     item = { kind, id, namespace_id: namespace, outcome_id: outcome };
   }
-  return { namespace, outcome, area, view, section, item };
+  let subject;
+  if (p.has("subject")) {
+    if (!item) throw Error(copy.text.thisWorkspaceLinkHasAnInvalidItem);
+    const kind = p.get("subject");
+    if (kind === "criterion" && ["outcome", "objective", "work_item"].includes(item.kind) && uuid.test(p.get("criterion") || ""))
+      subject = { kind, ref: item, criterion_id: p.get("criterion") };
+    else if (kind === "roadmap_revision" && item.kind === "roadmap" && /^[1-9][0-9]{0,19}$/.test(p.get("revision") || "") && BigInt(p.get("revision")) <= 18446744073709551615n)
+      subject = { kind, ref: item, revision_number: p.get("revision") };
+    else if (kind === "execution_record" && item.kind === "work_item" && ["contract", "submission", "review_case"].includes(p.get("record_kind")) && uuid.test(p.get("record") || ""))
+      subject = { kind, ref: item, record_kind: p.get("record_kind"), record_id: p.get("record") };
+    else throw Error(copy.text.thisWorkspaceLinkHasAnInvalidItem);
+  }
+  return { namespace, outcome, area, view, section, item, ...(subject ? { subject } : {}) };
 }
 export function routeQuery({
   namespace,
@@ -92,11 +104,20 @@ export function routeQuery({
   view = "canvas",
   section = "work_items",
   item,
+  subject,
 }) {
   if (!namespace || !outcome) return "";
   const p = new URLSearchParams({ workspace: namespace, outcome, area });
   if (!["canvas", "overview"].includes(area)) p.set("section", section);
   if (area === "work") p.set("view", view);
   if (item) p.set("item", `${item.kind}/${item.id}`);
+  if (item && subject && subject.kind !== "entity" && subject.ref?.kind === item.kind && subject.ref?.id === item.id &&
+      subject.ref.namespace_id === namespace && subject.ref.outcome_id === outcome) {
+    p.set("subject", subject.kind);
+    if (subject.criterion_id) p.set("criterion", subject.criterion_id);
+    if (subject.revision_number) p.set("revision", subject.revision_number);
+    if (subject.record_kind) p.set("record_kind", subject.record_kind);
+    if (subject.record_id) p.set("record", subject.record_id);
+  }
   return "?" + p;
 }

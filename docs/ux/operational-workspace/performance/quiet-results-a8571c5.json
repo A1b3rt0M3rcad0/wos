@@ -1,0 +1,104 @@
+{
+  "sqlite": {
+    "cards_100": {
+      "p50_ns": 21356988.0,
+      "p95_ns": 81760529.0,
+      "p99_ns": 215995899.0,
+      "response_bytes": 66648.0,
+      "sql_statements/op": 8.0
+    },
+    "structural_page_50": {
+      "p50_ns": 7155698.0,
+      "p95_ns": 17273559.0,
+      "p99_ns": 24518499.0,
+      "response_bytes": 32628.0,
+      "sql_statements/op": 10.0
+    },
+    "task_inspector": {
+      "p50_ns": 21830313.0,
+      "p95_ns": 60642185.0,
+      "p99_ns": 214231261.0,
+      "response_bytes": 18322.0,
+      "sql_statements/op": 42.0
+    },
+    "objective_inspector": {
+      "p50_ns": 39643861.0,
+      "p95_ns": 194387688.0,
+      "p99_ns": 224630514.0,
+      "response_bytes": 16424.0,
+      "sql_statements/op": 41.0
+    },
+    "outcome_inspector": {
+      "p50_ns": 19965444.0,
+      "p95_ns": 38019582.0,
+      "p99_ns": 47312476.0,
+      "response_bytes": 25571.0,
+      "sql_statements/op": 29.0
+    },
+    "timeline_5": {
+      "p50_ns": 1857858.0,
+      "p95_ns": 2897900.0,
+      "p99_ns": 3097077.0,
+      "response_bytes": 6985.0,
+      "sql_statements/op": 4.0
+    },
+    "task_inspector_10_sessions": {
+      "p50_request_ns": 111611121.0,
+      "p95_request_ns": 277273086.0,
+      "p99_request_ns": 427179259.0,
+      "response_bytes": 18322.0,
+      "sql_statements/request": 42.0
+    }
+  },
+  "postgres": {
+    "cards_100": {
+      "p50_ns": 33632973.0,
+      "p95_ns": 182602478.0,
+      "p99_ns": 299595999.0,
+      "response_bytes": 66648.0,
+      "sql_statements/op": 10.0
+    },
+    "structural_page_50": {
+      "p50_ns": 18617771.0,
+      "p95_ns": 37977631.0,
+      "p99_ns": 43084791.0,
+      "response_bytes": 32628.0,
+      "sql_statements/op": 12.0
+    },
+    "task_inspector": {
+      "p50_ns": 42922687.0,
+      "p95_ns": 75753880.0,
+      "p99_ns": 87402884.0,
+      "response_bytes": 18322.0,
+      "sql_statements/op": 44.0
+    },
+    "objective_inspector": {
+      "p50_ns": 57194535.0,
+      "p95_ns": 180440519.0,
+      "p99_ns": 254939857.0,
+      "response_bytes": 16424.0,
+      "sql_statements/op": 43.0
+    },
+    "outcome_inspector": {
+      "p50_ns": 43350923.0,
+      "p95_ns": 148891283.0,
+      "p99_ns": 218130431.0,
+      "response_bytes": 25571.0,
+      "sql_statements/op": 31.0
+    },
+    "timeline_5": {
+      "p50_ns": 4353934.0,
+      "p95_ns": 9231031.0,
+      "p99_ns": 11563226.0,
+      "response_bytes": 6985.0,
+      "sql_statements/op": 6.0
+    },
+    "task_inspector_10_sessions": {
+      "p50_request_ns": 168277001.0,
+      "p95_request_ns": 834385527.0,
+      "p99_request_ns": 1103993927.0,
+      "response_bytes": 18322.0,
+      "sql_statements/request": 44.0
+    }
+  }
+}

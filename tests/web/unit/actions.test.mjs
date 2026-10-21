@@ -30,5 +30,23 @@ test("dependency removal is exposed only for an active typed relation with permi
   assert.ok(!removable({ ...base, context: "work_item" }));
   assert.equal(inventory.remove_dependency.exposure, "H");
   assert.equal(inventory.remove_dependency.surface, "human");
-  assert.equal(inventory.remove_dependency.permission, "outcome:write");
+  assert.equal(inventory.remove_dependency.permission, "dependency:write");
+});
+
+test("Issue–Task links require update authority, an open Outcome and the canonical typed relation", () => {
+  const linked = (value) => availableActions(value).some((action) => action.name === "relate_issue_to_work_item");
+  const remove = (value) => availableActions(value).some((action) => action.name === "remove_issue_work_item_relation");
+  for (const kind of ["issue", "work_item"])
+    assert.ok(linked({ ...context, context: kind, outcome: { lifecycle: "active" } }));
+  assert.ok(!linked({ ...context, context: "issue", outcome: { lifecycle: "achieved" } }));
+  assert.ok(!linked({ ...context, context: "issue", permissions: ["state:read"], outcome: { lifecycle: "active" } }));
+  const relation = { ...context, context: "relation", outcome: { lifecycle: "active" },
+    entity: { _kind: "relation", relation_type: "relates_to", lifecycle: "active" } };
+  assert.ok(remove(relation));
+  for (const relation_type of ["depends_on", "produces", undefined])
+    assert.ok(!remove({ ...relation, entity: { ...relation.entity, relation_type } }));
+  assert.ok(!remove({ ...relation, entity: { ...relation.entity, lifecycle: "removed" } }));
+  assert.ok(!remove({ ...relation, outcome: { lifecycle: "achieved" } }));
+  assert.equal(inventory.relate_issue_to_work_item.permission, "issue:update");
+  assert.equal(inventory.remove_issue_work_item_relation.permission, "issue:update");
 });

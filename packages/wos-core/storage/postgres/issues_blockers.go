@@ -4,6 +4,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
@@ -18,18 +19,20 @@ func (r issueRepository) Get(ctx context.Context, scope domain.Scope, id domain.
 		version                                 int64
 		title, description, severity, lifecycle string
 		reportedByJSON, resolutionSummary       string
-		duplicateRaw                            sql.NullString
+		assigneeJSON                            sql.NullString
+		objectiveRaw, duplicateRaw              sql.NullString
 		createdAt, updatedAt                    int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
-SELECT version, title, description, severity, lifecycle, reported_by_json,
+SELECT version, title, description, objective_id, severity, lifecycle, reported_by_json,
+       assignee_ref_json,
        resolution_summary, duplicate_of_issue_id, created_at, updated_at
 FROM issues
 WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
 		scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(),
 	).Scan(
-		&version, &title, &description, &severity, &lifecycle, &reportedByJSON,
-		&resolutionSummary, &duplicateRaw, &createdAt, &updatedAt,
+		&version, &title, &description, &objectiveRaw, &severity, &lifecycle, &reportedByJSON,
+		&assigneeJSON, &resolutionSummary, &duplicateRaw, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return domain.Issue{}, mapSQLError("get issue", err)
@@ -37,6 +40,14 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
 	var reportedBy domain.ActorRef
 	if err := unmarshalJSON(reportedByJSON, &reportedBy); err != nil {
 		return domain.Issue{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted issue reported_by is invalid", err)
+	}
+	var assigneeRef *domain.ActorRef
+	if assigneeJSON.Valid {
+		var parsed domain.ActorRef
+		if err := unmarshalJSON(assigneeJSON.String, &parsed); err != nil {
+			return domain.Issue{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted issue assignee_ref is invalid", err)
+		}
+		assigneeRef = &parsed
 	}
 	value := domain.Issue{
 		ID:                id,
@@ -47,9 +58,17 @@ WHERE namespace_id = $1 AND outcome_id = $2 AND id = $3`,
 		Severity:          domain.IssueSeverity(severity),
 		Lifecycle:         domain.IssueLifecycle(lifecycle),
 		ReportedBy:        reportedBy,
+		AssigneeRef:       assigneeRef,
 		ResolutionSummary: resolutionSummary,
 		CreatedAt:         decodeTime(createdAt),
 		UpdatedAt:         decodeTime(updatedAt),
+	}
+	if objectiveRaw.Valid {
+		parsed, err := domain.ParseID(objectiveRaw.String)
+		if err != nil {
+			return domain.Issue{}, err
+		}
+		value.ObjectiveID = &parsed
 	}
 	if duplicateRaw.Valid {
 		parsed, err := domain.ParseID(duplicateRaw.String)
@@ -138,6 +157,167 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	return result, nil
 }
 
+func (r issueRepository) ListPendingIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, false)
+}
+
+func (r issueRepository) ListDuplicateIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int) ([]domain.Issue, int, error) {
+	return r.listIssuesByObjective(ctx, scope, objectiveID, after, limit, true)
+}
+
+func (r issueRepository) listIssuesByObjective(ctx context.Context, scope domain.Scope, objectiveID domain.ID, after string, limit int, duplicateOnly bool) ([]domain.Issue, int, error) {
+	if err := r.uow.ensureOpen(); err != nil {
+		return nil, 0, err
+	}
+	if err := scope.Validate(); err != nil {
+		return nil, 0, err
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "invalid Objective ID", err)
+	}
+	if limit < 1 || limit > 101 {
+		return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid Objective Issue page limit")
+	}
+	if after != "" {
+		if _, err := domain.ParseID(after); err != nil {
+			return nil, 0, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid_cursor: invalid Issue key")
+		}
+	}
+
+	// This private predicate is fixed by the typed repository entry point;
+	// caller input is bound only as SQL parameters. Both branches use the
+	// scope/Objective/lifecycle index and share the bounded page hydration.
+	predicate := "lifecycle IN ('open', 'investigating')"
+	if duplicateOnly {
+		predicate = "lifecycle = 'duplicate'"
+	}
+	countQuery := fmt.Sprintf(`
+SELECT count(*) FROM issues
+WHERE namespace_id = $1 AND outcome_id = $2 AND objective_id = $3
+  AND %s`, predicate)
+	var total int
+	if err := r.uow.tx.QueryRowContext(ctx, countQuery,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), objectiveID.String(),
+	).Scan(&total); err != nil {
+		return nil, 0, mapSQLError("count Objective Issues", err)
+	}
+
+	// Fetch the page and its affected references in one bounded query. The
+	// count and rows use the same serializable unit-of-work snapshot.
+	pageQuery := fmt.Sprintf(`
+WITH page AS (
+    SELECT id, version, title, description, objective_id, severity, lifecycle,
+           reported_by_json, assignee_ref_json, resolution_summary, duplicate_of_issue_id, created_at, updated_at
+    FROM issues
+    WHERE namespace_id = $1 AND outcome_id = $2 AND objective_id = $3
+      AND %s AND id > $4
+    ORDER BY id
+    LIMIT $5
+)
+SELECT p.id, p.version, p.title, p.description, p.objective_id, p.severity, p.lifecycle,
+       p.reported_by_json, p.assignee_ref_json, p.resolution_summary, p.duplicate_of_issue_id, p.created_at, p.updated_at,
+       r.affected_id, r.affected_kind
+FROM page p
+LEFT JOIN issue_affected_refs r
+  ON r.namespace_id = $6 AND r.outcome_id = $7 AND r.issue_id = p.id
+ORDER BY p.id, r.affected_kind, r.affected_id`, predicate)
+	rows, err := r.uow.tx.QueryContext(ctx, pageQuery,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), objectiveID.String(), after, limit,
+		scope.NamespaceID.String(), scope.OutcomeID.String(),
+	)
+	if err != nil {
+		return nil, 0, mapSQLError("list Objective Issues", err)
+	}
+	defer rows.Close()
+
+	result := make([]domain.Issue, 0)
+	indexByID := make(map[string]int)
+	for rows.Next() {
+		var (
+			rawID, title, description, severity, lifecycle string
+			reportedByJSON, resolutionSummary              string
+			assigneeJSON                                   sql.NullString
+			version                                        int64
+			objectiveRaw, duplicateRaw                     sql.NullString
+			createdAt, updatedAt                           int64
+			affectedID, affectedKind                       sql.NullString
+		)
+		if err := rows.Scan(
+			&rawID, &version, &title, &description, &objectiveRaw, &severity, &lifecycle,
+			&reportedByJSON, &assigneeJSON, &resolutionSummary, &duplicateRaw, &createdAt, &updatedAt,
+			&affectedID, &affectedKind,
+		); err != nil {
+			return nil, 0, err
+		}
+		index, exists := indexByID[rawID]
+		if !exists {
+			id, err := domain.ParseID(rawID)
+			if err != nil {
+				return nil, 0, err
+			}
+			reportedBy := domain.ActorRef{}
+			if err := unmarshalJSON(reportedByJSON, &reportedBy); err != nil {
+				return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted issue reported_by is invalid", err)
+			}
+			var assigneeRef *domain.ActorRef
+			if assigneeJSON.Valid {
+				var parsed domain.ActorRef
+				if err := unmarshalJSON(assigneeJSON.String, &parsed); err != nil {
+					return nil, 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted issue assignee_ref is invalid", err)
+				}
+				assigneeRef = &parsed
+			}
+			value := domain.Issue{
+				ID: id, Scope: scope, Version: domain.Version(version), Title: title,
+				Description: description, Severity: domain.IssueSeverity(severity),
+				Lifecycle: domain.IssueLifecycle(lifecycle), ReportedBy: reportedBy, AssigneeRef: assigneeRef,
+				ResolutionSummary: resolutionSummary, CreatedAt: decodeTime(createdAt),
+				UpdatedAt: decodeTime(updatedAt), AffectedRefs: make([]domain.EntityRef, 0),
+			}
+			if objectiveRaw.Valid {
+				parsed, err := domain.ParseID(objectiveRaw.String)
+				if err != nil {
+					return nil, 0, err
+				}
+				value.ObjectiveID = &parsed
+			}
+			if duplicateRaw.Valid {
+				parsed, err := domain.ParseID(duplicateRaw.String)
+				if err != nil {
+					return nil, 0, err
+				}
+				value.DuplicateOfIssueID = &parsed
+			}
+			index = len(result)
+			indexByID[rawID] = index
+			result = append(result, value)
+		}
+		if affectedID.Valid != affectedKind.Valid {
+			return nil, 0, domain.NewError(domain.ErrorCodeIssue, "persisted issue affected reference is incomplete")
+		}
+		if affectedID.Valid {
+			id, err := domain.ParseID(affectedID.String)
+			if err != nil {
+				return nil, 0, err
+			}
+			kind, err := domain.ParseEntityKind(affectedKind.String)
+			if err != nil {
+				return nil, 0, err
+			}
+			result[index].AffectedRefs = append(result[index].AffectedRefs, domain.EntityRef{Scope: scope, Kind: kind, ID: id})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	for _, issue := range result {
+		if err := issue.Validate(); err != nil {
+			return nil, 0, domain.WrapError(domain.ErrorCodeIssue, "persisted issue is invalid", err)
+		}
+	}
+	return result, total, nil
+}
+
 func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
 	if err := r.uow.ensureOpen(); err != nil {
 		return err
@@ -152,14 +332,22 @@ func (r issueRepository) Insert(ctx context.Context, issue domain.Issue) error {
 	if err != nil {
 		return err
 	}
+	var assigneeJSON any
+	if issue.AssigneeRef != nil {
+		encoded, err := marshalJSON(*issue.AssigneeRef)
+		if err != nil {
+			return err
+		}
+		assigneeJSON = encoded
+	}
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO issues (
-    id, namespace_id, outcome_id, kind, version, title, description, severity,
+    id, namespace_id, outcome_id, kind, version, title, description, objective_id, assignee_ref_json, severity,
     lifecycle, reported_by_json, resolution_summary, duplicate_of_issue_id,
     created_at, updated_at
-) VALUES ($1, $2, $3, 'issue', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+) VALUES ($1, $2, $3, 'issue', $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
 		issue.ID.String(), issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(),
-		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity),
+		int64(issue.Version), issue.Title, issue.Description, nullableID(issue.ObjectiveID), assigneeJSON, string(issue.Severity),
 		string(issue.Lifecycle), reportedByJSON, issue.ResolutionSummary,
 		nullableID(issue.DuplicateOfIssueID), encodeTime(issue.CreatedAt), encodeTime(issue.UpdatedAt),
 	)
@@ -190,13 +378,21 @@ func (r issueRepository) Save(ctx context.Context, issue domain.Issue, expected 
 	if issue.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "issue version must advance exactly once per save")
 	}
+	var assigneeJSON any
+	if issue.AssigneeRef != nil {
+		encoded, err := marshalJSON(*issue.AssigneeRef)
+		if err != nil {
+			return err
+		}
+		assigneeJSON = encoded
+	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE issues
 SET version = $1, title = $2, description = $3, severity = $4, lifecycle = $5,
-    resolution_summary = $6, duplicate_of_issue_id = $7, updated_at = $8
-WHERE namespace_id = $9 AND outcome_id = $10 AND id = $11 AND version = $12`,
+    assignee_ref_json = $6, resolution_summary = $7, duplicate_of_issue_id = $8, updated_at = $9
+WHERE namespace_id = $10 AND outcome_id = $11 AND id = $12 AND version = $13`,
 		int64(issue.Version), issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle),
-		issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
+		assigneeJSON, issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.UpdatedAt),
 		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(), int64(expected),
 	)
 	if err != nil {

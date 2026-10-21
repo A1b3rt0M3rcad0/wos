@@ -67,6 +67,7 @@ func TestWave08LeaseHTTPContract(t *testing.T) {
 	)
 	outcome := created.Value.Value
 	outcomeURL := base + "/" + outcome.ID.String()
+	objective := createHTTPTestObjective(t, client, outcomeURL, "wave08-owner-create-0001")
 
 	criterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t,
@@ -98,7 +99,7 @@ func TestWave08LeaseHTTPContract(t *testing.T) {
 		client,
 		http.MethodPost,
 		outcomeURL+"/work-items",
-		[]byte(`{"title":"Lease work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Lease work", "todo"),
 		map[string]string{"Idempotency-Key": "wave08-work-create-0001"},
 		http.StatusCreated,
 	)

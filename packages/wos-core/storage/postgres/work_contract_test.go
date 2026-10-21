@@ -40,7 +40,7 @@ func contractStorageFixture(t *testing.T, store *Store, now time.Time) d.WorkIte
 	if err := tx.Outcomes().Insert(ctx, o); err != nil {
 		t.Fatal(err)
 	}
-	if err := tx.WorkItems().Insert(ctx, w); err != nil {
+	if err := insertWorkItemFixture(ctx, tx.Objectives(), tx.WorkItems(), &w); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.Commit(); err != nil {
@@ -194,11 +194,21 @@ func TestWorkContractFinalizationProofSurvivesRestore(t *testing.T) {
 		t.Fatal(err)
 	}
 	cc := sqliteCommandContext("0199ff10-0000-7000-8000-000000000020", "contract-result-criterion")
+	deferred, err := s.DeferWorkItem(ctx, sqliteCommandContext("0199ff10-0000-7000-8000-000000000120", ""), a.DeferWorkItemCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedVersion: w.Version})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w = deferred.Value
 	if _, err = s.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: w.Ref(), ExpectedVersion: w.Version, Title: "Checked delivery", Required: true, VerificationMode: d.VerificationModeAttestation}); err != nil {
 		t.Fatal(err)
 	}
+	activated, err := s.ActivateWorkItem(ctx, sqliteCommandContext("0199ff10-0000-7000-8000-000000000121", ""), a.ActivateWorkItemCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedVersion: w.Version + 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	w = activated.Value
 	cc.IdempotencyKey = "contract-result-acquire"
-	acquired, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version + 1})
+	acquired, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version})
 	if err != nil {
 		t.Fatal(err)
 	}

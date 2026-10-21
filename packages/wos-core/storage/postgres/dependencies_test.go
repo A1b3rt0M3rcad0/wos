@@ -18,7 +18,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	now := time.Date(2026, 10, 2, 15, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)
 
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	targetResult, err := service.CreateWorkItem(ctx, sqliteCommandContext(
 		"0199ef01-0000-7000-8000-000000000104", "",
 	), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "target", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "target", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {
@@ -79,8 +79,8 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	sourceResult, err := service.CreateWorkItem(ctx, sqliteCommandContext(
 		"0199ef01-0000-7000-8000-000000000105", "",
 	), application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "source", Priority: domain.PriorityNormal,
-		Lifecycle: domain.WorkItemLifecycleTodo, NotBefore: &future,
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()), Title: "source", Priority: domain.PriorityNormal,
+		Lifecycle: domain.WorkItemLifecycleBacklog, NotBefore: &future,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -96,13 +96,19 @@ func TestDependencyAndNotBeforeSurviveSQLiteRestart(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	activatedSource, err := service.ActivateWorkItem(ctx, sqliteCommandContext("0199ef01-0000-7000-8000-000000000116", ""), application.ActivateWorkItemCommand{Scope: source.Scope, WorkItemID: source.ID, ExpectedVersion: source.Version})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source = activatedSource.Value
+
 	relation := relationResult.Value
 
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
 
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

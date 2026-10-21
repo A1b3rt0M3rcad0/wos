@@ -46,7 +46,10 @@ func encodeValue(v reflect.Value) (any, error) {
 				continue
 			}
 			fv := v.Field(i)
-			if (strings.Contains(f.Tag.Get("json"), "omitempty") || fv.Kind() == reflect.Pointer || fv.Kind() == reflect.Slice) && fv.IsZero() {
+			if fv.Kind() == reflect.Pointer && fv.IsNil() && f.Tag.Get("wosnullable") == "false" {
+				return nil, fmt.Errorf("%s must not be null", fieldName(f))
+			}
+			if f.Tag.Get("wos") != "required" && (strings.Contains(f.Tag.Get("json"), "omitempty") || fv.Kind() == reflect.Pointer || fv.Kind() == reflect.Slice) && fv.IsZero() {
 				continue
 			}
 			encoded, err := encodeValue(fv)

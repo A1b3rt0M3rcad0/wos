@@ -73,10 +73,11 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if g.NamespaceID.Validate() != nil || g.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid grant")
 	}
-	for _, p := range g.Permissions {
-		if !p.Valid() {
-			return d.NewError(d.ErrorCodeInvalidArgument, "invalid permission")
-		}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
+	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -111,19 +112,30 @@ func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.N
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out, ctx.Err()
 }
-func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
+func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential, policy d.CredentialPolicy, metadata ports.CredentialMetadata) error {
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid bootstrap binding")
+	}
+	if g.PermissionCompatibilityVersion != 0 {
+		return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+	}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.security.Namespaces[n.ID]; ok {
 		return ctx.Err()
 	}
+	if err := validateMemoryCredentialBundle(s.security, s.outcomes, c, &policy, &metadata, g, metadata.CreatedAt, g.PrincipalID, c.Actor); err != nil {
+		return err
+	}
 	s.security.Namespaces[n.ID] = n
 	s.security.Versions[n.ID] = 1
 	s.security.Grants[securityKey(n.ID, g.PrincipalID)] = deepCopy(g)
 	s.security.Credentials[c.Digest] = c
+	s.security.Policies[securityKey(n.ID, c.ID.String())] = deepCopy(policy)
+	s.security.Metadata[securityKey(n.ID, c.ID.String())] = deepCopy(metadata)
 	return ctx.Err()
 }
 func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
@@ -137,7 +149,7 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 	}
 	allowed := false
 	for _, p := range grant.Permissions {
-		allowed = allowed || p == r.Authorization.Permission
+		allowed = allowed || p == r.Authorization.Permission || (r.Authorization.LegacyPermission != "" && grant.PermissionCompatibilityVersion == ports.PermissionCompatibilityLegacyV1 && p == r.Authorization.LegacyPermission)
 	}
 	if !allowed {
 		return denied
@@ -153,7 +165,7 @@ func (tx *transaction) AuthorizeAccessSnapshot(ctx context.Context, r ports.Acce
 		}
 		c = parent
 	}
-	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
+	if policy, ok := tx.security.Policies[securityKey(c.NamespaceID, c.ID.String())]; ok && !policy.PermitsWithCompatibility(string(r.Authorization.Permission), string(r.Authorization.LegacyPermission), r.Authorization.OutcomeID) {
 		return denied
 	}
 	return ctx.Err()

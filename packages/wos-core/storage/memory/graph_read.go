@@ -25,7 +25,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 	if e != nil {
 		return nil, e
 	}
-	add := func(id string, source, target d.EntityRef, kind, truth string) error {
+	add := func(id string, source, target d.EntityRef, kind, truth string, strength d.DependencyStrength) error {
 		if id <= after || !(direction != "in" && frontier[source] || direction != "out" && frontier[target]) {
 			return nil
 		}
@@ -40,7 +40,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 				return nil
 			}
 		}
-		return b.Add(id, ports.GraphReadEdge{ID: id, Source: source, Target: target, Kind: kind, SourceOfTruth: truth})
+		return b.Add(id, ports.GraphReadEdge{ID: id, Source: source, Target: target, Kind: kind, Strength: strength, SourceOfTruth: truth})
 	}
 	outcome := d.EntityRef{Scope: scope, Kind: d.EntityKindOutcome, ID: scope.OutcomeID}
 	for _, v := range r.tx.objectives {
@@ -51,7 +51,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.ParentObjectiveID != nil {
 			parent = d.EntityRef{Scope: scope, Kind: d.EntityKindObjective, ID: *v.ParentObjectiveID}
 		}
-		if e = add("objective:"+v.ID.String(), parent, v.Ref(), "hierarchy", "objective"); e != nil {
+		if e = add("objective:"+v.ID.String(), parent, v.Ref(), "hierarchy", "objective", ""); e != nil {
 			return nil, e
 		}
 	}
@@ -63,7 +63,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.ObjectiveID != nil {
 			owner = d.EntityRef{Scope: scope, Kind: d.EntityKindObjective, ID: *v.ObjectiveID}
 		}
-		if e = add("work:"+v.ID.String(), owner, v.Ref(), "ownership", "work_item"); e != nil {
+		if e = add("work:"+v.ID.String(), owner, v.Ref(), "ownership", "work_item", ""); e != nil {
 			return nil, e
 		}
 	}
@@ -71,11 +71,11 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.Scope != scope || v.Lifecycle != d.BlockerLifecycleActive {
 			continue
 		}
-		if e = add(v.ID.String(), v.Ref(), v.BlockedRef, "blocks", "blocker"); e != nil {
+		if e = add(v.ID.String(), v.Ref(), v.BlockedRef, "blocks", "blocker", ""); e != nil {
 			return nil, e
 		}
 		if v.CauseRef != nil {
-			if e = add(v.ID.String()+":cause", *v.CauseRef, v.Ref(), "causes", "blocker"); e != nil {
+			if e = add(v.ID.String()+":cause", *v.CauseRef, v.Ref(), "causes", "blocker", ""); e != nil {
 				return nil, e
 			}
 		}
@@ -84,7 +84,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.Scope != scope || v.ArtifactID == nil {
 			continue
 		}
-		if e = add(v.ID.String()+":artifact", v.Ref(), d.EntityRef{Scope: scope, Kind: d.EntityKindArtifact, ID: *v.ArtifactID}, "artifact_source", "evidence"); e != nil {
+		if e = add(v.ID.String()+":artifact", v.Ref(), d.EntityRef{Scope: scope, Kind: d.EntityKindArtifact, ID: *v.ArtifactID}, "artifact_source", "evidence", ""); e != nil {
 			return nil, e
 		}
 	}
@@ -92,7 +92,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.Scope != scope || v.SupersedesDecisionID == nil {
 			continue
 		}
-		if e = add(v.ID.String()+":supersedes", v.Ref(), d.EntityRef{Scope: scope, Kind: d.EntityKindDecision, ID: *v.SupersedesDecisionID}, "supersedes", "decision"); e != nil {
+		if e = add(v.ID.String()+":supersedes", v.Ref(), d.EntityRef{Scope: scope, Kind: d.EntityKindDecision, ID: *v.SupersedesDecisionID}, "supersedes", "decision", ""); e != nil {
 			return nil, e
 		}
 	}
@@ -100,7 +100,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.Scope != scope || v.Lifecycle != d.RelationLifecycleActive {
 			continue
 		}
-		if e = add(v.ID.String(), v.SourceRef, v.TargetRef, string(v.RelationType), "relation"); e != nil {
+		if e = add(v.ID.String(), v.SourceRef, v.TargetRef, string(v.RelationType), "relation", v.Strength); e != nil {
 			return nil, e
 		}
 	}
@@ -108,7 +108,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		if v.Scope != scope || v.Lifecycle != d.EvidenceLinkLifecycleActive {
 			continue
 		}
-		if e = add(v.ID.String(), d.EntityRef{Scope: scope, Kind: d.EntityKindEvidence, ID: v.EvidenceID}, v.TargetRef, string(v.Stance), "evidence_link"); e != nil {
+		if e = add(v.ID.String(), d.EntityRef{Scope: scope, Kind: d.EntityKindEvidence, ID: v.EvidenceID}, v.TargetRef, string(v.Stance), "evidence_link", ""); e != nil {
 			return nil, e
 		}
 	}

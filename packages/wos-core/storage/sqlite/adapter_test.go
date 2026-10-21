@@ -445,7 +445,7 @@ func TestSQLiteClaimByNewPrincipalCreatesLeasePrincipalBeforeSave(t *testing.T) 
 	work, err := service.CreateWorkItem(ctx, sqliteCommandContext(
 		"0199e946-0000-7000-8000-000000000105", "",
 	), application.CreateWorkItemCommand{
-		Scope:     activated.Value.Scope(),
+		Scope: activated.Value.Scope(), ObjectiveID: sqliteObjectiveForWorkFixture(t, service, activated.Value.Scope()),
 		Title:     "Claim me",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,

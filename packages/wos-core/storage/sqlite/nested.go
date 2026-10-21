@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
@@ -238,8 +239,9 @@ INSERT OR IGNORE INTO criterion_revisions (
 INSERT OR IGNORE INTO criterion_assessments (
     id, namespace_id, outcome_id, criterion_id, criterion_revision,
     result, rationale, principal_id, actor_json, assessed_at,
-    evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest,
+    task_delivery_id, task_delivery_digest, task_delivery_round
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			assessment.ID.String(),
 			owner.NamespaceID.String(),
 			owner.OutcomeID.String(),
@@ -252,6 +254,7 @@ INSERT OR IGNORE INTO criterion_assessments (
 			encodeTime(assessment.AssessedAt),
 			evaluatorJSON,
 			nullableID(assessment.SupersedesAssessmentID), nullableID(assessment.SubmissionID), assessment.SubmissionDigest,
+			taskDeliveryAssessmentID(assessment.TaskDeliveryRef), taskDeliveryAssessmentDigest(assessment.TaskDeliveryRef), taskDeliveryAssessmentRound(assessment.TaskDeliveryRef),
 		); err != nil {
 			return mapSQLError("insert criterion assessment", err)
 		}
@@ -331,12 +334,13 @@ func verifyCriterionAssessment(
 	var (
 		rawCriterionID, result, rationale, principalID, actorJSON string
 		revision, assessedAt                                      int64
-		evaluatorJSON, supersedes, submissionID                   sql.NullString
-		submissionDigest                                          string
+		evaluatorJSON, supersedes, submissionID, taskDeliveryID   sql.NullString
+		submissionDigest, taskDeliveryDigest, taskDeliveryRound   string
 	)
 	err := tx.QueryRowContext(ctx, `
 SELECT criterion_id, criterion_revision, result, rationale, principal_id,
-       actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest
+       actor_json, assessed_at, evaluator_ref_json, supersedes_assessment_id, submission_id, submission_digest,
+       task_delivery_id, task_delivery_digest, task_delivery_round
 FROM criterion_assessments
 WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		scope.NamespaceID.String(),
@@ -351,7 +355,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		&actorJSON,
 		&assessedAt,
 		&evaluatorJSON,
-		&supersedes, &submissionID, &submissionDigest,
+		&supersedes, &submissionID, &submissionDigest, &taskDeliveryID, &taskDeliveryDigest, &taskDeliveryRound,
 	)
 	if err != nil {
 		return mapSQLError("verify criterion assessment", err)
@@ -373,7 +377,9 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
 		expectedSupersedes = assessment.SupersedesAssessmentID.String()
 	}
 
-	if submissionID.String != idString(assessment.SubmissionID) || submissionDigest != assessment.SubmissionDigest || rawCriterionID != assessment.CriterionID.String() ||
+	if submissionID.String != idString(assessment.SubmissionID) || submissionDigest != assessment.SubmissionDigest ||
+		taskDeliveryID.String != idString(taskDeliveryAssessmentIDPtr(assessment.TaskDeliveryRef)) || taskDeliveryDigest != taskDeliveryAssessmentDigest(assessment.TaskDeliveryRef) || taskDeliveryRound != taskDeliveryAssessmentRound(assessment.TaskDeliveryRef) ||
+		rawCriterionID != assessment.CriterionID.String() ||
 		revision != int64(assessment.CriterionRevision) ||
 		result != string(assessment.Result) ||
 		rationale != assessment.Rationale ||
@@ -531,7 +537,8 @@ ORDER BY r.criterion_id, r.criterion_revision`,
 	assessmentRows, err := tx.QueryContext(ctx, `
 SELECT a.id, a.criterion_id, a.criterion_revision, a.result, a.rationale,
        a.principal_id, a.actor_json, a.assessed_at, a.evaluator_ref_json,
-       a.supersedes_assessment_id, a.submission_id, a.submission_digest
+       a.supersedes_assessment_id, a.submission_id, a.submission_digest,
+       a.task_delivery_id, a.task_delivery_digest, a.task_delivery_round
 FROM criterion_assessments a
 JOIN success_criteria c
   ON c.namespace_id = a.namespace_id
@@ -625,12 +632,13 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 	var (
 		rawID, rawCriterion, result, rationale, principal, actorJSON string
 		revision, assessedAt                                         int64
-		evaluatorJSON, supersedes, submissionID                      sql.NullString
-		submissionDigest                                             string
+		evaluatorJSON, supersedes, submissionID, taskDeliveryID      sql.NullString
+		submissionDigest, taskDeliveryDigest, taskDeliveryRound      string
 	)
 	if err := scanner.Scan(
 		&rawID, &rawCriterion, &revision, &result, &rationale,
 		&principal, &actorJSON, &assessedAt, &evaluatorJSON, &supersedes, &submissionID, &submissionDigest,
+		&taskDeliveryID, &taskDeliveryDigest, &taskDeliveryRound,
 	); err != nil {
 		return domain.CriterionAssessment{}, err
 	}
@@ -657,6 +665,19 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		AssessedAt:        decodeTime(assessedAt),
 	}
 	value.SubmissionDigest = submissionDigest
+	if taskDeliveryID.Valid {
+		deliveryID, err := domain.ParseID(taskDeliveryID.String)
+		if err != nil {
+			return domain.CriterionAssessment{}, err
+		}
+		round, err := strconv.ParseUint(taskDeliveryRound, 10, 64)
+		if err != nil {
+			return domain.CriterionAssessment{}, fmt.Errorf("invalid TaskDelivery assessment round: %w", err)
+		}
+		value.TaskDeliveryRef = &domain.TaskDeliveryAssessmentRef{ID: deliveryID, Digest: taskDeliveryDigest, Round: round}
+	} else if taskDeliveryDigest != "" || taskDeliveryRound != "0" {
+		return domain.CriterionAssessment{}, fmt.Errorf("incomplete TaskDelivery assessment binding")
+	}
 	if submissionID.Valid {
 		parsed, err := domain.ParseID(submissionID.String)
 		if err != nil {
@@ -679,6 +700,34 @@ func scanAssessment(scanner rowScanner) (domain.CriterionAssessment, error) {
 		value.SupersedesAssessmentID = &parsed
 	}
 	return value, value.Validate()
+}
+
+func taskDeliveryAssessmentID(ref *domain.TaskDeliveryAssessmentRef) any {
+	if ref == nil {
+		return nil
+	}
+	return ref.ID.String()
+}
+
+func taskDeliveryAssessmentIDPtr(ref *domain.TaskDeliveryAssessmentRef) *domain.ID {
+	if ref == nil {
+		return nil
+	}
+	return &ref.ID
+}
+
+func taskDeliveryAssessmentDigest(ref *domain.TaskDeliveryAssessmentRef) string {
+	if ref == nil {
+		return ""
+	}
+	return ref.Digest
+}
+
+func taskDeliveryAssessmentRound(ref *domain.TaskDeliveryAssessmentRef) string {
+	if ref == nil {
+		return "0"
+	}
+	return strconv.FormatUint(ref.Round, 10)
 }
 
 func loadAssessmentEvidence(
@@ -753,6 +802,29 @@ WHERE namespace_id = ? AND outcome_id = ? AND owner_id = ?`,
 		storageID, err := conclusionStorageID(owner, ordinal, conclusion)
 		if err != nil {
 			return err
+		}
+		// Historical writers could hash an empty assessment set as either null
+		// or []. Reads normalize the set; preserve the original storage ID
+		// rather than attempting to insert a different hash at its ordinal.
+		// All other content and provenance still pass verifyConclusionRow.
+		if len(conclusion.Assessments) == 0 {
+			alternate := conclusion
+			if conclusion.Assessments == nil {
+				alternate.Assessments = []domain.CriterionAssessmentRef{}
+			} else {
+				alternate.Assessments = nil
+			}
+			alternateID, err := conclusionStorageID(owner, ordinal, alternate)
+			if err != nil {
+				return err
+			}
+			var existing string
+			err = tx.QueryRowContext(ctx, `SELECT id FROM conclusions WHERE namespace_id=? AND outcome_id=? AND owner_id=? AND id=?`, owner.NamespaceID.String(), owner.OutcomeID.String(), owner.ID.String(), alternateID).Scan(&existing)
+			if err == nil {
+				storageID = existing
+			} else if err != sql.ErrNoRows {
+				return mapSQLError("resolve empty conclusion history identity", err)
+			}
 		}
 		actorJSON, err := marshalJSON(conclusion.Actor)
 		if err != nil {

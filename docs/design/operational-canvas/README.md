@@ -1,5 +1,10 @@
 # Outcome Board
 
+The [current screenshots](../editorial/board-communication/README.md) show
+compact contextual actions, unobstructed feedback and freely arranged notes.
+Use the [relationship guide](../../workspace-relationships.md) to distinguish
+ownership, dependencies, Evidence stances, affected items and explicit blocking.
+
 The Outcome Board brings the selected Outcome, its Objectives, Tasks and related records into one working view. It is the default working environment for an Outcome and uses the full workspace width without a left sidebar. Selecting a note opens the existing detail and action surfaces within that environment. The six purpose-based areas remain available through **Views** for summaries, complete collections and focused work. Choose **Views → Overview** to restore the sidebar and switch Outcomes or Workspaces. The board is a presentation of persisted WOS state; arranging a note does not change that state.
 
 The map, data and action contracts below originated on `feat/visual-operational-canvas`. The [viewport-workspace follow-up](canvas-first/README.md) records the full-width shell, compact navigation and contextual-inspector changes on `feat/canvas-first-workspace`, including their separate verification status. The current public name is Outcome Board; `canvas` route values, DOM IDs and module paths remain compatible. Earlier automated checks and the [integrated gallery](#screenshots) are recorded in [verification](validation.md); those results qualify their recorded source, not this follow-up. The [editorial guide](../editorial/README.md) documents the shared visual system. The [complete workspace follow-up](workspace/README.md) covers login, every specialist area, documentary details, forms, administration and recovery on its earlier desktop/mobile baseline.
@@ -67,7 +72,7 @@ Keyboard controls are scoped to the focused element:
 
 Search combines loaded matches with the authorized server candidate query. Selecting a result can load its neighborhood; it does not require that the initial map already contain it. Expand/collapse controls expose groups progressively. Load more retrieves another bounded source page, and the visible status reports loaded items, connections and collapsed content.
 
-The existing warm paper, fixed editorial grid, Instrument Serif, DM Sans, monospace metadata, orange chain and monochrome robots remain authoritative. The existing viewport scale above 1440 CSS px is separate from the map's internal camera zoom. A map transform is local to its world, not a global page-scale replacement. Mobile reflow and reduced-motion behavior remain part of acceptance.
+The existing warm paper, fixed editorial grid, Instrument Serif, DM Sans, monospace metadata, orange chain and monochrome robots remain authoritative. [Operational dimensions](../editorial/operational-density.md) remain stable as the viewport grows, independently of the map's internal camera zoom. A map transform is local to its world. Mobile reflow and reduced-motion behavior remain part of acceptance.
 
 ## Data architecture
 

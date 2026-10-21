@@ -35,7 +35,7 @@ func TestDeliveryRecoverySkipsLockedExpiredDelivery(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := 0; i < 2; i++ {
-		if _, err = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), Title: "signal", Priority: d.PriorityNormal}); err != nil {
+		if _, err = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: out.Value.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, out.Value.Scope()), Title: "signal", Priority: d.PriorityNormal}); err != nil {
 			t.Fatal(err)
 		}
 	}

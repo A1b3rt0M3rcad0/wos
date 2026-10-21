@@ -1,5 +1,14 @@
 # Human workspace
 
+For the current [contextual Kanbans, compact inspector and completion policy](ux/contextual-kanban/README.md), start with the new guide. For progressive creation and documentary updates,
+start with the [operational workspace guide](ux/operational-workspace/README.md).
+This guide also covers service access, settings and specialist navigation.
+
+To understand how Outcomes, Objectives, Tasks, Evidence, Issues and Blockers
+relate, use the [relationship guide](workspace-relationships.md). The inspector
+separates recorded placement, dependencies, observations and actual blocking;
+none of these silently accepts a result.
+
 The bundled workspace is served at `/app/`. Sign in with an access credential, choose an authorized Workspace and open or create an Outcome. The credential is exchanged for a secure session; shareable links contain scope and navigation, never credentials. Official product copy is English and dates label UTC. Authored titles, descriptions and external context retain their original language and values.
 
 The default login fits compact desktop and mobile screens. Its introduction becomes smaller while the credential field, guidance and Sign in remain complete. Expanding local access or increasing text size can scroll naturally; controls are not clipped to force the page into one screen.
@@ -98,6 +107,10 @@ The [Outcome Board guide](design/operational-canvas/README.md#acceptance-boundar
 
 The earlier real-server and automated accessibility results cover their recorded baseline. They do not qualify the sidebar-free Outcome Board, its inspector or its keyboard/mobile behavior. Equivalent viewport reflow and device scale factors are distinct from native browser zoom; the follow-up records those checks independently.
 
-The current [gallery](design/operational-canvas/canvas-first/README.md#screenshots) contains 35 source-pinned login, Board and specialist-navigation captures at `0d84588`. All 15 entry/layout journeys, four discovery journeys, 44 unit checks and 99 browser journeys pass in one clean full run with no skips. The [qualification](design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance) records source, served assets, binary/image hashes and measured geometry. Historical qualifications remain pinned separately.
+The [current density gallery](design/editorial/density/README.md) records stable
+operational sizes, compact navigation and readable long-record inspection.
+The earlier [35-image gallery](design/operational-canvas/canvas-first/README.md#screenshots)
+and its 44 unit/99 browser checks remain historical qualification at `0d84588`.
+Each gallery identifies its own source, capture method and verification scope.
 
 Representative-user usability, human comprehension/timing, manual screen-reader checks and other-browser acceptance remain pending. Native Chromium page zoom at 125% and 150% is tracked in the viewport-workspace qualification rather than inferred from smaller screenshot dimensions. The owner confirmed that no representative users or screen-reader testers are available. Automated acceptance is not a usability measurement or WCAG certification.

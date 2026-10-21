@@ -61,7 +61,8 @@ func (s *Service) rejectClosedReturn(ctx context.Context, u ports.UnitOfWork, b 
 	if e := s.requireSignedAcceptedCredential(ctx, u, scope, kind, d.ID(b.ContractID)); e != nil {
 		return e
 	}
-	identity, _, e := s.signedAccess(ctx, u, scope, commandPermission(command), "")
+	permission := commandPermission(command)
+	identity, _, e := s.signedAccess(ctx, u, scope, permission, "", legacyPermissionForCommand(command, permission))
 	if e != nil {
 		return e
 	}
@@ -104,7 +105,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 			return zero, 0, d.NewError(d.ErrorCodeForbidden, "original destination identity differs")
 		}
 		permission := commandPermission(command)
-		identity, policy, e := s.signedAccess(ctx, u, cmd.Scope, permission, d.ID(hint.SignerKeyID))
+		identity, policy, e := s.signedAccess(ctx, u, cmd.Scope, permission, d.ID(hint.SignerKeyID), legacyPermissionForCommand(command, permission))
 		if e != nil {
 			return zero, 0, e
 		}
@@ -113,7 +114,7 @@ func (s *Service) ResolveSignedReturnIntent(ctx context.Context, cc d.CommandCon
 		}
 		// Both signatures must still belong to the original live credential's
 		// permitted signer. Retired/replaced keys require explicit recovery.
-		if _, _, e = s.signedAccess(ctx, u, cmd.Scope, permission, d.ID(b.SignerKeyID)); e != nil {
+		if _, _, e = s.signedAccess(ctx, u, cmd.Scope, permission, d.ID(b.SignerKeyID), legacyPermissionForCommand(command, permission)); e != nil {
 			return zero, 0, e
 		}
 		registry, e := signingRepository(u)

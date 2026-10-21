@@ -1,0 +1,1389 @@
+{
+  "runtime_source": "fa82060cf661415d2253f32ac11dedfbf54296e1",
+  "command": "npx playwright test --workers=2 --reporter=list,json",
+  "browser": "Chromium 154.0.8037.57",
+  "stats": {
+    "startTime": "2026-10-20T13:38:39.852Z",
+    "duration": 807403.1270000001,
+    "expected": 229,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "cases": [
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a axe checks login, six-area overview, common Task form and server combobox",
+      "status": "passed",
+      "duration_ms": 16550
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a 390px mobile creates Outcome and Task with a usable searched reference",
+      "status": "passed",
+      "duration_ms": 8459
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a 200% equivalent reflow retains fields, focus and confirmation",
+      "status": "passed",
+      "duration_ms": 7936
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a 400% equivalent reflow retains fields, focus and confirmation",
+      "status": "passed",
+      "duration_ms": 4781
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a keyboard opens, searches, selects, confirms and restores focus without a pointer",
+      "status": "passed",
+      "duration_ms": 3336
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a compound Issue resolution explicitly releases selected impacts atomically",
+      "status": "passed",
+      "duration_ms": 2999
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a typed external context preserves scalar types without changing permission",
+      "status": "passed",
+      "duration_ms": 3754
+    },
+    {
+      "file": "accessibility.spec.mjs",
+      "title": "accessibility.spec.mjs \u203a typed participants are documentary and never acquire execution authority",
+      "status": "passed",
+      "duration_ms": 4300
+    },
+    {
+      "file": "authority.spec.mjs",
+      "title": "authority.spec.mjs \u203a read-only membership hides mutation and settings affordances",
+      "status": "passed",
+      "duration_ms": 5464
+    },
+    {
+      "file": "authority.spec.mjs",
+      "title": "authority.spec.mjs \u203a revoked credential cannot retrieve references or dispatch edits",
+      "status": "passed",
+      "duration_ms": 6845
+    },
+    {
+      "file": "authority.spec.mjs",
+      "title": "authority.spec.mjs \u203a a late failed Outcome read cannot replace the selected Outcome or its notice",
+      "status": "passed",
+      "duration_ms": 2767
+    },
+    {
+      "file": "authority.spec.mjs",
+      "title": "authority.spec.mjs \u203a revocation prevents replay dispatch of an already frozen uncertain intent",
+      "status": "passed",
+      "duration_ms": 6151
+    },
+    {
+      "file": "blocker-impact.spec.mjs",
+      "title": "blocker-impact.spec.mjs \u203a a subtree Issue previews actual affected work and atomically rejects a stale blocking scope",
+      "status": "passed",
+      "duration_ms": 6365
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Evidence actions remain compact and contextual at 2560 x 1440",
+      "status": "passed",
+      "duration_ms": 8736
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Evidence actions remain compact and contextual at 390 x 844",
+      "status": "passed",
+      "duration_ms": 3797
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Evidence actions remain compact and contextual at 360 x 640",
+      "status": "passed",
+      "duration_ms": 4081
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Outcome actions group real available commands and keep the final actions reachable",
+      "status": "passed",
+      "duration_ms": 3049
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Dismissing global Outcome actions preserves the selected Evidence and its command scope",
+      "status": "passed",
+      "duration_ms": 4165
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Native action dialog keeps grouped commands readable at 1280 x 900",
+      "status": "passed",
+      "duration_ms": 4293
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Native action dialog keeps grouped commands readable at 390 x 844",
+      "status": "passed",
+      "duration_ms": 4305
+    },
+    {
+      "file": "board-action-layout.spec.mjs",
+      "title": "board-action-layout.spec.mjs \u203a Partial map coverage stays in the footer and other feedback never covers inspection actions",
+      "status": "passed",
+      "duration_ms": 5167
+    },
+    {
+      "file": "board-feedback-transitions.spec.mjs",
+      "title": "board-feedback-transitions.spec.mjs \u203a a failed Outcome transition from Board keeps its error in the original visible live region",
+      "status": "passed",
+      "duration_ms": 3022
+    },
+    {
+      "file": "board-feedback-transitions.spec.mjs",
+      "title": "board-feedback-transitions.spec.mjs \u203a Workspace selection reset after Board exposes read errors beside the empty-workspace state",
+      "status": "passed",
+      "duration_ms": 3101
+    },
+    {
+      "file": "board-movement.spec.mjs",
+      "title": "board-movement.spec.mjs \u203a Board cards cross the original origin, survive refresh and resize, and fit their real extents",
+      "status": "passed",
+      "duration_ms": 5837
+    },
+    {
+      "file": "board-movement.spec.mjs",
+      "title": "board-movement.spec.mjs \u203a trackpad, background drag and keyboard pan freely without changing cards or stealing native scroll",
+      "status": "passed",
+      "duration_ms": 8132
+    },
+    {
+      "file": "board-movement.spec.mjs",
+      "title": "board-movement.spec.mjs \u203a a fresh card press immediately after dragging opens inspection without selecting the drag",
+      "status": "passed",
+      "duration_ms": 9686
+    },
+    {
+      "file": "canvas-context.spec.mjs",
+      "title": "canvas-context.spec.mjs \u203a Task context keeps source text and presents dependencies, Blockers and evidence without accepting work",
+      "status": "passed",
+      "duration_ms": 1399
+    },
+    {
+      "file": "canvas-context.spec.mjs",
+      "title": "canvas-context.spec.mjs \u203a bounded summaries declare local and server omissions and replace stale context",
+      "status": "passed",
+      "duration_ms": 1721
+    },
+    {
+      "file": "canvas-context.spec.mjs",
+      "title": "canvas-context.spec.mjs \u203a Evidence form submits the canonical context stance through its normal typed picker",
+      "status": "passed",
+      "duration_ms": 3700
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a the default work map exposes records deliberately and preserves local positions and authority distinctions",
+      "status": "passed",
+      "duration_ms": 6787
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a native canvas controls preserve selection, keyboard focus and explicit command boundaries",
+      "status": "passed",
+      "duration_ms": 6453
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a canvas search paginates and deduplicates without reopening stale queries or scopes",
+      "status": "passed",
+      "duration_ms": 6455
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a viewport growth preserves map scale and mobile has a native list alternative",
+      "status": "passed",
+      "duration_ms": 2615
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a overview zoom preserves accessible controls through item selection and the list alternative",
+      "status": "passed",
+      "duration_ms": 8898
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a a planning card remains selected when its inspector opens the real Roadmap",
+      "status": "passed",
+      "duration_ms": 2160
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a discarded callback failures stay silent while current failures remain announced",
+      "status": "passed",
+      "duration_ms": 1045
+    },
+    {
+      "file": "canvas-interactions.spec.mjs",
+      "title": "canvas-interactions.spec.mjs \u203a all map cards display the original supplied paper behind live accessible content",
+      "status": "passed",
+      "duration_ms": 4830
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a a late form restoration preserves edge keyboard focus and exact authorized removal",
+      "status": "passed",
+      "duration_ms": 9063
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a a late Task focal read cannot reopen a closed inspector or report an obsolete revision error",
+      "status": "passed",
+      "duration_ms": 5717
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a a late comparison for Task A cannot replace Task B's draft or introduce an old-target save",
+      "status": "passed",
+      "duration_ms": 7482
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a an earlier successful refresh cannot restore private Canvas content after a genuine access denial",
+      "status": "passed",
+      "duration_ms": 5337
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a an obsolete Task history transport failure cannot replace the current Task or its notice",
+      "status": "passed",
+      "duration_ms": 4749
+    },
+    {
+      "file": "canvas-races.spec.mjs",
+      "title": "canvas-races.spec.mjs \u203a Escape during deep-link graph restoration persists dismissal and Back reopens the record",
+      "status": "passed",
+      "duration_ms": 7199
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 1280 x 720",
+      "status": "passed",
+      "duration_ms": 3847
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 1366 x 768",
+      "status": "passed",
+      "duration_ms": 2272
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 1024 x 768",
+      "status": "passed",
+      "duration_ms": 2379
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 390 x 844",
+      "status": "passed",
+      "duration_ms": 2502
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 360 x 640",
+      "status": "passed",
+      "duration_ms": 2343
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact login fits its complete default composition at 320 x 740",
+      "status": "passed",
+      "duration_ms": 2971
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Expanded local login and enlarged text keep natural scrolling and whole controls",
+      "status": "passed",
+      "duration_ms": 3102
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Outcome Board uses the available desktop workspace at 1280 x 720",
+      "status": "passed",
+      "duration_ms": 7227
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Outcome Board uses the available desktop workspace at 1366 x 768",
+      "status": "passed",
+      "duration_ms": 6506
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Outcome Board uses the available desktop workspace at 1920 x 1080",
+      "status": "passed",
+      "duration_ms": 6663
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Outcome Board uses the available desktop workspace at 2560 x 1440",
+      "status": "passed",
+      "duration_ms": 11354
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Views and Outcome context stay progressive, keyboard accessible and separate from verification",
+      "status": "passed",
+      "duration_ms": 15700
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact Outcome Board keeps its own list and inspector scroll at 320 x 740",
+      "status": "passed",
+      "duration_ms": 19509
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a Compact Outcome Board keeps its own list and inspector scroll at 390 x 844",
+      "status": "passed",
+      "duration_ms": 7537
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return",
+      "status": "passed",
+      "duration_ms": 10900
+    },
+    {
+      "file": "canvas-workspace-layout.spec.mjs",
+      "title": "canvas-workspace-layout.spec.mjs \u203a native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable",
+      "status": "passed",
+      "duration_ms": 13054
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a Outcome Board is the default operational view without a Roadmap and keeps contextual deep links",
+      "status": "passed",
+      "duration_ms": 9097
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a contextual creation and editing reuse the real form and preserve Objective association",
+      "status": "passed",
+      "duration_ms": 5559
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a real connections distinguish hierarchy, dependency strength and Evidence stance; Issue resolution retains its Blocker",
+      "status": "passed",
+      "duration_ms": 6827
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a large Outcomes declare partial data, load incrementally and find authorized off-page Tasks",
+      "status": "passed",
+      "duration_ms": 4623
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a authorized dependency editing persists advisory links, refuses cycles and explicitly removes the selected relation",
+      "status": "passed",
+      "duration_ms": 5852
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a read-only Outcome Board has usable keyboard and mobile views while zoom and layout never mutate state",
+      "status": "passed",
+      "duration_ms": 17738
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a inline conflicts preserve local edits and uncertain retries keep their exact bytes and key",
+      "status": "passed",
+      "duration_ms": 7289
+    },
+    {
+      "file": "canvas.spec.mjs",
+      "title": "canvas.spec.mjs \u203a Roadmap Draft, immutable publication and activation stay separate from operational dependency",
+      "status": "passed",
+      "duration_ms": 9520
+    },
+    {
+      "file": "conclusion-impact.spec.mjs",
+      "title": "conclusion-impact.spec.mjs \u203a concluding parents reviews actual open work, rejects stale impact and preserves children at 2560px",
+      "status": "passed",
+      "duration_ms": 15259
+    },
+    {
+      "file": "conclusion-impact.spec.mjs",
+      "title": "conclusion-impact.spec.mjs \u203a concluding parents reviews actual open work, rejects stale impact and preserves children at 390px",
+      "status": "passed",
+      "duration_ms": 8281
+    },
+    {
+      "file": "conclusion-impact.spec.mjs",
+      "title": "conclusion-impact.spec.mjs \u203a a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector",
+      "status": "passed",
+      "duration_ms": 7309
+    },
+    {
+      "file": "contextual-kanban-guards.spec.mjs",
+      "title": "contextual-kanban-guards.spec.mjs \u203a strict cancellation acknowledgement in the browser persists its exact excluded scope",
+      "status": "passed",
+      "duration_ms": 7605
+    },
+    {
+      "file": "contextual-kanban-guards.spec.mjs",
+      "title": "contextual-kanban-guards.spec.mjs \u203a real credential revocation closes an open Kanban and clears its private content",
+      "status": "passed",
+      "duration_ms": 4176
+    },
+    {
+      "file": "contextual-kanban-guards.spec.mjs",
+      "title": "contextual-kanban-guards.spec.mjs \u203a refresh keeps the selected detail coherent and rejects newer isolated reads",
+      "status": "passed",
+      "duration_ms": 9095
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1024x768",
+      "status": "passed",
+      "duration_ms": 6145
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1280x720",
+      "status": "passed",
+      "duration_ms": 6927
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1366x768",
+      "status": "passed",
+      "duration_ms": 9281
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1440x900",
+      "status": "passed",
+      "duration_ms": 9826
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 1920x1080",
+      "status": "passed",
+      "duration_ms": 10511
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 2560x1440",
+      "status": "passed",
+      "duration_ms": 6637
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 3840x2160",
+      "status": "passed",
+      "duration_ms": 5161
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 390x844",
+      "status": "passed",
+      "duration_ms": 4609
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 320x740",
+      "status": "passed",
+      "duration_ms": 3953
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban preserves Board, hierarchy, cancellation and keyboard at 430x932",
+      "status": "passed",
+      "duration_ms": 4086
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a criteria verification is separate from acceptance and cancelled work remains historical",
+      "status": "passed",
+      "duration_ms": 3706
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a creation in Objective Kanban preserves parent and returns to the same context",
+      "status": "passed",
+      "duration_ms": 3509
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a activity history is loaded on demand and material choices retain their meaning",
+      "status": "passed",
+      "duration_ms": 4976
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a contextual Kanban remains operable at native browser zoom 125%, 150%, 200% and 400%",
+      "status": "passed",
+      "duration_ms": 11950
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a an authorized waiver is an explicit exception and never completes the Task",
+      "status": "passed",
+      "duration_ms": 3356
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a partial Kanban pages preserve column scroll and reject stale continuation",
+      "status": "passed",
+      "duration_ms": 5151
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a specialist inspection retains one native dialog without Board-only modal launchers",
+      "status": "passed",
+      "duration_ms": 2204
+    },
+    {
+      "file": "contextual-kanban.spec.mjs",
+      "title": "contextual-kanban.spec.mjs \u203a focused inspectors omit the action directory and technical audit",
+      "status": "passed",
+      "duration_ms": 2817
+    },
+    {
+      "file": "contracts.spec.mjs",
+      "title": "contracts.spec.mjs \u203a explicit cutover, contract progress, human review and privileged revocation",
+      "status": "passed",
+      "duration_ms": 8295
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a operational density stays bounded across desktop, tablet and phone viewports",
+      "status": "passed",
+      "duration_ms": 37744
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a buttons keep legible padded states across the workspace, dialogs and touch navigation",
+      "status": "passed",
+      "duration_ms": 81369
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a paper stays fixed behind scrolling content and the editorial sidebar remains usable",
+      "status": "passed",
+      "duration_ms": 7630
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a editorial chapters keep all six areas, real records and illustration assets",
+      "status": "passed",
+      "duration_ms": 6042
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a editorial layout reflows, respects reduced motion and survives missing fonts and images",
+      "status": "passed",
+      "duration_ms": 17843
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a static sign-in keeps its narrative and explains the no-JavaScript fallback",
+      "status": "passed",
+      "duration_ms": 1942
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a Woobe colors distinguish interaction copper, primary charcoal and semantic states",
+      "status": "passed",
+      "duration_ms": 2857
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a all modal families share matte workspace paper on desktop and mobile",
+      "status": "passed",
+      "duration_ms": 7821
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a WOS uses the supplied hand-drawn logo alone and real browser icons",
+      "status": "passed",
+      "duration_ms": 4891
+    },
+    {
+      "file": "editorial.spec.mjs",
+      "title": "editorial.spec.mjs \u203a forms preserve whole controls and save actions through nested editors, compact screens and larger text",
+      "status": "passed",
+      "duration_ms": 16073
+    },
+    {
+      "file": "entity-communication.spec.mjs",
+      "title": "entity-communication.spec.mjs \u203a relationships communicate placement, evidence and real blocking at 2560 x 1440",
+      "status": "passed",
+      "duration_ms": 6775
+    },
+    {
+      "file": "entity-communication.spec.mjs",
+      "title": "entity-communication.spec.mjs \u203a relationships communicate placement, evidence and real blocking at 390 x 844",
+      "status": "passed",
+      "duration_ms": 5882
+    },
+    {
+      "file": "entity-communication.spec.mjs",
+      "title": "entity-communication.spec.mjs \u203a specialist entity details use the same canonical relationships without depending on a loaded Board index",
+      "status": "passed",
+      "duration_ms": 3495
+    },
+    {
+      "file": "entity-communication.spec.mjs",
+      "title": "entity-communication.spec.mjs \u203a a late bounded graph expansion preserves coherent relationship pages, keyboard focus and disclosure state",
+      "status": "passed",
+      "duration_ms": 4491
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a quick creation keeps its named parent, creates planned work and supports a title-only intent",
+      "status": "passed",
+      "duration_ms": 825
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a Objective obligations and criterion review mode are explicit human defaults",
+      "status": "passed",
+      "duration_ms": 1317
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a a full Task form makes availability a separate explicit choice",
+      "status": "passed",
+      "duration_ms": 3110
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a replacement setters preserve exact versions and send explicit date, list and parent clears",
+      "status": "passed",
+      "duration_ms": 2267
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a a documentary note contains authenticated-context inputs rather than a state transition",
+      "status": "passed",
+      "duration_ms": 1203
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a contextual evidence fixes the criterion and uses one explicit compound intent without assessment",
+      "status": "passed",
+      "duration_ms": 1661
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a EvidenceLink search and blocking scope consume server-defined eligibility",
+      "status": "passed",
+      "duration_ms": 1574
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a contextual Artifact and Decision drafts carry canonical documentary relationships",
+      "status": "passed",
+      "duration_ms": 1378
+    },
+    {
+      "file": "human-forms.spec.mjs",
+      "title": "human-forms.spec.mjs \u203a batch preview is explicit, editable and cannot silently accept a changed title list",
+      "status": "passed",
+      "duration_ms": 1034
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F01: save a persisted Draft without command names, UUIDs or Advanced; setup never activates it",
+      "status": "passed",
+      "duration_ms": 3026
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F02/F03: add an Objective and scoped Task with readable list instructions",
+      "status": "passed",
+      "duration_ms": 5448
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F04: visual Roadmap draft, publish and activation are distinct; replan retains revision one",
+      "status": "passed",
+      "duration_ms": 17294
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F05: register proof then assess its exact criterion revision; Evidence alone does not certify",
+      "status": "passed",
+      "duration_ms": 6309
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F06: reporting an Issue and blocking work are explicit; resolving the Issue does not release impact",
+      "status": "passed",
+      "duration_ms": 5158
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F08: conflict retains local edits, compares latest state and requires a new confirmed intent",
+      "status": "passed",
+      "duration_ms": 4551
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a F08: lost response retries the committed command with identical bytes and key",
+      "status": "passed",
+      "duration_ms": 4442
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a reference picker searches 1,001 authorized Tasks and Evidence beyond the first page with duplicate context",
+      "status": "passed",
+      "duration_ms": 29792
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a reference picker keyboard navigation selects duplicate titles using IDs and parent context",
+      "status": "passed",
+      "duration_ms": 4921
+    },
+    {
+      "file": "human.spec.mjs",
+      "title": "human.spec.mjs \u203a stale reference cursor asks for reload and retains selections without silent replacement",
+      "status": "passed",
+      "duration_ms": 4780
+    },
+    {
+      "file": "journey.spec.mjs",
+      "title": "journey.spec.mjs \u203a human plans, agent executes by MCP, human certifies, new browser resumes after restart",
+      "status": "passed",
+      "duration_ms": 28863
+    },
+    {
+      "file": "journey.spec.mjs",
+      "title": "journey.spec.mjs \u203a human reviews evidence, resolves blockers, reconciles conflict and preserves contested history",
+      "status": "passed",
+      "duration_ms": 29808
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a create, assign, acquire, prove, assess and conclude in one Kanban at 1280px",
+      "status": "passed",
+      "duration_ms": 17156
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a create, assign, acquire, prove, assess and conclude in one Kanban at 2560px",
+      "status": "passed",
+      "duration_ms": 16014
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a create, assign, acquire, prove, assess and conclude in one Kanban at 3840px",
+      "status": "passed",
+      "duration_ms": 20310
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a create, assign, acquire, prove, assess and conclude in one Kanban at 390px",
+      "status": "passed",
+      "duration_ms": 17014
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a drag and single-pointer moves prepare actual operations; blocked and read-only work never moves",
+      "status": "passed",
+      "duration_ms": 10563
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a embedded forms preserve conflicting input and recover the same uncertain creation intent",
+      "status": "passed",
+      "duration_ms": 4560
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a Objective moves use StartObjective and explicit assessed achievement; hierarchy is not completion",
+      "status": "passed",
+      "duration_ms": 7393
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a contract-backed movement stays an explicit external handoff without browser acquisition or delivery",
+      "status": "passed",
+      "duration_ms": 4073
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a related Issues and Blockers remain operable in place and resolution never silently releases an impediment",
+      "status": "passed",
+      "duration_ms": 8320
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a an already acquired contract has a direct readonly continuation without a parallel browser workflow",
+      "status": "passed",
+      "duration_ms": 4275
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a delayed origin restoration returns focus to the rebuilt outcome trigger",
+      "status": "passed",
+      "duration_ms": 3978
+    },
+    {
+      "file": "kanban-operations.spec.mjs",
+      "title": "kanban-operations.spec.mjs \u203a delayed origin restoration returns focus to the rebuilt objective trigger",
+      "status": "passed",
+      "duration_ms": 3897
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a focused modal, contextual controls and clean inspection at 1280",
+      "status": "passed",
+      "duration_ms": 4908
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a focused modal, contextual controls and clean inspection at 2560",
+      "status": "passed",
+      "duration_ms": 4185
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a focused modal, contextual controls and clean inspection at 3840",
+      "status": "passed",
+      "duration_ms": 5595
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a focused modal, contextual controls and clean inspection at 390",
+      "status": "passed",
+      "duration_ms": 4023
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a proof checklist reuses existing Evidence, requires explicit assessment and preserves the agreed Task definition",
+      "status": "passed",
+      "duration_ms": 7266
+    },
+    {
+      "file": "kanban-simplification.spec.mjs",
+      "title": "kanban-simplification.spec.mjs \u203a proof preserves complete long instructions without restoring the audit interface",
+      "status": "passed",
+      "duration_ms": 4194
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a Kanban is a modal with persistent lanes and one active dialog at 1280",
+      "status": "passed",
+      "duration_ms": 4612
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a Kanban is a modal with persistent lanes and one active dialog at 2560",
+      "status": "passed",
+      "duration_ms": 8490
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a Kanban is a modal with persistent lanes and one active dialog at 390",
+      "status": "passed",
+      "duration_ms": 4251
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a Backlog to In progress requires two explicit confirmed commands and a fresh projection",
+      "status": "passed",
+      "duration_ms": 4890
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a Objectives use planned, started and achieved lanes without a fabricated review queue",
+      "status": "passed",
+      "duration_ms": 3843
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a an eligible planned Objective is achieved directly without an invented Start command",
+      "status": "passed",
+      "duration_ms": 4605
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a native Backlog drag prepares activation without writing and the real modal retains keyboard focus",
+      "status": "passed",
+      "duration_ms": 6053
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a a confirmed command with a failed refresh retries reads without duplicating the write",
+      "status": "passed",
+      "duration_ms": 3972
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a a contract v1 submission does not invent a signed review fact or a Verification lifecycle",
+      "status": "passed",
+      "duration_ms": 3541
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a blocked achievement can add its criterion and assessment in context before explicit acceptance",
+      "status": "passed",
+      "duration_ms": 7770
+    },
+    {
+      "file": "kanban-workspace.spec.mjs",
+      "title": "kanban-workspace.spec.mjs \u203a emulated touch can use the card action menu without drag or hover",
+      "status": "passed",
+      "duration_ms": 4764
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a expanded local login stays reachable at 1280x720",
+      "status": "passed",
+      "duration_ms": 1720
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a expanded local login stays reachable at 390x667",
+      "status": "passed",
+      "duration_ms": 1565
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 1280x720 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1533
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 1366x768 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 2423
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 1920x1080 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1626
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 2560x1440 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 2401
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 3840x2160 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1889
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 2048x1152 DPR 1.25 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1767
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 320x740 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1403
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 390x844 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1632
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 430x932 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1712
+    },
+    {
+      "file": "login-viewport.spec.mjs",
+      "title": "login-viewport.spec.mjs \u203a Login viewport 844x390 DPR 1 \u203a centers the complete composition below the actual header and preserves accessible overflow",
+      "status": "passed",
+      "duration_ms": 1898
+    },
+    {
+      "file": "navigation.spec.mjs",
+      "title": "navigation.spec.mjs \u203a Outcome Board and six specialist areas retain the persisted Draft checklist without automatic activation",
+      "status": "passed",
+      "duration_ms": 3215
+    },
+    {
+      "file": "navigation.spec.mjs",
+      "title": "navigation.spec.mjs \u203a deep links restore area and scoped item through reload, back and forward",
+      "status": "passed",
+      "duration_ms": 5387
+    },
+    {
+      "file": "navigation.spec.mjs",
+      "title": "navigation.spec.mjs \u203a all Task search and priority filter find an off-page item in 1,001 records",
+      "status": "passed",
+      "duration_ms": 15706
+    },
+    {
+      "file": "navigation.spec.mjs",
+      "title": "navigation.spec.mjs \u203a queued search cannot discard a page after explicit status navigation",
+      "status": "passed",
+      "duration_ms": 5296
+    },
+    {
+      "file": "navigation.spec.mjs",
+      "title": "navigation.spec.mjs \u203a a new Outcome exposes coherent navigation after pending permissions and accepts one Overview click",
+      "status": "passed",
+      "duration_ms": 2278
+    },
+    {
+      "file": "nested-task-density.spec.mjs",
+      "title": "nested-task-density.spec.mjs \u203a a nested Task initially exposes authored prose and retains reachable actions at 320px",
+      "status": "passed",
+      "duration_ms": 3887
+    },
+    {
+      "file": "nested-task-density.spec.mjs",
+      "title": "nested-task-density.spec.mjs \u203a a nested Task initially exposes authored prose and retains reachable actions at 390px",
+      "status": "passed",
+      "duration_ms": 4169
+    },
+    {
+      "file": "nested-task-density.spec.mjs",
+      "title": "nested-task-density.spec.mjs \u203a a nested Task initially exposes authored prose and retains reachable actions at 430px",
+      "status": "passed",
+      "duration_ms": 3989
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a An empty workspace keeps bounded headings and reachable navigation/settings",
+      "status": "passed",
+      "duration_ms": 3600
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 1280x720 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 4432
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 2560x1440 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 5398
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 3840x2160 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 6733
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 390x844 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 6162
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 320x740 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 5184
+    },
+    {
+      "file": "operational-density.spec.mjs",
+      "title": "operational-density.spec.mjs \u203a Operational density at 2048x1152-dpr1.25 \u203a keeps readable controls and bounded inspection without enlarging the whole interface",
+      "status": "passed",
+      "duration_ms": 5795
+    },
+    {
+      "file": "operational-workspace.spec.mjs",
+      "title": "operational-workspace.spec.mjs \u203a progressive planning, specification, update and criterion Evidence persist at 2560px",
+      "status": "passed",
+      "duration_ms": 18583
+    },
+    {
+      "file": "operational-workspace.spec.mjs",
+      "title": "operational-workspace.spec.mjs \u203a progressive planning, specification, update and criterion Evidence persist at 390px",
+      "status": "passed",
+      "duration_ms": 16937
+    },
+    {
+      "file": "operational-workspace.spec.mjs",
+      "title": "operational-workspace.spec.mjs \u203a one contextual evidence intention preserves its receipt when the request is repeated",
+      "status": "passed",
+      "duration_ms": 235
+    },
+    {
+      "file": "operational-workspace.spec.mjs",
+      "title": "operational-workspace.spec.mjs \u203a a preparation remedy retains the conclusion draft and never substitutes assessment or automatic acceptance",
+      "status": "passed",
+      "duration_ms": 3896
+    },
+    {
+      "file": "operational-workspace.spec.mjs",
+      "title": "operational-workspace.spec.mjs \u203a a mixed planning preview creates two Objectives and four scoped backlog Tasks in one visible intention",
+      "status": "passed",
+      "duration_ms": 4699
+    },
+    {
+      "file": "outcome-navigation.spec.mjs",
+      "title": "outcome-navigation.spec.mjs \u203a sidebar search debounces typing, submits Enter immediately and never mutates Outcomes",
+      "status": "passed",
+      "duration_ms": 2172
+    },
+    {
+      "file": "outcome-navigation.spec.mjs",
+      "title": "outcome-navigation.spec.mjs \u203a a late sidebar response cannot overwrite a newer query or its accessible status",
+      "status": "passed",
+      "duration_ms": 3222
+    },
+    {
+      "file": "outcome-navigation.spec.mjs",
+      "title": "outcome-navigation.spec.mjs \u203a changing a live query discards its old page cursor and keeps current pagination unique",
+      "status": "passed",
+      "duration_ms": 5035
+    },
+    {
+      "file": "outcome-navigation.spec.mjs",
+      "title": "outcome-navigation.spec.mjs \u203a mobile specialist views retain local Refresh and immediate Outcome filters",
+      "status": "passed",
+      "duration_ms": 5229
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a specialist areas show real documentary records, section-aware filters and mobile alternatives",
+      "status": "passed",
+      "duration_ms": 67968
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a standalone details, contextual forms and Roadmap revisions preserve their native modal contract",
+      "status": "passed",
+      "duration_ms": 44166
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a entry, empty sections, pending reads and recoverable read errors remain usable at 320px",
+      "status": "passed",
+      "duration_ms": 17853
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a native conflict review and uncertain response preserve the exact recoverable intent on mobile",
+      "status": "passed",
+      "duration_ms": 7551
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a native Artifact and Decision creation use canonical commands and return to their real section",
+      "status": "passed",
+      "duration_ms": 3671
+    },
+    {
+      "file": "presentation.spec.mjs",
+      "title": "presentation.spec.mjs \u203a opening and saving an existing Roadmap Draft retains child phases and immutable publication",
+      "status": "passed",
+      "duration_ms": 5085
+    },
+    {
+      "file": "progressive-entry.spec.mjs",
+      "title": "progressive-entry.spec.mjs \u203a quick Task Enter repeats the same placement, Save inspects the result, and Escape never creates a draft",
+      "status": "passed",
+      "duration_ms": 9085
+    },
+    {
+      "file": "progressive-entry.spec.mjs",
+      "title": "progressive-entry.spec.mjs \u203a a criterion deep link reloads the typed subject and retains its real Task owner",
+      "status": "passed",
+      "duration_ms": 4621
+    },
+    {
+      "file": "reference-picker.spec.mjs",
+      "title": "reference-picker.spec.mjs \u203a choosing a reference cancels a queued debounce and fences older results that still arrive",
+      "status": "passed",
+      "duration_ms": 1302
+    },
+    {
+      "file": "reference-picker.spec.mjs",
+      "title": "reference-picker.spec.mjs \u203a Escape cancels queued and in-flight suggestions without clearing the search or reopening the popup",
+      "status": "passed",
+      "duration_ms": 1214
+    },
+    {
+      "file": "reference-picker.spec.mjs",
+      "title": "reference-picker.spec.mjs \u203a multiple selection keeps its explicit fresh suggestion search and does not replay an old timer",
+      "status": "passed",
+      "duration_ms": 1049
+    },
+    {
+      "file": "signed.spec.mjs",
+      "title": "signed.spec.mjs \u203a signed work shows accepted delivery, independent review and protected profile actions: approved",
+      "status": "passed",
+      "duration_ms": 14638
+    },
+    {
+      "file": "signed.spec.mjs",
+      "title": "signed.spec.mjs \u203a signed work shows accepted delivery, independent review and protected profile actions: changes_requested",
+      "status": "passed",
+      "duration_ms": 9304
+    },
+    {
+      "file": "specialist-races.spec.mjs",
+      "title": "specialist-races.spec.mjs \u203a an old Roadmap list cannot refill a new snapshot's cache while refresh permissions are pending",
+      "status": "passed",
+      "duration_ms": 2777
+    },
+    {
+      "file": "specialist-races.spec.mjs",
+      "title": "specialist-races.spec.mjs \u203a a delayed Board page cannot append obsolete records after a same-Outcome refresh",
+      "status": "passed",
+      "duration_ms": 3013
+    },
+    {
+      "file": "structural-move.spec.mjs",
+      "title": "structural-move.spec.mjs \u203a a Task move previews real inherited blocking, rejects a stale revision and preserves its recorded identity and proof",
+      "status": "passed",
+      "duration_ms": 3606
+    },
+    {
+      "file": "structural-preview.spec.mjs",
+      "title": "structural-preview.spec.mjs \u203a a move requires a coherent named before/after impact and acknowledgement before emitting exact versions",
+      "status": "passed",
+      "duration_ms": 1185
+    },
+    {
+      "file": "structural-preview.spec.mjs",
+      "title": "structural-preview.spec.mjs \u203a bounded Objective impact is explicit and a blocked destination never becomes a command",
+      "status": "passed",
+      "duration_ms": 1009
+    },
+    {
+      "file": "structural-preview.spec.mjs",
+      "title": "structural-preview.spec.mjs \u203a a late preview for a different destination or scope cannot restore an acknowledged command",
+      "status": "passed",
+      "duration_ms": 1134
+    },
+    {
+      "file": "workspace-inspector-view.spec.mjs",
+      "title": "workspace-inspector-view.spec.mjs \u203a one coherent Task inspector exposes its information facets inside two progressive groups without granting authority or accepting linked proof",
+      "status": "passed",
+      "duration_ms": 3298
+    },
+    {
+      "file": "workspace-inspector-view.spec.mjs",
+      "title": "workspace-inspector-view.spec.mjs \u203a an Issue names its affected work without treating the association itself as blocking",
+      "status": "passed",
+      "duration_ms": 3144
+    },
+    {
+      "file": "workspace-inspector-view.spec.mjs",
+      "title": "workspace-inspector-view.spec.mjs \u203a the same typed inspector explains documentary entities and actual blocking in specialist views",
+      "status": "passed",
+      "duration_ms": 6469
+    },
+    {
+      "file": "workspace-inspector-view.spec.mjs",
+      "title": "workspace-inspector-view.spec.mjs \u203a the shared inspector retains readable content and reachable keyboard controls across CSS viewports",
+      "status": "passed",
+      "duration_ms": 7449
+    },
+    {
+      "file": "workspace-inspector-view.spec.mjs",
+      "title": "workspace-inspector-view.spec.mjs \u203a resolving an Issue releases only the explicitly selected recorded impact",
+      "status": "passed",
+      "duration_ms": 3855
+    },
+    {
+      "file": "workspace-inspector.spec.mjs",
+      "title": "workspace-inspector.spec.mjs \u203a inline surfaces preserve exact form nodes, listeners and uncertain draft state",
+      "status": "passed",
+      "duration_ms": 667
+    },
+    {
+      "file": "workspace-inspector.spec.mjs",
+      "title": "workspace-inspector.spec.mjs \u203a local Escape returns from actions and forms to details, then to the canvas trigger",
+      "status": "passed",
+      "duration_ms": 694
+    },
+    {
+      "file": "workspace-inspector.spec.mjs",
+      "title": "workspace-inspector.spec.mjs \u203a autocomplete and nested dialogs keep their Escape without hiding the inspector",
+      "status": "passed",
+      "duration_ms": 739
+    },
+    {
+      "file": "workspace-inspector.spec.mjs",
+      "title": "workspace-inspector.spec.mjs \u203a enabling declines an open native modal without changing its top layer or firing close",
+      "status": "passed",
+      "duration_ms": 542
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a fresh canvas inspector preserves real lease authority for explicit completion and release",
+      "status": "passed",
+      "duration_ms": 6921
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a fresh work inspector preserves real lease authority for explicit completion and release",
+      "status": "passed",
+      "duration_ms": 6423
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a editing Issue, Blocker and Criterion preserves descriptions beyond their inspector preview",
+      "status": "passed",
+      "duration_ms": 5401
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a criterion preparation targets a required definition beyond the first inspector page",
+      "status": "passed",
+      "duration_ms": 3159
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a a delayed preparation lookup cannot replace a newer form after the original closes",
+      "status": "passed",
+      "duration_ms": 5274
+    },
+    {
+      "file": "workspace-lease.spec.mjs",
+      "title": "workspace-lease.spec.mjs \u203a privileged v1 revocation hydrates the actual contract without requiring the technical record",
+      "status": "passed",
+      "duration_ms": 6278
+    },
+    {
+      "file": "workspace-ready.spec.mjs",
+      "title": "workspace-ready.spec.mjs \u203a workspace mutations remain unavailable until the real authenticated identity finishes loading",
+      "status": "passed",
+      "duration_ms": 3554
+    },
+    {
+      "file": "workspace-ready.spec.mjs",
+      "title": "workspace-ready.spec.mjs \u203a native Escape invalidates a genuine pending criterion read instead of reopening its closed dialog",
+      "status": "passed",
+      "duration_ms": 4051
+    },
+    {
+      "file": "workspace.spec.mjs",
+      "title": "workspace.spec.mjs \u203a workspace summary, scoped list, operational board, pagination and real human action",
+      "status": "passed",
+      "duration_ms": 11974
+    }
+  ]
+}

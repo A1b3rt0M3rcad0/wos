@@ -112,17 +112,18 @@ func (s idempotencyStore) Reserve(
 		commandID            sql.NullString
 		revision             sql.NullInt64
 		response             sql.NullString
+		authorityCredential  sql.NullString
 		expiresAt            int64
 	)
 	err := s.uow.tx.QueryRowContext(ctx, `
-SELECT request_hash, status, command_id, outcome_revision, response_json, expires_at
+SELECT request_hash, status, command_id, outcome_revision, response_json, authority_credential_id, expires_at
 FROM idempotency_records
 WHERE namespace_id = ? AND principal_id = ? AND command_name = ? AND idempotency_key = ?`,
 		identity.NamespaceID.String(),
 		identity.PrincipalID,
 		identity.CommandName,
 		identity.IdempotencyKey,
-	).Scan(&existingHash, &status, &commandID, &revision, &response, &expiresAt)
+	).Scan(&existingHash, &status, &commandID, &revision, &response, &authorityCredential, &expiresAt)
 
 	if err == nil && expiresAt <= encodeTime(now) {
 		if _, deleteErr := s.uow.tx.ExecContext(ctx, `
@@ -162,9 +163,10 @@ WHERE namespace_id = ? AND principal_id = ? AND command_name = ? AND idempotency
 			return domain.IdempotencyReservation{}, err
 		}
 		result := domain.StoredCommandResult{
-			CommandID:       parsedCommandID,
-			OutcomeRevision: domain.OutcomeRevision(revision.Int64),
-			ResponseJSON:    json.RawMessage(response.String),
+			CommandID:             parsedCommandID,
+			OutcomeRevision:       domain.OutcomeRevision(revision.Int64),
+			ResponseJSON:          json.RawMessage(response.String),
+			AuthorityCredentialID: domain.ID(authorityCredential.String),
 		}
 		if err := result.Validate(); err != nil {
 			return domain.IdempotencyReservation{}, err
@@ -217,14 +219,19 @@ func (s idempotencyStore) Complete(
 	if err := result.Validate(); err != nil {
 		return err
 	}
+	var authorityCredential any
+	if !result.AuthorityCredentialID.IsZero() {
+		authorityCredential = result.AuthorityCredentialID.String()
+	}
 	update, err := s.uow.tx.ExecContext(ctx, `
 UPDATE idempotency_records
-SET status = 'completed', command_id = ?, outcome_revision = ?, response_json = ?
+SET status = 'completed', command_id = ?, outcome_revision = ?, response_json = ?, authority_credential_id = ?
 WHERE namespace_id = ? AND principal_id = ? AND command_name = ?
   AND idempotency_key = ? AND request_hash = ? AND status = 'processing'`,
 		result.CommandID.String(),
 		int64(result.OutcomeRevision),
 		string(result.ResponseJSON),
+		authorityCredential,
 		reservation.Identity.NamespaceID.String(),
 		reservation.Identity.PrincipalID,
 		reservation.Identity.CommandName,

@@ -51,7 +51,7 @@ func (r continuityReadRepository) FocalOutcome(ctx context.Context, scope d.Scop
 		return d.Outcome{}, e
 	}
 	v := r.tx.outcomes[outcomeKey(scope.NamespaceID, scope.OutcomeID)]
-	head := d.Outcome{ID: v.ID, NamespaceID: v.NamespaceID, Version: v.Version, Title: ports.Summarize(v.Ref(), v.Version, v.Title, "", "").Title, Lifecycle: v.Lifecycle, Priority: v.Priority}
+	head := d.Outcome{CompletionPolicy: v.CompletionPolicy.Effective(), OperationalProfile: v.OperationalProfile.Effective(), ID: v.ID, NamespaceID: v.NamespaceID, Version: v.Version, Title: ports.Summarize(v.Ref(), v.Version, v.Title, "", "").Title, Lifecycle: v.Lifecycle, Priority: v.Priority}
 	if v.ArchivedAt != nil {
 		at := *v.ArchivedAt
 		head.ArchivedAt = &at

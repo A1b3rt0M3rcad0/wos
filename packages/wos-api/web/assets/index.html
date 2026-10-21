@@ -19,9 +19,13 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="editorial.css" />
     <link rel="stylesheet" href="canvas.css" />
+    <link rel="stylesheet" href="workspace-board.css" />
+    <link rel="stylesheet" href="workspace-view.css" />
     <link rel="stylesheet" href="workspace-entry.css" />
     <link rel="stylesheet" href="workspace-surfaces.css" />
     <link rel="stylesheet" href="workspace-dialogs.css" />
+    <link rel="stylesheet" href="workspace-kanban.css" />
+    <link rel="stylesheet" href="workspace-workflows.css" />
   </head>
   <body>
     <noscript>
@@ -426,6 +430,7 @@
                   hidden
                 ></aside>
               </div>
+              <div id="canvas-feedback" class="canvas-feedback"></div>
             </section>
             <section
               id="area-intro"
@@ -617,7 +622,7 @@
       </div>
       <div id="detail-content" class="dialog-body"></div>
       <footer id="detail-actions">
-        <button id="entity-actions" data-copy="itemActions">
+        <button id="entity-actions" class="quiet" data-copy="itemActions">
           Item actions
         </button>
       </footer>

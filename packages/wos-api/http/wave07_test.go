@@ -26,6 +26,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	)
 	outcome := createdOutcome.Value.Value
 	outcomeURL := base + "/" + outcome.ID.String()
+	objective := createHTTPTestObjective(t, client, outcomeURL, "wave07-owner-create-0001")
 
 	criterion := doJSON[application.MutationResult[domain.SuccessCriterion]](
 		t, client, http.MethodPost, outcomeURL+"/criteria",
@@ -48,7 +49,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t, client, http.MethodPost, outcomeURL+"/work-items",
-		[]byte(`{"title":"Coordinated work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Coordinated work", "todo"),
 		map[string]string{"Idempotency-Key": "wave07-work-create-0001"},
 		http.StatusCreated,
 	)
@@ -57,6 +58,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 	independentIssue := doJSON[application.MutationResult[domain.Issue]](
 		t, client, http.MethodPost, outcomeURL+"/issues",
 		[]byte(`{
+			"objective_id":"`+objective.ID.String()+`",
 			"title":"Observed but non-blocking",
 			"description":"A problem can exist without being an impediment.",
 			"severity":"minor",
@@ -91,6 +93,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	compoundBody := []byte(`{
 		"issue":{
+			"objective_id":"` + objective.ID.String() + `",
 			"title":"Dependency incident",
 			"description":"The dependency is unavailable.",
 			"severity":"major",
@@ -234,7 +237,7 @@ func TestWave07IssueBlockerHTTPContract(t *testing.T) {
 
 	externalWork := doJSON[application.MutationResult[domain.WorkItem]](
 		t, client, http.MethodPost, outcomeURL+"/work-items",
-		[]byte(`{"title":"External dependency work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "External dependency work", "todo"),
 		map[string]string{"Idempotency-Key": "wave07-external-work-0001"},
 		http.StatusCreated,
 	)

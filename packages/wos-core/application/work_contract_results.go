@@ -71,39 +71,48 @@ type FinalizeWorkContractCommand struct {
 	Reason                  string
 }
 
-func (s *Service) contractForWrite(ctx context.Context, u ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, id domain.ID, authority ContractAuthority) (ports.WorkContractRepository, domain.WorkContract, domain.WorkItem, time.Time, error) {
+func (s *Service) contractForWrite(ctx context.Context, u ports.UnitOfWork, cc domain.CommandContext, scope domain.Scope, id domain.ID, authority ContractAuthority, commandName string) (ports.WorkContractRepository, domain.WorkContract, domain.WorkItem, *leaseCredentialAuthority, time.Time, error) {
 	var c domain.WorkContract
 	var w domain.WorkItem
 	var now time.Time
 	if err := requireActiveOutcome(ctx, u, scope); err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
 	repo, err := contractRepository(u)
 	if err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
 	c, err = repo.Get(ctx, scope, id)
 	if err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
 	if err = validateContractSpec(c, authority); err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
 	now, err = s.transactionTime(ctx, u)
 	if err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
-	if err = c.Authorize(cc.PrincipalID, authority.ExecutionID, authority.FencingToken, now); err != nil {
-		return nil, c, w, now, err
+	credentialAuthority, err := s.resolveWorkContractCredentialAuthority(ctx, u, cc, scope, &c, commandName, now)
+	if err != nil {
+		return nil, c, w, nil, now, err
+	}
+	if credentialAuthority != nil {
+		err = c.AuthorizeForCredential(cc.PrincipalID, credentialAuthority.holderID, authority.ExecutionID, authority.FencingToken, now)
+	} else {
+		err = c.Authorize(cc.PrincipalID, authority.ExecutionID, authority.FencingToken, now)
+	}
+	if err != nil {
+		return nil, c, w, nil, now, err
 	}
 	w, err = u.WorkItems().Get(ctx, scope, c.WorkItemID)
 	if err != nil {
-		return nil, c, w, now, err
+		return nil, c, w, nil, now, err
 	}
 	if w.CurrentContractID == nil || *w.CurrentContractID != c.ID {
-		return nil, c, w, now, domain.NewError(domain.ErrorCodeStaleExecution, "contract no longer owns work")
+		return nil, c, w, nil, now, domain.NewError(domain.ErrorCodeStaleExecution, "contract no longer owns work")
 	}
-	return repo, c, w, now, nil
+	return repo, c, w, credentialAuthority, now, nil
 }
 func boundedContractInput(v any) error {
 	b, err := json.Marshal(v)
@@ -124,7 +133,7 @@ func (s *Service) SyncWorkContract(ctx context.Context, cc domain.CommandContext
 	}
 	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (WorkContractResult, domain.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		repo, c, w, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority)
+		repo, c, w, credentialAuthority, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority, "SyncWorkContract")
 		if err != nil {
 			return zero, 0, err
 		}
@@ -168,7 +177,12 @@ func (s *Service) SyncWorkContract(ctx context.Context, cc domain.CommandContext
 		}
 		p := domain.WorkCheckpoint{ID: id, Scope: cmd.Scope, ContractID: c.ID, WorkItemID: w.ID, Sequence: uint64(c.Version), PrincipalID: cc.PrincipalID, AcceptedAt: now, Summary: cmd.Checkpoint.Summary, Completed: cmd.Checkpoint.Completed, Pending: cmd.Checkpoint.Pending, NextAction: cmd.Checkpoint.NextAction, ArtifactRefs: cmd.Checkpoint.ArtifactRefs, EvidenceRefs: cmd.Checkpoint.EvidenceRefs, IssueRefs: cmd.Checkpoint.IssueRefs, RepositoryRef: cmd.Checkpoint.RepositoryRef, WorkingCommit: cmd.Checkpoint.WorkingCommit, Dirty: cmd.Checkpoint.Dirty, Unknown: cmd.Checkpoint.Unknown}
 		v, l := c.Version, c.LeaseVersion
-		if err = c.RecordCheckpoint(p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now); err != nil {
+		if credentialAuthority != nil {
+			err = c.RecordCheckpointForCredential(p, cc.PrincipalID, credentialAuthority.holderID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now)
+		} else {
+			err = c.RecordCheckpoint(p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now)
+		}
+		if err != nil {
 			return zero, 0, err
 		}
 		if err = repo.InsertCheckpoint(ctx, p); err != nil {
@@ -239,7 +253,7 @@ func (s *Service) SubmitWorkResult(ctx context.Context, cc domain.CommandContext
 	}
 	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (WorkContractResult, domain.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		repo, c, w, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority)
+		repo, c, w, credentialAuthority, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority, "SubmitWorkResult")
 		if err != nil {
 			return zero, 0, err
 		}
@@ -257,7 +271,12 @@ func (s *Service) SubmitWorkResult(ctx context.Context, cc domain.CommandContext
 		}
 		p := domain.WorkSubmission{ID: id, Scope: cmd.Scope, Material: material, Digest: digest, PrincipalID: cc.PrincipalID, Actor: cc.Actor, SubmittedAt: now, SupersedesSubmissionID: cmd.SupersedesSubmissionID}
 		v, l := c.Version, c.LeaseVersion
-		if err = c.Submit(p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now); err != nil {
+		if credentialAuthority != nil {
+			err = c.SubmitForCredential(p, cc.PrincipalID, credentialAuthority.holderID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now)
+		} else {
+			err = c.Submit(p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, now)
+		}
+		if err != nil {
 			return zero, 0, err
 		}
 		if err = repo.InsertSubmission(ctx, p); err != nil {
@@ -276,8 +295,11 @@ func (s *Service) FinalizeWorkContract(ctx context.Context, cc domain.CommandCon
 	}
 	return transactCommand(ctx, s, cc, cmd, func(u ports.UnitOfWork) (WorkContractResult, domain.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		repo, c, w, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority)
+		repo, c, w, credentialAuthority, now, err := s.contractForWrite(ctx, u, cc, cmd.Scope, cmd.ContractID, cmd.Authority, "FinalizeWorkContract")
 		if err != nil {
+			return zero, 0, err
+		}
+		if err := requireTaskDeliveryReviewForCompletion(ctx, u, cmd.Scope, w.ID); err != nil {
 			return zero, 0, err
 		}
 		candidate := w
@@ -310,7 +332,12 @@ func (s *Service) FinalizeWorkContract(ctx context.Context, cc domain.CommandCon
 		}
 		conclusion := conclusionFromContext(id, cc, cmd.Reason, now)
 		v, l, wv := c.Version, c.LeaseVersion, w.Version
-		if err = c.Finalize(&w, p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, cmd.ExpectedWorkItemVersion, conclusion, now); err != nil {
+		if credentialAuthority != nil {
+			err = c.FinalizeForCredential(&w, p, cc.PrincipalID, credentialAuthority.holderID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, cmd.ExpectedWorkItemVersion, conclusion, now)
+		} else {
+			err = c.Finalize(&w, p, cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedContractVersion, cmd.ExpectedWorkItemVersion, conclusion, now)
+		}
+		if err != nil {
 			return zero, 0, err
 		}
 		if err = repo.Save(ctx, c, v, l); err != nil {
@@ -324,16 +351,51 @@ func (s *Service) FinalizeWorkContract(ctx context.Context, cc domain.CommandCon
 	})
 }
 
-func bindSubmissionAssessment(ctx context.Context, u ports.UnitOfWork, owner domain.EntityRef, id *domain.ID, a *domain.CriterionAssessment) error {
+func bindSubmissionAssessment(ctx context.Context, u ports.UnitOfWork, owner domain.EntityRef, id *domain.ID, requestedDeliveryRef *domain.TaskDeliveryAssessmentRef, a *domain.CriterionAssessment) error {
 	if owner.Kind != domain.EntityKindWorkItem {
-		if id != nil {
-			return domain.NewError(domain.ErrorCodeInvalidArgument, "submission assessment requires work owner")
+		if id != nil || requestedDeliveryRef != nil {
+			return domain.NewError(domain.ErrorCodeInvalidArgument, "execution-bound assessment requires work owner")
 		}
 		return nil
 	}
 	w, err := u.WorkItems().Get(ctx, owner.Scope, owner.ID)
 	if err != nil {
 		return err
+	}
+	if w.PendingDeliveryID == nil {
+		if requestedDeliveryRef != nil {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "TaskDelivery assessment reference requires the current pending delivery")
+		}
+	} else {
+		deliveryUnit, ok := u.(ports.TaskDeliveryUnitOfWork)
+		if !ok {
+			return domain.NewError(domain.ErrorCodeInvalidConfig, "adapter lacks TaskDelivery persistence")
+		}
+		delivery, err := deliveryUnit.TaskDeliveries().Pending(ctx, owner.Scope, w.ID)
+		if err != nil {
+			return err
+		}
+		expectedAuthority := domain.TaskDeliveryAuthorityLegacyLease
+		if w.ContractsEnabled {
+			expectedAuthority = domain.TaskDeliveryAuthorityContractsV1
+		}
+		if delivery == nil || delivery.ID != *w.PendingDeliveryID || delivery.Scope != w.Scope || delivery.WorkItemID != w.ID || delivery.Authority.Kind != expectedAuthority {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "assessment requires the exact pending TaskDelivery for this work protocol")
+		}
+		if err := delivery.ValidateForWork(w); err != nil {
+			return err
+		}
+		expected := domain.TaskDeliveryAssessmentRef{ID: delivery.ID, Digest: delivery.Digest, Round: delivery.Round}
+		if requestedDeliveryRef == nil {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "assessment must identify the exact pending TaskDelivery")
+		}
+		if err := requestedDeliveryRef.Validate(); err != nil {
+			return err
+		}
+		if *requestedDeliveryRef != expected {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "assessment reference differs from the exact pending TaskDelivery")
+		}
+		a.TaskDeliveryRef = &expected
 	}
 	if !w.ContractsEnabled {
 		if id != nil {
@@ -352,15 +414,45 @@ func bindSubmissionAssessment(ctx context.Context, u ports.UnitOfWork, owner dom
 	if err != nil {
 		return err
 	}
-	if p.Material.WorkItemID != w.ID || w.CurrentContractID == nil || p.Material.ContractID != *w.CurrentContractID {
+	if p.Material.WorkItemID != w.ID || p.Scope != w.Scope {
 		return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "submission does not own this work")
 	}
-	c, err := repo.Get(ctx, owner.Scope, p.Material.ContractID)
-	if err != nil {
-		return err
-	}
-	if c.LatestSubmissionID == nil || *c.LatestSubmissionID != p.ID {
-		return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "submission superseded")
+	if w.CurrentContractID != nil {
+		if p.Material.ContractID != *w.CurrentContractID {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "submission does not belong to the current execution contract")
+		}
+		c, err := repo.Get(ctx, owner.Scope, p.Material.ContractID)
+		if err != nil {
+			return err
+		}
+		if c.LatestSubmissionID == nil || *c.LatestSubmissionID != p.ID {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "submission superseded")
+		}
+	} else {
+		// After contracts_v1 delivery, execution authority is detached from the
+		// Task. A reviewer may assess only the exact immutable submission that
+		// the still-pending delivery references.
+		deliveryUnit, ok := u.(ports.TaskDeliveryUnitOfWork)
+		if !ok || w.PendingDeliveryID == nil {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "submission is not attached to an active contract or pending delivery")
+		}
+		delivery, err := deliveryUnit.TaskDeliveries().Pending(ctx, owner.Scope, w.ID)
+		if err != nil {
+			return err
+		}
+		if delivery == nil || delivery.ID != *w.PendingDeliveryID || delivery.WorkItemID != w.ID || delivery.Scope != w.Scope || delivery.SubmissionRef == nil || delivery.SubmissionRef.ID != p.ID || delivery.SubmissionRef.ContractID != p.Material.ContractID || delivery.SubmissionRef.Digest != p.Digest {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "assessment must target the exact submission of the pending delivery")
+		}
+		if err := delivery.ValidateForWork(w); err != nil {
+			return err
+		}
+		contract, err := repo.Get(ctx, owner.Scope, p.Material.ContractID)
+		if err != nil {
+			return err
+		}
+		if contract.SignedBinding != nil || contract.LatestSubmissionID == nil || *contract.LatestSubmissionID != p.ID || contract.Status != domain.ContractCompleted || contract.CloseReason != domain.ContractV1DeliveryCloseReason || contract.ClosedAt == nil || !contract.ClosedAt.Equal(delivery.DeliveredAt) || contract.WorkItemID != w.ID {
+			return domain.NewError(domain.ErrorCodeSubmissionNotAccepted, "pending delivery submission is not the completed contracts_v1 execution result")
+		}
 	}
 	for _, eid := range a.EvidenceIDs {
 		found := false
@@ -452,6 +544,9 @@ func (s *Service) registerContractRecords(ctx context.Context, u ports.UnitOfWor
 				return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "artifact withdrawn")
 			}
 		}
+		if _, err := validateEntityNoteSource(ctx, u, cmd.Scope, x.SourceRef); err != nil {
+			return zero, err
+		}
 		value, err := domain.NewEvidence(id, cmd.Scope, x.EvidenceType, x.Description, x.SourceRef, cc.Actor, x.CapturedAt, x.ArtifactID, x.Measurement, x.SourceVersion, x.Checksum, now)
 		if err != nil {
 			return zero, err
@@ -486,6 +581,9 @@ func (s *Service) registerContractRecords(ctx context.Context, u ports.UnitOfWor
 		}
 		if ev.Lifecycle != domain.EvidenceLifecycleRegistered {
 			return zero, domain.NewError(domain.ErrorCodePreconditionFailed, "evidence retracted")
+		}
+		if _, err := validateEntityNoteSource(ctx, u, cmd.Scope, ev.SourceRef); err != nil {
+			return zero, err
 		}
 		if err = validateEvidenceLinkTarget(ctx, u, decisions, x.TargetRef, x.CriterionID); err != nil {
 			return zero, err

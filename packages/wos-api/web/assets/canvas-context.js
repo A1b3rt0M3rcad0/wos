@@ -5,7 +5,7 @@ import { badge, date, display, kindName, shortId } from "./presentation.js";
 // mutations, readiness calculations, or interpretation of execution authority.
 export function renderCanvasContext(
   host,
-  { entity = {}, context, attention, onReference, onHistory } = {},
+  { entity = {}, context, attention, onReference, onHistory, skipPlacement = false } = {},
 ) {
   const root = el("section", undefined, "detail-section canvas-task-context");
   root.append(el("h3", "Task context"));
@@ -68,7 +68,7 @@ export function renderCanvasContext(
   }
 
   snapshot(root, context, "Context snapshot");
-  if (context?.outcome || context?.objective) {
+  if (!skipPlacement && (context?.outcome || context?.objective)) {
     const placement = section("Outcome and Objective");
     if (context.outcome) {
       const row = el("p", "Outcome: ");

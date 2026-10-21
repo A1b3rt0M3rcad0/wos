@@ -117,7 +117,7 @@ jobs:
         env:
           WOS_TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
-          if go test -p 1 -json -race ./... > race-tests.jsonl; then
+          if go test -p 1 -json -race -timeout=30m ./... > race-tests.jsonl; then
             echo 'Race execution recorded'
           else
             status=$?

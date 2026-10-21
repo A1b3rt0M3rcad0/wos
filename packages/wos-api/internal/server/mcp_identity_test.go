@@ -53,7 +53,7 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		}
 		humanCtx := application.WithIdentity(ctx, human)
 		ns, _ := domain.ParseID(cfg.Auth.BootstrapNamespaceID)
-		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
+		if err = security.Store.PutGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskCreate, ports.PermissionWorkWrite}}); err != nil {
 			t.Fatal(err)
 		}
 		credential, token, err := security.IssueCredential(humanCtx, ns, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "independent", ID: "agent-1"}, time.Now().Add(time.Hour))
@@ -73,7 +73,12 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		args := map[string]any{"idempotency_key": "remote-work-create-00001", "command": map[string]any{"scope": outcome.Value.Scope(), "title": "Agent writes shared work", "priority": "normal", "lifecycle": "todo"}}
+		ownerKey, _ := wossdk.NewIdempotencyKey()
+		objective, err := humanSDK.CreateObjective(ctx, ownerKey, application.CreateObjectiveCommand{Scope: outcome.Value.Scope(), Title: "Agent work owner", Priority: domain.PriorityNormal})
+		if err != nil {
+			t.Fatal(err)
+		}
+		args := map[string]any{"idempotency_key": "remote-work-create-00001", "command": map[string]any{"scope": outcome.Value.Scope(), "objective_id": objective.Value.ID, "title": "Agent writes shared work", "priority": "normal", "lifecycle": "todo"}}
 		created, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_work_item", Arguments: args})
 		if err != nil || created.IsError {
 			t.Fatalf("agent create: %v %+v", err, created)
@@ -99,14 +104,14 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		if err != nil || !cross.IsError {
 			t.Fatal("cross namespace tool was not denied", err)
 		}
-		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		if err = security.Store.PutGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 			t.Fatal(err)
 		}
 		replay, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "wos_create_work_item", Arguments: args})
 		if err != nil || !replay.IsError {
 			t.Fatal("long-lived MCP session bypassed revoked write grant", err)
 		}
-		if err = security.RevokeCredential(humanCtx, ns, credential.ID); err != nil {
+		if err = security.Store.RevokeCredential(humanCtx, credential.ID); err != nil {
 			t.Fatal(err)
 		}
 		if _, err = session.ReadResource(ctx, &mcp.ReadResourceParams{URI: "wos://namespaces/" + ns.String() + "/outcomes/" + outcome.Value.ID.String() + "/continuity"}); err == nil {

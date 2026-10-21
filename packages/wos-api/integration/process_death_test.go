@@ -131,9 +131,9 @@ func TestDeliveryWorkerProcessDeathReclaimsPersistedLease(t *testing.T) {
 			// Wait for the real persisted deadline; no clock/row/signature is altered.
 			deadline := time.NewTimer(time.Until(original.LeaseUntil.Add(30 * time.Millisecond)))
 			<-deadline.C
-			replacement := &dropOneACK{DeliveryStore: two}
-			replacement.once.Store(true)
-			worker, e := New(replacement, diagnosticClock{}, ids, map[string]string{"load": secret}, Policy{AllowedHosts: []string{"127.0.0.1"}, AllowLoopback: true})
+			// Only the killed child needs a short lease. Recovery uses the real
+			// worker lease so instrumentation cannot expire its successful ACK.
+			worker, e := New(two, diagnosticClock{}, ids, map[string]string{"load": secret}, Policy{AllowedHosts: []string{"127.0.0.1"}, AllowLoopback: true})
 			if e != nil {
 				t.Fatal(e)
 			}

@@ -1,0 +1,4 @@
+{
+  "bump": "minor",
+  "summary": "Add outcome-scoped operational workspace views, shared inspection, contextual editing and append-only participant notes, atomic planning and evidence linking, and explicit criterion assessment and acceptance guidance across the browser, CLI, HTTP and MCP."
+}

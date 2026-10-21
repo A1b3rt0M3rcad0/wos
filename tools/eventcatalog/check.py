@@ -20,6 +20,7 @@ current.update(re.findall(r'"(work_review\.[a-z_]+)"', (root / "packages/wos-cor
 current.update(re.findall(r'"(work_review\.[a-z_]+)"', (root / "packages/wos-core/application/signed_review_return.go").read_text()))
 current.update(re.findall(r'"((?:work_review|work_contract)\.[a-z_]+)"', (root / "packages/wos-core/application/signed_intervention.go").read_text()))
 current.update(re.findall(r'"(work_activity\.[a-z_]+)"', (root / "packages/wos-core/application/work_activity.go").read_text()))
+current.update(re.findall(r'"(entity_note\.[a-z_]+)"', (root / "packages/wos-core/application/entity_notes.go").read_text()))
 catalog = json.loads((root / "docs/integration-events-v1.json").read_text())
 published = [entry["event_type"] for entry in catalog["events"]]
 if catalog["schema_version"] != 1 or len(published) != len(set(published)):

@@ -15,23 +15,42 @@ const (
 	OutcomeLifecycleAbandoned OutcomeLifecycle = "abandoned"
 )
 
+type CompletionPolicy string
+
+const (
+	CompletionPolicyCompatible CompletionPolicy = "compatible"
+	CompletionPolicyStrictWork CompletionPolicy = "strict_work"
+)
+
+func (p CompletionPolicy) Effective() CompletionPolicy {
+	if p == "" {
+		return CompletionPolicyCompatible
+	}
+	return p
+}
+func (p CompletionPolicy) Valid() bool {
+	return p.Effective() == CompletionPolicyCompatible || p == CompletionPolicyStrictWork
+}
+
 type Outcome struct {
-	ExternalContext   ExternalContext  `json:"external_context,omitempty"`
-	ID                ID               `json:"id"`
-	NamespaceID       ID               `json:"namespace_id"`
-	Version           Version          `json:"version"`
-	Title             string           `json:"title"`
-	Description       string           `json:"description,omitempty"`
-	DesiredState      string           `json:"desired_state"`
-	Lifecycle         OutcomeLifecycle `json:"lifecycle"`
-	Priority          Priority         `json:"priority"`
-	OwnerRefs         []ActorRef       `json:"owner_refs,omitempty"`
-	ArchivedAt        *time.Time       `json:"archived_at,omitempty"`
-	Criteria          CriterionSet     `json:"criteria"`
-	CurrentConclusion *Conclusion      `json:"conclusion,omitempty"`
-	ConclusionHistory []Conclusion     `json:"conclusion_history,omitempty"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
+	CompletionPolicy   CompletionPolicy   `json:"completion_policy,omitempty"`
+	ExternalContext    ExternalContext    `json:"external_context,omitempty"`
+	ID                 ID                 `json:"id"`
+	NamespaceID        ID                 `json:"namespace_id"`
+	Version            Version            `json:"version"`
+	Title              string             `json:"title"`
+	Description        string             `json:"description,omitempty"`
+	DesiredState       string             `json:"desired_state"`
+	Lifecycle          OutcomeLifecycle   `json:"lifecycle"`
+	Priority           Priority           `json:"priority"`
+	OwnerRefs          []ActorRef         `json:"owner_refs,omitempty"`
+	ArchivedAt         *time.Time         `json:"archived_at,omitempty"`
+	Criteria           CriterionSet       `json:"criteria"`
+	CurrentConclusion  *Conclusion        `json:"conclusion,omitempty"`
+	ConclusionHistory  []Conclusion       `json:"conclusion_history,omitempty"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	OperationalProfile OperationalProfile `json:"operational_profile,omitempty"`
 }
 
 func NewOutcome(id, namespaceID ID, title, description, desiredState string, priority Priority, createdAt time.Time) (Outcome, error) {
@@ -65,6 +84,12 @@ func (o Outcome) Ref() EntityRef {
 func (o Outcome) IsArchived() bool { return o.ArchivedAt != nil }
 
 func (o Outcome) Validate() error {
+	if !o.OperationalProfile.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid operational_profile")
+	}
+	if !o.CompletionPolicy.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid completion_policy")
+	}
 	if err := o.ExternalContext.Validate(); err != nil {
 		return err
 	}
@@ -108,8 +133,8 @@ func (o Outcome) Validate() error {
 }
 
 func (o *Outcome) AddCriterion(c SuccessCriterion, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if c.OwnerRef != o.Ref() {
 		return NewError(ErrorCodeCriterion, "criterion owner does not match outcome")
@@ -121,8 +146,8 @@ func (o *Outcome) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (o *Outcome) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Revise(id, title, description, required, mode); err != nil {
 		return err
@@ -131,8 +156,8 @@ func (o *Outcome) ReviseCriterion(id ID, title, description string, required boo
 }
 
 func (o *Outcome) RetireCriterion(id ID, now time.Time) error {
-	if o.IsArchived() || o.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on archived or terminal outcome")
+	if err := o.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if err := o.Criteria.Retire(id); err != nil {
 		return err
@@ -161,14 +186,8 @@ func (o *Outcome) AssessCriterionAttestation(a CriterionAssessment, now time.Tim
 }
 
 func (o *Outcome) Activate(now time.Time) error {
-	if o.IsArchived() {
-		return NewError(ErrorCodeInvalidTransition, "archived outcome cannot be activated")
-	}
-	if o.Lifecycle != OutcomeLifecycleDraft {
-		return NewError(ErrorCodeInvalidTransition, "only draft outcome can be activated")
-	}
-	if !o.Criteria.HasRequiredActive() {
-		return NewError(ErrorCodePreconditionFailed, "outcome requires at least one required active criterion")
+	if err := o.CheckActivation(); err != nil {
+		return err
 	}
 	o.Lifecycle = OutcomeLifecycleActive
 	return o.touch(now)
@@ -179,8 +198,8 @@ func (o *Outcome) Achieve(conclusion Conclusion, now time.Time) error {
 }
 
 func (o *Outcome) AchieveWithObligations(conclusion Conclusion, requiredObjectiveIDs []ID, now time.Time) error {
-	if o.IsArchived() || o.Lifecycle != OutcomeLifecycleActive {
-		return NewError(ErrorCodeInvalidTransition, "only active non-archived outcome can be achieved")
+	if err := o.CheckAchievement(); err != nil {
+		return err
 	}
 	refs, err := o.Criteria.RequiredSatisfied()
 	if err != nil {
@@ -192,8 +211,9 @@ func (o *Outcome) AchieveWithObligations(conclusion Conclusion, requiredObjectiv
 		return err
 	}
 	if err := conclusion.Bind(o.Ref(), o.Version, string(o.Lifecycle), ConclusionObligations{
-		RequiredCriteria:     o.Criteria.RequiredObligations(),
-		RequiredObjectiveIDs: append([]ID(nil), requiredObjectiveIDs...),
+		AcknowledgedCancelledWork: append([]EntityRef(nil), conclusion.Obligations.AcknowledgedCancelledWork...),
+		RequiredCriteria:          o.Criteria.RequiredObligations(),
+		RequiredObjectiveIDs:      append([]ID(nil), requiredObjectiveIDs...),
 	}); err != nil {
 		return err
 	}

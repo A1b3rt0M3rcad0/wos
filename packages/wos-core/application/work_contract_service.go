@@ -20,10 +20,10 @@ func (s *Service) AcquireWorkContract(ctx context.Context, cc d.CommandContext, 
 		return MutationResult[WorkContractResult]{}, err
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
-		return s.acquireContract(ctx, uow, cc, cmd)
+		return s.acquireContract(ctx, uow, cc, cmd, "AcquireWorkContract")
 	})
 }
-func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc d.CommandContext, cmd AcquireWorkContractCommand) (WorkContractResult, d.OutcomeRevision, error) {
+func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc d.CommandContext, cmd AcquireWorkContractCommand, commandName string) (WorkContractResult, d.OutcomeRevision, error) {
 	zero := WorkContractResult{}
 	if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 		return zero, 0, err
@@ -43,6 +43,10 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		return zero, 0, d.NewError(d.ErrorCodeVersionConflict, "work item version conflict")
 	}
 	now, err := s.transactionTime(ctx, uow)
+	if err != nil {
+		return zero, 0, err
+	}
+	credentialAuthority, err := s.resolveWorkContractCredentialAuthority(ctx, uow, cc, cmd.Scope, nil, commandName, now)
 	if err != nil {
 		return zero, 0, err
 	}
@@ -127,7 +131,12 @@ func (s *Service) acquireContract(ctx context.Context, uow ports.UnitOfWork, cc 
 		}
 		policy = p.LeasePolicy
 	}
-	c, err := d.NewWorkContract(id, execution, w, cc.PrincipalID, cc.Actor, policy, cmd.TTLSeconds, spec, coord.Revision, now)
+	var c d.WorkContract
+	if credentialAuthority != nil {
+		c, err = d.NewWorkContractForCredential(id, execution, w, cc.PrincipalID, credentialAuthority.holderID, credentialAuthority.sessionID, cc.Actor, policy, cmd.TTLSeconds, spec, coord.Revision, now)
+	} else {
+		c, err = d.NewWorkContract(id, execution, w, cc.PrincipalID, cc.Actor, policy, cmd.TTLSeconds, spec, coord.Revision, now)
+	}
 	if err != nil {
 		return zero, 0, err
 	}
@@ -155,7 +164,7 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return zero, 0, err
 		}
 		repo, err := contractRepository(uow)
@@ -169,8 +178,22 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 		if err := validateContractSpec(c, cmd.Authority); err != nil {
 			return zero, 0, err
 		}
+		w, err := uow.WorkItems().Get(ctx, cmd.Scope, c.WorkItemID)
+		if err != nil {
+			return zero, 0, err
+		}
 		now, err := s.transactionTime(ctx, uow)
 		if err != nil {
+			return zero, 0, err
+		}
+		credentialAuthority, err := s.resolveWorkContractCredentialAuthority(ctx, uow, cc, cmd.Scope, &c, "RenewWorkContract", now)
+		if err != nil {
+			return zero, 0, err
+		}
+		candidate := w
+		candidate.Lifecycle = d.WorkItemLifecycleTodo
+		candidate.CurrentLease = nil
+		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 			return zero, 0, err
 		}
 		if pr, ok := uow.(ports.WorkProtocolUnitOfWork); ok {
@@ -181,14 +204,15 @@ func (s *Service) RenewWorkContract(ctx context.Context, cc d.CommandContext, cm
 			c.LeasePolicy = p.LeasePolicy
 		}
 		v, l := c.Version, c.LeaseVersion
-		if err := c.Renew(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now); err != nil {
+		if credentialAuthority != nil {
+			err = c.RenewForCredential(cc.PrincipalID, credentialAuthority.holderID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now)
+		} else {
+			err = c.Renew(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, cmd.TTLSeconds, now)
+		}
+		if err != nil {
 			return zero, 0, err
 		}
 		if err := repo.Save(ctx, c, v, l); err != nil {
-			return zero, 0, err
-		}
-		w, err := uow.WorkItems().Get(ctx, cmd.Scope, c.WorkItemID)
-		if err != nil {
 			return zero, 0, err
 		}
 		rev, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
@@ -201,7 +225,7 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
 		zero := WorkContractResult{}
-		if _, err := uow.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+		if err := requireActiveOutcome(ctx, uow, cmd.Scope); err != nil {
 			return zero, 0, err
 		}
 		repo, err := contractRepository(uow)
@@ -223,12 +247,27 @@ func (s *Service) ResumeWorkContract(ctx context.Context, cc d.CommandContext, c
 		if err != nil {
 			return zero, 0, err
 		}
+		credentialAuthority, err := s.resolveWorkContractCredentialAuthority(ctx, uow, cc, cmd.Scope, &c, "ResumeWorkContract", now)
+		if err != nil {
+			return zero, 0, err
+		}
+		candidate := w
+		candidate.Lifecycle = d.WorkItemLifecycleTodo
+		candidate.CurrentLease = nil
+		if err := requireWorkItemReady(ctx, uow, candidate, now); err != nil {
+			return zero, 0, err
+		}
 		execution, err := s.ids.NewID()
 		if err != nil {
 			return zero, 0, err
 		}
 		v, l := c.Version, c.LeaseVersion
-		if err := c.Resume(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, execution, w.LastFencingToken, now); err != nil {
+		if credentialAuthority != nil {
+			err = c.ResumeForCredential(cc.PrincipalID, credentialAuthority.holderID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, execution, w.LastFencingToken, now)
+		} else {
+			err = c.Resume(cc.PrincipalID, cmd.Authority.ExecutionID, cmd.Authority.FencingToken, cmd.ExpectedLeaseVersion, execution, w.LastFencingToken, now)
+		}
+		if err != nil {
 			return zero, 0, err
 		}
 		if w.CurrentContractID == nil || *w.CurrentContractID != c.ID {

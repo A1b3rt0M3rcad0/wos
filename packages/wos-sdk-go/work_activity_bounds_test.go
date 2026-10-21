@@ -71,5 +71,5 @@ func TestWorkActivityOriginalResponseBoundAllowsInlineRecordExpansion(t *testing
 }
 
 func commandResultLegacyBound(ctx context.Context, client *Client, scope d.Scope) (CommandResult[d.WorkItem], error) {
-	return command[d.WorkItem](ctx, client, "create_work_item", "bounded-legacy-typed", a.CreateWorkItemCommand{Scope: scope, Title: "Legacy bound", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+	return command[d.WorkItem](ctx, client, "create_work_item", "bounded-legacy-typed", a.CreateWorkItemCommand{Scope: scope, ObjectiveID: &scope.OutcomeID, Title: "Legacy bound", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
 }

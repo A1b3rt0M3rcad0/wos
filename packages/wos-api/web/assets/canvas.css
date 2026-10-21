@@ -154,6 +154,11 @@ dl.canvas-summary-metrics > div {
   border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
   background: var(--wos-workspace);
 }
+/* Suggestions belong above the overlaid inspector. Raising only the results'
+   own z-index cannot escape the toolbar's lower stacking context. */
+.canvas-toolbar:has(.canvas-search-results:not([hidden])) {
+  z-index: 7;
+}
 .canvas-toolbar button,
 .canvas-node-actions button,
 .canvas-list-expand {
@@ -171,6 +176,9 @@ dl.canvas-summary-metrics > div {
   padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
   font: 500 0.78571rem/1.4 var(--utility);
   white-space: nowrap;
+}
+.canvas-toolbar button {
+  font-size: 1rem;
 }
 .canvas-view-switch,
 .canvas-camera-controls {
@@ -249,7 +257,7 @@ dl.canvas-summary-metrics > div {
 .canvas-search input {
   width: 100%;
   min-width: 0;
-  font-size: 0.85714rem;
+  font-size: 1rem;
 }
 .canvas-search-results {
   position: absolute;
@@ -309,7 +317,8 @@ dl.canvas-summary-metrics > div {
   width: auto;
   min-width: calc(130 * var(--wos-unit, 1px));
   max-width: 100%;
-  font-size: 0.78571rem;
+  font-size: 1rem;
+  font-family: var(--utility);
 }
 .canvas-viewport {
   position: relative;
@@ -776,8 +785,8 @@ dl.canvas-summary-metrics > div {
   background: var(--wos-canvas);
 }
 .canvas-context-panel .dialog-heading h2 {
-  font-size: 1.71429rem;
-  line-height: 1.15;
+  font-size: 1.42857rem;
+  line-height: 1.3;
 }
 .canvas-context-panel .dialog-heading .eyebrow {
   margin-bottom: calc(6 * var(--wos-unit, 1px));
@@ -828,17 +837,78 @@ dl.canvas-summary-metrics > div {
   max-width: 100%;
   min-width: 0;
 }
+:where(.canvas-context-panel, #action-dialog) .action-options {
+  grid-auto-rows: max-content;
+  align-content: start;
+  align-items: start;
+}
 .canvas-context-panel .action-options {
   grid-template-columns: minmax(0, 1fr);
   min-height: 0;
   overflow: auto;
+  scroll-padding-block: calc(12 * var(--wos-unit, 1px));
   padding: calc(12 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
 }
-.canvas-context-panel .action-options button {
+:where(.canvas-context-panel, #action-dialog) .action-options button {
+  display: grid;
+  align-content: center;
+  gap: calc(4 * var(--wos-unit, 1px));
   width: 100%;
+  min-width: 0;
   text-align: start;
-  font-size: 1.42857rem;
-  padding-inline: calc(10 * var(--wos-unit, 1px));
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font: 400 1rem/1.45 var(--utility);
+}
+.canvas-context-panel .action-options button {
+  min-height: calc(44 * var(--wos-unit, 1px));
+  height: auto;
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options :is(.action-context, .action-group) {
+  min-width: 0;
+  margin: 0;
+}
+:where(.canvas-context-panel, #action-dialog) .action-context {
+  grid-column: 1 / -1;
+  padding-bottom: calc(12 * var(--wos-unit, 1px));
+  border-bottom: calc(1 * var(--wos-unit, 1px)) solid var(--wos-border);
+  color: var(--muted);
+  font-size: 0.85714rem;
+  overflow-wrap: anywhere;
+}
+:where(.canvas-context-panel, #action-dialog) .action-context > p {
+  margin: calc(6 * var(--wos-unit, 1px)) 0 0;
+  font-size: inherit;
+}
+.canvas-context-panel .action-group + .action-group {
+  margin-top: calc(12 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-group h3 {
+  margin: 0 0 calc(6 * var(--wos-unit, 1px));
+  font: 600 0.85714rem/1.5 var(--utility);
+  color: var(--muted);
+}
+:where(.canvas-context-panel, #action-dialog) .action-group-options {
+  display: grid;
+  gap: calc(4 * var(--wos-unit, 1px));
+  grid-auto-rows: max-content;
+  align-content: start;
+}
+:where(.canvas-context-panel, #action-dialog) .action-description {
+  font-size: 0.85714rem;
+  line-height: 1.45;
+  color: inherit;
+  opacity: 0.8;
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details {
+  margin-top: calc(8 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details > summary {
+  min-height: calc(44 * var(--wos-unit, 1px));
+}
+:where(.canvas-context-panel, #action-dialog) .action-options > details .action-group {
+  margin: calc(12 * var(--wos-unit, 1px));
 }
 .canvas-context-section {
   min-width: 0;
@@ -1041,7 +1111,7 @@ dl.canvas-summary-metrics > div {
   border: calc(1 * var(--wos-unit, 1px)) solid transparent;
   border-bottom-color: var(--wos-border);
   color: var(--wos-foreground);
-  font: 500 0.78571rem/1.4 var(--utility);
+  font: 500 1rem/1.4 var(--utility);
   cursor: pointer;
   list-style: none;
 }
@@ -1180,25 +1250,27 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   min-height: 0;
   padding: calc(6 * var(--wos-unit, 1px)) calc(16 * var(--wos-unit, 1px));
 }
-.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty) {
-  flex-shrink: 0;
+/* Announce feedback in its own document row. Map coverage already has a
+   persistent footer status and never needs a toast over the inspector. */
+.canvas-feedback {
+  flex: 0 0 auto;
+  min-width: 0;
   max-height: 20dvh;
   overflow: auto;
-  padding-block: calc(4 * var(--wos-unit, 1px));
-  margin-bottom: calc(6 * var(--wos-unit, 1px));
-}
-/* Routine refresh feedback remains announced without becoming another fixed
-   header row. Errors keep their bounded, visible place in the normal flow. */
-.workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #notice:not(:empty):not(.error) {
-  position: absolute;
-  z-index: 5;
-  inset-inline-end: calc(24 * var(--wos-unit, 1px));
-  bottom: calc(56 * var(--wos-unit, 1px));
-  max-width: min(60%, calc(560 * var(--wos-unit, 1px)));
-  margin: 0;
-  padding: calc(4 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  overscroll-behavior: contain;
   background: var(--wos-workspace);
-  pointer-events: none;
+}
+.canvas-feedback:empty,
+.canvas-feedback:not(:has(#notice:not(:empty))) {
+  display: none;
+}
+.canvas-feedback > #notice:not(:empty) {
+  position: static;
+  max-width: 100%;
+  margin: calc(4 * var(--wos-unit, 1px)) 0 0;
+  padding: calc(6 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+  font-size: 0.85714rem;
+  overflow-wrap: anywhere;
 }
 .workspace-main:has(> #outcome:not([hidden])[data-editorial-area="canvas"]) > #signed-protocol-info {
   flex-shrink: 0;
@@ -1245,7 +1317,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 #outcome[data-editorial-area="canvas"] .outcome-heading h1 {
   max-width: none;
   margin: 0 0 calc(4 * var(--wos-unit, 1px));
-  font-size: 1.85714rem;
+  font-size: 1.71429rem;
   line-height: 1.1;
   letter-spacing: calc(-0.3 * var(--wos-unit, 1px));
   overflow: hidden;
@@ -1266,7 +1338,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 }
 #outcome[data-editorial-area="canvas"] #canvas-counts {
   color: var(--wos-muted);
-  font: 0.71429rem/1.5 var(--mono);
+  font: 0.85714rem/1.5 var(--mono);
   overflow-wrap: anywhere;
 }
 #outcome[data-editorial-area="canvas"] .heading-actions {
@@ -1275,7 +1347,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   gap: calc(6 * var(--wos-unit, 1px));
 }
 #outcome[data-editorial-area="canvas"] .heading-actions > button {
-  font-size: 0.78571rem;
+  font-size: 1rem;
   padding-inline: calc(12 * var(--wos-unit, 1px));
 }
 #outcome[data-editorial-area="canvas"] #canvas-view {
@@ -1350,7 +1422,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 }
 #outcome[data-editorial-area="canvas"] .canvas-footer > button {
   min-height: calc(44 * var(--wos-unit, 1px));
-  font-size: 0.71429rem;
+  font-size: 0.85714rem;
 }
 #outcome[data-editorial-area="canvas"] .canvas-legend {
   position: relative;
@@ -1414,7 +1486,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
 }
 #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading h2 {
   margin: 0;
-  font-size: 1.85714rem;
+  font-size: 1.42857rem;
   overflow-wrap: anywhere;
 }
 #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading .eyebrow {
@@ -1511,9 +1583,13 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     font-size: 1.71429rem;
   }
   #outcome[data-editorial-area="canvas"] .heading-actions {
-    flex: 1;
-    justify-content: flex-end;
+    display: grid;
+    flex: 1 1 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: calc(4 * var(--wos-unit, 1px));
+  }
+  #outcome[data-editorial-area="canvas"] .heading-actions > button {
+    white-space: normal;
   }
   #outcome .outcome-heading #area-tabs {
     gap: calc(4 * var(--wos-unit, 1px));
@@ -1522,7 +1598,7 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   #outcome :is(.outcome-views, .outcome-tools, .canvas-context-disclosure) > summary,
   #outcome[data-editorial-area="canvas"] .heading-actions > button {
     padding-inline: calc(8 * var(--wos-unit, 1px));
-    font-size: 0.71429rem;
+    font-size: 0.85714rem;
   }
   #outcome .outcome-view-options {
     inset-inline-start: 0;
@@ -1539,6 +1615,9 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     gap: calc(4 * var(--wos-unit, 1px));
     padding: calc(4 * var(--wos-unit, 1px));
   }
+  #outcome[data-editorial-area="canvas"] .canvas-toolbar button {
+    font-size: 0.85714rem;
+  }
   #outcome[data-editorial-area="canvas"] .canvas-view-switch {
     flex: 0 0 auto;
   }
@@ -1547,9 +1626,11 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
   }
   #outcome[data-editorial-area="canvas"] .canvas-link-filter {
     flex: 1 1 calc(170 * var(--wos-unit, 1px));
+    font-size: 0;
   }
   #outcome[data-editorial-area="canvas"] .canvas-link-filter select {
     min-width: 0;
+    font-size: 0.85714rem;
   }
   #outcome[data-editorial-area="canvas"] .canvas-footer {
     padding-inline: calc(6 * var(--wos-unit, 1px));
@@ -1578,9 +1659,9 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     place-items: center;
   }
 }
-/* On a short phone, a fixed heading and action footer would leave no reading
- * area. Let the whole inspector surface scroll within the same bounded stage. */
-@media (max-width: 760px) and (max-height: 700px) {
+/* Compact phones and zoomed desktop windows need room for the reading surface.
+ * Let the whole inspector scroll within the same bounded stage. */
+@media (max-width: 760px), (max-height: 600px) {
   #outcome[data-editorial-area="canvas"] .canvas-inspector-slot {
     display: block;
     overflow: auto;
@@ -1597,4 +1678,29 @@ body:has(#workspace:not([hidden]) #outcome:not([hidden])[data-editorial-area="ca
     max-height: none;
     overflow: visible;
   }
+}
+/* At high native browser zoom, the remaining map stage can be shorter than
+   its chrome. Keep the selected record reachable within the actual viewport. */
+@media (max-height: 360px) {
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel:not([hidden]) {
+    position: fixed;
+    inset: 4px;
+    width: auto;
+    height: calc(100dvh - 8px);
+    max-height: calc(100dvh - 8px);
+    margin: 0;
+    z-index: 30;
+  }
+}
+
+/* Specialist views follow the direct Overview control, without a dropdown. */
+#outcome #outcome-views { position: static; display: flex; flex-wrap: wrap; gap: 4px; padding: 0; border: 0; box-shadow: none; background: transparent; max-height: none; min-width: 0; }
+#outcome #outcome-views[hidden] { display: none; }
+#outcome #outcome-views button { width: auto; }
+
+#outcome .outcome-heading #area-tabs { flex-wrap: wrap; min-width: 0; max-width: 100%; flex-shrink: 1; }
+#outcome #outcome-views { min-width: 0; max-width: 100%; }
+@media (max-width: 900px) {
+  #outcome #outcome-views { flex-basis: 100%; width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+  #outcome #outcome-views button { flex: 0 0 auto; }
 }

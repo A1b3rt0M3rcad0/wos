@@ -177,7 +177,7 @@ func TestObjectiveAndWorkItemRemainingLifecycleCommands(t *testing.T) {
 	}
 
 	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope: outcome.Scope(), Title: "Work", Priority: domain.PriorityNormal,
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()), Title: "Work", Priority: domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
 	})
 	if err != nil {

@@ -35,6 +35,7 @@ func (r signedWorkContractRepository) Get(ctx context.Context, scope d.Scope, id
 	}
 	return c, c.Validate()
 }
+
 func (r signedWorkContractRepository) Current(ctx context.Context, scope d.Scope, work d.ID) (*d.WorkContract, error) {
 	var id string
 	err := r.uow.tx.QueryRowContext(ctx, `SELECT id FROM signed_work_contracts WHERE namespace_id=$1 AND outcome_id=$2 AND work_item_id=$3 AND status='active'`, scope.NamespaceID.String(), scope.OutcomeID.String(), work.String()).Scan(&id)

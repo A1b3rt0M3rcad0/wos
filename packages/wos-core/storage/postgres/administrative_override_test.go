@@ -32,11 +32,11 @@ func (a sqliteAdministrativeAuthorizer) Authorize(_ context.Context, request por
 	}
 }
 
-func TestSQLiteAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
+func TestPostgresAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestSQLiteAdministrativeCompletionIsDurableAndAudited(t *testing.T) {
 	if err := store.Close(); err != nil {
 		t.Fatal(err)
 	}
-	reopened, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	reopened, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}

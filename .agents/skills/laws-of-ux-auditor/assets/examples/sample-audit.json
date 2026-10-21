@@ -1,0 +1,178 @@
+{
+  "schema_version": "1.0.0",
+  "skill": "laws-of-ux-auditor",
+  "audit": {
+    "product": "Produto fictício de gerenciamento de tarefas",
+    "scope": "Formulário de criação de tarefas (cenário ilustrativo)",
+    "date": "2026-10-19",
+    "mode": "visual",
+    "build_or_version": "mockup (não é produto real)",
+    "environment": "revisão hipotética de layout estático; não houve browser nem usuários",
+    "roles": [
+      "editor (hipótese)"
+    ],
+    "viewports_css": [
+      "390x844 (cenário de referência, não testado)"
+    ],
+    "tested_screens": [
+      "layout fictício do formulário, sem captura real"
+    ],
+    "tested_flows": [],
+    "access_limits": [
+      "sem browser ou DOM",
+      "sem logs ou dados de usuários",
+      "sem ensaio WCAG"
+    ]
+  },
+  "coverage": [
+    {
+      "area": "A",
+      "label": "Navegação e orientação",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "B",
+      "label": "Hierarquia e densidade",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "C",
+      "label": "Jornadas e modelos mentais",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "D",
+      "label": "Interações e feedback",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "E",
+      "label": "Formulários",
+      "status": "hipotese",
+      "evidence": [],
+      "notes": "Exercício didático; não há produto/captura a verificar."
+    },
+    {
+      "area": "F",
+      "label": "Responsividade",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "G",
+      "label": "Acessibilidade",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "H",
+      "label": "Estados e recuperação",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "I",
+      "label": "Canvas, boards e edição rica",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    },
+    {
+      "area": "J",
+      "label": "Conteúdo e confiança",
+      "status": "nao_testado",
+      "evidence": [],
+      "notes": ""
+    }
+  ],
+  "findings": [
+    {
+      "id": "UX-001",
+      "title": "Hipótese: erro do formulário pode não oferecer instrução de recuperação",
+      "classification": "hypothesis",
+      "area": "E",
+      "screen": "formulário fictício / criar tarefa",
+      "user_goal": "Concluir criação de tarefa após corrigir campo inválido",
+      "observed": "Cenário fictício apresentado apenas para demonstrar formato de registro; nenhum produto real inspecionado.",
+      "expected": "Quando houver erro detectável, identificar o campo e explicar como corrigi-lo em linguagem clara.",
+      "limitations": "Não há evidência de que uma interface real apresente a falha; não rotular como violação WCAG nem estimar frequência.",
+      "repro_steps": [
+        "Solicitar mockup ou URL/ambiente de teste",
+        "Submeter formulário com campo obrigatório inválido",
+        "Registrar feedback visual e anúncio acessível; converter hipótese em achado somente se reproduzido"
+      ],
+      "evidence": [
+        {
+          "type": "hypothesis",
+          "reference": "assets/examples/form-example.md",
+          "observation": "Situação construída como exemplo de investigação; não é observação de sistema real."
+        }
+      ],
+      "principles": [
+        "WCAG 2.2 SC 3.3.1 (avaliar se elegível)",
+        "Jakob (convenções de erro; heurística, não comprovação)"
+      ],
+      "confidence": "baixo",
+      "proposal": {
+        "change": "Se for confirmada a lacuna, associar uma mensagem de erro específica ao campo e fornecer resumo quando apropriado.",
+        "acceptance": [
+          "Na reprodução, usuário identifica o campo inválido e a correção necessária",
+          "Verificar anúncio de erro com técnica assistiva apropriada e preservação de contexto"
+        ],
+        "verification": [
+          "Inspeção interativa com submissão inválida",
+          "Teste de teclado, foco e semântica do feedback",
+          "Teste com participantes antes/depois, se disponível"
+        ]
+      },
+      "impact": {
+        "severity": 3,
+        "criticality": 4,
+        "reach": 2,
+        "score": 3.1,
+        "rationale": "Notas meramente ilustrativas; frequência não medida; requer investigação."
+      },
+      "effort": {
+        "complexity": 2,
+        "dependencies": 2,
+        "verification": 3,
+        "score": 2.33,
+        "rationale": "Estimativa ordinal fictícia, não equivalente a horas de engenharia."
+      },
+      "priority": {
+        "tier": "P2",
+        "index": 1.33,
+        "rationale": "Hipótese de alto valor de investigação, mas sem falha comprovada; validar antes de alterar."
+      }
+    }
+  ],
+  "summary": {
+    "executive_summary": "Exemplo fictício para demonstrar JSON auditável sem alegar auditoria real.",
+    "key_findings": [],
+    "quick_wins": [],
+    "unverified_hypotheses": [
+      "UX-001: error handling e recuperação no formulário"
+    ],
+    "recommendation_order": [
+      "Verificar comportamento primeiro",
+      "Se confirmado, especificar correção e testes de aceite"
+    ]
+  },
+  "validation_plan": [
+    {
+      "step": "Inspecionar formulário real antes de alterar produto",
+      "status": "not_started"
+    }
+  ]
+}

@@ -67,17 +67,44 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		return result, d.NewError(d.ErrorCodeForbidden, "authenticated scoped credential required")
 	}
 	permission := ports.PermissionNamespaceAdmin
+	legacyCommand := ""
+	namespaceCASRequired := true
 	switch cmd.Operation {
 	case "register_signing_key":
 		permission = ports.PermissionSigningKeyEnroll
+		namespaceCASRequired = false
 	case "create_rotation_enrollment":
 		permission = ports.PermissionSigningKeyRotate
-	case "create_enrollment", "set_credential_policy", "set_acceptance_policy", "set_review_group", "revoke_signing_key":
+		namespaceCASRequired = false
+	case "create_enrollment":
+		// Creating an enrollment remains an administrator-authorized operation.
+	case "set_credential_policy", "set_acceptance_policy", "set_review_group":
+		permission = ports.PermissionPolicyManage
+		switch cmd.Operation {
+		case "set_credential_policy":
+			legacyCommand = "SetCredentialPolicy"
+		case "set_acceptance_policy":
+			legacyCommand = "SetAcceptancePolicy"
+		case "set_review_group":
+			legacyCommand = "SetReviewGroup"
+		}
+	case "revoke_signing_key":
+		permission = ports.PermissionSigningKeyRevoke
 	default:
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "unknown signing security operation")
 	}
-	if err := s.Require(ctx, cmd.NamespaceID, permission); err != nil {
-		return result, err
+	var authorizationErr error
+	if legacyCommand != "" {
+		identity, _ := IdentityFromContext(ctx)
+		authorizationErr = s.Authorize(ctx, ports.AuthorizationRequest{
+			NamespaceID: cmd.NamespaceID, PrincipalID: identity.PrincipalID, Permission: permission,
+			LegacyPermission: legacyPermissionForCommand(legacyCommand, permission),
+		})
+	} else {
+		authorizationErr = s.Require(ctx, cmd.NamespaceID, permission)
+	}
+	if authorizationErr != nil {
+		return result, authorizationErr
 	}
 	manager, ok := s.Store.(ports.TransactionManager)
 	if !ok {
@@ -117,7 +144,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		return result, err
 	}
-	if permission == ports.PermissionNamespaceAdmin && (cmd.ExpectedNamespaceVersion != version || cmd.ExpectedNamespaceVersion < 1) {
+	if namespaceCASRequired && (cmd.ExpectedNamespaceVersion != version || cmd.ExpectedNamespaceVersion < 1) {
 		return result, d.NewError(d.ErrorCodeVersionConflict, "namespace security version changed")
 	}
 	now, err := securityTransactionTime(ctx, uow, s.Clock)
@@ -133,6 +160,16 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		policy := *cmd.CredentialPolicy
 		if policy.NamespaceID != cmd.NamespaceID {
 			return result, d.NewError(d.ErrorCodeInvalidScope, "policy namespace differs")
+		}
+		// The compatibility marker is migration-managed. Preserve an existing
+		// marker across ordinary policy edits, and never accept it on creation.
+		policy.PermissionCompatibilityVersion = 0
+		if cmd.ExpectedVersion != 0 {
+			previous, readErr := repo.CredentialPolicy(ctx, policy.NamespaceID, policy.CredentialID)
+			if readErr != nil {
+				return result, readErr
+			}
+			policy.PermissionCompatibilityVersion = previous.PermissionCompatibilityVersion
 		}
 		policy.Version = cmd.ExpectedVersion + 1
 		policy.UpdatedAt = now

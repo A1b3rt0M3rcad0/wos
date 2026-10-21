@@ -56,7 +56,7 @@ func TestExplicitSignedCutoverDrainsLegacyAuthorityAndPreservesReceipt(t *testin
 			must(u.Outcomes().Insert(ctx, outcome))
 			work, e := d.NewWorkItem(testID("0199a888-0000-7000-8000-000000000003"), scope, "preserve unsigned history", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 			must(e)
-			must(u.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			must(u.Commit())
 			cc := func(key string) d.CommandContext {
 				id, e := ids.NewID()

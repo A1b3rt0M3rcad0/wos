@@ -9,6 +9,7 @@ import (
 	"go/token"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -59,6 +60,20 @@ func main() {
 				rt := fn.Type.Results.List[0].Type.(*ast.IndexExpr)
 				printer.Fprint(&result, fset, rt.Index)
 				resultType := result.String()
+				if selector, ok := rt.Index.(*ast.SelectorExpr); ok {
+					if qualifier, ok := selector.X.(*ast.Ident); ok {
+						for _, imported := range f.Imports {
+							path, _ := strconv.Unquote(imported.Path.Value)
+							alias := path[strings.LastIndex(path, "/")+1:]
+							if imported.Name != nil {
+								alias = imported.Name.Name
+							}
+							if alias == qualifier.Name && path == "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain" {
+								resultType = "domain." + selector.Sel.Name
+							}
+						}
+					}
+				}
 				if !strings.Contains(resultType, ".") {
 					resultType = "application." + resultType
 				}

@@ -406,9 +406,7 @@ func (l EvidenceLink) Validate() error {
 	if l.TargetRef.Scope != l.Scope {
 		return NewError(ErrorCodeEvidenceLink, "target_ref must belong to the same Outcome")
 	}
-	switch l.TargetRef.Kind {
-	case EntityKindOutcome, EntityKindObjective, EntityKindWorkItem, EntityKindIssue, EntityKindDecision:
-	default:
+	if !EvidenceLinkTargetAllowed(l.TargetRef.Kind) {
 		return NewError(ErrorCodeEvidenceLink, "unsupported evidence target kind")
 	}
 	if l.CriterionID != nil {

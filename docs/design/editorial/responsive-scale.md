@@ -1,5 +1,11 @@
 # Responsive composition scale
 
+> **Historical requirement:** the owner's later correction supersedes the
+> viewport-proportional enlargement below. See [Stable operational
+> density](operational-density.md) for the current sizing direction and its
+> separate validation status. The measurements and captures here qualify the
+> earlier implementation only.
+
 The approved reference is the existing 1440 × 1000 **CSS-pixel viewport**, recorded in `screenshots.json` for `20-fixed-paper-scrolled.png`. Its header is 76 CSS px high, its sidebar 244 px wide, and its paper tile 120 px. These browser dimensions establish the reference; the uploaded image's raster dimensions alone do not establish CSS size.
 
 Above 1440 CSS px, one reference pixel becomes `clamp(1px, 100vw / 1440, 2.6666666667px)`. Both existing stylesheets express their authored pixel dimensions through `--wos-unit`, with a literal 1 px fallback. The 14 px root follows that unit, coordinating existing rem typography with controls, sidebar, padding, margins, gaps, maximum widths, artwork, grid tiles, borders, and focus indicators. Existing fluid headline clamps use `--wos-vw`: one reference vw is 14.4 reference pixels, so headings stop growing with the rest of the composition at the cap.

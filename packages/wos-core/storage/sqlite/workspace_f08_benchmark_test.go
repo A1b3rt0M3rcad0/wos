@@ -1,0 +1,185 @@
+package sqlite
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"path/filepath"
+	"runtime"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+)
+
+// Run explicitly with -run '^$' -bench '^BenchmarkWorkspaceF08$' -benchtime=20x.
+// This measures embedded, indexed SQLite reads on the actual runner. It does not
+// simulate network RTT, HTTP rendering, a 2-vCPU machine or independent users.
+func BenchmarkWorkspaceF08(b *testing.B) {
+	ctx := context.Background()
+	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	store, e := Open(filepath.Join(b.TempDir(), "f08.db"), Options{MigrateOnOpen: true})
+	if e != nil {
+		b.Fatal(e)
+	}
+	defer store.Close()
+	service, e := a.NewService(store, portClock{now}, &portIDs{})
+	if e != nil {
+		b.Fatal(e)
+	}
+	cc := sqliteCommandContext(portID(1).String(), "")
+	out, e := service.CreateOutcome(ctx, cc, a.CreateOutcomeCommand{NamespaceID: portID(2), Title: "F08 operational map", DesiredState: "Bounded reads preserve explicit acceptance", Priority: d.PriorityNormal})
+	if e != nil {
+		b.Fatal(e)
+	}
+	scope := out.Value.Scope()
+	u, e := store.Begin(ctx)
+	if e != nil {
+		b.Fatal(e)
+	}
+	defer u.Rollback()
+	must := func(e error) {
+		if e != nil {
+			b.Fatal(e)
+		}
+	}
+	objectives := []d.Objective{}
+	for i := 0; i < 100; i++ {
+		v, e := d.NewObjective(portID(100+i), scope, fmt.Sprintf("Objective %03d", i), "A separately verifiable condition", d.PriorityNormal, i < 5, now)
+		must(e)
+		must(u.Objectives().Insert(ctx, v))
+		objectives = append(objectives, v)
+	}
+	docs := u.(ports.DocumentaryUnitOfWork)
+	for i := 0; i < 5000; i++ {
+		v, e := d.NewEvidence(portID(30000+i), scope, d.EvidenceTypeSource, strings.Repeat("Immutable external observation. ", 24), d.SourceReference{Provider: "benchmark", ID: fmt.Sprintf("source-%d", i)}, cc.Actor, now, nil, nil, "v1", "", now)
+		must(e)
+		must(docs.Evidence().Insert(ctx, v))
+	}
+	refs := []d.EntityRef{}
+	works := []d.WorkItem{}
+	for i := 0; i < 1000; i++ {
+		w, e := d.NewWorkItem(portID(1000+i), scope, fmt.Sprintf("Task %04d", i), "A defined piece of work with a recorded result and independent proof.", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+		must(e)
+		w.ObjectiveID = &objectives[i%100].ID
+		c, e := d.NewSuccessCriterion(portID(45000+i), w.Ref(), "Observed behavior is supported by the source", "", true, d.VerificationModeEvidenceReview)
+		must(e)
+		must(w.Criteria.Add(c))
+		assessment := d.CriterionAssessment{ID: portID(40000 + i), CriterionID: c.ID, CriterionRevision: 1, Result: d.AssessmentResultMet, Rationale: "Fixture records a real explicit assessment, separate from Task completion.", EvidenceIDs: []d.ID{portID(30000 + i)}, PrincipalID: cc.PrincipalID, Actor: cc.Actor, AssessedAt: now}
+		must(w.Criteria.RecordAssessment(assessment, false))
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
+		works = append(works, w)
+		if i < 100 {
+			refs = append(refs, w.Ref())
+		}
+	}
+	notes := u.(ports.EntityNoteUnitOfWork).EntityNotes()
+
+	for i := 0; i < 10000; i++ {
+		revision, e := u.Coordination().AdvanceOutcome(ctx, scope)
+		must(e)
+		subject := works[i%1000].Ref()
+		note := d.EntityNote{ID: portID(50000 + i), Scope: scope, SubjectRef: subject, Type: d.EntityNoteUpdate, Body: strings.Repeat("Recorded progress remains documentary; no authority or acceptance is implied. ", 20), PrincipalID: cc.PrincipalID, Actor: cc.Actor, RecordedAt: now.Add(time.Duration(i) * time.Microsecond), OutcomeRevision: revision}
+		must(note.Validate())
+		must(notes.Insert(ctx, note))
+		payload, e := json.Marshal(note)
+		must(e)
+		event := d.DomainEvent{EventID: portID(70000 + i), EventType: "entity_note.recorded", SchemaVersion: 1, NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, OutcomeRevision: revision, AggregateRef: subject, PrincipalID: cc.PrincipalID, Actor: cc.Actor, RecordedAt: note.RecordedAt, CommandID: portID(90000 + i), Payload: payload}
+		must(event.Validate())
+		must(u.Events().Append(ctx, []d.DomainEvent{event}))
+	}
+
+	must(u.Commit())
+	_, e = store.db.ExecContext(ctx, "ANALYZE")
+	must(e)
+	b.Logf("fixture=F08 objectives=100 tasks=1000 evidence=5000 notes=10000 note_events=10000 runner_cpus=%d GOMAXPROCS=%d adapter=SQLite protocol=legacy same-process-no-network cache=preloaded-and-ANALYZE filesystem=temp-local", runtime.NumCPU(), runtime.GOMAXPROCS(0))
+	statements := traceOperationalSQL(b, store)
+	for _, name := range []string{"cards_100", "structural_page_50", "task_inspector", "objective_inspector", "outcome_inspector", "timeline_5"} {
+		b.Run(name, func(b *testing.B) {
+			before := statements.Load()
+			samples := []time.Duration{}
+			bytes := 0
+			for b.Loop() {
+				started := time.Now()
+				var value any
+				var e error
+				switch name {
+				case "cards_100":
+					value, e = service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{Refs: refs})
+				case "structural_page_50":
+					ref := out.Value.Ref()
+					value, e = service.GetWorkspaceCards(ctx, scope, a.WorkspaceCardsQuery{ParentRef: &ref, Limit: 50})
+				case "task_inspector":
+					value, e = service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: works[0].Ref()}})
+				case "objective_inspector":
+					value, e = service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: objectives[0].Ref()}})
+				case "outcome_inspector":
+					value, e = service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: out.Value.Ref()}})
+				case "timeline_5":
+					ref := works[0].Ref()
+					value, e = service.GetWorkspaceTimeline(ctx, scope, a.WorkspaceTimelineQuery{SubjectRef: &ref, Limit: 5})
+				}
+				if e != nil {
+					b.Fatal(e)
+				}
+				raw, e := json.Marshal(value)
+				if e != nil {
+					b.Fatal(e)
+				}
+				if len(raw) > a.MaxSnapshotBytes {
+					b.Fatal("unbounded response")
+				}
+				bytes = len(raw)
+				samples = append(samples, time.Since(started))
+			}
+			b.ReportMetric(float64(statements.Load()-before)/float64(b.N), "sql_statements/op")
+			b.ReportMetric(float64(bytes), "response_bytes")
+			sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
+			for _, p := range []int{50, 95, 99} {
+				b.ReportMetric(float64(samples[(len(samples)*p+99)/100-1].Nanoseconds()), fmt.Sprintf("p%d_ns", p))
+			}
+		})
+	}
+	b.Run("task_inspector_10_sessions", func(b *testing.B) {
+		type observation struct {
+			duration time.Duration
+			bytes    int
+			err      error
+		}
+		before := statements.Load()
+		samples := []time.Duration{}
+		responseBytes := 0
+		for b.Loop() {
+			results := make(chan observation, 10)
+			for i := 0; i < 10; i++ {
+				go func() {
+					started := time.Now()
+					view, e := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: works[0].Ref()}})
+					var raw []byte
+					if e == nil {
+						raw, e = json.Marshal(view)
+					}
+					results <- observation{time.Since(started), len(raw), e}
+				}()
+			}
+			for i := 0; i < 10; i++ {
+				sample := <-results
+				if sample.err != nil {
+					b.Fatal(sample.err)
+				}
+				samples = append(samples, sample.duration)
+				responseBytes = sample.bytes
+			}
+		}
+		b.ReportMetric(10, "requests/batch")
+		b.ReportMetric(float64(statements.Load()-before)/float64(b.N*10), "sql_statements/request")
+		b.ReportMetric(float64(responseBytes), "response_bytes")
+		sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
+		for _, p := range []int{50, 95, 99} {
+			b.ReportMetric(float64(samples[(len(samples)*p+99)/100-1].Nanoseconds()), fmt.Sprintf("p%d_request_ns", p))
+		}
+	})
+}

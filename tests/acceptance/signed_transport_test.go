@@ -34,6 +34,44 @@ type transportIssuer struct {
 	private  ed25519.PrivateKey
 }
 
+func applyAcceptanceGrant(t *testing.T, security *a.SecurityService, ctx context.Context, key string, grant ports.NamespaceGrant) ports.SecurityAdminResult {
+	t.Helper()
+	identity, err := security.SigningIdentity(ctx, nil)
+	if err != nil {
+		t.Fatalf("read namespace version before grant mutation: %v", err)
+	}
+	result, _, err := security.AdministrativeMutation(ctx, key, ports.SecurityAdminCommand{
+		NamespaceID: grant.NamespaceID, ExpectedVersion: identity.NamespaceVersion,
+		Operation: "set_grant", Grant: &grant, Reason: "Acceptance fixture grant setup",
+	})
+	if err != nil {
+		t.Fatalf("apply acceptance grant: %v", err)
+	}
+	if result.NamespaceVersion <= identity.NamespaceVersion {
+		t.Fatalf("grant mutation namespace version = %d, want greater than %d", result.NamespaceVersion, identity.NamespaceVersion)
+	}
+	return result
+}
+
+func revokeAcceptanceCredential(t *testing.T, security *a.SecurityService, ctx context.Context, key string, namespaceID, credentialID d.ID) ports.SecurityAdminResult {
+	t.Helper()
+	identity, err := security.SigningIdentity(ctx, nil)
+	if err != nil {
+		t.Fatalf("read namespace version before credential revocation: %v", err)
+	}
+	result, _, err := security.AdministrativeMutation(ctx, key, ports.SecurityAdminCommand{
+		NamespaceID: namespaceID, ExpectedVersion: identity.NamespaceVersion,
+		Operation: "revoke_credential", CredentialID: credentialID, Reason: "Acceptance fixture credential revocation",
+	})
+	if err != nil {
+		t.Fatalf("revoke acceptance credential: %v", err)
+	}
+	if result.NamespaceVersion <= identity.NamespaceVersion {
+		t.Fatalf("revocation namespace version = %d, want greater than %d", result.NamespaceVersion, identity.NamespaceVersion)
+	}
+	return result
+}
+
 func (i transportIssuer) Identity() d.ServerIdentity { return i.identity }
 func (i transportIssuer) SignCanonical(purpose string, raw []byte) (json.RawMessage, error) {
 	envelope, err := signing.SignCanonical(signing.PayloadType(purpose), raw, i.identity.IssuerKeyID.String(), i.private)
@@ -90,7 +128,8 @@ func signedTransportJourney(t *testing.T, store interface {
 	must := func(e error) {
 		t.Helper()
 		if e != nil {
-			t.Fatal(e)
+			_, file, line, _ := runtime.Caller(1)
+			t.Fatalf("%s:%d: %v", file, line, e)
 		}
 	}
 	ns := d.MustParseID("0199ff31-0000-7000-8000-000000000001")
@@ -103,7 +142,7 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(e)
 	adminCtx := a.WithIdentity(ctx, admin)
 	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite}
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: permissions}))
+	applyAcceptanceGrant(t, sec, adminCtx, "signed-transport-worker-grant", ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: permissions})
 	credential, token, e := sec.IssueCredential(adminCtx, ns, "worker", d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: "worker"}, now.Add(time.Hour))
 	must(e)
 	service, e := a.NewAuthorizedService(store, clock{}, generator, sec)
@@ -131,19 +170,48 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(e)
 	worker, e := sdk.New(endpoint.URL, token, endpoint.Client())
 	must(e)
+	setupPrincipal := "transport-fixture-admin"
+	setupPermissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionPermissionsManage, ports.PermissionCredentialsIssue, ports.PermissionCredentialsRevoke, ports.PermissionPolicyManage, ports.PermissionNamespaceAdmin, ports.PermissionActorDelegate, ports.PermissionSigningKeyEnroll}
+	applyAcceptanceGrant(t, sec, adminCtx, "signed-transport-admin-grant", ports.NamespaceGrant{NamespaceID: ns, PrincipalID: setupPrincipal, Permissions: setupPermissions})
+	setupCredential, setupToken, e := sec.IssueCredential(adminCtx, ns, setupPrincipal, d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: setupPrincipal}, now.Add(time.Hour))
+	must(e)
+	setupIdentity, e := sec.Authenticate(ctx, setupToken)
+	must(e)
+	setupAdminCtx := a.WithIdentity(ctx, setupIdentity)
+	setupAdmin, e := sdk.New(endpoint.URL, setupToken, endpoint.Client())
+	must(e)
+	if setupIdentity.CredentialID != setupCredential.ID {
+		t.Fatal("fixture administrator credential binding differs")
+	}
 	identity, e := operator.SigningIdentity(ctx, nil)
 	must(e)
+	workerIdentity, e := worker.SigningIdentity(ctx, nil)
+	must(e)
+	if workerIdentity.Policy == nil || workerIdentity.Policy.Version != 1 {
+		t.Fatalf("credential issuance policy version = %v, want an explicit version-1 policy", workerIdentity.Policy)
+	}
 	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "worker", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, p := range permissions {
 		policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 	}
-	configured, e := operator.SigningMutation(ctx, "transport-set-signing-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	configured, e := operator.SigningMutation(ctx, "transport-set-signing-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: identity.NamespaceVersion, ExpectedVersion: workerIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &policy})
+	if e != nil {
+		t.Fatalf("update issued worker policy: %v", e)
+	}
+	if configured.CredentialPolicy == nil || configured.CredentialPolicy.Version != workerIdentity.Policy.Version+1 {
+		t.Fatalf("transport worker policy version = %v, want issuance version %d advanced once before compatibility migration", configured.CredentialPolicy, workerIdentity.Policy.Version+1)
+	}
+	workerMigration, e := sec.ApplyPermissionMigration(adminCtx, "transport-worker-permission-migration", a.PermissionMigrationApplyRequest{
+		NamespaceID: ns, PrincipalID: "worker", CredentialID: credential.ID,
+		ExpectedNamespaceVersion: configured.NamespaceVersion, ExpectedPolicyVersion: configured.CredentialPolicy.Version,
+		PolicyVersionPresent: true, Reason: "Migrate the transport worker's reviewed legacy permissions",
+	})
 	must(e)
 	agentPub, agentPrivate, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	agentFP, e := signing.Fingerprint(agentPub)
 	must(e)
-	enrollment, e := operator.SigningMutation(ctx, "transport-enroll-signing-key", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: configured.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "worker", ExpectedFingerprint: agentFP})
+	enrollment, e := operator.SigningMutation(ctx, "transport-enroll-signing-key", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: workerMigration.NamespaceVersion, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: "worker", ExpectedFingerprint: agentFP})
 	must(e)
 	own, e := worker.SigningIdentity(ctx, &enrollment.Enrollment.ID)
 	must(e)
@@ -181,7 +249,11 @@ func signedTransportJourney(t *testing.T, store interface {
 	must(e)
 	outcome.Lifecycle = d.OutcomeLifecycleActive
 	must(u.Outcomes().Insert(ctx, outcome))
-	work, e := d.NewWorkItem(d.MustParseID("0199ff31-0000-7000-8000-000000000005"), scope, "Bounded task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+	objective, e := d.NewObjective(d.MustParseID("0199ff31-0000-7000-8000-000000000006"), scope, "Bounded objective", "", d.PriorityNormal, false, now)
+	must(e)
+	objective.Lifecycle = d.ObjectiveLifecycleInProgress
+	must(u.Objectives().Insert(ctx, objective))
+	work, e := d.NewWorkItemForObjective(d.MustParseID("0199ff31-0000-7000-8000-000000000005"), scope, &objective.ID, "Bounded task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	must(e)
 	work.ContractsEnabled = true
 	work.LastFencingToken = 9007199254740993
@@ -311,31 +383,45 @@ func signedTransportJourney(t *testing.T, store interface {
 	// A separate reviewer uses only its own credential/key/lease, after the
 	// original execution bearer has been revoked. No executor session is reused.
 	reviewPermissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite}
-	must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reviewer", Permissions: reviewPermissions}))
-	reviewCredential, reviewToken, e := sec.IssueCredential(adminCtx, ns, "reviewer", d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: "reviewer"}, now.Add(time.Hour))
+	applyAcceptanceGrant(t, sec, setupAdminCtx, "signed-transport-reviewer-grant", ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reviewer", Permissions: reviewPermissions})
+	reviewCredential, reviewToken, e := sec.IssueCredential(setupAdminCtx, ns, "reviewer", d.ActorRef{Kind: d.ActorKindAgent, Provider: "harness", ID: "reviewer"}, now.Add(time.Hour))
 	must(e)
 	reviewer, e := sdk.New(endpoint.URL, reviewToken, endpoint.Client())
 	must(e)
-	adminView, e := operator.SigningIdentity(ctx, nil)
+	reviewerIdentity, e := reviewer.SigningIdentity(ctx, nil)
+	must(e)
+	if reviewerIdentity.Policy == nil || reviewerIdentity.Policy.Version != 1 {
+		t.Fatalf("reviewer credential issuance policy version = %v, want an explicit version-1 policy", reviewerIdentity.Policy)
+	}
+	adminView, e := setupAdmin.SigningIdentity(ctx, nil)
 	must(e)
 	reviewPolicy := d.CredentialPolicy{NamespaceID: ns, CredentialID: reviewCredential.ID, PrincipalID: "reviewer", AcceptanceFloor: d.AcceptanceIndependentReview, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1}
 	for _, permission := range reviewPermissions {
 		reviewPolicy.PermittedOperations = append(reviewPolicy.PermittedOperations, string(permission))
 	}
-	reviewConfigured, e := operator.SigningMutation(ctx, "transport-review-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: adminView.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &reviewPolicy})
+	reviewConfigured, e := setupAdmin.SigningMutation(ctx, "transport-review-policy", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: adminView.NamespaceVersion, ExpectedVersion: reviewerIdentity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &reviewPolicy})
+	must(e)
+	if reviewConfigured.CredentialPolicy == nil || reviewConfigured.CredentialPolicy.Version != reviewerIdentity.Policy.Version+1 {
+		t.Fatalf("reviewer policy version = %v, want issuance version %d advanced once before compatibility migration", reviewConfigured.CredentialPolicy, reviewerIdentity.Policy.Version+1)
+	}
+	reviewMigration, e := sec.ApplyPermissionMigration(setupAdminCtx, "transport-review-permission-migration", a.PermissionMigrationApplyRequest{
+		NamespaceID: ns, PrincipalID: "reviewer", CredentialID: reviewCredential.ID,
+		ExpectedNamespaceVersion: reviewConfigured.NamespaceVersion, ExpectedPolicyVersion: reviewConfigured.CredentialPolicy.Version,
+		PolicyVersionPresent: true, Reason: "Migrate the reviewer's reviewed legacy permissions",
+	})
 	must(e)
 	reviewPublic, reviewPrivate, e := ed25519.GenerateKey(rand.Reader)
 	must(e)
 	reviewFP, e := signing.Fingerprint(reviewPublic)
 	must(e)
-	reviewEnrollment, e := operator.SigningMutation(ctx, "transport-review-enrollment", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: reviewConfigured.NamespaceVersion, Operation: "create_enrollment", CredentialID: reviewCredential.ID, PrincipalID: "reviewer", ExpectedFingerprint: reviewFP})
+	reviewEnrollment, e := setupAdmin.SigningMutation(ctx, "transport-review-enrollment", a.SigningSecurityIntent{NamespaceID: ns, ExpectedNamespaceVersion: reviewMigration.NamespaceVersion, Operation: "create_enrollment", CredentialID: reviewCredential.ID, PrincipalID: "reviewer", ExpectedFingerprint: reviewFP})
 	must(e)
 	challenge := reviewEnrollment.Enrollment
 	reviewProof, e := signing.Sign(signing.KeyEnrollment, signing.EnrollmentPayload{Binding: signing.Binding{ProtocolVersion: 2, ServerID: server.ID.String(), NamespaceID: ns.String(), PrincipalID: "reviewer", SignerKeyID: challenge.KeyID.String()}, EnrollmentID: challenge.ID.String(), Nonce: challenge.Nonce, Purpose: challenge.Purpose, PublicKey: base64.StdEncoding.EncodeToString(reviewPublic), ExpiresAt: challenge.ExpiresAt.UTC().Format(time.RFC3339Nano)}, challenge.KeyID.String(), reviewPrivate)
 	must(e)
 	reviewRegistered, e := reviewer.SigningMutation(ctx, "transport-review-register", a.SigningSecurityIntent{NamespaceID: ns, Operation: "register_signing_key", EnrollmentID: challenge.ID, Proof: &reviewProof})
 	must(e)
-	must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+	revokeAcceptanceCredential(t, sec, setupAdminCtx, "signed-transport-revoke-worker", ns, credential.ID)
 	caseView, e := reviewer.ReadSignedState(ctx, a.SignedStateQuery{Scope: scope, Resource: "case", ID: d.ID(receipt.ReviewCaseID)})
 	must(e)
 	if caseView.ReviewCase == nil {

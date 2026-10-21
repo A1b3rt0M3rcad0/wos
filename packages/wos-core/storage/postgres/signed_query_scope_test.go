@@ -57,7 +57,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			admin, err := sec.Authenticate(ctx, "read-scope-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "reader", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "reader"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -66,7 +66,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			first := testID("0199a557-0000-7000-8000-000000000020")
 			hidden := testID("0199a557-0000-7000-8000-000000000021")
 			last := testID("0199a557-0000-7000-8000-000000000022")
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: identity.PrincipalID, Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead)}, AllowedOutcomeIDs: []d.ID{first, last}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			u, err := store.Begin(ctx)
 			must(err)
 			for _, id := range []d.ID{first, hidden, last} {
@@ -74,7 +74,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 				must(err)
 				must(u.Outcomes().Insert(ctx, outcome))
 			}
-			must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 0))
+			must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 1))
 			must(u.Commit())
 			service, err := a.NewAuthorizedService(store, clock, ids, &sec)
 			must(err)
@@ -139,7 +139,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
 				t.Fatalf("receipt snapshot did not enforce restriction: %v", e)
 			}
-			guarded.before = func() error { return sec.RevokeCredential(adminCtx, ns, credential.ID) }
+			guarded.before = func() error { return sec.Store.RevokeCredential(adminCtx, credential.ID) }
 			if _, err = racing.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: first}); err == nil {
 				t.Fatal("revocation between preflight and snapshot leaked state")
 			}

@@ -126,14 +126,14 @@ func (r continuityReadRepository) FocalRecords(ctx context.Context, scope d.Scop
 	return result, e
 }
 
-const focalAncestorCTE = `WITH RECURSIVE ancestors(id,parent_objective_id) AS (
- SELECT id,parent_objective_id FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?
+const focalAncestorCTE = `WITH RECURSIVE ancestors(id,parent_objective_id,completion_mode,completion_cycle) AS (
+ SELECT id,parent_objective_id,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? AND id=?
  UNION
- SELECT o.id,o.parent_objective_id FROM objectives o JOIN ancestors a ON o.id=a.parent_objective_id WHERE o.namespace_id=? AND o.outcome_id=?
+ SELECT o.id,o.parent_objective_id,o.completion_mode,o.completion_cycle FROM objectives o JOIN ancestors a ON o.id=a.parent_objective_id WHERE o.namespace_id=? AND o.outcome_id=?
 ) `
 
 func (r continuityReadRepository) focalAncestors(ctx context.Context, scope d.Scope, id d.ID) ([]d.Objective, error) {
-	rows, e := r.rows(ctx, focalAncestorCTE+`SELECT id,parent_objective_id FROM ancestors ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, focalAncestorCTE+`SELECT id,parent_objective_id,completion_mode,completion_cycle FROM ancestors ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String(), scope.NamespaceID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, e
 	}
@@ -141,15 +141,20 @@ func (r continuityReadRepository) focalAncestors(ctx context.Context, scope d.Sc
 	result := []d.Objective{}
 	for rows.Next() {
 		var rawID string
+		var mode, cycle string
 		var parent sql.NullString
-		if e = rows.Scan(&rawID, &parent); e != nil {
+		if e = rows.Scan(&rawID, &parent, &mode, &cycle); e != nil {
 			return nil, e
 		}
 		parsed, e := d.ParseID(rawID)
 		if e != nil {
 			return nil, e
 		}
-		v := d.Objective{ID: parsed, Scope: scope}
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, e
+		}
+		v := d.Objective{ID: parsed, Scope: scope, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle}
 		if parent.Valid {
 			pid, e := d.ParseID(parent.String)
 			if e != nil {
@@ -165,7 +170,7 @@ func (r continuityReadRepository) focalAncestors(ctx context.Context, scope d.Sc
 	if len(result) == 0 {
 		return nil, d.NewError(d.ErrorCodeNotFound, "focal Objective ancestry missing")
 	}
-	return result, nil
+	return r.validateObjectiveCompletionList(ctx, result)
 }
 func (r continuityReadRepository) focalBlockers(ctx context.Context, scope d.Scope, workID d.ID, objectiveID *d.ID) ([]d.Blocker, error) {
 	prefix := ""

@@ -9,24 +9,186 @@ import (
 )
 
 const maxResolveIssueBlockers = 64
+const maxReportIssueBlockers = 64
+
+type blockerImpactKey struct {
+	target      domain.EntityRef
+	propagation domain.BlockerPropagation
+}
+
+// IssueBlockerInput describes one explicitly reviewed operational impact for
+// an Issue. A target and propagation pair may appear only once per request.
+type IssueBlockerInput struct {
+	BlockedRef  domain.EntityRef          `json:"blocked_ref"`
+	Description string                    `json:"description,omitempty"`
+	Propagation domain.BlockerPropagation `json:"propagation,omitempty"`
+}
+
+// ReportIssueWithBlockersCommand creates one Objective-owned Issue and all of
+// its explicitly confirmed Blockers as one version-pinned operation.
+type ReportIssueWithBlockersCommand struct {
+	Scope                   domain.Scope
+	ObjectiveID             domain.ID
+	Title                   string
+	Description             string
+	Severity                domain.IssueSeverity
+	AffectedRefs            []domain.EntityRef
+	Blockers                []IssueBlockerInput
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"required" wosnullable:"false" json:"observed_outcome_revision,omitempty,string"`
+}
+
+type ReportIssueWithBlockersResult struct {
+	Issue    domain.Issue     `json:"issue"`
+	Blockers []domain.Blocker `json:"blockers"`
+}
 
 // ReportIssueWithBlockerCommand records a problem and the concrete impediment
 // it creates as one atomic domain command. The resulting Blocker always points
 // to the newly created Issue as its cause.
 type ReportIssueWithBlockerCommand struct {
-	Scope              domain.Scope
-	Title              string
-	Description        string
-	Severity           domain.IssueSeverity
-	AffectedRefs       []domain.EntityRef
-	BlockedRef         domain.EntityRef
-	BlockerDescription string
-	Propagation        domain.BlockerPropagation
+	Scope                   domain.Scope
+	ObjectiveID             domain.ID
+	Title                   string
+	Description             string
+	Severity                domain.IssueSeverity
+	AffectedRefs            []domain.EntityRef
+	BlockedRef              domain.EntityRef
+	BlockerDescription      string
+	Propagation             domain.BlockerPropagation
+	ObservedOutcomeRevision *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type ReportIssueWithBlockerResult struct {
 	Issue   domain.Issue   `json:"issue"`
 	Blocker domain.Blocker `json:"blocker"`
+}
+
+func (s *Service) ReportIssueWithBlockers(
+	ctx context.Context,
+	cc domain.CommandContext,
+	cmd ReportIssueWithBlockersCommand,
+) (MutationResult[ReportIssueWithBlockersResult], error) {
+	if err := cc.Validate(); err != nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, err
+	}
+	if err := cmd.Scope.Validate(); err != nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, err
+	}
+	if cmd.ObservedOutcomeRevision == nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "multi-target Issue reporting requires observed_outcome_revision")
+	}
+	if len(cmd.Blockers) == 0 || len(cmd.Blockers) > maxReportIssueBlockers {
+		return MutationResult[ReportIssueWithBlockersResult]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "ReportIssueWithBlockers requires between 1 and 64 explicit blockers")
+	}
+	payload, err := json.Marshal(cmd)
+	if err != nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "ReportIssueWithBlockers payload cannot be encoded", err)
+	}
+	if len(payload) > domain.MaxDomainEventPayloadBytes {
+		return MutationResult[ReportIssueWithBlockersResult]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "ReportIssueWithBlockers payload exceeds the 256 KiB command envelope")
+	}
+	for _, item := range cmd.Blockers {
+		if item.BlockedRef.Scope != cmd.Scope {
+			return MutationResult[ReportIssueWithBlockersResult]{}, domain.NewError(domain.ErrorCodeBlocker, "every blocked_ref must match command scope")
+		}
+	}
+
+	issueID, err := s.ids.NewID()
+	if err != nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, err
+	}
+	blockerIDs := make([]domain.ID, len(cmd.Blockers))
+	for i := range blockerIDs {
+		blockerIDs[i], err = s.ids.NewID()
+		if err != nil {
+			return MutationResult[ReportIssueWithBlockersResult]{}, err
+		}
+	}
+	now := s.clock.Now().UTC()
+	issue, err := domain.NewIssueForObjective(
+		issueID,
+		cmd.Scope,
+		&cmd.ObjectiveID,
+		cmd.Title,
+		cmd.Description,
+		cmd.Severity,
+		cmd.AffectedRefs,
+		cc.Actor,
+		now,
+	)
+	if err != nil {
+		return MutationResult[ReportIssueWithBlockersResult]{}, err
+	}
+	issueRef := issue.Ref()
+	createdBlockers := make([]domain.Blocker, 0, len(cmd.Blockers))
+	uniqueImpacts := make(map[blockerImpactKey]struct{}, len(cmd.Blockers))
+	for index, item := range cmd.Blockers {
+		blocker, err := domain.NewBlocker(blockerIDs[index], item.BlockedRef, &issueRef, nil, item.Description, item.Propagation, now)
+		if err != nil {
+			return MutationResult[ReportIssueWithBlockersResult]{}, err
+		}
+		impactKey := blockerImpactKey{target: blocker.BlockedRef, propagation: blocker.Propagation}
+		if _, exists := uniqueImpacts[impactKey]; exists {
+			return MutationResult[ReportIssueWithBlockersResult]{}, domain.NewError(domain.ErrorCodeInvalidArgument, "ReportIssueWithBlockers cannot repeat a target and propagation")
+		}
+		uniqueImpacts[impactKey] = struct{}{}
+		createdBlockers = append(createdBlockers, blocker)
+	}
+
+	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (ReportIssueWithBlockersResult, domain.OutcomeRevision, error) {
+		coordination, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+		if err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		outcome, err := uow.Outcomes().Get(ctx, cmd.Scope.NamespaceID, cmd.Scope.OutcomeID)
+		if err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		if err := validateOpenOutcome(outcome); err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		if coordination.Revision != *cmd.ObservedOutcomeRevision {
+			subject := cmd.Blockers[0].BlockedRef
+			related := make([]domain.EntityRef, 0, min(5, len(cmd.Blockers)))
+			for _, item := range cmd.Blockers[:min(5, len(cmd.Blockers))] {
+				related = append(related, item.BlockedRef)
+			}
+			return ReportIssueWithBlockersResult{}, 0, domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "the Outcome changed after the multi-target blocking impact review; review affected work before confirming again", domain.ErrorDetails{
+				ReasonCode: "blocker_impact_changed", SubjectRef: &subject, RelatedRefs: related, FieldPaths: []string{"observed_outcome_revision"},
+				Remedies: []domain.ErrorRemedy{{ActionID: "review_blocker_impact", SubjectRef: &subject}},
+			})
+		}
+		if err := validateIssueObjective(ctx, uow, cmd.Scope, cmd.ObjectiveID); err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		issues, blockers, err := issueBlockerRepositories(uow)
+		if err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, issue.AffectedRefs); err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		// Validate every target before the first write. The transaction remains
+		// atomic if an adapter rejects any later insert or event append.
+		for _, blocker := range createdBlockers {
+			if err := validateBlockerTarget(ctx, uow, blocker.BlockedRef); err != nil {
+				return ReportIssueWithBlockersResult{}, 0, err
+			}
+		}
+		if err := issues.Insert(ctx, issue); err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		for _, blocker := range createdBlockers {
+			if err := blockers.Insert(ctx, blocker); err != nil {
+				return ReportIssueWithBlockersResult{}, 0, err
+			}
+		}
+		revision, err := uow.Coordination().AdvanceOutcome(ctx, cmd.Scope)
+		if err != nil {
+			return ReportIssueWithBlockersResult{}, 0, err
+		}
+		return ReportIssueWithBlockersResult{Issue: issue, Blockers: createdBlockers}, revision, nil
+	})
 }
 
 // BlockerResolution makes release confirmation explicit. A compound issue
@@ -72,9 +234,10 @@ func (s *Service) ReportIssueWithBlocker(
 		return MutationResult[ReportIssueWithBlockerResult]{}, err
 	}
 	now := s.clock.Now().UTC()
-	issue, err := domain.NewIssue(
+	issue, err := domain.NewIssueForObjective(
 		issueID,
 		cmd.Scope,
+		&cmd.ObjectiveID,
 		cmd.Title,
 		cmd.Description,
 		cmd.Severity,
@@ -103,6 +266,9 @@ func (s *Service) ReportIssueWithBlocker(
 		if err := requireOpenOutcome(ctx, uow, cmd.Scope); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
 		}
+		if err := validateIssueObjective(ctx, uow, cmd.Scope, cmd.ObjectiveID); err != nil {
+			return ReportIssueWithBlockerResult{}, 0, err
+		}
 		issues, blockers, err := issueBlockerRepositories(uow)
 		if err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
@@ -112,6 +278,18 @@ func (s *Service) ReportIssueWithBlocker(
 		}
 		if err := validateIssueAffectedRefs(ctx, uow, issues, blockers, issue.AffectedRefs); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
+		}
+		if cmd.ObservedOutcomeRevision != nil {
+			current, err := uow.Coordination().LockOutcome(ctx, cmd.Scope)
+			if err != nil {
+				return ReportIssueWithBlockerResult{}, 0, err
+			}
+			if current.Revision != *cmd.ObservedOutcomeRevision {
+				return ReportIssueWithBlockerResult{}, 0, domain.NewDetailedError(domain.ErrorCodePreconditionFailed, "the Outcome changed after the blocking impact review; review current affected work before confirming again", domain.ErrorDetails{
+					ReasonCode: "blocker_impact_changed", SubjectRef: &cmd.BlockedRef, FieldPaths: []string{"observed_outcome_revision"},
+					Remedies: []domain.ErrorRemedy{{ActionID: "review_blocker_impact", SubjectRef: &cmd.BlockedRef}},
+				})
+			}
 		}
 		if err := issues.Insert(ctx, issue); err != nil {
 			return ReportIssueWithBlockerResult{}, 0, err
@@ -222,6 +400,14 @@ func compoundIssueBlockerEvents[T any](
 		return nil, false, nil
 	}
 	switch result := any(value).(type) {
+	case ReportIssueWithBlockersResult:
+		specs := make([]compoundEventSpec, 0, 1+len(result.Blockers))
+		specs = append(specs, compoundEventSpec{eventType: "issue.created", ref: result.Issue.Ref(), after: versionPtr(result.Issue.Version)})
+		for _, blocker := range result.Blockers {
+			specs = append(specs, compoundEventSpec{eventType: "blocker.created", ref: blocker.Ref(), after: versionPtr(blocker.Version)})
+		}
+		events, err := buildCompoundEvents(s, cc, meta, revision, specs)
+		return events, true, err
 	case ReportIssueWithBlockerResult:
 		specs := []compoundEventSpec{
 			{eventType: "issue.created", ref: result.Issue.Ref(), after: versionPtr(result.Issue.Version)},

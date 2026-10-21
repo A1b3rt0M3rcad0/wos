@@ -13,7 +13,6 @@ import (
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
-	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 )
 
 type commandMetadata struct {
@@ -96,18 +95,27 @@ func transactCommand[T any, C any](
 	}
 
 	if dynamic, ok := service.authorizer.(ports.TransactionalAuthorizer); ok && service.requireIdentity {
-		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: commandPermission(meta.Name)}
+		permission := commandPermission(meta.Name)
+		request := ports.AuthorizationRequest{NamespaceID: meta.NamespaceID, OutcomeID: meta.Scope.OutcomeID, PrincipalID: commandContext.PrincipalID, Permission: permission, LegacyPermission: legacyPermissionForCommand(meta.Name, permission)}
 		if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
-		if assessment, ok := any(command).(RecordCriterionAssessmentCommand); ok && assessment.Result == domain.AssessmentResultWaived {
-			request.Permission = ports.PermissionAssessmentWaive
-			if err := dynamic.AuthorizeInUnitOfWork(ctx, uow, request); err != nil {
-				return MutationResult[T]{Value: zero}, err
-			}
-		}
 	}
 	cutoverIntent := service.requireIdentity && signedCutoverCommand(command)
+	if err := service.authorizeComposedCommandPermissions(ctx, uow, commandContext, meta.Scope, command, meta.Fingerprint); err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
+	var receiptAuthority *leaseCredentialAuthority
+	if commandContext.IdempotencyKey != "" && credentialBoundProtectedReceiptCommand(meta.Name) {
+		now, e := service.transactionTime(ctx, uow)
+		if e != nil {
+			return MutationResult[T]{Value: zero}, e
+		}
+		receiptAuthority, err = service.resolveLeaseCredentialAuthority(ctx, uow, commandContext, meta.Scope, nil, meta.Name, now)
+		if err != nil {
+			return MutationResult[T]{Value: zero}, err
+		}
+	}
 	var signedIdentity Identity
 	if signedCommand(meta.Name) {
 		selectedKey := domain.ID("")
@@ -119,7 +127,7 @@ func transactCommand[T any, C any](
 			selectedKey = field.Interface().(domain.ID)
 		}
 		var accessError error
-		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey)
+		signedIdentity, _, accessError = service.signedAccess(ctx, uow, meta.Scope, commandPermission(meta.Name), selectedKey, legacyPermissionForCommand(meta.Name, commandPermission(meta.Name)))
 		if accessError != nil {
 			return MutationResult[T]{Value: zero}, accessError
 		}
@@ -216,6 +224,16 @@ func transactCommand[T any, C any](
 			return MutationResult[T]{Value: zero}, err
 		}
 		if reservation.IsReplay() {
+			if credentialBoundProtectedReceiptCommand(meta.Name) {
+				if err := validateProtectedReceiptAuthority(*reservation.Replay, receiptAuthority, service.requireIdentity); err != nil {
+					return MutationResult[T]{Value: zero}, err
+				}
+			}
+			if dependencyCommand, ok := dependencyChangesCommand(command); ok {
+				if err := service.authorizeDependencyChangesReplay(ctx, uow, commandContext, dependencyCommand, *reservation.Replay); err != nil {
+					return MutationResult[T]{Value: zero}, err
+				}
+			}
 			var replay MutationResult[T]
 			if err := json.Unmarshal(reservation.Replay.ResponseJSON, &replay); err != nil {
 				return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "stored command result cannot be decoded", err)
@@ -257,8 +275,16 @@ func transactCommand[T any, C any](
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
+	objectiveEffects, err := service.deriveObjectiveCompletionEffects(ctx, uow, meta.Name, command, value, revision)
+	if err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
 
 	events, err := eventsForCommand(service, commandContext, meta, value, revision)
+	if err != nil {
+		return MutationResult[T]{Value: zero}, err
+	}
+	events, err = appendObjectiveCompletionEvents(service, commandContext, events, objectiveEffects, revision)
 	if err != nil {
 		return MutationResult[T]{Value: zero}, err
 	}
@@ -278,15 +304,26 @@ func transactCommand[T any, C any](
 		OutcomeRevision:  revision,
 		CommandID:        commandContext.CommandID,
 	}
+	for _, effect := range objectiveEffects {
+		if effect.Objective.CurrentConclusion == nil || effect.Objective.CurrentConclusion.DerivedCompletion == nil {
+			return MutationResult[T]{Value: zero}, domain.NewError(domain.ErrorCodeInvalidEvent, "derived Objective result has no conclusion provenance")
+		}
+		provenance := effect.Objective.CurrentConclusion.DerivedCompletion
+		result.DerivedObjectiveAchievements = append(result.DerivedObjectiveAchievements, DerivedObjectiveAchievement{
+			Objective: effect.Objective.Ref(), Version: effect.Objective.Version, AuthorityID: provenance.AuthorityID,
+			PolicyVersion: provenance.PolicyVersion, CompletionCycle: provenance.CompletionCycle,
+		})
+	}
 	if commandContext.IdempotencyKey != "" {
 		response, err := json.Marshal(result)
 		if err != nil {
 			return MutationResult[T]{Value: zero}, domain.WrapError(domain.ErrorCodeIdempotencyState, "command result cannot be serialized", err)
 		}
 		if err := uow.Idempotency().Complete(ctx, reservation, domain.StoredCommandResult{
-			CommandID:       commandContext.CommandID,
-			OutcomeRevision: revision,
-			ResponseJSON:    response,
+			CommandID:             commandContext.CommandID,
+			OutcomeRevision:       revision,
+			ResponseJSON:          response,
+			AuthorityCredentialID: protectedReceiptCredentialID(meta.Name, receiptAuthority),
 		}); err != nil {
 			return MutationResult[T]{Value: zero}, err
 		}
@@ -324,53 +361,21 @@ func buildCommandMetadata[C any](commandContext domain.CommandContext, command C
 		return commandMetadata{}, domain.NewError(domain.ErrorCodeInvalidArgument, "command must be a struct")
 	}
 
-	name := value.Type().Name()
-	name = strings.TrimSuffix(name, "Command")
+	name := commandNameForAuthorization(command)
 	if name == "" {
 		return commandMetadata{}, domain.NewError(domain.ErrorCodeInvalidArgument, "command name cannot be empty")
 	}
-
-	meta := commandMetadata{Name: name}
-	if field := value.FieldByName("NamespaceID"); field.IsValid() {
-		meta.NamespaceID = field.Interface().(domain.ID)
+	resource, registered, err := commandAuthorizationResourceFor(name, command)
+	if !registered {
+		return commandMetadata{}, domain.NewError(domain.ErrorCodeForbidden, "command authorization requirement is not registered")
 	}
-	if field := value.FieldByName("Scope"); field.IsValid() {
-		meta.Scope = field.Interface().(domain.Scope)
-		meta.NamespaceID = meta.Scope.NamespaceID
+	if err != nil {
+		return commandMetadata{}, err
 	}
-	if field := value.FieldByName("Owner"); field.IsValid() {
-		owner := field.Interface().(domain.EntityRef)
-		meta.Owner = &owner
-		meta.Scope = owner.Scope
-		meta.NamespaceID = owner.NamespaceID
-	}
+	meta := commandMetadata{Name: name, NamespaceID: resource.NamespaceID, Scope: resource.Scope, Owner: resource.Owner}
 	if field := value.FieldByName("ExpectedVersion"); field.IsValid() {
 		expected := field.Interface().(domain.Version)
 		meta.ExpectedVersion = &expected
-	}
-	if c, ok := any(command).(ReturnSignedWorkCommand); ok {
-		var hint signing.WorkReturnPayload[SignedReturnMaterial]
-		if err := signedRequestHint(c.Envelope, &hint); err != nil {
-			return commandMetadata{}, err
-		}
-		scope, err := signedRequestScope(hint.RequestBinding)
-		if err != nil {
-			return commandMetadata{}, err
-		}
-		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
-	}
-	if c, ok := any(command).(ReturnSignedReviewCommand); ok {
-		var hint signing.ReviewReturnPayload[SignedReviewMaterial]
-		if err := signedRequestHint(c.Envelope, &hint); err != nil {
-			return commandMetadata{}, err
-		}
-		scope, err := signedRequestScope(hint.RequestBinding)
-		if err != nil {
-			return commandMetadata{}, err
-		}
-		meta.Scope = scope
-		meta.NamespaceID = scope.NamespaceID
 	}
 	if err := meta.NamespaceID.Validate(); err != nil {
 		return commandMetadata{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "command namespace cannot be resolved", err)
@@ -444,6 +449,12 @@ func eventsForCommand[T any](
 	value T,
 	revision domain.OutcomeRevision,
 ) ([]domain.DomainEvent, error) {
+	if result, ok := any(value).(ObjectiveCompletionModeChange); ok {
+		return objectiveCompletionModeEvents(s, commandContext, meta, result, revision)
+	}
+	if result, ok := any(value).(issueAssignmentResult); ok {
+		return issueAssignmentEvents(s, commandContext, meta, result, revision)
+	}
 	if activity, ok := any(value).(WorkActivityResult); ok {
 		return workActivityEvents(s, commandContext, meta, activity, revision)
 	}
@@ -475,10 +486,30 @@ func eventsForCommand[T any](
 	if events, handled, err := contractCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if events, handled, err := taskDeliveryCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+	if result, ok := any(value).(TaskDeliveryReviewResult); ok {
+		if events, handled, err := taskDeliveryDecisionCommandEvents(s, commandContext, meta, result, revision); handled || err != nil {
+			return events, err
+		}
+	}
 	if events, handled, err := compoundIssueBlockerEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
+	if events, handled, err := dependencyChangesCommandEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
 	if events, handled, err := compoundDocumentaryEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+	if note, ok := any(value).(domain.EntityNote); ok {
+		return entityNoteEvents(s, commandContext, meta, note, revision)
+	}
+	if events, handled, err := planningCreationEvents(s, commandContext, meta, value, revision); handled || err != nil {
+		return events, err
+	}
+	if events, handled, err := documentaryContextEvents(s, commandContext, meta, value, revision); handled || err != nil {
 		return events, err
 	}
 
@@ -505,6 +536,20 @@ func eventsForCommand[T any](
 			return nil, err
 		}
 		payload := append(json.RawMessage(nil), meta.Payload...)
+		if criterion, ok := any(value).(domain.SuccessCriterion); ok && meta.Name == "AddCriterion" {
+			var fact map[string]json.RawMessage
+			if err := json.Unmarshal(payload, &fact); err != nil {
+				return nil, err
+			}
+			fact["criterion_id"], err = json.Marshal(criterion.ID)
+			if err != nil {
+				return nil, err
+			}
+			payload, err = json.Marshal(fact)
+			if err != nil {
+				return nil, err
+			}
+		}
 		if meta.Name == "CompleteWorkItem" && eventType == "work_item.released" {
 			payload = json.RawMessage(`{"reason":"completion"}`)
 		}
@@ -542,8 +587,80 @@ func eventsForCommand[T any](
 	return events, nil
 }
 
+func issueAssignmentEvents(
+	s *Service,
+	commandContext domain.CommandContext,
+	meta commandMetadata,
+	result issueAssignmentResult,
+	revision domain.OutcomeRevision,
+) ([]domain.DomainEvent, error) {
+	ref, before, after, noOp, err := commandAggregate(meta, result)
+	if err != nil {
+		return nil, err
+	}
+	if noOp {
+		return nil, nil
+	}
+	if revision == 0 {
+		return nil, domain.NewError(domain.ErrorCodeInvalidEvent, "confirmed issue assignment must have an outcome_revision")
+	}
+	eventTypes, err := eventTypesForCommand(meta)
+	if err != nil {
+		return nil, err
+	}
+	payload, err := json.Marshal(struct {
+		PreviousAssigneeRef *domain.ActorRef `json:"previous_assignee_ref"`
+		AssigneeRef         *domain.ActorRef `json:"assignee_ref"`
+		Reason              string           `json:"reason,omitempty"`
+	}{
+		PreviousAssigneeRef: cloneIssueActorRef(result.PreviousAssigneeRef),
+		AssigneeRef:         cloneIssueActorRef(result.AssigneeRef),
+		Reason:              result.Reason,
+	})
+	if err != nil {
+		return nil, domain.WrapError(domain.ErrorCodeInvalidEvent, "issue assignment event payload cannot be encoded", err)
+	}
+	now := s.clock.Now().UTC()
+	events := make([]domain.DomainEvent, 0, len(eventTypes))
+	for index, eventType := range eventTypes {
+		eventID, err := s.ids.NewID()
+		if err != nil {
+			return nil, err
+		}
+		event := domain.DomainEvent{
+			EventID:                eventID,
+			EventType:              eventType,
+			SchemaVersion:          domain.DomainEventSchemaVersion,
+			NamespaceID:            ref.NamespaceID,
+			OutcomeID:              ref.OutcomeID,
+			OutcomeRevision:        revision,
+			EventIndex:             uint32(index),
+			AggregateRef:           ref,
+			AggregateVersionBefore: before,
+			AggregateVersionAfter:  after,
+			PrincipalID:            commandContext.PrincipalID,
+			Actor:                  commandContext.Actor,
+			RecordedAt:             now,
+			CommandID:              commandContext.CommandID,
+			CorrelationID:          commandContext.CorrelationID,
+			CausationID:            cloneIDPointer(commandContext.CausationID),
+			ExecutionContext:       commandContext.Execution,
+			Payload:                payload,
+		}
+		if err := event.Validate(); err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+	return events, nil
+}
+
 func commandAggregate[T any](meta commandMetadata, value T) (domain.EntityRef, *domain.Version, *domain.Version, bool, error) {
 	switch result := any(value).(type) {
+	case ObjectiveCompletionModeChange:
+		return aggregateVersions(meta, result.Objective.Ref(), result.Objective.Version)
+	case issueAssignmentResult:
+		return aggregateVersions(meta, result.Issue.Ref(), result.Issue.Version)
 	case domain.Outcome:
 		return aggregateVersions(meta, result.Ref(), result.Version)
 	case domain.Objective:
@@ -652,6 +769,8 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"outcome.archived"}, nil
 	case "UnarchiveOutcome":
 		return []string{"outcome.unarchived"}, nil
+	case "ConfigureOutcomeOperationalProfile":
+		return []string{"outcome.operational_profile_configured"}, nil
 	case "SetOutcomeOwners", "UpdateOutcome":
 		return []string{"outcome.updated"}, nil
 	case "CreateObjective":
@@ -664,14 +783,24 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"objective.cancelled", "objective.conclusion_recorded"}, nil
 	case "ReopenObjective":
 		return []string{"objective.reopened"}, nil
+	case "SetObjectiveCompletionMode":
+		return []string{"objective.completion_policy_authorized"}, nil
 	case "SetObjectiveOwners", "UpdateObjective":
 		return []string{"objective.updated"}, nil
+	case "SetObjectiveParent":
+		return []string{"objective.parent_changed"}, nil
 	case "CreateWorkItem":
 		return []string{"work_item.created"}, nil
 	case "ActivateWorkItem":
 		return []string{"work_item.activated"}, nil
 	case "DeferWorkItem", "SetWorkItemAssignees", "UpdateWorkItem":
 		return []string{"work_item.updated"}, nil
+	case "SetWorkItemExecutionSpec":
+		return []string{"work_item.execution_spec_changed"}, nil
+	case "SetWorkItemNotBefore":
+		return []string{"work_item.not_before_changed"}, nil
+	case "SetWorkItemObjective":
+		return []string{"work_item.objective_changed"}, nil
 	case "ClaimWorkItem":
 		return []string{"work_item.claimed"}, nil
 	case "RenewWorkItemLease":
@@ -694,11 +823,21 @@ func eventTypesForCommand(meta commandMetadata) ([]string, error) {
 		return []string{"relation.created"}, nil
 	case "RemoveDependency":
 		return []string{"relation.removed"}, nil
+	case "RelateIssueWorkItem":
+		return []string{"relation.created"}, nil
+	case "RemoveIssueWorkItemRelation":
+		return []string{"relation.removed"}, nil
 	case "CreateIssue":
 		return []string{"issue.created"}, nil
 	case "UpdateIssue":
 		return []string{"issue.updated"}, nil
 	case "InvestigateIssue":
+		return []string{"issue.investigating"}, nil
+	case "AssignIssue":
+		return []string{"issue.assigned"}, nil
+	case "UnassignIssue":
+		return []string{"issue.unassigned"}, nil
+	case "StartIssueInvestigation":
 		return []string{"issue.investigating"}, nil
 	case "ResolveIssue":
 		return []string{"issue.resolved"}, nil

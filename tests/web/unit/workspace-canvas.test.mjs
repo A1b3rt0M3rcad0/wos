@@ -100,6 +100,53 @@ test("new data avoids existing positions and leaves the input model untouched", 
   assert.deepEqual(model, before);
 });
 
+test("local arrangements keep signed coordinates and bounds follow cards in every direction", () => {
+  const model = fixture(),
+    before = structuredClone(model),
+    initial = layoutCanvas(model);
+  const translate = (x, y) =>
+    new Map(initial.nodes.map((entry) => [
+      entry.key, { x: entry.x + x, y: entry.y + y },
+    ]));
+  for (const [dx, dy] of [[-5000, -4000], [5000, 4000], [-5000, 4000]]) {
+    const positions = translate(dx, dy),
+      moved = layoutCanvas(model, { positions });
+    for (const entry of moved.nodes) {
+      assert.deepEqual({ x: entry.x, y: entry.y }, positions.get(entry.key));
+      assert.ok(entry.x >= moved.bounds.x);
+      assert.ok(entry.y >= moved.bounds.y);
+      assert.ok(entry.x + entry.width <= moved.bounds.x + moved.bounds.width);
+      assert.ok(entry.y + entry.height <= moved.bounds.y + moved.bounds.height);
+    }
+    assert.equal(moved.bounds.x, initial.bounds.x + dx);
+    assert.equal(moved.bounds.y, initial.bounds.y + dy);
+    assert.ok(Math.abs(moved.width - initial.width) < 1e-9);
+    assert.ok(Math.abs(moved.height - initial.height) < 1e-9);
+    // Refreshes and newly loaded records must retain an intentional local
+    // position, rather than snapping a card back to a fabricated origin wall.
+    const refreshed = layoutCanvas({
+      ...model,
+      nodes: [...model.nodes, item("work_item:later", "work_item", "objective:a")],
+    }, { positions });
+    for (const entry of moved.nodes) {
+      const next = refreshed.byKey.get(entry.key);
+      assert.deepEqual({ x: next.x, y: next.y }, positions.get(entry.key));
+    }
+    assert.deepEqual(moved.edges, initial.edges);
+  }
+  assert.deepEqual(model, before);
+});
+
+test("invalid local coordinates fall back to a finite layout without changing source data", () => {
+  const model = fixture();
+  const layout = layoutCanvas(model, { positions: new Map([
+    ["outcome:root", { x: Infinity, y: 0 }],
+    ["objective:a", { x: 0, y: NaN }],
+  ]) });
+  assert.ok(Object.values(layout.bounds).every(Number.isFinite));
+  assert.ok(layout.nodes.every((entry) => Number.isFinite(entry.x) && Number.isFinite(entry.y)));
+});
+
 test("hundreds of mixed paper cards fit a deterministic non-overlapping layout", () => {
   const nodes = [item("root", "outcome")];
   for (let group = 0; group < 12; group++) {
@@ -187,6 +234,7 @@ test("connection filters preserve selected documentary context and distinct unkn
     /strength not loaded/,
   );
   assert.match(canvasEdgeLabel(edges[1]), /advisory/);
+  assert.match(canvasEdgeLabel({ kind: "depends_on", mode: "hard", label: "Generic connection" }), /^Depends on.*hard/);
   assert.match(canvasEdgeLabel(edges[3]), /Plan order/);
 });
 

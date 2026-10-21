@@ -1,4 +1,6 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, intent, save, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { seedPresentation } from "./presentation-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
@@ -28,7 +30,12 @@ async function capture(page, name) {
 async function area(page, key, section) {
   await chooseArea(page, key);
   if (section && key !== "work") await page.locator(`#tabs [data-section="${section}"]`).click();
-  if (section && key === "work") await page.locator("#work-status").selectOption(section);
+  if (section && key === "work") {
+    // The previous viewport can leave Work in its persisted Task Board view.
+    // Status filtering is a List control, so choose that view explicitly.
+    await page.locator('#view-tabs [data-view="list"]').click();
+    await page.locator("#work-status").selectOption(section);
+  }
   await expect(page.locator(`#area-tabs [data-area="${key}"]`)).toHaveAttribute("aria-pressed", "true");
   const heading = {
     objectives: "Objectives", roadmaps: "All roadmaps", active_roadmaps: "Active roadmaps",
@@ -43,7 +50,14 @@ async function rowDetail(page, key, section, item) {
   await area(page, key, section);
   await page.locator(`#content [data-entity-id="${item.id}"]`).click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
-  await expect(page.locator("#detail-title")).toHaveText(item.title || item.name || item.description);
+  const kindHeading = { blockers: "Blocker", evidence: "Evidence" }[section];
+  await expect(page.locator("#detail-title")).toHaveText(item.title || item.name || kindHeading);
+  if (!item.title && !item.name) {
+    await expect(page.locator(".detail-description")).toHaveText(item.description);
+    // The authored body appears once; named relationship endpoints may repeat
+    // the same record label without duplicating its descriptive paragraph.
+    await expect(page.locator("#detail-content .detail-description")).toHaveCount(1);
+  }
 }
 async function dialogAccess(page, id) {
   const dialog = page.locator(id);
@@ -162,6 +176,7 @@ test("specialist areas show real documentary records, section-aware filters and 
 test("standalone details, contextual forms and Roadmap revisions preserve their native modal contract", async ({ page, wos }) => {
   test.setTimeout(180000);
   const data = await seedPresentation(wos);
+  data.tasks.ready=await wos.command('defer_work_item',{scope:data.scope,work_item_id:data.tasks.ready.id,expected_version:data.tasks.ready.version});
   const published = JSON.stringify(data.roadmap.revisions[0]);
   const mutations = [];
   page.on("request", (request) => {
@@ -185,13 +200,19 @@ test("standalone details, contextual forms and Roadmap revisions preserve their 
       await rowDetail(page, key, section, item);
       await dialogAccess(page, "#detail-dialog");
       if (name === "roadmap") {
-        await expect(page.locator("#detail-content")).toContainText("Refine the shared handoff");
-        await expect(page.locator("#detail-content")).toContainText(/Revision 1/i);
+        await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
+        await expect(page.locator('#detail-content [data-workspace-facet="roadmap"]')).toContainText(/revision 1/i);
+        await expect(page.locator('#detail-content [data-action-id="view_roadmap_revision"]')).toBeVisible();
       }
       if (device === "desktop" && ["artifact", "decision", "roadmap"].includes(name) || device === "mobile" && name === "blocker")
         await capture(page, `02-${device}-${name}-detail`);
-      await page.locator("#detail-actions").getByRole("button", { name: action, exact: true }).click();
+      await clickRecordAction(page, action);
       await dialogAccess(page, "#command-dialog");
+      if (name === "roadmap") {
+        const titles = await page.locator('.roadmap-edit-row').getByLabel("Item title", { exact: true })
+          .evaluateAll((inputs) => inputs.map((input) => input.value));
+        expect(titles).toContain("Refine the shared handoff");
+      }
       await expect(page.locator("#submit-command")).toBeInViewport();
       if (device === "desktop" && name === "roadmap" || device === "mobile" && ["evidence", "decision", "roadmap"].includes(name))
         await capture(page, `02-${device}-${name}-form`);
@@ -199,7 +220,7 @@ test("standalone details, contextual forms and Roadmap revisions preserve their 
       await closeCommand(page);
     }
     await rowDetail(page, "plan", "roadmaps", data.roadmap);
-    await page.locator("#detail-actions").getByRole("button", { name: "Review and publish", exact: true }).click();
+    await clickRecordAction(page, "Review and publish");
     await expect(page.locator(".roadmap-diff")).toContainText("Refine the shared handoff");
     await expect(page.getByLabel("Publication reason", { exact: true })).toBeVisible();
     if (device === "desktop") await capture(page, `02-${device}-roadmap-publication`);
@@ -387,7 +408,7 @@ test("opening and saving an existing Roadmap Draft retains child phases and immu
   await wos.login(page);
   await openOutcome(page, data.outcome.title);
   await rowDetail(page, "plan", "roadmaps", original);
-  await page.locator("#detail-actions").getByRole("button", { name: "Edit draft", exact: true }).click();
+  await clickRecordAction(page, "Edit draft");
   // Canonical API nodes can precede their parent phase in the response. Merely
   // opening the editor must not turn a real child into a root-level reference.
   for (const child of children)
@@ -402,7 +423,7 @@ test("opening and saving an existing Roadmap Draft retains child phases and immu
   expect(persisted.draft.after_links).toEqual(original.draft.after_links);
   expect(JSON.stringify(persisted.revisions[0])).toBe(published);
   await rowDetail(page, "plan", "roadmaps", persisted);
-  await page.locator("#detail-actions").getByRole("button", { name: "Edit draft", exact: true }).click();
+  await clickRecordAction(page, "Edit draft");
   const removed = children[0];
   const row = await roadmapRow(page, removed.title);
   await row.getByLabel("Within phase", { exact: true }).focus();

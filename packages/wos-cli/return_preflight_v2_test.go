@@ -46,6 +46,42 @@ func TestAssessmentShapeRejectedBeforeSigningOrNetwork(t *testing.T) {
 	}
 }
 
+func TestDirectCompletionMustRespectIssuedAcceptanceFloor(t *testing.T) {
+	profile, file := contractFixtureV2WithFloor(t, d.AcceptanceIndependentReview)
+	view, err := file.VerifyIssued(profile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Authority.AcceptanceMode != string(d.AcceptanceIndependentReview) {
+		t.Fatal("review-floor authority did not verify from its issued signature")
+	}
+	issuedAuthorityBytes, err := signing.Canonical(file.Issued.Authority)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file.Execution.CompletionIntent = "direct"
+	if err = validateReturnDraftV2(profile, file, view); err == nil || !strings.Contains(err.Error(), "requires independent review") {
+		t.Fatalf("direct intent below the issued review floor was not rejected locally: %v", err)
+	}
+	file.Execution.CompletionIntent = "auto"
+	if err = validateReturnDraftV2(profile, file, view); err != nil {
+		t.Fatalf("auto intent should be allowed to resolve to a real review: %v", err)
+	}
+	directProfile, directFile := contractFixtureV2(t)
+	directView, err := directFile.VerifyIssued(directProfile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	directFile.Execution.CompletionIntent = "direct"
+	if err = validateReturnDraftV2(directProfile, directFile, directView); err != nil {
+		t.Fatalf("direct intent should remain available for an issued direct floor: %v", err)
+	}
+	issuedAuthorityAfter, err := signing.Canonical(file.Issued.Authority)
+	if err != nil || string(issuedAuthorityAfter) != string(issuedAuthorityBytes) {
+		t.Fatal("local intent validation rewrote frozen issued authority bytes", err)
+	}
+}
+
 func TestFindingReferenceUsesAuthenticatedOriginalObligations(t *testing.T) {
 	profile, file := contractFixtureV2(t)
 	view, e := file.VerifyIssued(profile)

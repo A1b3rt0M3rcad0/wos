@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "status": "not_run",
+  "study_type": "independent_formative_comprehension",
+  "protocol": "docs/ux/operational-workspace/human-study.md",
+  "owner_requirement": "docs/ux/operational-workspace/owner-plan-2026-10-19.md#6-teste-de-compreensão-humana",
+  "minimum_independent_participants": 5,
+  "primary_cohort_size": 5,
+  "participants_recorded": 0,
+  "participants": [],
+  "study_started_at": null,
+  "study_finished_at": null,
+  "source": {
+    "git_revision": null,
+    "server_build": null,
+    "served_assets_manifest": null,
+    "adapter": null,
+    "protocols": [],
+    "fixture_preparation_record": null
+  },
+  "observer_code": null,
+  "thresholds": {
+    "H01": {
+      "requirement": "Create one Outcome, two Objectives, four Tasks and preparation Criteria",
+      "median_seconds_at_most": 180,
+      "ids_or_technical_console_permitted": false,
+      "measured_cohort_median_seconds": null,
+      "median_denominator": null,
+      "noncompletion_count": null,
+      "assessment": "not_assessed"
+    },
+    "H02": {
+      "requirement": "Find the five Task information groups without switching the global view",
+      "seconds_at_most": 30,
+      "minimum_successes_in_primary_five": 4,
+      "observed_successes_within_limit": null,
+      "observed_unassisted_successes_within_limit": null,
+      "assessment": "not_assessed"
+    },
+    "H03": {
+      "requirement": "Add Evidence to the correct Criterion without losing the link",
+      "seconds_at_most": 45,
+      "minimum_successes_in_primary_five": 4,
+      "observed_successes_within_limit": null,
+      "observed_unassisted_successes_within_limit": null,
+      "assessment": "not_assessed"
+    },
+    "H04": {
+      "requirement": "Report an Issue and deliberately select the correct blocking target and impact",
+      "seconds_at_most": 45,
+      "minimum_successes_in_primary_five": 4,
+      "observed_successes_within_limit": null,
+      "observed_unassisted_successes_within_limit": null,
+      "assessment": "not_assessed"
+    },
+    "H05": {
+      "requirement": "No error granting fictitious authority or confusing authorship",
+      "seconds_at_most": null,
+      "maximum_qualifying_errors": 0,
+      "observed_qualifying_errors": null,
+      "assessment": "not_assessed"
+    },
+    "H06": {
+      "requirement": "No critical UI-induced confusion between Evidence, assessment and acceptance",
+      "seconds_at_most": null,
+      "maximum_critical_ui_induced_errors": 0,
+      "observed_critical_ui_induced_errors": null,
+      "assessment": "not_assessed"
+    }
+  },
+  "participant_entry_template": {
+    "template_only_not_a_participant": true,
+    "participant_code": null,
+    "cohort": null,
+    "independent_of_interface_design": null,
+    "prior_wos_experience": null,
+    "agent_assisted_development_familiarity": null,
+    "started_at": null,
+    "environment": {
+      "source_matches_study_revision": null,
+      "browser": null,
+      "browser_version": null,
+      "device": null,
+      "css_viewport_width": null,
+      "css_viewport_height": null,
+      "native_zoom_percent": null,
+      "input_method": null
+    },
+    "task_attempt_template": {
+      "template_only_not_an_attempt": true,
+      "task_id": null,
+      "status": "not_started",
+      "starting_fixture": null,
+      "started_at": null,
+      "finished_at": null,
+      "elapsed_seconds": null,
+      "unrelated_pause_seconds": null,
+      "pause_reason": null,
+      "completed_correctly": null,
+      "within_owner_time_limit": null,
+      "used_ids_or_technical_console": null,
+      "switched_global_view": null,
+      "persisted_result_or_evidence_reference": null,
+      "verbatim_answers": [],
+      "errors": [],
+      "assistance": [],
+      "abandoned": null,
+      "abandonment_reason": null,
+      "ui_wording_related_to_misunderstanding": [],
+      "observer_notes": null
+    },
+    "task_attempts": []
+  },
+  "error_entry_template": {
+    "description": null,
+    "elapsed_seconds_when_observed": null,
+    "wrong_target_or_action": null,
+    "critical_conceptual_error": null,
+    "granted_fictitious_authority_or_confused_authorship": null,
+    "ui_induced": null,
+    "visible_text_or_control": null,
+    "recovered_without_assistance": null
+  },
+  "assistance_entry_template": {
+    "elapsed_seconds_when_requested": null,
+    "participant_question": null,
+    "observer_response_verbatim": null,
+    "continued_after_assistance": null
+  },
+  "protocol_deviations": [],
+  "findings": [],
+  "independent_human_acceptance": "pending",
+  "overall_conclusion": null,
+  "limitations": [
+    "This file is a blank template; no participant session has been conducted or scored.",
+    "Automated tests, screenshots and owner walkthroughs do not count as independent participant results.",
+    "Five formative sessions do not establish market-wide satisfaction or a production performance guarantee."
+  ]
+}
