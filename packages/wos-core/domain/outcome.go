@@ -33,23 +33,24 @@ func (p CompletionPolicy) Valid() bool {
 }
 
 type Outcome struct {
-	CompletionPolicy  CompletionPolicy `json:"completion_policy,omitempty"`
-	ExternalContext   ExternalContext  `json:"external_context,omitempty"`
-	ID                ID               `json:"id"`
-	NamespaceID       ID               `json:"namespace_id"`
-	Version           Version          `json:"version"`
-	Title             string           `json:"title"`
-	Description       string           `json:"description,omitempty"`
-	DesiredState      string           `json:"desired_state"`
-	Lifecycle         OutcomeLifecycle `json:"lifecycle"`
-	Priority          Priority         `json:"priority"`
-	OwnerRefs         []ActorRef       `json:"owner_refs,omitempty"`
-	ArchivedAt        *time.Time       `json:"archived_at,omitempty"`
-	Criteria          CriterionSet     `json:"criteria"`
-	CurrentConclusion *Conclusion      `json:"conclusion,omitempty"`
-	ConclusionHistory []Conclusion     `json:"conclusion_history,omitempty"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
+	CompletionPolicy   CompletionPolicy   `json:"completion_policy,omitempty"`
+	ExternalContext    ExternalContext    `json:"external_context,omitempty"`
+	ID                 ID                 `json:"id"`
+	NamespaceID        ID                 `json:"namespace_id"`
+	Version            Version            `json:"version"`
+	Title              string             `json:"title"`
+	Description        string             `json:"description,omitempty"`
+	DesiredState       string             `json:"desired_state"`
+	Lifecycle          OutcomeLifecycle   `json:"lifecycle"`
+	Priority           Priority           `json:"priority"`
+	OwnerRefs          []ActorRef         `json:"owner_refs,omitempty"`
+	ArchivedAt         *time.Time         `json:"archived_at,omitempty"`
+	Criteria           CriterionSet       `json:"criteria"`
+	CurrentConclusion  *Conclusion        `json:"conclusion,omitempty"`
+	ConclusionHistory  []Conclusion       `json:"conclusion_history,omitempty"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
+	OperationalProfile OperationalProfile `json:"operational_profile,omitempty"`
 }
 
 func NewOutcome(id, namespaceID ID, title, description, desiredState string, priority Priority, createdAt time.Time) (Outcome, error) {
@@ -83,6 +84,9 @@ func (o Outcome) Ref() EntityRef {
 func (o Outcome) IsArchived() bool { return o.ArchivedAt != nil }
 
 func (o Outcome) Validate() error {
+	if !o.OperationalProfile.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid operational_profile")
+	}
 	if !o.CompletionPolicy.Valid() {
 		return NewError(ErrorCodeInvalidArgument, "invalid completion_policy")
 	}

@@ -15,21 +15,23 @@ const (
 )
 
 type Objective struct {
-	ID                 ID                 `json:"id"`
-	Scope              Scope              `json:"scope"`
-	Version            Version            `json:"version"`
-	Title              string             `json:"title"`
-	Description        string             `json:"description,omitempty"`
-	ParentObjectiveID  *ID                `json:"parent_objective_id,omitempty"`
-	Lifecycle          ObjectiveLifecycle `json:"lifecycle"`
-	Priority           Priority           `json:"priority"`
-	OwnerRefs          []ActorRef         `json:"owner_refs,omitempty"`
-	RequiredForOutcome bool               `json:"required_for_outcome"`
-	Criteria           CriterionSet       `json:"criteria"`
-	CurrentConclusion  *Conclusion        `json:"conclusion,omitempty"`
-	ConclusionHistory  []Conclusion       `json:"conclusion_history,omitempty"`
-	CreatedAt          time.Time          `json:"created_at"`
-	UpdatedAt          time.Time          `json:"updated_at"`
+	ID                 ID                      `json:"id"`
+	Scope              Scope                   `json:"scope"`
+	Version            Version                 `json:"version"`
+	Title              string                  `json:"title"`
+	Description        string                  `json:"description,omitempty"`
+	ParentObjectiveID  *ID                     `json:"parent_objective_id,omitempty"`
+	Lifecycle          ObjectiveLifecycle      `json:"lifecycle"`
+	Priority           Priority                `json:"priority"`
+	OwnerRefs          []ActorRef              `json:"owner_refs,omitempty"`
+	RequiredForOutcome bool                    `json:"required_for_outcome"`
+	Criteria           CriterionSet            `json:"criteria"`
+	CurrentConclusion  *Conclusion             `json:"conclusion,omitempty"`
+	ConclusionHistory  []Conclusion            `json:"conclusion_history,omitempty"`
+	CreatedAt          time.Time               `json:"created_at"`
+	UpdatedAt          time.Time               `json:"updated_at"`
+	CompletionMode     ObjectiveCompletionMode `json:"completion_mode,omitempty"`
+	CompletionCycle    uint64                  `json:"completion_cycle,omitempty"`
 }
 
 func NewObjective(id ID, scope Scope, title, description string, priority Priority, requiredForOutcome bool, createdAt time.Time) (Objective, error) {
@@ -57,6 +59,9 @@ func (o Objective) Ref() EntityRef {
 }
 
 func (o Objective) Validate() error {
+	if !o.CompletionMode.Valid() {
+		return NewError(ErrorCodeInvalidArgument, "invalid objective completion_mode")
+	}
 	if err := o.ID.Validate(); err != nil {
 		return err
 	}
@@ -196,11 +201,19 @@ func (o *Objective) Reopen(reason string, now time.Time) error {
 	if strings.TrimSpace(reason) == "" {
 		return NewError(ErrorCodeInvalidArgument, "reopen reason is required")
 	}
+	nextCycle, err := nextObjectiveCompletionCycle(o.EffectiveCompletionCycle())
+	if err != nil {
+		return err
+	}
+	if _, err := nextVersion(o.Version); err != nil {
+		return err
+	}
 	if o.CurrentConclusion != nil {
 		o.ConclusionHistory = append(o.ConclusionHistory, *o.CurrentConclusion)
 		o.CurrentConclusion = nil
 	}
 	o.Lifecycle = ObjectiveLifecyclePlanned
+	o.CompletionCycle = nextCycle
 	return o.touch(now)
 }
 
