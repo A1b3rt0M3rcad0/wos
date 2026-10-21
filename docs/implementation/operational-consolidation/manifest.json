@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "f83cd3f668eefce458c3bdeb3f3a8b5ff0089051",
+  "execution_head_sha": "2d5adb6cee625ce0bd41cbeb232515895a3fc60b",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -439,15 +439,23 @@
     {
       "id": "E20",
       "title": "Implementar gestão, rotação e observação de chaves",
-      "state": "in_progress",
+      "state": "implemented",
       "depends_on": [
         "E19"
       ],
       "responsible": "primary with subagent distribution_ci_repair",
-      "commit_sha": null,
+      "commit_sha": "2d5adb6cee625ce0bd41cbeb232515895a3fc60b",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E20.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application ./packages/wos-core/storage/memory ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres ./packages/wos-api/http ./packages/wos-api/mcp -count=1 -timeout=3m — pass; PostgreSQL integration tests requiring a live DSN were skipped",
+        "go vet ./packages/wos-core/application ./packages/wos-core/storage/memory ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres ./packages/wos-api/http ./packages/wos-api/mcp — pass",
+        "python3 tools/postgresgen/generate.py with Go 1.27.2 on PATH and stable second-generation hash check — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Live PostgreSQL transaction and migration acceptance — WOS_TEST_POSTGRES_DSN was unset; stage remains implemented rather than verified.",
+        "Full repository and browser suites — not run for E20."
+      ]
     },
     {
       "id": "E21",
