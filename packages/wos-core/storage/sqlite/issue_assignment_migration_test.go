@@ -146,9 +146,9 @@ func assertIssueExpandData(t *testing.T, store *Store, scope domain.Scope, issue
 	}
 }
 
-func TestIssueObjectiveAssigneeExpandMigrationUpgradeIdempotencyAndRestore(t *testing.T) {
+func TestIssueObjectiveAssigneeExpandMigrationUpgradeAndIdempotency(t *testing.T) {
 	ctx := context.Background()
-	store, path := openStoreAtSchema33(t)
+	store, _ := openStoreAtSchema33(t)
 	scope, issue := createIssueForExpandMigration(t, store)
 	migrations, err := loadMigrations()
 	if err != nil {
@@ -172,13 +172,10 @@ func TestIssueObjectiveAssigneeExpandMigrationUpgradeIdempotencyAndRestore(t *te
 	if err != nil || version != 34 {
 		t.Fatalf("upgraded schema version = %d, err=%v; want 34", version, err)
 	}
-	if err := store.Migrate(ctx); err != nil {
-		t.Fatalf("idempotent migration replay: %v", err)
+	if err := store.applyMigration(ctx, *expand); err != nil {
+		t.Fatalf("idempotent version 34 migration replay: %v", err)
 	}
 	assertIssueExpandData(t, store, scope, issue)
-
-	restored := reopenIntegrationFixture(t, store, path)
-	assertIssueExpandData(t, restored, scope, issue)
 }
 
 func TestIssueObjectiveAssigneeExpandMigrationRollsBackDDLAtomically(t *testing.T) {

@@ -19,7 +19,7 @@ type advancingContinuityClock struct{ now time.Time }
 
 func (c *advancingContinuityClock) Now() time.Time { return c.now }
 func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "expiry.db")
@@ -90,7 +90,7 @@ func TestContinuityProjectionLeaseExpiryAndFrozenCursor(t *testing.T) {
 	}
 }
 func TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -162,7 +162,7 @@ func TestContinuityProjectionRetainsConclusionEvidenceAndCurrentContradiction(t 
 }
 
 func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -195,7 +195,7 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 				works = append(works, w)
 			}
 			actor := d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "fixture"}
-			issue, e := d.NewIssue(portID(5020), scope, "External dependency", "", d.IssueSeverityMinor, []d.EntityRef{out.Ref()}, actor, now)
+			issue, e := d.NewIssueForObjective(portID(5020), scope, &owner.ID, "External dependency", "", d.IssueSeverityMinor, []d.EntityRef{out.Ref()}, actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			cause := issue.Ref()

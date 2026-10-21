@@ -25,7 +25,7 @@ func (m *workspaceCountingManager) Begin(ctx context.Context) (ports.UnitOfWork,
 }
 
 func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -118,7 +118,7 @@ func TestWorkspaceCardsBatchAndStructuralPagesAvoidHydration(t *testing.T) {
 func refPointerForTest(ref d.EntityRef) *d.EntityRef { return &ref }
 
 func TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -201,7 +201,7 @@ func TestWorkspaceViewHasOneSnapshotAndDoesNotPromoteLinkedEvidence(t *testing.T
 }
 
 func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			ctx := context.Background()
@@ -271,7 +271,7 @@ func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *tes
 				must(e)
 				must(docs.EvidenceLinks().Insert(ctx, link))
 			}
-			issue, e := d.NewIssue(portID(60), scope, "Inspect the affected Task", "Context", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+			issue, e := d.NewIssueForObjective(portID(60), scope, &objective.ID, "Inspect the affected Task", "Context", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			relation, e := d.NewDependencyRelation(portID(70), work.Ref(), objective.Ref(), d.DependencyStrengthAdvisory, now)

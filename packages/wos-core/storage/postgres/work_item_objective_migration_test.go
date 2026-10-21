@@ -152,13 +152,13 @@ func workItemObjectiveContractMigration(t *testing.T, store *Store, required mig
 }
 
 func TestWorkItemObjectiveContractMigrationPreservesTasksAndContractForeignKeys(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	store, _, required := openWorkItemObjectiveSchema34(t)
 	workItemObjectiveContractMigration(t, store, required)
 }
 
 func TestWorkItemObjectiveContractMigrationRejectsOrphanAndCanRetry(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store, _, required := openWorkItemObjectiveSchema34(t)
 	if required.version != 35 {
@@ -193,13 +193,13 @@ func TestWorkItemObjectiveContractMigrationRejectsOrphanAndCanRetry(t *testing.T
 		t.Fatalf("repaired Task was not preserved: title=%q err=%v scope=%+v", title, err, scope)
 	}
 	version, err = store.SchemaVersion(ctx)
-	if err != nil || version != 35 {
-		t.Fatalf("retry schema version = %d, err=%v; want 35", version, err)
+	if err != nil || version != 36 {
+		t.Fatalf("retry schema version = %d, err=%v; want 36", version, err)
 	}
 }
 
 func TestFreshSchemaRequiresWorkItemObjective(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store, err := openTestPostgres(filepath.Join(t.TempDir(), "fresh-objective-contract.db"), Options{MigrateOnOpen: true})
 	if err != nil {
@@ -211,7 +211,7 @@ func TestFreshSchemaRequiresWorkItemObjective(t *testing.T) {
 		t.Fatal("fresh schema accepted a Task without Objective")
 	}
 	version, err := store.SchemaVersion(ctx)
-	if err != nil || version != 35 {
-		t.Fatalf("fresh schema version = %d, err=%v; want 35", version, err)
+	if err != nil || version != 36 {
+		t.Fatalf("fresh schema version = %d, err=%v; want 36", version, err)
 	}
 }

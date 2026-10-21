@@ -179,7 +179,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 				must(rel.Validate())
 				must(u.Relations().Insert(ctx, rel))
 			}
-			issue, e := d.NewIssue(portID(300), scope, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
+			issue, e := d.NewIssueForObjective(portID(300), scope, works[0].ObjectiveID, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			cause := issue.Ref()

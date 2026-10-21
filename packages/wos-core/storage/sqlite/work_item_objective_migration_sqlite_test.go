@@ -75,8 +75,8 @@ func TestSQLiteBackupRestoreAtSchema34CanUpgradeWorkItemObjective(t *testing.T) 
 	}
 	t.Cleanup(func() { _ = upgraded.Close() })
 	version, err := upgraded.SchemaVersion(ctx)
-	if err != nil || version != 35 {
-		t.Fatalf("restored schema version = %d, err=%v; want 35", version, err)
+	if err != nil || version != 36 {
+		t.Fatalf("restored schema version = %d, err=%v; want 36", version, err)
 	}
 	var title string
 	if err := upgraded.db.QueryRowContext(ctx, "SELECT title FROM work_items WHERE id = ?", workID.String()).Scan(&title); err != nil || title != "Preserved Task" {

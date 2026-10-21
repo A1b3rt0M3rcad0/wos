@@ -68,7 +68,7 @@ func assertFocalJSON(t *testing.T, want, got any) {
 	}
 }
 func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -143,7 +143,7 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 	}
 }
 func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()
@@ -182,7 +182,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 				must(rel.Validate())
 				must(u.Relations().Insert(ctx, rel))
 			}
-			issue, e := d.NewIssue(portID(300), scope, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
+			issue, e := d.NewIssueForObjective(portID(300), scope, works[0].ObjectiveID, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			cause := issue.Ref()
@@ -261,7 +261,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 }
 
 func TestGraphAdjacentPreservesHardAndAdvisoryDependencyStrength(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	for _, backend := range []string{"memory", "sql"} {
 		t.Run(backend, func(t *testing.T) {
 			var store ports.TransactionManager = memory.New()

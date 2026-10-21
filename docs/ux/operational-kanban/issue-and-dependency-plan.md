@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–25 concluídas; etapa 26 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–26 concluídas; etapa 27 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -554,6 +554,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Arquivos previstos:** `packages/wos-core/storage/{postgres,sqlite}/migrations/0036_issue_objective_owner_required.sql`; testes de migration.
 
 **Trabalho:** Enforce issue objective_id NOT NULL, FK correta, protegendo delete de Objective proprietário e consultas indexadas.
+
+**Execução em 2026-10-21:** A migration 0036 torna `issues.objective_id` obrigatório e adiciona FK composta para o Objective no mesmo Namespace/Outcome, com `ON DELETE RESTRICT`. Os dois runners contam Issues órfãs dentro da transação e interrompem antes de aplicar DDL, indicando o utilitário de mapeamento revisado. PostgreSQL aplica constraint e NOT NULL transacionalmente. SQLite reconstrói `issues`, repõe indexes/triggers explícitos e preserva `issue_affected_refs` apesar do cascade reverso durante o rebuild. O índice de escopo/Objective/lifecycle existente é preservado. O gerador PostgreSQL e o teste compartilhado de adapter foram sincronizados.
+
+**Verificação:** testes cobrem migração sem perda de campos, Objective owner, assignee e affected refs; rejeição de Issue órfã com schema e linha inalterados; correção explícita e retry; bloqueio de remoção do Objective proprietário; NOT NULL; checksum; backup/restore SQLite na versão 35; índices, triggers e `foreign_key_check`. A suíte completa SQLite e os testes focados no PostgreSQL real passam. O schema novo fica na versão 36.
 
 **Aceite verificável:** Não aceita Issue órfã, upgrade sem perdas; rollback e verificação de checksum.
 

@@ -70,7 +70,9 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("begin migration transaction", err)
 	}
 	defer tx.Rollback()
- if _,err:=tx.ExecContext(ctx,"SELECT pg_advisory_xact_lock(846239010)");err!=nil{return err}
+	if _, err := tx.ExecContext(ctx, "SELECT pg_advisory_xact_lock(846239010)"); err != nil {
+		return err
+	}
 
 	// Check under the same migration transaction (and PostgreSQL advisory
 	// lock) before inspecting or applying any compiled migration.
@@ -103,7 +105,7 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("read migration checksum", err)
 	}
 
-	var workItemObjects []string
+	var migrationTable string
 	if item.version == 35 {
 		var orphanCount int64
 		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM work_items WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
@@ -112,7 +114,21 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		if orphanCount != 0 {
 			return fmt.Errorf("migration 35 requires zero Tasks without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
 		}
-		workItemObjects, err = snapshotWorkItemSchemaObjects(ctx, tx)
+		migrationTable = "work_items"
+	}
+	if item.version == 36 {
+		var orphanCount int64
+		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM issues WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
+			return mapSQLError("check Issue Objective ownership before migration 36", err)
+		}
+		if orphanCount != 0 {
+			return fmt.Errorf("migration 36 requires zero Issues without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
+		}
+		migrationTable = "issues"
+	}
+	var migrationTableObjects []string
+	if migrationTable != "" {
+		migrationTableObjects, err = snapshotTableSchemaObjects(ctx, tx, migrationTable)
 		if err != nil {
 			return err
 		}
@@ -121,16 +137,16 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply postgres migration %d", item.version), err)
 	}
-	if item.version == 35 {
-		for _, statement := range workItemObjects {
+	if migrationTable != "" {
+		for _, statement := range migrationTableObjects {
 			if _, err := tx.ExecContext(ctx, statement); err != nil {
-				return mapSQLError("restore explicit work_items index or trigger after migration 35", err)
+				return mapSQLError(fmt.Sprintf("restore explicit %s index or trigger after migration %d", migrationTable, item.version), err)
 			}
 		}
-		if err := verifyWorkItemMigrationForeignKeys(ctx, tx); err != nil {
+		if err := verifyMigrationForeignKeys(ctx, tx, item.version); err != nil {
 			return err
 		}
-		if err := releaseWorkItemForeignKeyDeferral(ctx, tx); err != nil {
+		if err := releaseMigrationForeignKeyDeferral(ctx, tx, item.version); err != nil {
 			return err
 		}
 	}
@@ -154,9 +170,13 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	return nil
 }
 
-func snapshotWorkItemSchemaObjects(ctx context.Context, tx *sql.Tx) ([]string, error) { return nil, nil }
-func verifyWorkItemMigrationForeignKeys(ctx context.Context, tx *sql.Tx) error { return nil }
-func releaseWorkItemForeignKeyDeferral(ctx context.Context, tx *sql.Tx) error { return nil }
+func snapshotTableSchemaObjects(ctx context.Context, tx *sql.Tx, table string) ([]string, error) {
+	return nil, nil
+}
+func verifyMigrationForeignKeys(ctx context.Context, tx *sql.Tx, version int64) error { return nil }
+func releaseMigrationForeignKeyDeferral(ctx context.Context, tx *sql.Tx, version int64) error {
+	return nil
+}
 
 func loadMigrations() ([]migration, error) {
 	entries, err := fs.ReadDir(migrationFiles, "migrations")

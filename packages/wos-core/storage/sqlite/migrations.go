@@ -101,7 +101,7 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		return mapSQLError("read migration checksum", err)
 	}
 
-	var workItemObjects []string
+	var migrationTable string
 	if item.version == 35 {
 		var orphanCount int64
 		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM work_items WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
@@ -110,7 +110,21 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 		if orphanCount != 0 {
 			return fmt.Errorf("migration 35 requires zero Tasks without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
 		}
-		workItemObjects, err = snapshotWorkItemSchemaObjects(ctx, tx)
+		migrationTable = "work_items"
+	}
+	if item.version == 36 {
+		var orphanCount int64
+		if err := tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM issues WHERE objective_id IS NULL").Scan(&orphanCount); err != nil {
+			return mapSQLError("check Issue Objective ownership before migration 36", err)
+		}
+		if orphanCount != 0 {
+			return fmt.Errorf("migration 36 requires zero Issues without an Objective; found %d. Apply reviewed ownership mappings with tools/acceptance/issue_ownership_backfill.py, then retry", orphanCount)
+		}
+		migrationTable = "issues"
+	}
+	var migrationTableObjects []string
+	if migrationTable != "" {
+		migrationTableObjects, err = snapshotTableSchemaObjects(ctx, tx, migrationTable)
 		if err != nil {
 			return err
 		}
@@ -119,16 +133,16 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	if _, err := tx.ExecContext(ctx, item.sql); err != nil {
 		return mapSQLError(fmt.Sprintf("apply sqlite migration %d", item.version), err)
 	}
-	if item.version == 35 {
-		for _, statement := range workItemObjects {
+	if migrationTable != "" {
+		for _, statement := range migrationTableObjects {
 			if _, err := tx.ExecContext(ctx, statement); err != nil {
-				return mapSQLError("restore explicit work_items index or trigger after migration 35", err)
+				return mapSQLError(fmt.Sprintf("restore explicit %s index or trigger after migration %d", migrationTable, item.version), err)
 			}
 		}
-		if err := verifyWorkItemMigrationForeignKeys(ctx, tx); err != nil {
+		if err := verifyMigrationForeignKeys(ctx, tx, item.version); err != nil {
 			return err
 		}
-		if err := releaseWorkItemForeignKeyDeferral(ctx, tx); err != nil {
+		if err := releaseMigrationForeignKeyDeferral(ctx, tx, item.version); err != nil {
 			return err
 		}
 	}
@@ -152,37 +166,37 @@ func (s *Store) applyMigration(ctx context.Context, item migration) error {
 	return nil
 }
 
-// SQLITE_WORK_ITEM_SCHEMA_OBJECTS_BEGIN
-func snapshotWorkItemSchemaObjects(ctx context.Context, tx *sql.Tx) ([]string, error) {
+// SQLITE_TABLE_SCHEMA_OBJECTS_BEGIN
+func snapshotTableSchemaObjects(ctx context.Context, tx *sql.Tx, table string) ([]string, error) {
 	rows, err := tx.QueryContext(ctx, `
 SELECT sql
 FROM sqlite_master
-WHERE tbl_name = 'work_items'
+WHERE tbl_name = ?
   AND type IN ('index', 'trigger')
   AND sql IS NOT NULL
-ORDER BY type, name`)
+ORDER BY type, name`, table)
 	if err != nil {
-		return nil, mapSQLError("snapshot work_items indexes and triggers", err)
+		return nil, mapSQLError("snapshot migration table indexes and triggers", err)
 	}
 	defer rows.Close()
 	var statements []string
 	for rows.Next() {
 		var statement string
 		if err := rows.Scan(&statement); err != nil {
-			return nil, mapSQLError("read work_items index or trigger definition", err)
+			return nil, mapSQLError("read migration table index or trigger definition", err)
 		}
 		statements = append(statements, statement)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, mapSQLError("iterate work_items index or trigger definitions", err)
+		return nil, mapSQLError("iterate migration table index or trigger definitions", err)
 	}
 	return statements, nil
 }
 
-func verifyWorkItemMigrationForeignKeys(ctx context.Context, tx *sql.Tx) error {
+func verifyMigrationForeignKeys(ctx context.Context, tx *sql.Tx, version int64) error {
 	rows, err := tx.QueryContext(ctx, "PRAGMA foreign_key_check")
 	if err != nil {
-		return mapSQLError("verify foreign keys after migration 35", err)
+		return mapSQLError(fmt.Sprintf("verify foreign keys after migration %d", version), err)
 	}
 	defer rows.Close()
 	if rows.Next() {
@@ -190,28 +204,28 @@ func verifyWorkItemMigrationForeignKeys(ctx context.Context, tx *sql.Tx) error {
 		var rowID sql.NullInt64
 		var foreignKey int64
 		if err := rows.Scan(&table, &rowID, &parent, &foreignKey); err != nil {
-			return mapSQLError("read foreign-key violation after migration 35", err)
+			return mapSQLError(fmt.Sprintf("read foreign-key violation after migration %d", version), err)
 		}
-		return fmt.Errorf("sqlite migration 35 left a foreign-key violation in %s (row %v references %s, constraint %d)", table, rowID, parent, foreignKey)
+		return fmt.Errorf("sqlite migration %d left a foreign-key violation in %s (row %v references %s, constraint %d)", version, table, rowID, parent, foreignKey)
 	}
 	if err := rows.Err(); err != nil {
-		return mapSQLError("iterate foreign-key check after migration 35", err)
+		return mapSQLError(fmt.Sprintf("iterate foreign-key check after migration %d", version), err)
 	}
 	return nil
 }
 
-func releaseWorkItemForeignKeyDeferral(ctx context.Context, tx *sql.Tx) error {
+func releaseMigrationForeignKeyDeferral(ctx context.Context, tx *sql.Tx, version int64) error {
 	// SQLite keeps a deferred-FK violation counter for DROP TABLE even when the
 	// replacement has restored every referenced key. foreign_key_check above
 	// verifies the complete transactional database state; turning deferral off
 	// now clears that stale counter while foreign_keys itself remains enabled.
 	if _, err := tx.ExecContext(ctx, "PRAGMA defer_foreign_keys = OFF"); err != nil {
-		return mapSQLError("finish deferred foreign-key checks after migration 35", err)
+		return mapSQLError(fmt.Sprintf("finish deferred foreign-key checks after migration %d", version), err)
 	}
 	return nil
 }
 
-// SQLITE_WORK_ITEM_SCHEMA_OBJECTS_END
+// SQLITE_TABLE_SCHEMA_OBJECTS_END
 
 func loadMigrations() ([]migration, error) {
 	entries, err := fs.ReadDir(migrationFiles, "migrations")

@@ -191,7 +191,7 @@ func TestContinuityProjectedBlockingLegacyCursorAndByteBudget(t *testing.T) {
 				works = append(works, w)
 			}
 			actor := d.ActorRef{Kind: d.ActorKindService, Provider: "test", ID: "fixture"}
-			issue, e := d.NewIssue(portID(5020), scope, "External dependency", "", d.IssueSeverityMinor, []d.EntityRef{out.Ref()}, actor, now)
+			issue, e := d.NewIssueForObjective(portID(5020), scope, &owner.ID, "External dependency", "", d.IssueSeverityMinor, []d.EntityRef{out.Ref()}, actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			cause := issue.Ref()

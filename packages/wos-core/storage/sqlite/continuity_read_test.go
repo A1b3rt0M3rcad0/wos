@@ -58,7 +58,7 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 		work.ObjectiveID = &objective.ID
 		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 		works = append(works, work)
-		issue, e := d.NewIssue(portID(base+2), scope, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+		issue, e := d.NewIssueForObjective(portID(base+2), scope, &objective.ID, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
 		must(e)
 		must(issues.Issues().Insert(ctx, issue))
 		cause := issue.Ref()

@@ -28,7 +28,7 @@ type portIDs struct{ next int }
 func (g *portIDs) NewID() (d.ID, error) { g.next++; return portID(10000 + g.next), nil }
 func portID(n int) d.ID                 { return d.MustParseID(fmt.Sprintf("0199d180-0000-7000-8000-%012x", n)) }
 func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store := openTestStore(t, filepath.Join(t.TempDir(), "continuity-port.db"))
 	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
@@ -60,7 +60,7 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 		work.ObjectiveID = &objective.ID
 		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 		works = append(works, work)
-		issue, e := d.NewIssue(portID(base+2), scope, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+		issue, e := d.NewIssueForObjective(portID(base+2), scope, &objective.ID, title, "observed", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
 		must(e)
 		must(issues.Issues().Insert(ctx, issue))
 		cause := issue.Ref()
@@ -139,7 +139,7 @@ func TestContinuityMetadataPagesMatchLegacySerializedSections(t *testing.T) {
 }
 
 func TestExternalContinuityKeysBackfillFromPublishedSchema(t *testing.T) {
- requirePostgres(t)
+	requirePostgres(t)
 	ctx := context.Background()
 	store, e := openTestPostgres(filepath.Join(t.TempDir(), "legacy-continuity.db"), Options{})
 	if e != nil {

@@ -267,7 +267,7 @@ func TestWorkspaceNamedRelationshipsCriterionLinksAndTerminalCapabilities(t *tes
 				must(e)
 				must(docs.EvidenceLinks().Insert(ctx, link))
 			}
-			issue, e := d.NewIssue(portID(60), scope, "Inspect the affected Task", "Context", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
+			issue, e := d.NewIssueForObjective(portID(60), scope, &objective.ID, "Inspect the affected Task", "Context", d.IssueSeverityMinor, []d.EntityRef{work.Ref()}, actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			relation, e := d.NewDependencyRelation(portID(70), work.Ref(), objective.Ref(), d.DependencyStrengthAdvisory, now)
