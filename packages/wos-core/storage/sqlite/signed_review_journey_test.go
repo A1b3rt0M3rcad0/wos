@@ -49,7 +49,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -72,7 +72,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
 			must(registry.SaveCredentialPolicy(ctx, policy, 0))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
@@ -243,13 +243,13 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			}
 			// Grant review acquisition to the original Principal expressly: rejection must
 			// come from independence, not merely a missing permission.
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
+			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
 			u, e = store.Begin(ctx)
 			must(e)
 			reg := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			previousVersion := policy.Version
 			policy.Version++
-			policy.PermittedOperations = append(policy.PermittedOperations, string(ports.PermissionWorkReviewAcquire))
+			policy.PermittedOperations = append(policy.PermittedOperations, string(ports.PermissionTaskReview), string(ports.PermissionWorkReviewAcquire))
 			must(reg.SaveCredentialPolicy(ctx, policy, previousVersion))
 			must(u.Commit())
 			nextCC := func(id a.Identity, key string) d.CommandContext {
@@ -292,8 +292,8 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				must(u.Commit())
 				return id, a.WithIdentity(ctx, id), kid, private, p
 			}
-			reviewer, reviewCtx, reviewKey, reviewPrivate, reviewPolicy := participant("reviewer", []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite})
-			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractRevoke})
+			reviewer, reviewCtx, reviewKey, reviewPrivate, reviewPolicy := participant("reviewer", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionTaskAccept, ports.PermissionTaskRequestChanges, ports.PermissionWorkReviewDecide, ports.PermissionRecordsWrite, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite})
+			administrator, interventionCtx, _, _, _ := participant("review-administrator", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskIntervene, ports.PermissionWorkContractRevoke})
 			searchCC := nextCC(reviewer, "review-round-one-acquisition")
 			searchCmd := a.AcquireNextSignedReviewContractCommand{Scope: scope, SignerKeyID: reviewKey, TTLSeconds: 300, Limit: 1}
 			searched, e := service.AcquireNextSignedReviewContract(reviewCtx, searchCC, searchCmd)
@@ -421,7 +421,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				t.Fatal("changes requested incorrectly approved Task")
 			}
 			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
-			executor, executorCtx, executorKey, executorPrivate, executorPolicy := participant("correction-executor", []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionRecordsWrite, ports.PermissionWorkReviewAcquire})
+			executor, executorCtx, executorKey, executorPrivate, executorPolicy := participant("correction-executor", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionRecordsWrite, ports.PermissionWorkReviewAcquire})
 			u, e = store.Begin(ctx)
 			must(e)
 			currentWork, e := u.WorkItems().Get(ctx, scope, work.ID)

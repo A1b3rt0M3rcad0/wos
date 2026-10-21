@@ -128,7 +128,7 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 	if cmd.SignerKeyID.Validate() != nil {
 		return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "agent signer key required")
 	}
-	identity, policy, err := s.signedAccess(ctx, uow, cmd.Scope, ports.PermissionWorkWrite, cmd.SignerKeyID)
+	identity, policy, err := s.signedAccess(ctx, uow, cmd.Scope, ports.PermissionTaskRenew, cmd.SignerKeyID)
 	if err != nil {
 		return zero, 0, err
 	}

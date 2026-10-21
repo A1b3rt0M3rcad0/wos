@@ -217,7 +217,7 @@ func OpenRuntime(config Config) (*Runtime, error) {
 				return
 			}
 			ctx := application.WithIdentity(r.Context(), id)
-			if err = security.Require(ctx, id.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+			if err = security.Require(ctx, id.NamespaceID, ports.PermissionAuditRead); err != nil {
 				http.Error(w, "forbidden", 403)
 				return
 			}

@@ -20,12 +20,12 @@ func TestPublicCatalogExposesConditionalAuthorizationRequirements(t *testing.T) 
 		{
 			name: "create_plan_items",
 			body: `{` + base + `,"items":[{"local_key":"objective","kind":"objective","title":"Objective"},{"local_key":"task","kind":"work_item","title":"Task",` + criteria + `}]}`,
-			want: []ports.Permission{ports.PermissionPlanningWrite, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite},
+			want: []ports.Permission{ports.PermissionPlanningWrite, ports.PermissionObjectiveCreate, ports.PermissionTaskCreate, ports.PermissionCriterionDefine},
 		},
 		{
 			name: "create_work_item",
 			body: `{` + base + `,"title":"Task",` + criteria + `}`,
-			want: []ports.Permission{ports.PermissionWorkWrite, ports.PermissionOutcomeWrite},
+			want: []ports.Permission{ports.PermissionTaskCreate, ports.PermissionCriterionDefine},
 		},
 	}
 	for _, test := range tests {

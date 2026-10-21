@@ -24344,6 +24344,7 @@
                 "items": {
                   "type": "string"
                 },
+                "maxItems": 128,
                 "type": "array"
               },
               "principal_id": {
@@ -24681,6 +24682,7 @@
                 "items": {
                   "type": "string"
                 },
+                "maxItems": 128,
                 "type": "array"
               },
               "principal_id": {

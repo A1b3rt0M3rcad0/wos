@@ -16,7 +16,7 @@ import {
   routeQuery,
   workSections,
 } from "./navigation.js";
-import { humanActions, availableActions, permissionLabels } from "./actions.js";
+import { humanActions, availableActions, permissionLabels, permissionDescriptions } from "./actions.js";
 import { humanForm } from "./human-forms.js";
 import { createIntent, sameScope, reconcileDraft } from "./intents.js";
 import { button as actionButton, conflictComparison } from "./ui.js";
@@ -570,8 +570,14 @@ async function refreshPermissions() {
 function applyPermissionControls() {
   const identified = Boolean(state.principal);
   $("actions").disabled = !identified;
-  $("developer-tools").hidden = !identified || !state.permissions.includes("namespace:admin");
-  $("administration").hidden = !identified || !state.permissions.includes("namespace:admin");
+  const hasDeveloperOperation = Object.values(inventory).some(
+    (item) => item.surface === "developer" && state.permissions.includes(item.permission),
+  );
+  const canReadAdministration =
+    state.permissions.includes("credentials:read") &&
+    state.permissions.includes("audit:read");
+  $("developer-tools").hidden = !identified || !hasDeveloperOperation;
+  $("administration").hidden = !identified || !canReadAdministration;
   for (const id of ["create-outcome", "empty-create"])
     $(id).disabled = !identified || !state.permissions.includes("outcome:write");
 }
@@ -1852,19 +1858,19 @@ function renderSummary() {
           state.selected = { ...state.outcome, _kind: "outcome" };
           openCommands("add_criterion");
         },
-        "planning:write",
+        "criterion:define",
       ],
       [
         copy.text.addAnObjective,
         c.objectives > 0,
         () => createItem("create_objective"),
-        "planning:write",
+        "objective:create",
       ],
       [
         copy.text.addATaskOptional,
         c.work_items > 0,
         () => createItem("create_work_item"),
-        "work:write",
+        "task:create",
       ],
       [
         copy.text.createARoadmapOptional,
@@ -3631,7 +3637,12 @@ function openTechnicalCommands(name) {
     openCommands();
     return;
   }
-  if (!state.permissions.includes("namespace:admin")) {
+  const allowedDeveloperOperation = name
+    ? state.permissions.includes(inventory[name]?.permission)
+    : Object.values(inventory).some(
+        (item) => item.surface === "developer" && state.permissions.includes(item.permission),
+      );
+  if (!allowedDeveloperOperation) {
     notice(
       copy.text.developerToolsRequireWorkspaceAdministrationPermission,
       true,
@@ -3751,10 +3762,13 @@ function field(name, schema, value, required = false) {
         input = el("input");
       input.type = "checkbox";
       input.checked = (value || []).includes(permission);
-      label.append(
-        input,
-        document.createTextNode(permissionLabels[permission]),
+      const description = document.createElement("span");
+      description.className = "permission-copy";
+      description.append(
+        el("span", permissionLabels[permission]),
+        el("small", permissionDescriptions[permission] || ""),
       );
+      label.append(input, description);
       node.append(label);
       return { permission, input };
     });

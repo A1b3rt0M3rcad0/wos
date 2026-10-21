@@ -231,7 +231,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			second, secondCtx := participant(f.cc.PrincipalID, d.ID(f.request.SignerKeyID), cp)
 			_, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 1)
 			must(e)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 			foreign, foreignCtx := participant("another-executor", foreignKey, cp)
 			_, e = acquire(foreignCtx, foreign.PrincipalID, foreign.Actor, foreignKey, 2)

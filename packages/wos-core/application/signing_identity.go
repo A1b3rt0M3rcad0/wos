@@ -67,12 +67,20 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 		return result, d.NewError(d.ErrorCodeForbidden, "authenticated scoped credential required")
 	}
 	permission := ports.PermissionNamespaceAdmin
+	namespaceCASRequired := true
 	switch cmd.Operation {
 	case "register_signing_key":
 		permission = ports.PermissionSigningKeyEnroll
+		namespaceCASRequired = false
 	case "create_rotation_enrollment":
 		permission = ports.PermissionSigningKeyRotate
-	case "create_enrollment", "set_credential_policy", "set_acceptance_policy", "set_review_group", "revoke_signing_key":
+		namespaceCASRequired = false
+	case "create_enrollment":
+		// Creating an enrollment remains an administrator-authorized operation.
+	case "set_credential_policy", "set_acceptance_policy", "set_review_group":
+		permission = ports.PermissionPolicyManage
+	case "revoke_signing_key":
+		permission = ports.PermissionSigningKeyRevoke
 	default:
 		return result, d.NewError(d.ErrorCodeInvalidArgument, "unknown signing security operation")
 	}
@@ -117,7 +125,7 @@ func (s SecurityService) SigningMutation(ctx context.Context, key string, cmd Si
 	if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeNotFound {
 		return result, err
 	}
-	if permission == ports.PermissionNamespaceAdmin && (cmd.ExpectedNamespaceVersion != version || cmd.ExpectedNamespaceVersion < 1) {
+	if namespaceCASRequired && (cmd.ExpectedNamespaceVersion != version || cmd.ExpectedNamespaceVersion < 1) {
 		return result, d.NewError(d.ErrorCodeVersionConflict, "namespace security version changed")
 	}
 	now, err := securityTransactionTime(ctx, uow, s.Clock)

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"strings"
 )
 
 func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminRequest) (ports.SecurityAdminResult, error) {
@@ -27,13 +28,17 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if err != nil || unmarshalJSON(grantJSON, &permissions) != nil {
 		return result, domain.NewError(domain.ErrorCodeForbidden, "namespace administration denied")
 	}
-	admin, delegate := false, false
+	required, registered := ports.SecurityAdminPermission(r.Command.Operation)
+	if !registered {
+		return result, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown security operation")
+	}
+	authorized, delegate := false, false
 	for _, p := range permissions {
-		admin = admin || p == ports.PermissionNamespaceAdmin
+		authorized = authorized || p == required
 		delegate = delegate || p == ports.PermissionActorDelegate
 	}
-	if !admin {
-		return result, domain.NewError(domain.ErrorCodeForbidden, "namespace administration denied")
+	if !authorized {
+		return result, domain.NewError(domain.ErrorCodeForbidden, "security operation permission denied")
 	}
 	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
 		return result, domain.NewError(domain.ErrorCodeForbidden, "actor delegation denied")
@@ -103,8 +108,11 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		result.CreatedNamespace = n
 	case "set_grant":
 		g := r.Command.Grant
-		if g == nil {
+		if g == nil || g.NamespaceID != r.Command.NamespaceID || strings.TrimSpace(g.PrincipalID) == "" {
 			return result, domain.NewError(domain.ErrorCodeInvalidArgument, "grant required")
+		}
+		if err = ports.ValidatePermissionValues(g.Permissions); err != nil {
+			return result, err
 		}
 		target = g.PrincipalID
 		if err = ensurePrincipal(ctx, tx, g.PrincipalID); err != nil {

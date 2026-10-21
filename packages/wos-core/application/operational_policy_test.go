@@ -23,7 +23,7 @@ func (a *operationalPolicyTestAuthorizer) Authorize(_ context.Context, request p
 	if err := request.Validate(); err != nil {
 		return err
 	}
-	if a.denyAdmin && request.Permission == ports.PermissionNamespaceAdmin {
+	if a.denyAdmin && request.Permission == ports.PermissionPolicyManage {
 		return domain.NewError(domain.ErrorCodeForbidden, "namespace admin permission denied")
 	}
 	return nil
@@ -98,7 +98,7 @@ func TestOperationalProfilePreviewIsAuthorizedAndReadOnly(t *testing.T) {
 	}
 	foundAdmin := false
 	for _, request := range f.authorizer.requests {
-		if request.Permission == ports.PermissionNamespaceAdmin && request.NamespaceID == f.scope.NamespaceID && request.OutcomeID == f.scope.OutcomeID && request.PrincipalID == f.identity.PrincipalID {
+		if request.Permission == ports.PermissionPolicyManage && request.NamespaceID == f.scope.NamespaceID && request.OutcomeID == f.scope.OutcomeID && request.PrincipalID == f.identity.PrincipalID {
 			foundAdmin = true
 		}
 	}
@@ -107,11 +107,11 @@ func TestOperationalProfilePreviewIsAuthorizedAndReadOnly(t *testing.T) {
 	}
 }
 
-func TestOperationalProfilePreviewRequiresNamespaceAdminIdentity(t *testing.T) {
+func TestOperationalProfilePreviewRequiresPolicyManagementIdentity(t *testing.T) {
 	f := newOperationalPolicyFixture(t)
 	f.authorizer.denyAdmin = true
 	if _, err := f.service.PreviewOutcomeOperationalProfileMigration(f.ctx, f.scope); err == nil {
-		t.Fatal("preview succeeded without NamespaceAdmin permission")
+		t.Fatal("preview succeeded without policy:manage permission")
 	}
 	if _, err := f.service.PreviewOutcomeOperationalProfileMigration(context.Background(), f.scope); err == nil {
 		t.Fatal("preview succeeded without authenticated identity")

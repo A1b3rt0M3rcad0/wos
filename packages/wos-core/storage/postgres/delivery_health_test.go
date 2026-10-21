@@ -90,8 +90,8 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
 		t.Fatal("reader diagnostic", e)
 	}
-	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionNamespaceAdmin}}))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 1, PermittedOperations: []string{string(ports.PermissionNamespaceAdmin)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionAuditRead}}))
+	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 1, PermittedOperations: []string{string(ports.PermissionAuditRead)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 	u, e := store.Begin(ctx)
 	must(e)
 	must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 0))

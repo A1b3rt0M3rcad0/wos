@@ -98,8 +98,8 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					executors := []signedLoadParticipant{}
 					reviewers := []signedLoadParticipant{}
 					for i := 0; i < consumers; i++ {
-						executors = append(executors, participant(fmt.Sprintf("executor-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractReturn, ports.PermissionWorkWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
-						reviewers = append(reviewers, participant(fmt.Sprintf("reviewer-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
+						executors = append(executors, participant(fmt.Sprintf("executor-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionWorkWrite, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
+						reviewers = append(reviewers, participant(fmt.Sprintf("reviewer-%d", i), []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionTaskAccept, ports.PermissionTaskRequestChanges, ports.PermissionWorkReviewDecide, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}))
 					}
 					scopes := []d.Scope{}
 					u, e := store.Begin(ctx)

@@ -8,6 +8,9 @@ import (
 )
 
 func workspaceFieldBounds(owner reflect.Type, name string, schema map[string]any) {
+	if name == "permissions" || name == "permitted_operations" {
+		schema["maxItems"] = domain.MaxPermissionValues
+	}
 	if name == "initial_criteria" {
 		schema["maxItems"] = application.MaxInitialCriteria
 	}

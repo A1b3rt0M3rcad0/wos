@@ -1170,6 +1170,15 @@ dialog::backdrop {
   min-height: calc(44 * var(--wos-unit, 1px));
   align-items: flex-start;
 }
+.permission-options .permission-copy {
+  display: grid;
+  gap: calc(3 * var(--wos-unit, 1px));
+}
+.permission-options .permission-copy small {
+  color: var(--muted);
+  font-size: 0.78em;
+  line-height: 1.4;
+}
 .detail-drawer {
   background: var(--wos-canvas);
   padding: 0;

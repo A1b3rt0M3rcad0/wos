@@ -26,7 +26,7 @@ func registerSecurity(server *mcp.Server, options Options) {
 		r, e := success(map[string]any{"items": value})
 		return r, nil, e
 	})
-	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_namespace_administration", Description: "Read namespace version, grants, credential metadata and bounded security audit; namespace:admin required."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
+	mcp.AddTool(server, &mcp.Tool{Name: "wos_get_namespace_administration", Description: "Read namespace version, grants, credential metadata and bounded security audit; credentials:read and audit:read required."}, func(ctx context.Context, req *mcp.CallToolRequest, q queryArgs) (*mcp.CallToolResult, any, error) {
 		ctx, cancel, err := requestContext(ctx, req, options)
 		defer cancel()
 		if err != nil {

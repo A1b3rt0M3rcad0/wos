@@ -70,6 +70,12 @@ func (s *Store) RevokeScopedCredential(ctx context.Context, ns, id domain.ID) er
 	return err
 }
 func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
+	if g.NamespaceID.Validate() != nil || g.PrincipalID == "" {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "invalid namespace grant")
+	}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -141,6 +147,12 @@ func (s *Store) PutNamespace(ctx context.Context, n ports.Namespace) error {
 var _ ports.SecurityStore = (*Store)(nil)
 
 func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
+	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID {
+		return domain.NewError(domain.ErrorCodeInvalidArgument, "invalid bootstrap binding")
+	}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

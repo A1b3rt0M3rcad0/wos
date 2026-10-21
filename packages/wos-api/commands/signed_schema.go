@@ -74,6 +74,9 @@ func SignedSchema(t reflect.Type) map[string]any {
 			if f.Type.Kind() == reflect.Slice && (name == "artifacts" || name == "evidence" || name == "evidence_links" || name == "findings" || name == "correction_responses" || name == "execution_principals" || name == "execution_groups") {
 				field["maxItems"] = 100
 			}
+			if f.Type.Kind() == reflect.Slice && (name == "permissions" || name == "permitted_operations") {
+				field["maxItems"] = d.MaxPermissionValues
+			}
 			if t == reflect.TypeFor[d.ExecutionSpec]() {
 				field["maxItems"] = 100
 			}

@@ -14,7 +14,10 @@ import (
 )
 
 func (s SecurityService) AdministrativeSnapshot(ctx context.Context, ns domain.ID) (ports.SecurityAdminSnapshot, error) {
-	if err := s.Require(ctx, ns, ports.PermissionNamespaceAdmin); err != nil {
+	if err := s.Require(ctx, ns, ports.PermissionCredentialsRead); err != nil {
+		return ports.SecurityAdminSnapshot{}, err
+	}
+	if err := s.Require(ctx, ns, ports.PermissionAuditRead); err != nil {
 		return ports.SecurityAdminSnapshot{}, err
 	}
 	store, ok := s.Store.(ports.SecurityAdministrationStore)
@@ -28,7 +31,11 @@ func (s SecurityService) AdministrativeSnapshot(ctx context.Context, ns domain.I
 // a lost initial secret must be revoked and replaced, never recovered from storage.
 func (s SecurityService) AdministrativeMutation(ctx context.Context, key string, cmd ports.SecurityAdminCommand) (ports.SecurityAdminResult, string, error) {
 	var empty ports.SecurityAdminResult
-	if err := s.Require(ctx, cmd.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+	permission, err := securityAdminPermission(cmd.Operation)
+	if err != nil {
+		return empty, "", err
+	}
+	if err := s.Require(ctx, cmd.NamespaceID, permission); err != nil {
 		return empty, "", err
 	}
 	if err := domain.ValidateIdempotencyKey(key); err != nil {
@@ -74,13 +81,11 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		cmd.NewNamespace = &ports.Namespace{ID: ns, Name: strings.TrimSpace(cmd.NamespaceName)}
 		cmd.Credential = &ports.Credential{NamespaceID: ns, ID: credentialID, PrincipalID: id.PrincipalID, Actor: id.Actor, ExpiresAt: s.Clock.Now().Add(12 * time.Hour), Digest: TokenDigest(token)}
 	case "set_grant":
-		if cmd.Grant == nil || cmd.Grant.NamespaceID != cmd.NamespaceID || strings.TrimSpace(cmd.Grant.PrincipalID) == "" || len(cmd.Grant.PrincipalID) > 256 || len(cmd.Grant.Permissions) > 32 {
+		if cmd.Grant == nil || cmd.Grant.NamespaceID != cmd.NamespaceID || strings.TrimSpace(cmd.Grant.PrincipalID) == "" || len(cmd.Grant.PrincipalID) > 256 {
 			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "invalid namespace grant")
 		}
-		for _, permission := range cmd.Grant.Permissions {
-			if !permission.Valid() {
-				return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "unknown permission")
-			}
+		if err := ports.ValidatePermissionValues(cmd.Grant.Permissions); err != nil {
+			return empty, "", err
 		}
 	case "issue_credential":
 		c := cmd.Credential
@@ -126,6 +131,14 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		token = ""
 	}
 	return result, token, err
+}
+
+func securityAdminPermission(operation string) (ports.Permission, error) {
+	permission, ok := ports.SecurityAdminPermission(operation)
+	if !ok {
+		return "", domain.NewError(domain.ErrorCodeInvalidArgument, "unknown security operation")
+	}
+	return permission, nil
 }
 
 // AdministrativeIntent is the shared flat HTTP/MCP administration contract.

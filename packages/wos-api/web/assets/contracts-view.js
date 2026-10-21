@@ -168,7 +168,7 @@ export function contractViews({
         );
         const review = el("button", copy.text.reviewSubmission, "quiet");
         review.disabled =
-          !state.permissions.includes("assessment:write") ||
+          !state.permissions.includes("criterion:assess") ||
           view.effective_status !== "active" ||
           c.id !== entity.current_contract_id;
         review.onclick = () => {

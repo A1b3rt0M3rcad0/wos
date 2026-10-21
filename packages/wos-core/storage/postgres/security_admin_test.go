@@ -126,7 +126,7 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 	}
 	identity, _ := security.Authenticate(context.Background(), token)
 	ctx := application.WithIdentity(context.Background(), identity)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionPermissionsManage}
 	if err := security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: permissions}); err != nil {
 		t.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 		t.Fatalf("create namespace: %+v %v", result, err)
 	}
 	grant, err := store.GetGrant(context.Background(), result.CreatedNamespace.ID, "operator")
-	if err != nil || len(grant.Permissions) != 2 {
+	if err != nil || len(grant.Permissions) != 3 {
 		t.Fatalf("permission escalation: %+v %v", grant, err)
 	}
 	createdIdentity, err := security.Authenticate(context.Background(), createdToken)

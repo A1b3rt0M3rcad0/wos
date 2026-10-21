@@ -84,7 +84,7 @@ func (s *Service) EffectivePermissions(ctx context.Context, scope domain.Scope) 
 }
 func privilegedPresentationPermission(p ports.Permission) bool {
 	switch p {
-	case ports.PermissionNamespaceAdmin, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionSigningKeyRevoke:
+	case ports.PermissionNamespaceAdmin, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive, ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionWorkReviewAcquire, ports.PermissionWorkReviewDecide, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionSigningKeyRevoke, ports.PermissionCredentialsRead, ports.PermissionAuditRead, ports.PermissionObjectiveConfigureCompletion, ports.PermissionTaskIntervene, ports.PermissionCriterionWaive, ports.PermissionCredentialsIssue, ports.PermissionCredentialsUpdate, ports.PermissionCredentialsRevoke, ports.PermissionCredentialsRotate, ports.PermissionPermissionsManage, ports.PermissionPolicyManage:
 		return true
 	}
 	return false

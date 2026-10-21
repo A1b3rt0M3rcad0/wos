@@ -53,7 +53,7 @@ func TestRemoteMCPRevalidatesGrantsAndAuthenticatedAuthorship(t *testing.T) {
 		}
 		humanCtx := application.WithIdentity(ctx, human)
 		ns, _ := domain.ParseID(cfg.Auth.BootstrapNamespaceID)
-		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
+		if err = security.SetGrant(humanCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskCreate, ports.PermissionWorkWrite}}); err != nil {
 			t.Fatal(err)
 		}
 		credential, token, err := security.IssueCredential(humanCtx, ns, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "independent", ID: "agent-1"}, time.Now().Add(time.Hour))

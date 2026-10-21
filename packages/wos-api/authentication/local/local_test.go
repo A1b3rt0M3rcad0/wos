@@ -14,6 +14,18 @@ func TestContractPermissionsRespectLocalPrincipalAndAdministrativeOptIn(t *testi
 		if err := auth.Authorize(context.Background(), request); err != nil {
 			t.Fatal("local acquisition should follow ordinary work permission", err)
 		}
+		request.Permission = ports.PermissionTaskClaim
+		if err := auth.Authorize(context.Background(), request); err != nil {
+			t.Fatal("granular local execution permission should be available", err)
+		}
+		request.Permission = ports.PermissionTaskAccept
+		if err := auth.Authorize(context.Background(), request); err != nil {
+			t.Fatal("granular local acceptance permission should be available", err)
+		}
+		request.Permission = ports.PermissionPolicyManage
+		if (auth.Authorize(context.Background(), request) == nil) != admin {
+			t.Fatal("policy management should require explicit local administrative opt-in", admin)
+		}
 		request.Permission = ports.PermissionWorkContractRevoke
 		if err := auth.Authorize(context.Background(), request); (err == nil) != admin {
 			t.Fatal("revocation requires administrative opt-in", admin, err)

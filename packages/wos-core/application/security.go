@@ -156,7 +156,7 @@ func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission p
 	return s.Authorize(ctx, ports.AuthorizationRequest{NamespaceID: ns, PrincipalID: id.PrincipalID, Permission: permission})
 }
 func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.ID, principal string, actor domain.ActorRef, expires time.Time) (ports.Credential, string, error) {
-	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
+	if err := s.Require(ctx, namespace, ports.PermissionCredentialsIssue); err != nil {
 		return ports.Credential{}, "", err
 	}
 	if identity, ok := IdentityFromContext(ctx); ok && identity.Actor != actor {
@@ -190,21 +190,19 @@ func (s SecurityService) IssueCredential(ctx context.Context, namespace domain.I
 	return c, token, nil
 }
 func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGrant) error {
-	if err := s.Require(ctx, grant.NamespaceID, ports.PermissionNamespaceAdmin); err != nil {
+	if err := s.Require(ctx, grant.NamespaceID, ports.PermissionPermissionsManage); err != nil {
 		return err
 	}
 	if strings.TrimSpace(grant.PrincipalID) == "" {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "principal is required")
 	}
-	for _, p := range grant.Permissions {
-		if !p.Valid() {
-			return domain.NewError(domain.ErrorCodeInvalidArgument, "unknown permission")
-		}
+	if err := ports.ValidatePermissionValues(grant.Permissions); err != nil {
+		return err
 	}
 	return s.Store.PutGrant(ctx, grant)
 }
 func (s SecurityService) RevokeCredential(ctx context.Context, namespace domain.ID, credential domain.ID) error {
-	if err := s.Require(ctx, namespace, ports.PermissionNamespaceAdmin); err != nil {
+	if err := s.Require(ctx, namespace, ports.PermissionCredentialsRevoke); err != nil {
 		return err
 	}
 	// Store validates the credential's principal belongs to this namespace in ScopedCredentialRevoker.
@@ -257,7 +255,10 @@ func (s SecurityService) Bootstrap(ctx context.Context, namespace ports.Namespac
 	if err != nil {
 		return err
 	}
-	permissions := []ports.Permission{ports.PermissionWorkContractAcquire, ports.PermissionWorkContractRevoke, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionNamespaceAdmin, ports.PermissionIntegrationWrite, ports.PermissionActorDelegate, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete, ports.PermissionAssessmentWaive}
+	// Bootstrap is an operator-only root identity. It receives the complete
+	// explicit catalog; all subsequently issued credentials are scoped by grants
+	// and CredentialPolicy and do not inherit this list automatically.
+	permissions := ports.AllPermissions()
 	atomic, ok := s.Store.(interface {
 		BootstrapSecurity(context.Context, ports.Namespace, ports.NamespaceGrant, ports.Credential) error
 	})

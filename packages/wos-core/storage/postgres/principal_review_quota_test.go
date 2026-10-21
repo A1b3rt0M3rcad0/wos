@@ -74,7 +74,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				cases = append(cases, *review)
 				must(u.Rollback())
 			}
-			perms := []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkReviewAcquire}
+			perms := []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire}
 			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: perms}))
 			key := testID("0199a555-0000-7000-8000-000000000099")
 			participants := []a.Identity{}
@@ -85,7 +85,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				must(e)
 				id, e := sec.Authenticate(ctx, token)
 				must(e)
-				cp := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
+				cp := d.CredentialPolicy{NamespaceID: ns, CredentialID: cred.ID, PrincipalID: id.PrincipalID, Version: 1, AcceptanceFloor: d.AcceptanceIndependentReview, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskReview), string(ports.PermissionWorkReviewAcquire)}, AllowedSigningKeyIDs: []d.ID{key}, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, UpdatedAt: clock.Now()}
 				u, e := f.store.Begin(ctx)
 				must(e)
 				must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, cp, 0))

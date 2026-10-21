@@ -73,10 +73,8 @@ func (s *Store) PutGrant(ctx context.Context, g ports.NamespaceGrant) error {
 	if g.NamespaceID.Validate() != nil || g.PrincipalID == "" {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid grant")
 	}
-	for _, p := range g.Permissions {
-		if !p.Valid() {
-			return d.NewError(d.ErrorCodeInvalidArgument, "invalid permission")
-		}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -114,6 +112,9 @@ func (s *Store) ListNamespaces(ctx context.Context, principal string) ([]ports.N
 func (s *Store) BootstrapSecurity(ctx context.Context, n ports.Namespace, g ports.NamespaceGrant, c ports.Credential) error {
 	if n.ID.Validate() != nil || g.NamespaceID != n.ID || c.NamespaceID != n.ID || g.PrincipalID != c.PrincipalID || c.Actor.Validate() != nil || c.ID.Validate() != nil {
 		return d.NewError(d.ErrorCodeInvalidArgument, "invalid bootstrap binding")
+	}
+	if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
+		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()

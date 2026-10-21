@@ -55,7 +55,7 @@ func (s *Service) AppendWorkActivity(ctx context.Context, cc d.CommandContext, c
 		if err := cmd.SignerKeyID.Validate(); err != nil {
 			return zero, 0, err
 		}
-		identity, _, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionWorkWrite, cmd.SignerKeyID)
+		identity, _, err := s.signedAccess(ctx, u, cmd.Scope, ports.PermissionRecordsWrite, cmd.SignerKeyID)
 		if err != nil {
 			return zero, 0, err
 		}

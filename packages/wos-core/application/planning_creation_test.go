@@ -283,7 +283,7 @@ func TestPlanningReplayRechecksConstituentPermissions(t *testing.T) {
 		t.Fatal(err)
 	}
 	objectiveID := objectiveForWorkFixture(t, service, owner.Value.Scope())
-	policy.denied = ports.PermissionWorkWrite
+	policy.denied = ports.PermissionTaskCreate
 	if _, err := service.CreatePlanItems(ctx, cc, cmd); err == nil {
 		t.Fatal("replay disclosed work after constituent permission was revoked")
 	}

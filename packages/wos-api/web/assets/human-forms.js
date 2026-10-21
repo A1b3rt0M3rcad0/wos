@@ -372,7 +372,7 @@ export function humanForm(
         ["inconclusive", copy.text.inconclusive],
       ];
       const result = f("result", copy.text.assessmentResult, { options: results });
-      if (permissions.includes("assessment:waive")) {
+      if (permissions.includes("criterion:waive")) {
         const waiver = a("_waiver", "Record an authorized waiver instead of verification", {
           type:"checkbox", help:"An exception requires a rationale. It is not a met criterion or verified success.",
         });

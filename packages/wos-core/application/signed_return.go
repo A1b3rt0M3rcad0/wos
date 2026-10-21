@@ -253,7 +253,7 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 			return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "completion intent must be auto/direct/review")
 		}
 		if direct {
-			for _, permission := range []ports.Permission{ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
+			for _, permission := range []ports.Permission{ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
 				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID); err != nil {
 					return zero, 0, err
 				}

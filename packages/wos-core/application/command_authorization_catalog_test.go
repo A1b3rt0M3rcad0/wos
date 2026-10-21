@@ -76,27 +76,27 @@ func TestAuthorizationCatalogConditionalRequirements(t *testing.T) {
 				{Kind: domain.EntityKindObjective},
 				{Kind: domain.EntityKindWorkItem, InitialCriteria: []application.InitialCriterion{{Title: "proof"}}},
 			}},
-			want: []ports.Permission{ports.PermissionPlanningWrite, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite},
+			want: []ports.Permission{ports.PermissionPlanningWrite, ports.PermissionObjectiveCreate, ports.PermissionTaskCreate, ports.PermissionCriterionDefine},
 		},
 		{
 			name: "CreateWorkItem without criteria",
 			cmd:  application.CreateWorkItemCommand{},
-			want: []ports.Permission{ports.PermissionWorkWrite},
+			want: []ports.Permission{ports.PermissionTaskCreate},
 		},
 		{
 			name: "CreateWorkItem with initial criteria",
 			cmd:  application.CreateWorkItemCommand{InitialCriteria: []application.InitialCriterion{{Title: "proof"}}},
-			want: []ports.Permission{ports.PermissionWorkWrite, ports.PermissionOutcomeWrite},
+			want: []ports.Permission{ports.PermissionTaskCreate, ports.PermissionCriterionDefine},
 		},
 		{
 			name: "RecordCriterionAssessment met",
 			cmd:  application.RecordCriterionAssessmentCommand{Result: domain.AssessmentResultMet},
-			want: []ports.Permission{ports.PermissionAssessmentWrite},
+			want: []ports.Permission{ports.PermissionCriterionAssess},
 		},
 		{
 			name: "RecordCriterionAssessment waived",
 			cmd:  application.RecordCriterionAssessmentCommand{Result: domain.AssessmentResultWaived},
-			want: []ports.Permission{ports.PermissionAssessmentWrite, ports.PermissionAssessmentWaive},
+			want: []ports.Permission{ports.PermissionCriterionAssess, ports.PermissionCriterionWaive},
 		},
 	}
 	for _, test := range tests {

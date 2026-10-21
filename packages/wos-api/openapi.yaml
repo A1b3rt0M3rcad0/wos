@@ -5811,7 +5811,7 @@ paths:
   /api/v1/namespaces/{namespace_id}/administration:
     get:
       description: Namespace version, grants, credential metadata and last 100 audit entries; explicit truncated
-        flag. Requires namespace:admin.
+        flag. Requires credentials:read and audit:read.
       parameters:
       - name: namespace_id
         in: path
@@ -5869,6 +5869,7 @@ paths:
                   minimum: 1
                 permissions:
                   type: array
+                  maxItems: 128
                   items:
                     type: string
               required:
@@ -5998,8 +5999,9 @@ paths:
     post:
       operationId: administerNamespace
       summary: Apply guarded administrative intent
-      description: Requires namespace:admin, Idempotency-Key and expected_namespace_version. A credential token
-        is returned once; replay preserves the receipt and omits the token.
+      description: Requires the operation-specific credentials:issue, credentials:revoke, permissions:manage,
+        or namespace:admin permission, Idempotency-Key and expected_namespace_version. A credential token is
+        returned once; replay preserves the receipt and omits the token.
       parameters:
       - name: Idempotency-Key
         in: header
@@ -6037,6 +6039,7 @@ paths:
                   type: string
                 permissions:
                   type: array
+                  maxItems: 128
                   items:
                     type: string
                 actor_ref:

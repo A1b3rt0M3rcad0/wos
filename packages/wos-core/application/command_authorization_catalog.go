@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"strings"
 
@@ -38,126 +39,126 @@ var commandAuthorizationCatalog = func() map[string]commandAuthorizationEntry {
 	catalog := map[string]commandAuthorizationEntry{
 		"AbandonOutcome":                     {primary: ports.PermissionOutcomeWrite},
 		"AcceptDecision":                     {primary: ports.PermissionRecordsWrite},
-		"AchieveObjective":                   {primary: ports.PermissionConclusionWrite},
+		"AchieveObjective":                   {primary: ports.PermissionObjectiveConclude},
 		"AchieveOutcome":                     {primary: ports.PermissionConclusionWrite},
-		"AcquireNextSignedReviewContract":    {primary: ports.PermissionWorkReviewAcquire},
-		"AcquireNextSignedWorkContract":      {primary: ports.PermissionWorkContractAcquire},
-		"AcquireNextWorkContract":            {primary: ports.PermissionWorkContractAcquire},
-		"AcquireSignedReviewContract":        {primary: ports.PermissionWorkReviewAcquire},
-		"AcquireSignedWorkContract":          {primary: ports.PermissionWorkContractAcquire},
-		"AcquireWorkContract":                {primary: ports.PermissionWorkContractAcquire},
+		"AcquireNextSignedReviewContract":    {primary: ports.PermissionTaskReview},
+		"AcquireNextSignedWorkContract":      {primary: ports.PermissionTaskClaim},
+		"AcquireNextWorkContract":            {primary: ports.PermissionTaskClaim},
+		"AcquireSignedReviewContract":        {primary: ports.PermissionTaskReview},
+		"AcquireSignedWorkContract":          {primary: ports.PermissionTaskClaim},
+		"AcquireWorkContract":                {primary: ports.PermissionTaskClaim},
 		"ActivateOutcome":                    {primary: ports.PermissionOutcomeWrite},
 		"ActivateRoadmapRevision":            {primary: ports.PermissionPlanningWrite},
-		"ActivateWorkItem":                   {primary: ports.PermissionWorkWrite},
-		"AddCriterion":                       {primary: ports.PermissionOutcomeWrite},
-		"AddDependency":                      {primary: ports.PermissionOutcomeWrite},
+		"ActivateWorkItem":                   {primary: ports.PermissionTaskActivate},
+		"AddCriterion":                       {primary: ports.PermissionCriterionDefine},
+		"AddDependency":                      {primary: ports.PermissionDependencyWrite},
 		"AdministrativeCancelWorkItem":       {primary: ports.PermissionWorkAdminCancel},
 		"AdministrativeCompleteWorkItem":     {primary: ports.PermissionWorkAdminComplete},
 		"AppendEntityNote":                   {primary: ports.PermissionRecordsWrite},
-		"AppendWorkActivity":                 {primary: ports.PermissionWorkWrite},
+		"AppendWorkActivity":                 {primary: ports.PermissionRecordsWrite},
 		"ArchiveOutcome":                     {primary: ports.PermissionOutcomeWrite},
 		"ArchiveRoadmap":                     {primary: ports.PermissionPlanningWrite},
-		"AttestCriterion":                    {primary: ports.PermissionAssessmentWrite},
-		"CancelBlocker":                      {primary: ports.PermissionWorkWrite},
-		"CancelObjective":                    {primary: ports.PermissionOutcomeWrite},
-		"CancelWorkItem":                     {primary: ports.PermissionWorkWrite},
-		"ClaimWorkItem":                      {primary: ports.PermissionWorkWrite},
-		"CompleteWorkItem":                   {primary: ports.PermissionWorkWrite},
-		"ConfigureOutcomeOperationalProfile": {primary: ports.PermissionNamespaceAdmin},
+		"AttestCriterion":                    {primary: ports.PermissionCriterionAssess},
+		"CancelBlocker":                      {primary: ports.PermissionBlockerCancel},
+		"CancelObjective":                    {primary: ports.PermissionObjectiveCancel},
+		"CancelWorkItem":                     {primary: ports.PermissionTaskCancel},
+		"ClaimWorkItem":                      {primary: ports.PermissionTaskClaim},
+		"CompleteWorkItem":                   {primary: ports.PermissionTaskAccept},
+		"ConfigureOutcomeOperationalProfile": {primary: ports.PermissionPolicyManage},
 		"ConfigureTrigger":                   {primary: ports.PermissionIntegrationWrite},
-		"CreateBlocker":                      {primary: ports.PermissionWorkWrite},
+		"CreateBlocker":                      {primary: ports.PermissionBlockerCreate},
 		"CreateEvidenceLink":                 {primary: ports.PermissionRecordsWrite},
-		"CreateIssue":                        {primary: ports.PermissionWorkWrite},
-		"CreateObjective":                    {primary: ports.PermissionOutcomeWrite},
-		"CreateOutcome":                      {primary: ports.PermissionOutcomeWrite},
+		"CreateIssue":                        {primary: ports.PermissionIssueCreate},
+		"CreateObjective":                    {primary: ports.PermissionObjectiveCreate, additional: createObjectiveAuthorizationPermissions},
+		"CreateOutcome":                      {primary: ports.PermissionOutcomeWrite, additional: createOutcomeAuthorizationPermissions},
 		"CreatePlanItems":                    {primary: ports.PermissionPlanningWrite, additional: createPlanItemAuthorizationPermissions},
 		"CreateRoadmap":                      {primary: ports.PermissionPlanningWrite},
-		"CreateWorkItem":                     {primary: ports.PermissionWorkWrite, additional: createWorkItemAuthorizationPermissions},
+		"CreateWorkItem":                     {primary: ports.PermissionTaskCreate, additional: createWorkItemAuthorizationPermissions},
 		"DeactivateRoadmapRevision":          {primary: ports.PermissionPlanningWrite},
-		"DeferWorkItem":                      {primary: ports.PermissionWorkWrite},
+		"DeferWorkItem":                      {primary: ports.PermissionTaskDefer},
 		"DiscardRoadmapDraft":                {primary: ports.PermissionPlanningWrite},
 		"FailOutcome":                        {primary: ports.PermissionOutcomeWrite},
-		"FinalizeWorkContract":               {primary: ports.PermissionConclusionWrite},
-		"InterveneSignedReviewCase":          {primary: ports.PermissionNamespaceAdmin},
-		"InvestigateIssue":                   {primary: ports.PermissionWorkWrite},
+		"FinalizeWorkContract":               {primary: ports.PermissionTaskAccept},
+		"InterveneSignedReviewCase":          {primary: ports.PermissionTaskIntervene},
+		"InvestigateIssue":                   {primary: ports.PermissionIssueInvestigate},
 		"LinkExternalReference":              {primary: ports.PermissionOutcomeWrite},
-		"MarkIssueDuplicate":                 {primary: ports.PermissionWorkWrite},
-		"MarkIssueWontFix":                   {primary: ports.PermissionWorkWrite},
+		"MarkIssueDuplicate":                 {primary: ports.PermissionIssueResolve},
+		"MarkIssueWontFix":                   {primary: ports.PermissionIssueResolve},
 		"OpenRoadmapDraft":                   {primary: ports.PermissionPlanningWrite},
 		"ProposeDecision":                    {primary: ports.PermissionRecordsWrite},
 		"ProposeDecisionInContext":           {primary: ports.PermissionRecordsWrite},
 		"PublishRoadmapDraft":                {primary: ports.PermissionPlanningWrite},
-		"ReclaimWorkItem":                    {primary: ports.PermissionWorkWrite},
-		"ReconcileExpiredWorkContracts":      {primary: ports.PermissionNamespaceAdmin},
-		"RecordCriterionAssessment":          {primary: ports.PermissionAssessmentWrite, additional: criterionAssessmentAuthorizationPermissions},
+		"ReclaimWorkItem":                    {primary: ports.PermissionTaskClaim},
+		"ReconcileExpiredWorkContracts":      {primary: ports.PermissionTaskIntervene},
+		"RecordCriterionAssessment":          {primary: ports.PermissionCriterionAssess, additional: criterionAssessmentAuthorizationPermissions},
 		"RedeliverDelivery":                  {primary: ports.PermissionIntegrationWrite},
 		"RegisterArtifact":                   {primary: ports.PermissionRecordsWrite},
 		"RegisterArtifactInContext":          {primary: ports.PermissionRecordsWrite},
 		"RegisterEvidence":                   {primary: ports.PermissionRecordsWrite},
 		"RegisterEvidenceWithLinks":          {primary: ports.PermissionRecordsWrite},
 		"RejectDecision":                     {primary: ports.PermissionRecordsWrite},
-		"ReleaseWorkItem":                    {primary: ports.PermissionWorkWrite},
-		"RemoveDependency":                   {primary: ports.PermissionOutcomeWrite},
+		"ReleaseWorkItem":                    {primary: ports.PermissionTaskRelease},
+		"RemoveDependency":                   {primary: ports.PermissionDependencyWrite},
 		"RemoveExternalReference":            {primary: ports.PermissionOutcomeWrite},
-		"RenewSignedReviewContract":          {primary: ports.PermissionWorkReviewAcquire},
-		"RenewSignedWorkContract":            {primary: ports.PermissionWorkWrite},
-		"RenewWorkContract":                  {primary: ports.PermissionWorkWrite},
-		"RenewWorkItemLease":                 {primary: ports.PermissionWorkWrite},
-		"ReopenIssue":                        {primary: ports.PermissionWorkWrite},
-		"ReopenObjective":                    {primary: ports.PermissionConclusionWrite},
+		"RenewSignedReviewContract":          {primary: ports.PermissionTaskReview},
+		"RenewSignedWorkContract":            {primary: ports.PermissionTaskRenew},
+		"RenewWorkContract":                  {primary: ports.PermissionTaskRenew},
+		"RenewWorkItemLease":                 {primary: ports.PermissionTaskRenew},
+		"ReopenIssue":                        {primary: ports.PermissionIssueReopen},
+		"ReopenObjective":                    {primary: ports.PermissionObjectiveReopen},
 		"ReopenOutcome":                      {primary: ports.PermissionConclusionWrite},
 		"ReopenRoadmap":                      {primary: ports.PermissionPlanningWrite},
-		"ReopenWorkItem":                     {primary: ports.PermissionWorkWrite},
+		"ReopenWorkItem":                     {primary: ports.PermissionTaskReopen},
 		"ReplaceExternalContext":             {primary: ports.PermissionOutcomeWrite},
 		"ReplaceRoadmapDraft":                {primary: ports.PermissionPlanningWrite},
-		"ReportIssueWithBlocker":             {primary: ports.PermissionWorkWrite},
-		"ResolveBlocker":                     {primary: ports.PermissionWorkWrite},
-		"ResolveIssue":                       {primary: ports.PermissionWorkWrite},
-		"ResolveIssueAndBlockers":            {primary: ports.PermissionWorkWrite},
+		"ReportIssueWithBlocker":             {primary: ports.PermissionIssueCreate, additional: reportIssueWithBlockerPermissions},
+		"ResolveBlocker":                     {primary: ports.PermissionBlockerRelease},
+		"ResolveIssue":                       {primary: ports.PermissionIssueResolve},
+		"ResolveIssueAndBlockers":            {primary: ports.PermissionIssueResolve, additional: resolveIssueAndBlockersPermissions},
 		"ResolveSignedReturnIntent":          {primary: ports.PermissionStateRead},
-		"ResumeSignedReviewContract":         {primary: ports.PermissionWorkReviewAcquire},
-		"ResumeSignedWorkContract":           {primary: ports.PermissionWorkWrite},
-		"ResumeWorkContract":                 {primary: ports.PermissionWorkWrite},
-		"RetireCriterion":                    {primary: ports.PermissionOutcomeWrite},
+		"ResumeSignedReviewContract":         {primary: ports.PermissionTaskReview},
+		"ResumeSignedWorkContract":           {primary: ports.PermissionTaskRenew},
+		"ResumeWorkContract":                 {primary: ports.PermissionTaskRenew},
+		"RetireCriterion":                    {primary: ports.PermissionCriterionDefine},
 		"RetractEvidence":                    {primary: ports.PermissionRecordsWrite},
 		"RetractEvidenceLink":                {primary: ports.PermissionRecordsWrite},
-		"ReturnSignedReview":                 {primary: ports.PermissionWorkReviewDecide},
-		"ReturnSignedWork":                   {primary: ports.PermissionWorkContractReturn},
+		"ReturnSignedReview":                 {primary: ports.PermissionTaskReview, additional: signedReviewDecisionAuthorizationPermissions},
+		"ReturnSignedWork":                   {primary: ports.PermissionTaskDeliver, additional: signedWorkReturnAuthorizationPermissions},
 		"RevokeSignedContract":               {primary: ports.PermissionWorkContractRevoke},
 		"RevokeWorkContract":                 {primary: ports.PermissionWorkContractRevoke},
-		"ReviseCriterion":                    {primary: ports.PermissionOutcomeWrite},
-		"SetNamespaceWorkProtocol":           {primary: ports.PermissionNamespaceAdmin},
-		"SetObjectiveOwners":                 {primary: ports.PermissionOutcomeWrite},
-		"SetObjectiveParent":                 {primary: ports.PermissionOutcomeWrite},
+		"ReviseCriterion":                    {primary: ports.PermissionCriterionDefine},
+		"SetNamespaceWorkProtocol":           {primary: ports.PermissionPolicyManage},
+		"SetObjectiveOwners":                 {primary: ports.PermissionObjectiveUpdate},
+		"SetObjectiveParent":                 {primary: ports.PermissionObjectiveUpdate},
 		"SetOutcomeOwners":                   {primary: ports.PermissionOutcomeWrite},
 		"SetTriggerEnabled":                  {primary: ports.PermissionIntegrationWrite},
-		"SetWorkItemAssignees":               {primary: ports.PermissionWorkWrite},
-		"SetWorkItemExecutionSpec":           {primary: ports.PermissionWorkWrite},
-		"SetWorkItemNotBefore":               {primary: ports.PermissionWorkWrite},
-		"SetWorkItemObjective":               {primary: ports.PermissionWorkWrite},
-		"StartObjective":                     {primary: ports.PermissionOutcomeWrite},
-		"SubmitWorkResult":                   {primary: ports.PermissionWorkWrite},
+		"SetWorkItemAssignees":               {primary: ports.PermissionTaskAssign},
+		"SetWorkItemExecutionSpec":           {primary: ports.PermissionTaskUpdateDefinition},
+		"SetWorkItemNotBefore":               {primary: ports.PermissionTaskUpdateDefinition},
+		"SetWorkItemObjective":               {primary: ports.PermissionTaskUpdateDefinition},
+		"StartObjective":                     {primary: ports.PermissionObjectiveStart},
+		"SubmitWorkResult":                   {primary: ports.PermissionTaskDeliver},
 		"SupersedeDecision":                  {primary: ports.PermissionRecordsWrite},
-		"SyncWorkContract":                   {primary: ports.PermissionWorkWrite},
+		"SyncWorkContract":                   {primary: ports.PermissionTaskDeliver},
 		"UnarchiveOutcome":                   {primary: ports.PermissionOutcomeWrite},
 		"UpdateBlockerDescription":           {primary: ports.PermissionWorkWrite},
 		"UpdateDecision":                     {primary: ports.PermissionRecordsWrite},
-		"UpdateIssue":                        {primary: ports.PermissionWorkWrite},
-		"UpdateObjective":                    {primary: ports.PermissionOutcomeWrite},
+		"UpdateIssue":                        {primary: ports.PermissionIssueUpdate},
+		"UpdateObjective":                    {primary: ports.PermissionObjectiveUpdate},
 		"UpdateOutcome":                      {primary: ports.PermissionOutcomeWrite},
 		"UpdateTrigger":                      {primary: ports.PermissionIntegrationWrite},
-		"UpdateWorkItem":                     {primary: ports.PermissionWorkWrite},
+		"UpdateWorkItem":                     {primary: ports.PermissionTaskUpdateDefinition},
 		"WithdrawArtifact":                   {primary: ports.PermissionRecordsWrite},
 
 		// Application commands not currently included in the HTTP command catalog
 		// retain the permissions previously inferred for their exact names.
-		"ApplyDependencyChanges":      {primary: ports.PermissionOutcomeWrite},
-		"AssignIssue":                 {primary: ports.PermissionWorkWrite},
-		"RelateIssueWorkItem":         {primary: ports.PermissionWorkWrite},
-		"RemoveIssueWorkItemRelation": {primary: ports.PermissionWorkWrite},
-		"ReportIssueWithBlockers":     {primary: ports.PermissionWorkWrite},
-		"StartIssueInvestigation":     {primary: ports.PermissionWorkWrite},
-		"UnassignIssue":               {primary: ports.PermissionWorkWrite},
+		"ApplyDependencyChanges":      {primary: ports.PermissionDependencyWrite},
+		"AssignIssue":                 {primary: ports.PermissionIssueAssign},
+		"RelateIssueWorkItem":         {primary: ports.PermissionIssueUpdate},
+		"RemoveIssueWorkItemRelation": {primary: ports.PermissionIssueUpdate},
+		"ReportIssueWithBlockers":     {primary: ports.PermissionIssueCreate, additional: reportIssueWithBlockerPermissions},
+		"StartIssueInvestigation":     {primary: ports.PermissionIssueInvestigate},
+		"UnassignIssue":               {primary: ports.PermissionIssueAssign},
 	}
 	for name, entry := range catalog {
 		entry.resolveResource = resolveCommandResourceFields
@@ -339,27 +340,111 @@ func createPlanItemAuthorizationPermissions(command any) []ports.Permission {
 	default:
 		return nil
 	}
-	permissions := make([]ports.Permission, 0, len(items)*2)
+	permissions := make([]ports.Permission, 0, len(items)*3)
 	for _, item := range items {
-		if item.Kind == domain.EntityKindObjective || len(item.InitialCriteria) > 0 {
-			permissions = append(permissions, ports.PermissionOutcomeWrite)
+		if item.Kind == domain.EntityKindObjective {
+			permissions = append(permissions, ports.PermissionObjectiveCreate)
 		}
 		if item.Kind == domain.EntityKindWorkItem {
-			permissions = append(permissions, ports.PermissionWorkWrite)
+			permissions = append(permissions, ports.PermissionTaskCreate)
+		}
+		if len(item.InitialCriteria) > 0 {
+			permissions = append(permissions, ports.PermissionCriterionDefine)
 		}
 	}
 	return permissions
+}
+
+func signedWorkReturnAuthorizationPermissions(command any) []ports.Permission {
+	var envelope signing.Envelope
+	switch cmd := command.(type) {
+	case ReturnSignedWorkCommand:
+		envelope = cmd.Envelope
+	case *ReturnSignedWorkCommand:
+		if cmd != nil {
+			envelope = cmd.Envelope
+		}
+	default:
+		return nil
+	}
+	var hint signing.WorkReturnPayload[json.RawMessage]
+	if signedRequestHint(envelope, &hint) != nil || hint.CompletionIntent != "direct" {
+		return nil
+	}
+	return []ports.Permission{ports.PermissionTaskAccept}
+}
+
+func signedReviewDecisionAuthorizationPermissions(command any) []ports.Permission {
+	var envelope signing.Envelope
+	switch cmd := command.(type) {
+	case ReturnSignedReviewCommand:
+		envelope = cmd.Envelope
+	case *ReturnSignedReviewCommand:
+		if cmd != nil {
+			envelope = cmd.Envelope
+		}
+	default:
+		return nil
+	}
+	var hint signing.ReviewReturnPayload[json.RawMessage]
+	if signedRequestHint(envelope, &hint) != nil {
+		return nil
+	}
+	switch hint.Decision {
+	case "approved":
+		return []ports.Permission{ports.PermissionTaskAccept}
+	case "changes_requested":
+		return []ports.Permission{ports.PermissionTaskRequestChanges}
+	default:
+		return nil
+	}
+}
+
+func createOutcomeAuthorizationPermissions(command any) []ports.Permission {
+	switch cmd := command.(type) {
+	case CreateOutcomeCommand:
+		if len(cmd.InitialCriteria) > 0 {
+			return []ports.Permission{ports.PermissionCriterionDefine}
+		}
+	case *CreateOutcomeCommand:
+		if cmd != nil && len(cmd.InitialCriteria) > 0 {
+			return []ports.Permission{ports.PermissionCriterionDefine}
+		}
+	}
+	return nil
+}
+
+func createObjectiveAuthorizationPermissions(command any) []ports.Permission {
+	switch cmd := command.(type) {
+	case CreateObjectiveCommand:
+		if len(cmd.InitialCriteria) > 0 {
+			return []ports.Permission{ports.PermissionCriterionDefine}
+		}
+	case *CreateObjectiveCommand:
+		if cmd != nil && len(cmd.InitialCriteria) > 0 {
+			return []ports.Permission{ports.PermissionCriterionDefine}
+		}
+	}
+	return nil
+}
+
+func reportIssueWithBlockerPermissions(any) []ports.Permission {
+	return []ports.Permission{ports.PermissionBlockerCreate}
+}
+
+func resolveIssueAndBlockersPermissions(any) []ports.Permission {
+	return []ports.Permission{ports.PermissionBlockerRelease}
 }
 
 func createWorkItemAuthorizationPermissions(command any) []ports.Permission {
 	switch cmd := command.(type) {
 	case CreateWorkItemCommand:
 		if len(cmd.InitialCriteria) > 0 {
-			return []ports.Permission{ports.PermissionOutcomeWrite}
+			return []ports.Permission{ports.PermissionCriterionDefine}
 		}
 	case *CreateWorkItemCommand:
 		if cmd != nil && len(cmd.InitialCriteria) > 0 {
-			return []ports.Permission{ports.PermissionOutcomeWrite}
+			return []ports.Permission{ports.PermissionCriterionDefine}
 		}
 	}
 	return nil
@@ -369,11 +454,11 @@ func criterionAssessmentAuthorizationPermissions(command any) []ports.Permission
 	switch cmd := command.(type) {
 	case RecordCriterionAssessmentCommand:
 		if cmd.Result == domain.AssessmentResultWaived {
-			return []ports.Permission{ports.PermissionAssessmentWaive}
+			return []ports.Permission{ports.PermissionCriterionWaive}
 		}
 	case *RecordCriterionAssessmentCommand:
 		if cmd != nil && cmd.Result == domain.AssessmentResultWaived {
-			return []ports.Permission{ports.PermissionAssessmentWaive}
+			return []ports.Permission{ports.PermissionCriterionWaive}
 		}
 	}
 	return nil

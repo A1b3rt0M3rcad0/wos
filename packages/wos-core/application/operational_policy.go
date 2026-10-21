@@ -106,7 +106,7 @@ func authorizeOperationalPolicyAdmin(ctx context.Context, authorizer ports.Autho
 	if !ok || principal == "" || identity.PrincipalID != principal || identity.NamespaceID != scope.NamespaceID {
 		return d.NewError(d.ErrorCodeForbidden, "authenticated namespace administrator identity is required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: principal, Permission: ports.PermissionNamespaceAdmin}
+	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: principal, Permission: ports.PermissionPolicyManage}
 	if err := request.Validate(); err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func authorizeOperationalPolicyAdminInUnitOfWork(ctx context.Context, authorizer
 	if !ok || principal == "" || identity.PrincipalID != principal || identity.NamespaceID != scope.NamespaceID {
 		return d.NewError(d.ErrorCodeForbidden, "authenticated namespace administrator identity is required")
 	}
-	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: principal, Permission: ports.PermissionNamespaceAdmin}
+	request := ports.AuthorizationRequest{NamespaceID: scope.NamespaceID, OutcomeID: scope.OutcomeID, PrincipalID: principal, Permission: ports.PermissionPolicyManage}
 	if err := request.Validate(); err != nil {
 		return err
 	}

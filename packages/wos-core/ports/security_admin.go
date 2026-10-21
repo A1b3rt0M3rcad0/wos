@@ -17,6 +17,24 @@ type SecurityAdminCommand struct {
 	Credential      *Credential     `json:"credential,omitempty"`
 	CredentialID    domain.ID       `json:"credential_id,omitempty"`
 }
+
+// SecurityAdminPermission binds each administrative operation to its specific
+// authority. Namespace administration remains limited to namespace creation.
+func SecurityAdminPermission(operation string) (Permission, bool) {
+	switch operation {
+	case "create_namespace":
+		return PermissionNamespaceAdmin, true
+	case "set_grant":
+		return PermissionPermissionsManage, true
+	case "issue_credential":
+		return PermissionCredentialsIssue, true
+	case "revoke_credential":
+		return PermissionCredentialsRevoke, true
+	default:
+		return "", false
+	}
+}
+
 type SecurityAdminRequest struct {
 	Command          SecurityAdminCommand
 	PrincipalID      string
