@@ -33,8 +33,35 @@ func (o Objective) CheckStart() error {
 	if o.Lifecycle != ObjectiveLifecyclePlanned {
 		return NewDetailedError(ErrorCodeInvalidTransition, "only planned objective can start", ErrorDetails{ReasonCode: "invalid_lifecycle", SubjectRef: &ref})
 	}
+	return o.CheckStartDefinition()
+}
+
+// CheckStartDefinition evaluates authored planning completeness independently
+// from the Objective's lifecycle, parent scope, dependencies, and blockers.
+func (o Objective) CheckStartDefinition() error {
+	ref := o.Ref()
 	if !o.Criteria.HasRequiredActive() {
 		return missingRequiredCriterion(ref)
+	}
+	return nil
+}
+
+// CheckActivationDefinition checks the Task definition needed before it may
+// become executable. Compatibility-profile records may continue using their
+// historical rules; operational_v2 callers opt into this stricter predicate.
+func (w WorkItem) CheckActivationDefinition() error {
+	ref := w.Ref()
+	if w.ObjectiveID == nil {
+		return NewDetailedError(ErrorCodePreconditionFailed, "Task requires an owning Objective before activation", ErrorDetails{
+			ReasonCode: string(ReadinessReasonTaskObjectiveRequired), SubjectRef: &ref,
+			FieldPaths: []string{"objective_id"}, Remedies: []ErrorRemedy{{ActionID: "select_objective"}},
+		})
+	}
+	if !w.Criteria.HasRequiredActive() {
+		return NewDetailedError(ErrorCodePreconditionFailed, "Task requires at least one active required criterion before activation", ErrorDetails{
+			ReasonCode: string(ReadinessReasonTaskDefinitionIncomplete), SubjectRef: &ref,
+			FieldPaths: []string{"criteria"}, Remedies: []ErrorRemedy{{ActionID: "add_criterion", SubjectRef: &ref}},
+		})
 	}
 	return nil
 }

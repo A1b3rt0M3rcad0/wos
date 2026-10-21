@@ -812,24 +812,7 @@ func evaluateObjectiveReadiness(
 	objective domain.Objective,
 	now time.Time,
 ) (domain.Readiness, error) {
-	outcome, err := uow.Outcomes().Get(ctx, objective.Scope.NamespaceID, objective.Scope.OutcomeID)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	relations, err := uow.Relations().ListByOutcome(ctx, objective.Scope)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	evaluations, err := dependencyEvaluationsForSource(ctx, uow, objective.Ref(), relations)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	readiness := domain.ObjectiveReadiness(objective, outcome, evaluations, now)
-	blocking, err := blockingStateForRef(ctx, uow, objective.Ref())
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	return domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked), nil
+	return evaluateObjectiveExecutionGate(ctx, uow, objective, now)
 }
 
 func evaluateWorkItemReadiness(
@@ -838,32 +821,7 @@ func evaluateWorkItemReadiness(
 	item domain.WorkItem,
 	now time.Time,
 ) (domain.Readiness, error) {
-	outcome, err := uow.Outcomes().Get(ctx, item.Scope.NamespaceID, item.Scope.OutcomeID)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	var objective *domain.Objective
-	if item.ObjectiveID != nil {
-		value, err := uow.Objectives().Get(ctx, item.Scope, *item.ObjectiveID)
-		if err != nil {
-			return domain.Readiness{}, err
-		}
-		objective = &value
-	}
-	relations, err := uow.Relations().ListByOutcome(ctx, item.Scope)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	evaluations, err := dependencyEvaluationsForSource(ctx, uow, item.Ref(), relations)
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	readiness := domain.WorkItemReadiness(item, outcome, objective, evaluations, now)
-	blocking, err := blockingStateForRef(ctx, uow, item.Ref())
-	if err != nil {
-		return domain.Readiness{}, err
-	}
-	return domain.ApplyBlockingToReadiness(readiness, blocking.IsBlocked), nil
+	return evaluateTaskAcquisition(ctx, uow, item, now)
 }
 
 func requireObjectiveReady(ctx context.Context, uow ports.UnitOfWork, objective domain.Objective, now time.Time) error {
@@ -874,11 +832,7 @@ func requireObjectiveReady(ctx context.Context, uow ports.UnitOfWork, objective 
 	if readiness.Ready {
 		return nil
 	}
-	reasons := make([]string, len(readiness.Reasons))
-	for i, reason := range readiness.Reasons {
-		reasons[i] = string(reason)
-	}
-	return domain.NewError(domain.ErrorCodePreconditionFailed, "objective is not ready: "+strings.Join(reasons, ","))
+	return operationalReadinessError(readiness, "objective is not ready")
 }
 
 func requireWorkItemReady(ctx context.Context, uow ports.UnitOfWork, item domain.WorkItem, now time.Time) error {
@@ -889,9 +843,5 @@ func requireWorkItemReady(ctx context.Context, uow ports.UnitOfWork, item domain
 	if readiness.Ready {
 		return nil
 	}
-	reasons := make([]string, len(readiness.Reasons))
-	for i, reason := range readiness.Reasons {
-		reasons[i] = string(reason)
-	}
-	return domain.NewError(domain.ErrorCodePreconditionFailed, "work item is not ready: "+strings.Join(reasons, ","))
+	return operationalReadinessError(readiness, "work item is not ready")
 }
