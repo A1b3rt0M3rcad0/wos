@@ -839,6 +839,29 @@ export const copy = Object.freeze({
     credentialsRevoke: "Credentials revoke",
     credentialsRotate: "Credentials rotate",
     permissionsManage: "Permission management",
+    permissionTemplateReader: "Reader",
+    permissionTemplateReaderDescription:
+      "Read scoped workspace state without changing it.",
+    permissionTemplatePlanner: "Planner",
+    permissionTemplatePlannerDescription:
+      "Prepare Outcomes, Objectives, Tasks and dependencies. This template does not approve delivered work.",
+    permissionTemplateExecutor: "Executor",
+    permissionTemplateExecutorDescription:
+      "Acquire and execute assigned Tasks, submit deliveries and record supporting material.",
+    permissionTemplateReviewer: "Reviewer",
+    permissionTemplateReviewerDescription:
+      "Review deliveries, assess criteria and accept work or request changes. This template does not grant execution rights.",
+    permissionTemplateIssueOperator: "Issue operator",
+    permissionTemplateIssueOperatorDescription:
+      "Create and manage Issues and Blockers without changing Task acceptance decisions.",
+    permissionTemplateAdministrator: "Administrator",
+    permissionTemplateAdministratorDescription:
+      "Manage Namespace access, credentials, delegation and operational policy. Administrative access does not bypass review or acceptance rules.",
+    permissionTemplateCustom: "Custom permissions",
+    permissionTemplateCustomDescription:
+      "The permission list was edited. Custom is a selection state, not a grant or role.",
+    permissionTemplateAuthorityNote:
+      "A template only helps choose explicit rights. Effective authority remains bounded by Principal grants and credential policy. Different templates on the same Principal do not provide independent review.",
     policyManage: "Policy management",
     item: "Item",
     checksum: "Checksum",
