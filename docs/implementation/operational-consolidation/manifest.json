@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "3cbbc2fa71537cac7bda582ad8b87f74efe11fb2",
+  "execution_head_sha": "88a2a05a74bdbf1016f8f78ffd9415511665ae1a",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -84,16 +84,23 @@
     {
       "id": "E04",
       "title": "Adicionar tipos de política operacional ao domínio",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E02",
         "E03"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "88a2a05a74bdbf1016f8f78ffd9415511665ae1a",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E04.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOPROXY=direct go test ./packages/wos-core/domain ./packages/wos-core/application -count=1 — pass",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOPROXY=direct go vet ./packages/wos-core/domain ./packages/wos-core/application — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "SQLite/PostgreSQL persistence round-trips — persistence is E05.",
+        "Live PostgreSQL acceptance — WOS_TEST_POSTGRES_DSN is unset."
+      ]
     },
     {
       "id": "E05",
