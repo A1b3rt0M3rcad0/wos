@@ -57,10 +57,10 @@ func TestGranularPermissionCatalogAndValidation(t *testing.T) {
 
 func TestCredentialPolicyPermissionListsAreExplicitAndEmptyDenies(t *testing.T) {
 	policy := domain.CredentialPolicy{
-		NamespaceID: domain.MustParseID("0199ff01-0000-7000-8000-000000000001"),
+		NamespaceID:  domain.MustParseID("0199ff01-0000-7000-8000-000000000001"),
 		CredentialID: domain.MustParseID("0199ff01-0000-7000-8000-000000000002"),
-		PrincipalID: "policy-reader", Version: 1,
-		AcceptanceFloor: domain.AcceptanceDirect,
+		PrincipalID:  "policy-reader", Version: 1,
+		AcceptanceFloor:        domain.AcceptanceDirect,
 		MaxActiveWorkContracts: 1, MaxActiveReviewContracts: 1,
 		UpdatedAt: time.Date(2026, 10, 21, 0, 0, 0, 0, time.UTC),
 	}
