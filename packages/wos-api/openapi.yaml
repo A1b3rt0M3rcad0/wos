@@ -5872,6 +5872,9 @@ paths:
                   maxItems: 128
                   items:
                     type: string
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               - permissions
@@ -5950,6 +5953,9 @@ paths:
                   description: Optional signing-key allowlist; omitted or empty means no signing keys are allowed. Enrollment can add a key to the credential policy.
                   items:
                     $ref: '#/components/schemas/ID'
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               - principal_id
@@ -5989,9 +5995,33 @@ paths:
                 expected_namespace_version:
                   type: integer
                   minimum: 1
+                reason:
+                  type: string
+                  maxLength: 500
               required:
               - expected_namespace_version
               additionalProperties: false
+  /api/v1/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke-preview:
+    get:
+      description: Authorized, read-only impact preview. Counts persisted child sessions and active signed contracts; legacy unbound leases may be unattributed and external processes are not stopped by revocation.
+      parameters:
+      - name: namespace_id
+        in: path
+        required: true
+        schema: *id001
+      - name: credential_id
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Safe impact counts and explicit limitations.
+        '401':
+          description: Credential required.
+        '403':
+          description: Scope or permission denied.
+        '404':
+          description: Credential not found.
   /session:
     post:
       description: Exchange an integration token for a separately revocable HttpOnly SameSite=Strict browser session,
@@ -6092,6 +6122,9 @@ paths:
                   format: uuid
                 namespace_name:
                   type: string
+                reason:
+                  type: string
+                  maxLength: 500
                 credential_name:
                   type: string
                   maxLength: 100

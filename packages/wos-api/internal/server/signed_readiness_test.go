@@ -48,11 +48,18 @@ func TestSignedRuntimeWithoutSignerIsNotReadyButRetainsHistory(t *testing.T) {
 		security := a.SecurityService{Store: runtime.store, Clock: systemClock{}, IDs: uuidV7Generator{}}
 		admin, e := security.Authenticate(ctx, cfg.Auth.BootstrapToken)
 		must(e)
-		must(security.SetGrant(a.WithIdentity(ctx, admin), ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionAuditRead, ports.PermissionPolicyManage, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractAcquire, ports.PermissionTaskClaim, ports.PermissionSigningKeyEnroll, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionObjectiveCreate, ports.PermissionTaskCreate}}))
+		_, _, e = security.AdministrativeMutation(a.WithIdentity(ctx, admin), "readiness-grant-setup-0001", ports.SecurityAdminCommand{
+			NamespaceID: namespace, ExpectedVersion: identity.NamespaceVersion, Operation: "set_grant", Reason: "Configure signed readiness test permissions",
+			Grant: &ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionAuditRead, ports.PermissionPermissionsManage, ports.PermissionCredentialsIssue, ports.PermissionPolicyManage, ports.PermissionNamespaceAdmin, ports.PermissionWorkContractAcquire, ports.PermissionTaskClaim, ports.PermissionSigningKeyEnroll, ports.PermissionOutcomeWrite, ports.PermissionWorkWrite, ports.PermissionObjectiveCreate, ports.PermissionTaskCreate}},
+		})
+		must(e)
 		identity, e = client.SigningIdentity(ctx, nil)
 		must(e)
-		policy := d.CredentialPolicy{NamespaceID: namespace, CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionAuditRead), string(ports.PermissionPolicyManage), string(ports.PermissionNamespaceAdmin), string(ports.PermissionWorkContractAcquire), string(ports.PermissionTaskClaim), string(ports.PermissionSigningKeyEnroll), string(ports.PermissionOutcomeWrite), string(ports.PermissionWorkWrite), string(ports.PermissionObjectiveCreate), string(ports.PermissionTaskCreate)}}
-		configured, e := client.SigningMutation(ctx, "readiness-credential-policy", a.SigningSecurityIntent{NamespaceID: namespace, ExpectedNamespaceVersion: identity.NamespaceVersion, Operation: "set_credential_policy", CredentialPolicy: &policy})
+		if identity.Policy == nil {
+			t.Fatal("issued bootstrap credential is missing its materialized policy")
+		}
+		policy := d.CredentialPolicy{NamespaceID: namespace, CredentialID: identity.CredentialID, PrincipalID: identity.PrincipalID, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionAuditRead), string(ports.PermissionPermissionsManage), string(ports.PermissionCredentialsIssue), string(ports.PermissionPolicyManage), string(ports.PermissionNamespaceAdmin), string(ports.PermissionWorkContractAcquire), string(ports.PermissionTaskClaim), string(ports.PermissionSigningKeyEnroll), string(ports.PermissionOutcomeWrite), string(ports.PermissionWorkWrite), string(ports.PermissionObjectiveCreate), string(ports.PermissionTaskCreate)}}
+		configured, e := client.SigningMutation(ctx, "readiness-credential-policy", a.SigningSecurityIntent{NamespaceID: namespace, ExpectedNamespaceVersion: identity.NamespaceVersion, ExpectedVersion: identity.Policy.Version, Operation: "set_credential_policy", CredentialPolicy: &policy})
 		must(e)
 		public, private, e := ed25519.GenerateKey(rand.Reader)
 		must(e)

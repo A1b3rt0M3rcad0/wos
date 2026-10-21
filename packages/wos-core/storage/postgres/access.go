@@ -3,9 +3,78 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
+
+// authorizeSecurityAdminReadTx keeps the credential, its root/session parent,
+// current namespace grant and policy in the same snapshot as administrative
+// projections. The caller provides trusted identity resolved by the adapter.
+func authorizeSecurityAdminReadTx(ctx context.Context, tx *sql.Tx, access ports.SecurityAdminReadAccess) (domain.ID, error) {
+	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
+	if access.NamespaceID.Validate() != nil || access.CredentialID.Validate() != nil || access.PrincipalID == "" || access.CredentialDigest == "" || access.Actor.Validate() != nil || access.Now.IsZero() || len(access.Permissions) == 0 {
+		return "", denied
+	}
+	var lifecycle string
+	if err := tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=$1 FOR SHARE`, access.NamespaceID.String()).Scan(&lifecycle); err != nil || lifecycle != "active" {
+		return "", denied
+	}
+	var raw string
+	if err := tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=$1 AND g.principal_id=$2 AND p.lifecycle='active'`, access.NamespaceID.String(), access.PrincipalID).Scan(&raw); err != nil {
+		return "", denied
+	}
+	var granted []ports.Permission
+	if unmarshalJSON(raw, &granted) != nil {
+		return "", denied
+	}
+	for _, required := range access.Permissions {
+		allowed := false
+		for _, permission := range granted {
+			allowed = allowed || permission == required
+		}
+		if !allowed {
+			return "", denied
+		}
+	}
+	var principal, namespace, actorJSON, parent string
+	var expires int64
+	var revoked bool
+	var caller domain.ID
+	err := tx.QueryRowContext(ctx, `SELECT id,principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=$1 FOR SHARE`, access.CredentialDigest).Scan(&caller, &principal, &namespace, &actorJSON, &parent, &expires, &revoked)
+	var actor domain.ActorRef
+	if err != nil || caller != access.CredentialID || principal != access.PrincipalID || namespace != access.NamespaceID.String() || revoked || expires <= encodeTime(access.Now) || unmarshalJSON(actorJSON, &actor) != nil || actor != access.Actor {
+		return "", denied
+	}
+	rootID := caller
+	if parent != "" {
+		var rootPrincipal, rootNamespace, rootActorJSON, rootParent string
+		var rootExpires int64
+		var rootRevoked bool
+		err = tx.QueryRowContext(ctx, `SELECT id,principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=$1 FOR SHARE`, parent).Scan(&rootID, &rootPrincipal, &rootNamespace, &rootActorJSON, &rootParent, &rootExpires, &rootRevoked)
+		var rootActor domain.ActorRef
+		if err != nil || rootParent != "" || rootPrincipal != principal || rootNamespace != namespace || rootRevoked || rootExpires <= encodeTime(access.Now) || unmarshalJSON(rootActorJSON, &rootActor) != nil || rootActor != actor {
+			return "", denied
+		}
+	}
+	var policyJSON string
+	err = tx.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE namespace_id=$1 AND credential_id=$2 AND principal_id=$3`, access.NamespaceID.String(), rootID.String(), access.PrincipalID).Scan(&policyJSON)
+	if err == nil {
+		var policy domain.CredentialPolicy
+		if unmarshalJSON(policyJSON, &policy) != nil {
+			return "", denied
+		}
+		for _, permission := range access.Permissions {
+			if !policy.PermitsWithCompatibility(string(permission), "", "") {
+				return "", denied
+			}
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return "", mapSQLError("read administrative credential policy", err)
+	}
+	return rootID, nil
+}
 
 func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
 	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")

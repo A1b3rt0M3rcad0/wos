@@ -73,7 +73,7 @@ func TestPrincipalReviewQuotaAcrossCredentialsAndIndependentCeilings(t *testing.
 				must(u.Rollback())
 			}
 			perms := []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire}
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: perms}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: perms}))
 			key := testID("0199a555-0000-7000-8000-000000000099")
 			participants := []a.Identity{}
 			contexts := []context.Context{}

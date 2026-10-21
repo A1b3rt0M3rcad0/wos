@@ -18,6 +18,35 @@ var _ ports.CredentialManagementReader = (*Store)(nil)
 var _ ports.CredentialUseObserver = (*Store)(nil)
 
 func (s *Store) ListManagedCredentials(ctx context.Context, q ports.CredentialManagementQuery) (ports.CredentialManagementPage, error) {
+	return listManagedCredentials(ctx, s.db, q)
+}
+
+func (s *Store) ListManagedCredentialsAuthorized(ctx context.Context, q ports.CredentialManagementQuery, access ports.SecurityAdminReadAccess) (ports.CredentialManagementPage, error) {
+	var empty ports.CredentialManagementPage
+	if access.NamespaceID != q.NamespaceID || access.Now != q.Now {
+		return empty, domain.NewError(domain.ErrorCodeInvalidArgument, "credential query authorization scope mismatch")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return empty, mapSQLError("begin authorized credential list", err)
+	}
+	defer tx.Rollback()
+	if _, err = authorizeSecurityAdminReadTx(ctx, tx, access); err != nil {
+		return empty, err
+	}
+	page, err := listManagedCredentials(ctx, tx, q)
+	if err != nil {
+		return empty, err
+	}
+	return page, tx.Commit()
+}
+
+type credentialManagementQueryer interface {
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+func listManagedCredentials(ctx context.Context, queryer credentialManagementQueryer, q ports.CredentialManagementQuery) (ports.CredentialManagementPage, error) {
 	var page ports.CredentialManagementPage
 	if q.NamespaceID.Validate() != nil || q.Now.IsZero() || q.Limit < 1 || q.Limit > 100 || (!q.Cursor.IsZero() && q.Cursor.Validate() != nil) || (q.Status != "" && q.Status != "active" && q.Status != "expired" && q.Status != "revoked") {
 		return page, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid bounded credential query")
@@ -61,7 +90,7 @@ func (s *Store) ListManagedCredentials(ctx context.Context, q ports.CredentialMa
 	}
 	query += ` ORDER BY c.id LIMIT ?`
 	args = append(args, scanLimit+1)
-	rows, err := s.db.QueryContext(ctx, rebind(query), args...)
+	rows, err := queryer.QueryContext(ctx, rebind(query), args...)
 	if err != nil {
 		return page, mapSQLError("list credentials", err)
 	}
@@ -105,6 +134,30 @@ func (s *Store) ListManagedCredentials(ctx context.Context, q ports.CredentialMa
 }
 
 func (s *Store) ReadManagedCredential(ctx context.Context, ns, id domain.ID, now time.Time) (ports.CredentialAdministrativeRecord, error) {
+	return readManagedCredential(ctx, s.db, ns, id, now)
+}
+
+func (s *Store) ReadManagedCredentialAuthorized(ctx context.Context, ns, id domain.ID, now time.Time, access ports.SecurityAdminReadAccess) (ports.CredentialAdministrativeRecord, error) {
+	var empty ports.CredentialAdministrativeRecord
+	if access.NamespaceID != ns || access.Now != now {
+		return empty, domain.NewError(domain.ErrorCodeInvalidArgument, "credential detail authorization scope mismatch")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return empty, mapSQLError("begin authorized credential detail", err)
+	}
+	defer tx.Rollback()
+	if _, err = authorizeSecurityAdminReadTx(ctx, tx, access); err != nil {
+		return empty, err
+	}
+	record, err := readManagedCredential(ctx, tx, ns, id, now)
+	if err != nil {
+		return empty, err
+	}
+	return record, tx.Commit()
+}
+
+func readManagedCredential(ctx context.Context, queryer credentialManagementQueryer, ns, id domain.ID, now time.Time) (ports.CredentialAdministrativeRecord, error) {
 	var empty ports.CredentialAdministrativeRecord
 	if ns.Validate() != nil || id.Validate() != nil || now.IsZero() {
 		return empty, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid credential detail query")
@@ -117,7 +170,7 @@ func (s *Store) ReadManagedCredential(ctx context.Context, ns, id domain.ID, now
 		LEFT JOIN credential_policies p ON p.namespace_id=c.namespace_id AND p.credential_id=c.id
 		LEFT JOIN namespace_grants g ON g.namespace_id=c.namespace_id AND g.principal_id=c.principal_id
 		WHERE c.namespace_id=? AND c.id=? AND c.parent_digest IS NULL`
-	row := s.db.QueryRowContext(ctx, rebind(query), ns.String(), id.String())
+	row := queryer.QueryRowContext(ctx, rebind(query), ns.String(), id.String())
 	record, err := scanCredentialRecord(row, ns, now)
 	if errors.Is(err, sql.ErrNoRows) {
 		return empty, domain.NewError(domain.ErrorCodeNotFound, "credential not found")
@@ -126,6 +179,49 @@ func (s *Store) ReadManagedCredential(ctx context.Context, ns, id domain.ID, now
 		return empty, mapSQLError("read credential", err)
 	}
 	return record, nil
+}
+
+func (s *Store) PreviewCredentialRevocation(ctx context.Context, ns, id domain.ID, now time.Time, access ports.SecurityAdminReadAccess) (ports.CredentialRevocationImpact, error) {
+	var empty ports.CredentialRevocationImpact
+	if ns.Validate() != nil || id.Validate() != nil || now.IsZero() || access.NamespaceID != ns || access.Now != now {
+		return empty, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid credential revocation preview")
+	}
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return empty, mapSQLError("begin credential revocation preview", err)
+	}
+	defer tx.Rollback()
+	if _, err = authorizeSecurityAdminReadTx(ctx, tx, access); err != nil {
+		return empty, err
+	}
+	impact, err := credentialRevocationImpactTx(ctx, tx, ns, id, now)
+	if err != nil {
+		return empty, err
+	}
+	return impact, tx.Commit()
+}
+
+func credentialRevocationImpactTx(ctx context.Context, tx *sql.Tx, ns, id domain.ID, now time.Time) (ports.CredentialRevocationImpact, error) {
+	var impact ports.CredentialRevocationImpact
+	var principal, digest string
+	if err := tx.QueryRowContext(ctx, `SELECT principal_id,digest FROM credentials WHERE namespace_id=$1 AND id=$2 AND parent_digest IS NULL`, ns.String(), id.String()).Scan(&principal, &digest); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return impact, domain.NewError(domain.ErrorCodeNotFound, "credential not found")
+		}
+		return impact, mapSQLError("read credential revocation target", err)
+	}
+	impact = ports.CredentialRevocationImpact{NamespaceID: ns, CredentialID: id, PrincipalID: principal, LegacyLeasesMayBeUnattributed: true, LegacyContractsMayBeUnattributed: true, AuthorityRemovedOnCommit: true}
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM credentials WHERE parent_digest=$1 AND revoked=0 AND expires_at>$2`, digest, encodeTime(now)).Scan(&impact.ActiveSessions); err != nil {
+		return ports.CredentialRevocationImpact{}, err
+	}
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM signed_work_contracts WHERE namespace_id=$1 AND credential_id=$2 AND status='active' AND expires_at>$3`, ns.String(), id.String(), encodeTime(now)).Scan(&impact.ActiveSignedWorkContracts); err != nil {
+		return ports.CredentialRevocationImpact{}, mapSQLError("count signed work contracts", err)
+	}
+	if err := tx.QueryRowContext(ctx, `SELECT count(*) FROM work_review_contracts WHERE namespace_id=$1 AND credential_id=$2 AND status='active' AND expires_at>$3`, ns.String(), id.String(), encodeTime(now)).Scan(&impact.ActiveSignedReviewContracts); err != nil {
+		return ports.CredentialRevocationImpact{}, mapSQLError("count signed review contracts", err)
+	}
+	impact.ExternalProcessesStopped = false
+	return impact, nil
 }
 
 type credentialRecordScanner interface{ Scan(...any) error }
@@ -198,6 +294,9 @@ func scanCredentialRecord(scanner credentialRecordScanner, ns domain.ID, now tim
 		out.Policy = &policy
 	}
 	var granted []ports.Permission
+	if grantCompatibility.Valid {
+		out.GrantPermissionCompatibilityVersion = uint32(grantCompatibility.Int64)
+	}
 	if grantJSON.Valid {
 		if err = unmarshalJSON(grantJSON.String, &granted); err != nil {
 			return out, err

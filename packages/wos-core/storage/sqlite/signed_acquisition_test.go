@@ -65,7 +65,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionTaskRenew, ports.PermissionWorkWrite, ports.PermissionRecordsWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionTaskRenew, ports.PermissionWorkWrite, ports.PermissionRecordsWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -319,7 +319,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					t.Fatal("clean restore lost durable original acquisition")
 				}
 			}
-			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 			if _, err = service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd); err == nil {
 				t.Fatal("stale authenticated bearer disclosed signed replay")
 			}

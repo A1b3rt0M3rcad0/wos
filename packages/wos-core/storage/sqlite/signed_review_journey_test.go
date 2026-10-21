@@ -49,7 +49,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -243,7 +243,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			}
 			// Grant review acquisition to the original Principal expressly: rejection must
 			// come from independence, not merely a missing permission.
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: identity.PrincipalID, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskReview, ports.PermissionWorkReviewAcquire, ports.PermissionRecordsWrite}}))
 			u, e = store.Begin(ctx)
 			must(e)
 			reg := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
@@ -268,7 +268,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 				t.Fatal("self review search acquired its own execution")
 			}
 			participant := func(principal string, permissions []ports.Permission) (a.Identity, context.Context, d.ID, ed25519.PrivateKey, d.CredentialPolicy) {
-				must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal, Permissions: permissions}))
+				must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: principal, Permissions: permissions}))
 				cred, token, e := sec.IssueCredential(adminCtx, ns, principal, d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: principal}, now.Add(time.Hour))
 				must(e)
 				id, e := sec.Authenticate(ctx, token)
@@ -420,7 +420,7 @@ func TestSignedReviewCorrectionJourneyWithoutExecutorAuthority(t *testing.T) {
 			if changesReceipt.Disposition != "changes_requested" || changesReceipt.WorkItemLifecycle != "in_progress" {
 				t.Fatal("changes requested incorrectly approved Task")
 			}
-			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 			executor, executorCtx, executorKey, executorPrivate, executorPolicy := participant("correction-executor", []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionRecordsWrite, ports.PermissionWorkReviewAcquire})
 			u, e = store.Begin(ctx)
 			must(e)

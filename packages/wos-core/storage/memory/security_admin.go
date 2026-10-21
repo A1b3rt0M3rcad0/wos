@@ -53,21 +53,8 @@ func (s *Store) ReadSecurityAdminReceipt(ctx context.Context, r ports.SecurityAd
 	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
 		return empty, false, d.NewError(d.ErrorCodeForbidden, "actor delegation denied")
 	}
-	if r.CredentialDigest != "" {
-		caller, found := state.Credentials[r.CredentialDigest]
-		if !found || caller.PrincipalID != r.PrincipalID || caller.NamespaceID != r.Command.NamespaceID || caller.Actor != r.Actor || caller.Revoked || !r.Now.Before(caller.ExpiresAt) {
-			return empty, false, d.NewError(d.ErrorCodeForbidden, "credential inactive")
-		}
-		if caller.ParentDigest != "" {
-			parent, found := state.Credentials[caller.ParentDigest]
-			if !found || parent.ParentDigest != "" || parent.PrincipalID != caller.PrincipalID || parent.NamespaceID != caller.NamespaceID || parent.Actor != caller.Actor || parent.Revoked || !r.Now.Before(parent.ExpiresAt) {
-				return empty, false, d.NewError(d.ErrorCodeForbidden, "session parent inactive")
-			}
-			caller = parent
-		}
-		if policy, found := state.Policies[securityKey(caller.NamespaceID, caller.ID.String())]; found && !policy.PermitsWithCompatibility(string(required), "", d.ID("")) {
-			return empty, false, d.NewError(d.ErrorCodeForbidden, "credential policy restricts security operation")
-		}
+	if _, err := authorizeMemorySecurityAdminRead(state, ports.SecurityAdminReadAccess{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, CredentialID: r.CallerCredentialID, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Permissions: []ports.Permission{required}, Now: r.Now}); err != nil {
+		return empty, false, err
 	}
 	receiptKey := securityKey(r.Command.NamespaceID, r.PrincipalID) + "/" + r.IdempotencyKey
 	previous, found := state.Receipts[receiptKey]
@@ -126,21 +113,9 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
 		return empty, d.NewError(d.ErrorCodeForbidden, "actor delegation denied")
 	}
-	if r.CredentialDigest != "" {
-		caller, found := state.Credentials[r.CredentialDigest]
-		if !found || caller.PrincipalID != r.PrincipalID || caller.NamespaceID != r.Command.NamespaceID || caller.Actor != r.Actor || caller.Revoked || !r.Now.Before(caller.ExpiresAt) {
-			return empty, d.NewError(d.ErrorCodeForbidden, "credential inactive")
-		}
-		if caller.ParentDigest != "" {
-			parent, found := state.Credentials[caller.ParentDigest]
-			if !found || parent.ParentDigest != "" || parent.PrincipalID != caller.PrincipalID || parent.NamespaceID != caller.NamespaceID || parent.Actor != caller.Actor || parent.Revoked || !r.Now.Before(parent.ExpiresAt) {
-				return empty, d.NewError(d.ErrorCodeForbidden, "session parent inactive")
-			}
-			caller = parent
-		}
-		if policy, found := state.Policies[securityKey(caller.NamespaceID, caller.ID.String())]; found && !policy.PermitsWithCompatibility(string(required), "", d.ID("")) {
-			return empty, d.NewError(d.ErrorCodeForbidden, "credential policy restricts security operation")
-		}
+	rootCredentialID, err := authorizeMemorySecurityAdminRead(state, ports.SecurityAdminReadAccess{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, CredentialID: r.CallerCredentialID, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Permissions: []ports.Permission{required}, Now: r.Now})
+	if err != nil {
+		return empty, err
 	}
 
 	receiptKey := securityKey(r.Command.NamespaceID, r.PrincipalID) + "/" + r.IdempotencyKey
@@ -158,6 +133,10 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	}
 	if version != r.Command.ExpectedVersion {
 		return empty, d.NewError(d.ErrorCodeVersionConflict, "namespace version changed")
+	}
+	beforeState, err := memorySecurityAdminBefore(state, r.Command, r.Now)
+	if err != nil {
+		return empty, err
 	}
 	result := ports.SecurityAdminResult{}
 	target := ""
@@ -194,7 +173,9 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if err := ports.ValidatePermissionValues(g.Permissions); err != nil {
 			return empty, err
 		}
-		state.Grants[securityKey(g.NamespaceID, g.PrincipalID)] = deepCopy(*g)
+		grant := deepCopy(*g)
+		grant.PermissionCompatibilityVersion = 0
+		state.Grants[securityKey(g.NamespaceID, g.PrincipalID)] = grant
 		target = g.PrincipalID
 	case "issue_credential":
 		credential := r.Command.Credential
@@ -232,6 +213,11 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		if r.Command.CredentialID.Validate() != nil {
 			return empty, d.NewError(d.ErrorCodeInvalidArgument, "credential ID required")
 		}
+		impact, impactErr := memoryCredentialRevocationImpact(state, s.signedContracts, s.signedReview.Contracts, r.Command.NamespaceID, r.Command.CredentialID, r.Now)
+		if impactErr != nil {
+			return empty, impactErr
+		}
+		result.RevocationImpact = &impact
 		found := false
 		for digest, credential := range state.Credentials {
 			if credential.NamespaceID == r.Command.NamespaceID && credential.ID == r.Command.CredentialID {
@@ -248,10 +234,32 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	default:
 		return empty, d.NewError(d.ErrorCodeInvalidArgument, "unknown security operation")
 	}
+	adminNamespace := r.Command.NamespaceID
+	if r.Command.Operation == "create_namespace" {
+		if result.CreatedNamespace == nil {
+			return empty, d.NewError(d.ErrorCodeInvalidTransition, "created Namespace missing from result")
+		}
+		adminNamespace = result.CreatedNamespace.ID
+	}
+	if err = ensureRecoverableAdminMemory(state, adminNamespace, r.Now); err != nil {
+		return empty, err
+	}
 
 	result.NamespaceVersion = version + 1
 	state.Versions[r.Command.NamespaceID] = result.NamespaceVersion
-	state.Audit[r.Command.NamespaceID] = append(state.Audit[r.Command.NamespaceID], ports.SecurityAudit{NamespaceVersion: result.NamespaceVersion, PrincipalID: r.PrincipalID, Actor: r.Actor, Operation: r.Command.Operation, Target: target, RecordedAt: r.Now.UTC()})
+	afterState, err := memorySecurityAdminAfter(state, r.Command, result, r.Now)
+	if err != nil {
+		return empty, err
+	}
+	beforeJSON, err := json.Marshal(beforeState)
+	if err != nil {
+		return empty, err
+	}
+	afterJSON, err := json.Marshal(afterState)
+	if err != nil {
+		return empty, err
+	}
+	state.Audit[r.Command.NamespaceID] = append(state.Audit[r.Command.NamespaceID], ports.SecurityAudit{NamespaceVersion: result.NamespaceVersion, PrincipalID: r.PrincipalID, Actor: r.Actor, AuthorCredentialID: r.CallerCredentialID, RootCredentialID: rootCredentialID, Operation: r.Command.Operation, Target: target, Reason: r.Command.Reason, Before: beforeJSON, After: afterJSON, RecordedAt: r.Now.UTC()})
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return empty, err
@@ -532,6 +540,27 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, namespace d.ID) (ports.Se
 	if err := ctx.Err(); err != nil {
 		return result, err
 	}
+	return s.readSecurityAdminLocked(namespace)
+}
+
+func (s *Store) ReadSecurityAdminAuthorized(ctx context.Context, access ports.SecurityAdminReadAccess) (ports.SecurityAdminSnapshot, error) {
+	var empty ports.SecurityAdminSnapshot
+	if err := ctx.Err(); err != nil {
+		return empty, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, err := authorizeMemorySecurityAdminRead(s.security, access); err != nil {
+		return empty, err
+	}
+	if err := ctx.Err(); err != nil {
+		return empty, err
+	}
+	return s.readSecurityAdminLocked(access.NamespaceID)
+}
+
+func (s *Store) readSecurityAdminLocked(namespace d.ID) (ports.SecurityAdminSnapshot, error) {
+	var result ports.SecurityAdminSnapshot
 	n, ok := s.security.Namespaces[namespace]
 	if !ok {
 		return result, missingSigning()
@@ -577,6 +606,221 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, namespace d.ID) (ports.Se
 		result.Truncated = true
 	}
 	return result, nil
+}
+
+func authorizeMemorySecurityAdminRead(state memorySecurityState, access ports.SecurityAdminReadAccess) (d.ID, error) {
+	denied := d.NewError(d.ErrorCodeForbidden, "credential or namespace permission inactive")
+	if access.NamespaceID.Validate() != nil || access.CredentialID.Validate() != nil || access.PrincipalID == "" || access.CredentialDigest == "" || access.Actor.Validate() != nil || access.Now.IsZero() || len(access.Permissions) == 0 {
+		return "", denied
+	}
+	if _, ok := state.Namespaces[access.NamespaceID]; !ok {
+		return "", denied
+	}
+	grant, ok := state.Grants[securityKey(access.NamespaceID, access.PrincipalID)]
+	if !ok {
+		return "", denied
+	}
+	for _, required := range access.Permissions {
+		allowed := false
+		for _, granted := range grant.Permissions {
+			allowed = allowed || required == granted
+		}
+		if !allowed {
+			return "", denied
+		}
+	}
+	caller, ok := state.Credentials[access.CredentialDigest]
+	if !ok || caller.ID != access.CredentialID || caller.PrincipalID != access.PrincipalID || caller.NamespaceID != access.NamespaceID || caller.Actor != access.Actor || caller.Revoked || !access.Now.Before(caller.ExpiresAt) {
+		return "", denied
+	}
+	root := caller
+	if caller.ParentDigest != "" {
+		root, ok = state.Credentials[caller.ParentDigest]
+		if !ok || root.ParentDigest != "" || root.PrincipalID != caller.PrincipalID || root.NamespaceID != caller.NamespaceID || root.Actor != caller.Actor || root.Revoked || !access.Now.Before(root.ExpiresAt) {
+			return "", denied
+		}
+	}
+	if policy, exists := state.Policies[securityKey(root.NamespaceID, root.ID.String())]; exists {
+		for _, required := range access.Permissions {
+			if !policy.PermitsWithCompatibility(string(required), "", "") {
+				return "", denied
+			}
+		}
+	}
+	return root.ID, nil
+}
+
+func memorySecurityAdminBefore(state memorySecurityState, command ports.SecurityAdminCommand, now time.Time) (map[string]any, error) {
+	before := map[string]any{"exists": false}
+	switch command.Operation {
+	case "set_grant":
+		if command.Grant == nil {
+			return before, nil
+		}
+		grant, found := state.Grants[securityKey(command.NamespaceID, command.Grant.PrincipalID)]
+		if !found {
+			return ports.SecurityAuditGrantState(false, nil, 0), nil
+		}
+		return ports.SecurityAuditGrantState(true, grant.Permissions, grant.PermissionCompatibilityVersion), nil
+	case "issue_credential", "create_namespace":
+		return before, nil
+	case "update_credential", "rotate_credential", "revoke_credential":
+		for _, credential := range state.Credentials {
+			if credential.NamespaceID == command.NamespaceID && credential.ID == command.CredentialID && credential.ParentDigest == "" {
+				return ports.SecurityAuditCredentialState(memoryCredentialAuditRecord(state, credential, now)), nil
+			}
+		}
+		return nil, d.NewError(d.ErrorCodeNotFound, "credential not found")
+	default:
+		return before, nil
+	}
+}
+
+func memoryCredentialAuditRecord(state memorySecurityState, credential ports.Credential, now time.Time) ports.CredentialAdministrativeRecord {
+	credential.Digest, credential.ParentDigest = "", ""
+	key := securityKey(credential.NamespaceID, credential.ID.String())
+	metadata := state.Metadata[key]
+	if metadata.CredentialID.IsZero() {
+		metadata = ports.CredentialMetadata{NamespaceID: credential.NamespaceID, CredentialID: credential.ID, Name: "Legacy credential"}
+	}
+	policy, hasPolicy := state.Policies[key]
+	grant := state.Grants[securityKey(credential.NamespaceID, credential.PrincipalID)]
+	record := ports.CredentialAdministrativeRecord{Credential: credential, Metadata: deepCopy(metadata), Status: credentialStatus(credential, now), GrantPermissionCompatibilityVersion: grant.PermissionCompatibilityVersion, PolicyExplicit: hasPolicy}
+	if hasPolicy {
+		copyPolicy := deepCopy(policy)
+		record.Policy = &copyPolicy
+		record.EffectivePolicy = copyPolicy
+		allowed := make(map[ports.Permission]struct{}, len(grant.Permissions))
+		for _, permission := range grant.Permissions {
+			allowed[permission] = struct{}{}
+		}
+		record.EffectivePolicy.PermittedOperations = make([]string, 0, len(policy.PermittedOperations))
+		for _, operation := range policy.PermittedOperations {
+			if _, ok := allowed[ports.Permission(operation)]; ok {
+				record.EffectivePolicy.PermittedOperations = append(record.EffectivePolicy.PermittedOperations, operation)
+			}
+		}
+		sort.Strings(record.EffectivePolicy.PermittedOperations)
+	} else {
+		record.EffectivePolicy = d.CredentialPolicy{NamespaceID: credential.NamespaceID, CredentialID: credential.ID, PrincipalID: credential.PrincipalID, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, PermissionCompatibilityVersion: grant.PermissionCompatibilityVersion}
+		for _, permission := range grant.Permissions {
+			record.EffectivePolicy.PermittedOperations = append(record.EffectivePolicy.PermittedOperations, string(permission))
+		}
+	}
+	sort.Strings(record.EffectivePolicy.PermittedOperations)
+	return record
+}
+
+func memorySecurityAdminAfter(state memorySecurityState, command ports.SecurityAdminCommand, result ports.SecurityAdminResult, now time.Time) (map[string]any, error) {
+	switch command.Operation {
+	case "set_grant":
+		if command.Grant == nil {
+			return nil, d.NewError(d.ErrorCodeInvalidArgument, "grant required for audit")
+		}
+		grant, ok := state.Grants[securityKey(command.Grant.NamespaceID, command.Grant.PrincipalID)]
+		if !ok {
+			return nil, d.NewError(d.ErrorCodeInvalidTransition, "updated grant missing from audit state")
+		}
+		return ports.SecurityAuditGrantState(true, grant.Permissions, grant.PermissionCompatibilityVersion), nil
+	case "issue_credential", "rotate_credential", "update_credential", "revoke_credential":
+		credentialID := command.CredentialID
+		if command.Operation != "revoke_credential" {
+			if result.Credential == nil {
+				return nil, d.NewError(d.ErrorCodeInvalidTransition, "credential result missing for audit")
+			}
+			credentialID = result.Credential.ID
+		}
+		for _, credential := range state.Credentials {
+			if credential.NamespaceID == command.NamespaceID && credential.ID == credentialID && credential.ParentDigest == "" {
+				projected := ports.SecurityAuditCredentialState(memoryCredentialAuditRecord(state, credential, now))
+				if result.RevocationImpact != nil {
+					projected["revocation_impact"] = result.RevocationImpact
+				}
+				return projected, nil
+			}
+		}
+		return nil, d.NewError(d.ErrorCodeNotFound, "credential not found for audit")
+	case "create_namespace":
+		if result.CreatedNamespace == nil || result.Credential == nil {
+			return nil, d.NewError(d.ErrorCodeInvalidTransition, "namespace result missing for audit")
+		}
+		grant, ok := state.Grants[securityKey(result.CreatedNamespace.ID, result.Credential.PrincipalID)]
+		if !ok {
+			return nil, d.NewError(d.ErrorCodeInvalidTransition, "initial Namespace grant missing from audit state")
+		}
+		var credential *ports.Credential
+		for _, candidate := range state.Credentials {
+			if candidate.NamespaceID == result.CreatedNamespace.ID && candidate.ID == result.Credential.ID && candidate.ParentDigest == "" {
+				copy := candidate
+				credential = &copy
+				break
+			}
+		}
+		if credential == nil {
+			return nil, d.NewError(d.ErrorCodeInvalidTransition, "initial Namespace credential missing from audit state")
+		}
+		return map[string]any{"exists": true, "namespace_id": result.CreatedNamespace.ID, "name": result.CreatedNamespace.Name, "initial_grant": ports.SecurityAuditGrantState(true, grant.Permissions, grant.PermissionCompatibilityVersion), "initial_credential": ports.SecurityAuditCredentialState(memoryCredentialAuditRecord(state, *credential, now))}, nil
+	default:
+		return map[string]any{"exists": true}, nil
+	}
+}
+
+func ensureRecoverableAdminMemory(state memorySecurityState, namespace d.ID, now time.Time) error {
+	candidates := []ports.Permission{ports.PermissionPermissionsManage, ports.PermissionCredentialsIssue, ports.PermissionCredentialsUpdate, ports.PermissionCredentialsRotate}
+	for _, credential := range state.Credentials {
+		if credential.NamespaceID != namespace || credential.ParentDigest != "" || credential.Revoked || !now.Before(credential.ExpiresAt) {
+			continue
+		}
+		grant, found := state.Grants[securityKey(namespace, credential.PrincipalID)]
+		if !found {
+			continue
+		}
+		policy, explicit := state.Policies[securityKey(namespace, credential.ID.String())]
+		for _, candidate := range candidates {
+			grantHas := false
+			for _, permission := range grant.Permissions {
+				grantHas = grantHas || permission == candidate
+			}
+			policyHas := !explicit || policy.PermitsWithCompatibility(string(candidate), "", "")
+			if grantHas && policyHas {
+				return nil
+			}
+		}
+	}
+	return d.NewError(d.ErrorCodeInvalidTransition, "operation would remove the last recoverable administrator credential")
+}
+
+func memoryCredentialRevocationImpact(state memorySecurityState, work map[string]d.WorkContract, reviews map[string]d.ReviewContract, namespace, id d.ID, now time.Time) (ports.CredentialRevocationImpact, error) {
+	var impact ports.CredentialRevocationImpact
+	var target ports.Credential
+	found := false
+	for _, credential := range state.Credentials {
+		if credential.NamespaceID == namespace && credential.ID == id && credential.ParentDigest == "" {
+			target, found = credential, true
+			break
+		}
+	}
+	if !found {
+		return impact, d.NewError(d.ErrorCodeNotFound, "credential not found")
+	}
+	impact = ports.CredentialRevocationImpact{NamespaceID: namespace, CredentialID: id, PrincipalID: target.PrincipalID, LegacyLeasesMayBeUnattributed: true, LegacyContractsMayBeUnattributed: true, AuthorityRemovedOnCommit: true}
+	for _, session := range state.Credentials {
+		if session.ParentDigest == target.Digest && !session.Revoked && now.Before(session.ExpiresAt) {
+			impact.ActiveSessions++
+		}
+	}
+	for _, contract := range work {
+		if contract.Scope.NamespaceID == namespace && contract.SignedBinding != nil && contract.SignedBinding.CredentialID == id && contract.Status == d.ContractActive && now.Before(contract.ExpiresAt) {
+			impact.ActiveSignedWorkContracts++
+		}
+	}
+	for _, contract := range reviews {
+		if contract.Scope.NamespaceID == namespace && contract.Binding.CredentialID == id && contract.Status == d.ContractActive && now.Before(contract.ExpiresAt) {
+			impact.ActiveSignedReviewContracts++
+		}
+	}
+	impact.ExternalProcessesStopped = false
+	return impact, nil
 }
 
 func (s *Store) ReadSecurityAdminVersion(ctx context.Context, namespace d.ID) (d.Version, error) {

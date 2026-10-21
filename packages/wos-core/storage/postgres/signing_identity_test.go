@@ -46,7 +46,7 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 			must(err)
 			adminCtx := application.WithIdentity(ctx, admin)
 			permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionWorkContractAcquire}
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: permissions}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: permissions}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, clock.Now().Add(time.Hour))
 			must(err)
 			namespaceVersion, err := store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(ctx, ns)
@@ -273,7 +273,7 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 				t.Fatal("concurrent registration duplicated key or weakened floor")
 			}
 			// A previously authenticated context is revalidated against live credential revocation.
-			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 			if _, err = sec.SigningOperation(agentCtx, "register-key-rotation-1"); err == nil {
 				t.Fatal("revoked bearer read durable receipt")
 			}

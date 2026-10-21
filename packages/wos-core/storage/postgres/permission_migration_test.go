@@ -45,7 +45,7 @@ func newPermissionMigrationFixture(t *testing.T, backend string) permissionMigra
 	}
 	adminCtx := application.WithIdentity(ctx, admin)
 	principal := "legacy-executor"
-	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: principal, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: principal, Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkWrite}}); err != nil {
 		t.Fatal(err)
 	}
 	actor := domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "legacy-executor"}
@@ -201,17 +201,24 @@ func TestPermissionMigrationDryRunApplyReplayAndStaleCAS(t *testing.T) {
 func TestPermissionMigrationDoesNotAcceptCallerSuppliedMarkerOrExpandEmptyGrant(t *testing.T) {
 	requirePostgres(t)
 	f := newPermissionMigrationFixture(t, "memory")
-	if err := f.security.SetGrant(f.adminCtx, ports.NamespaceGrant{NamespaceID: f.namespace, PrincipalID: "forged", PermissionCompatibilityVersion: ports.PermissionCompatibilityLegacyV1, Permissions: []ports.Permission{ports.PermissionWorkWrite}}); err == nil {
-		t.Fatal("ordinary grant API accepted a migration marker")
+	version, err := f.store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(f.adminCtx, f.namespace)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if err := f.security.SetGrant(f.adminCtx, ports.NamespaceGrant{NamespaceID: f.namespace, PrincipalID: "empty"}); err != nil {
+	if _, _, err = f.security.AdministrativeMutation(f.adminCtx, "permission-marker-forgery-0001", ports.SecurityAdminCommand{
+		NamespaceID: f.namespace, ExpectedVersion: version, Operation: "set_grant", Reason: "Reject caller supplied migration marker",
+		Grant: &ports.NamespaceGrant{NamespaceID: f.namespace, PrincipalID: "forged", PermissionCompatibilityVersion: ports.PermissionCompatibilityLegacyV1, Permissions: []ports.Permission{ports.PermissionWorkWrite}},
+	}); err == nil {
+		t.Fatal("administrative grant operation accepted a migration marker")
+	}
+	if err := f.security.Store.PutGrant(f.adminCtx, ports.NamespaceGrant{NamespaceID: f.namespace, PrincipalID: "empty"}); err != nil {
 		t.Fatal(err)
 	}
 	newCredential, _, err := f.security.IssueCredential(f.adminCtx, f.namespace, "empty", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "empty"}, time.Date(2026, 10, 21, 13, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
 	}
-	version, err := f.store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(context.Background(), f.namespace)
+	version, err = f.store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(context.Background(), f.namespace)
 	if err != nil {
 		t.Fatal(err)
 	}

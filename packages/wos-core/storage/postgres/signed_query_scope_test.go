@@ -57,7 +57,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			admin, err := sec.Authenticate(ctx, "read-scope-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "reader", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "reader"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -139,7 +139,7 @@ func TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation(t *te
 			} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
 				t.Fatalf("receipt snapshot did not enforce restriction: %v", e)
 			}
-			guarded.before = func() error { return sec.RevokeCredential(adminCtx, ns, credential.ID) }
+			guarded.before = func() error { return sec.Store.RevokeCredential(adminCtx, credential.ID) }
 			if _, err = racing.GetOutcome(readerCtx, d.Scope{NamespaceID: ns, OutcomeID: first}); err == nil {
 				t.Fatal("revocation between preflight and snapshot leaked state")
 			}

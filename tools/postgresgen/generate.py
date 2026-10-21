@@ -37,6 +37,16 @@ for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go',
   start=s.index('func (s *Store) ClaimDelivery(')
   s=s[:start]+s[start:].replace('sql.LevelSerializable','sql.LevelReadCommitted')
   s=s.replace('ORDER BY next_attempt,id LIMIT 1`','ORDER BY next_attempt,id LIMIT 1 FOR UPDATE SKIP LOCKED`')
+ if name=='security_admin.go':
+  # Authorized administrative reads lock the credential and grant rows to
+  # linearize disclosure against revocation. PostgreSQL does not permit row
+  # locks in a READ ONLY transaction, so keep these read-only-in-behavior
+  # transactions writable at the connection level while retaining SERIALIZABLE.
+  readonly_tx = 'BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelSerializable})'
+  readonly_tx_reversed = 'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable, ReadOnly: true})'
+  assert s.count(readonly_tx)==1 and s.count(readonly_tx_reversed)==1
+  s=s.replace(readonly_tx,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
+  s=s.replace(readonly_tx_reversed,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
  # Query fragments with placeholders need runtime rebinding after composition.
  if name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go','workspace_read.go','work_activity.go','queries.go','references.go','delivery_health.go','continuity_projection.go','focal_current.go','focal_records.go','graph_read.go','credential_management.go']:
   original=(source/name).read_text().replace('package sqlite','package postgres',1)
@@ -53,6 +63,12 @@ for name in ['workspace_placement.go','entity_notes.go','workspace_timeline.go',
      return '$'+str(counter)
     return match[1]+'`'+re.sub(r'\?',placeholder,query)+'`'
    s=re.sub(r'((?:QueryRowContext|QueryContext|ExecContext)\(ctx,\s*)`([^`]*)`',transform_direct_query,s)
+  if name=='credential_management.go':
+   # The query-fragment branch above reloads this file from the SQLite source,
+   # so apply PostgreSQL's locking transaction capability after that rewrite.
+   readonly_tx = 'BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelSerializable})'
+   assert s.count(readonly_tx)==3
+   s=s.replace(readonly_tx,'BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})')
  if name in ['work_activity.go','entity_notes.go']:
   s=s.replace('ExecContext(ctx, query,','ExecContext(ctx, rebind(query),').replace('ExecContext(ctx, q,','ExecContext(ctx, rebind(q),').replace('ExecContext(ctx,q,','ExecContext(ctx,rebind(q),').replace('QueryRowContext(ctx,q,','QueryRowContext(ctx,rebind(q),').replace('QueryRowContext(ctx, q,','QueryRowContext(ctx, rebind(q),')
  if name=='workspace_read.go':
@@ -121,6 +137,14 @@ for p in (source/'migrations').glob('*.sql'):
     CHECK (completion_cycle >= 1 AND completion_cycle <= 18446744073709551615);"""
   assert sqlite_cycle_column in sql, 'migration 0037 SQLite completion_cycle contract changed'
   sql=sql.replace(sqlite_cycle_column,postgres_cycle_column)
+ if p.name=='0041_security_audit_details.sql':
+  # SQLite's json_valid() is not available in PostgreSQL. A cast to jsonb
+  # performs the same validity check when the row is written; jsonb_typeof
+  # also accepts every JSON value that SQLite accepts (including scalars).
+  assert sql.count('CHECK (json_valid(before_json))')==1
+  assert sql.count('CHECK (json_valid(after_json))')==1
+  sql=sql.replace('CHECK (json_valid(before_json))','CHECK (jsonb_typeof(before_json::jsonb) IS NOT NULL)')
+  sql=sql.replace('CHECK (json_valid(after_json))','CHECK (jsonb_typeof(after_json::jsonb) IS NOT NULL)')
  # PostgreSQL stores booleans as integer in this shared schema, matching existing
  # relational DTO codecs and preserving all checks. Credential code adapts its bool.
  (target/'migrations'/p.name).write_text(sql)

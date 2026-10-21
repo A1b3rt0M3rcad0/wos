@@ -52,8 +52,8 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 					must(err)
 					adminCtx := a.WithIdentity(ctx, admin)
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+					must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+					must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 					credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 					must(err)
 					identity, err := sec.Authenticate(ctx, token)
@@ -445,7 +445,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						must(err)
 						must(policyUOW.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, tightened, policy.Version))
 						must(policyUOW.Commit())
-						must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{
+						must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{
 							ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite,
 							ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn,
 							ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite,
@@ -537,7 +537,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
 						t.Fatalf("wrong historical CID error: %v", e)
 					}
-					must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+					must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
 						t.Fatal("revoked bearer disclosed receipt")
 					}

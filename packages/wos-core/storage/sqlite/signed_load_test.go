@@ -71,7 +71,7 @@ func TestSignedWorkReviewLoadMatrix(t *testing.T) {
 					must(e)
 					must(service.ConfigureSignedIssuer(ctx, acquisitionIssuer{issuer, private}, d.AcceptanceIndependentReview))
 					participant := func(name string, permissions []ports.Permission) signedLoadParticipant {
-						must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: name, Permissions: permissions}))
+						must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: name, Permissions: permissions}))
 						cred, token, e := sec.IssueCredential(adminCtx, ns, name, d.ActorRef{Kind: d.ActorKindAgent, Provider: "signed-load", ID: name}, now.Add(time.Hour))
 						must(e)
 						identity, e := sec.Authenticate(ctx, token)

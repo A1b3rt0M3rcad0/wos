@@ -109,6 +109,10 @@ func TestBrowserSessionCatalogAndRevocation(t *testing.T) {
 		if rec.Code != 401 {
 			t.Fatal("logout did not revoke stored session", rec.Code)
 		}
+		rootCredential, err := runtime.store.GetCredential(t.Context(), application.TokenDigest(cfg.Auth.BootstrapToken))
+		if err != nil || rootCredential.Revoked {
+			t.Fatalf("logging out revoked the parent credential instead of only its browser session: credential=%+v err=%v", rootCredential, err)
+		}
 
 	})
 }

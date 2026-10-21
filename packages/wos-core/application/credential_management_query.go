@@ -22,6 +22,7 @@ type CredentialUpdateIntent struct {
 	Description              string
 	ExpiresAt                *time.Time
 	Policy                   *domain.CredentialPolicy
+	Reason                   string
 }
 
 type CredentialRotationIntent struct {
@@ -34,13 +35,11 @@ type CredentialRotationIntent struct {
 	OverlapUntil             time.Time
 	Name                     string
 	Description              string
+	Reason                   string
 }
 
 func (s SecurityService) ListCredentials(ctx context.Context, ns domain.ID, query ports.CredentialManagementQuery) (ports.CredentialManagementPage, error) {
-	if err := s.Require(ctx, ns, ports.PermissionCredentialsRead); err != nil {
-		return ports.CredentialManagementPage{}, err
-	}
-	reader, ok := s.Store.(ports.CredentialManagementReader)
+	reader, ok := s.Store.(ports.AuthorizedCredentialManagementReader)
 	if !ok {
 		return ports.CredentialManagementPage{}, domain.NewError(domain.ErrorCodeInvalidConfig, "credential management unavailable")
 	}
@@ -50,19 +49,36 @@ func (s SecurityService) ListCredentials(ctx context.Context, ns domain.ID, quer
 	if query.Limit < 1 || query.Limit > 100 {
 		return ports.CredentialManagementPage{}, domain.NewError(domain.ErrorCodeInvalidArgument, "credential page limit must be between 1 and 100")
 	}
-	query.NamespaceID, query.Now = ns, s.Clock.Now().UTC()
-	return reader.ListManagedCredentials(ctx, query)
+	access, err := s.securityAdminReadAccess(ctx, ns, []ports.Permission{ports.PermissionCredentialsRead})
+	if err != nil {
+		return ports.CredentialManagementPage{}, err
+	}
+	query.NamespaceID, query.Now = ns, access.Now
+	return reader.ListManagedCredentialsAuthorized(ctx, query, access)
 }
 
 func (s SecurityService) GetCredential(ctx context.Context, ns, id domain.ID) (ports.CredentialAdministrativeRecord, error) {
-	if err := s.Require(ctx, ns, ports.PermissionCredentialsRead); err != nil {
-		return ports.CredentialAdministrativeRecord{}, err
-	}
-	reader, ok := s.Store.(ports.CredentialManagementReader)
+	reader, ok := s.Store.(ports.AuthorizedCredentialManagementReader)
 	if !ok {
 		return ports.CredentialAdministrativeRecord{}, domain.NewError(domain.ErrorCodeInvalidConfig, "credential management unavailable")
 	}
-	return reader.ReadManagedCredential(ctx, ns, id, s.Clock.Now().UTC())
+	access, err := s.securityAdminReadAccess(ctx, ns, []ports.Permission{ports.PermissionCredentialsRead})
+	if err != nil {
+		return ports.CredentialAdministrativeRecord{}, err
+	}
+	return reader.ReadManagedCredentialAuthorized(ctx, ns, id, access.Now, access)
+}
+
+func (s SecurityService) PreviewCredentialRevocation(ctx context.Context, ns, id domain.ID) (ports.CredentialRevocationImpact, error) {
+	reader, ok := s.Store.(ports.AuthorizedCredentialManagementReader)
+	if !ok {
+		return ports.CredentialRevocationImpact{}, domain.NewError(domain.ErrorCodeInvalidConfig, "credential management unavailable")
+	}
+	access, err := s.securityAdminReadAccess(ctx, ns, []ports.Permission{ports.PermissionCredentialsRevoke})
+	if err != nil {
+		return ports.CredentialRevocationImpact{}, err
+	}
+	return reader.PreviewCredentialRevocation(ctx, ns, id, access.Now, access)
 }
 
 // UpdateCredential changes descriptive metadata, expiration, and optionally
@@ -131,7 +147,7 @@ func (s SecurityService) UpdateCredential(ctx context.Context, key string, in Cr
 		}
 		policy = &candidate
 	}
-	cmd := ports.SecurityAdminCommand{NamespaceID: in.NamespaceID, ExpectedVersion: in.ExpectedNamespaceVersion, Operation: "update_credential", CredentialID: in.CredentialID, ExpectedMetadataRevision: in.ExpectedMetadataRevision, ExpectedPolicyRevision: in.ExpectedPolicyRevision, CredentialName: name, CredentialDescription: description, CredentialPolicy: policy, CredentialExpiresAt: &expires}
+	cmd := ports.SecurityAdminCommand{NamespaceID: in.NamespaceID, ExpectedVersion: in.ExpectedNamespaceVersion, Operation: "update_credential", CredentialID: in.CredentialID, ExpectedMetadataRevision: in.ExpectedMetadataRevision, ExpectedPolicyRevision: in.ExpectedPolicyRevision, CredentialName: name, CredentialDescription: description, CredentialPolicy: policy, CredentialExpiresAt: &expires, Reason: in.Reason}
 	result, _, err := s.AdministrativeMutation(ctx, key, cmd)
 	return result, err
 }
@@ -155,6 +171,6 @@ func (s SecurityService) RotateCredential(ctx context.Context, key string, in Cr
 	if !expires.After(now) || expires.After(now.Add(366*24*time.Hour)) || !overlap.After(now) || overlap.After(expires) {
 		return ports.SecurityAdminResult{}, "", domain.NewError(domain.ErrorCodeInvalidArgument, "rotation requires bounded expiration and explicit overlap")
 	}
-	cmd := ports.SecurityAdminCommand{NamespaceID: in.NamespaceID, ExpectedVersion: in.ExpectedNamespaceVersion, Operation: "rotate_credential", CredentialID: in.CredentialID, ExpectedMetadataRevision: in.ExpectedMetadataRevision, ExpectedPolicyRevision: in.ExpectedPolicyRevision, CredentialName: name, CredentialDescription: description, CredentialExpiresAt: &expires, OverlapUntil: &overlap}
+	cmd := ports.SecurityAdminCommand{NamespaceID: in.NamespaceID, ExpectedVersion: in.ExpectedNamespaceVersion, Operation: "rotate_credential", CredentialID: in.CredentialID, ExpectedMetadataRevision: in.ExpectedMetadataRevision, ExpectedPolicyRevision: in.ExpectedPolicyRevision, CredentialName: name, CredentialDescription: description, CredentialExpiresAt: &expires, OverlapUntil: &overlap, Reason: in.Reason}
 	return s.AdministrativeMutation(ctx, key, cmd)
 }

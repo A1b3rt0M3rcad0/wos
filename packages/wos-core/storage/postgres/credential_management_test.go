@@ -34,7 +34,7 @@ func TestCredentialLifecycleListUpdateRotationAndUseObservation(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminCtx := application.WithIdentity(ctx, adminIdentity)
-	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	workerActor := domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "worker-agent"}

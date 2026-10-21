@@ -10,6 +10,15 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
 
+func TestSecurityServiceDoesNotExposeUnauditedAdminWriteWrappers(t *testing.T) {
+	typeOfSecurityService := reflect.TypeOf(SecurityService{})
+	for _, name := range []string{"SetGrant", "RevokeCredential"} {
+		if _, exists := typeOfSecurityService.MethodByName(name); exists {
+			t.Fatalf("SecurityService.%s bypasses the audited CAS administrative mutation pipeline", name)
+		}
+	}
+}
+
 func TestPrepareCredentialIssuanceMaterializesAndBoundsTemplate(t *testing.T) {
 	namespaceID := domain.MustParseID("0199f901-0000-7000-8000-000000000001")
 	credentialID := domain.MustParseID("0199f901-0000-7000-8000-000000000002")

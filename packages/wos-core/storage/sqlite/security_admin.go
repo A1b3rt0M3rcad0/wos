@@ -46,35 +46,9 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
 		return result, domain.NewError(domain.ErrorCodeForbidden, "actor delegation denied")
 	}
-	if r.CredentialDigest != "" {
-		var principal, ns, actor, parent, rootDigest string
-		var expires int64
-		var revoked int
-		err = tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &expires, &revoked)
-		var binding domain.ActorRef
-		if err != nil || principal != r.PrincipalID || ns != r.Command.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
-			return result, domain.NewError(domain.ErrorCodeForbidden, "credential inactive")
-		}
-		if parent != "" {
-			var active int
-			err = tx.QueryRowContext(ctx, `SELECT count(*) FROM credentials WHERE digest=? AND principal_id=? AND namespace_id=? AND revoked=0 AND expires_at>? AND parent_digest IS NULL`, parent, principal, ns, encodeTime(r.Now)).Scan(&active)
-			if err != nil || active != 1 {
-				return result, domain.NewError(domain.ErrorCodeForbidden, "session parent inactive")
-			}
-			rootDigest = parent
-		} else {
-			rootDigest = r.CredentialDigest
-		}
-		var policyJSON string
-		policyErr := tx.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE namespace_id=? AND credential_id=(SELECT id FROM credentials WHERE digest=?) AND principal_id=?`, r.Command.NamespaceID.String(), rootDigest, r.PrincipalID).Scan(&policyJSON)
-		if policyErr == nil {
-			var policy domain.CredentialPolicy
-			if unmarshalJSON(policyJSON, &policy) != nil || !policy.PermitsWithCompatibility(string(required), "", domain.ID("")) {
-				return result, domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts security operation")
-			}
-		} else if !errors.Is(policyErr, sql.ErrNoRows) {
-			return result, mapSQLError("read issuer credential policy", policyErr)
-		}
+	rootCredentialID, err := authorizeSecurityAdminReadTx(ctx, tx, ports.SecurityAdminReadAccess{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, CredentialID: r.CallerCredentialID, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Permissions: []ports.Permission{required}, Now: r.Now})
+	if err != nil {
+		return result, err
 	}
 	var fingerprint, payload string
 	err = tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM security_admin_results WHERE namespace_id=? AND principal_id=? AND idempotency_key=?`, r.Command.NamespaceID.String(), r.PrincipalID, r.IdempotencyKey).Scan(&fingerprint, &payload)
@@ -94,6 +68,10 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	}
 	if domain.Version(version) != r.Command.ExpectedVersion {
 		return result, domain.NewError(domain.ErrorCodeVersionConflict, "namespace version changed")
+	}
+	beforeState, err := securityAdminBeforeTx(ctx, tx, r.Command, r.Now)
+	if err != nil {
+		return result, err
 	}
 	target := ""
 	switch r.Command.Operation {
@@ -183,6 +161,11 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		result.CredentialMetadata = &metadata
 	case "revoke_credential":
 		target = r.Command.CredentialID.String()
+		impact, impactErr := credentialRevocationImpactTx(ctx, tx, r.Command.NamespaceID, r.Command.CredentialID, r.Now)
+		if impactErr != nil {
+			return result, impactErr
+		}
+		result.RevocationImpact = &impact
 		updated, err := tx.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE namespace_id=? AND id=?`, r.Command.NamespaceID.String(), target)
 		if err != nil {
 			return result, err
@@ -193,6 +176,16 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 	default:
 		return result, domain.NewError(domain.ErrorCodeInvalidArgument, "unknown security operation")
+	}
+	adminNamespace := r.Command.NamespaceID
+	if r.Command.Operation == "create_namespace" {
+		if result.CreatedNamespace == nil {
+			return result, domain.NewError(domain.ErrorCodeInvalidTransition, "created Namespace missing from result")
+		}
+		adminNamespace = result.CreatedNamespace.ID
+	}
+	if err = ensureRecoverableAdminTx(ctx, tx, adminNamespace, r.Now); err != nil {
+		return result, err
 	}
 	result.NamespaceVersion = domain.Version(version + 1)
 	updated, err := tx.ExecContext(ctx, `UPDATE namespaces SET version=version+1,updated_at=? WHERE id=? AND version=?`, encodeTime(r.Now), r.Command.NamespaceID.String(), version)
@@ -207,7 +200,19 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 	if err != nil {
 		return result, err
 	}
-	_, err = tx.ExecContext(ctx, `INSERT INTO security_audit(namespace_id,namespace_version,principal_id,actor_json,operation,target,recorded_at) VALUES(?,?,?,?,?,?,?)`, r.Command.NamespaceID.String(), int64(result.NamespaceVersion), r.PrincipalID, actor, r.Command.Operation, target, encodeTime(r.Now))
+	afterState, err := securityAdminAfterTx(ctx, tx, r.Command, result, r.Now)
+	if err != nil {
+		return result, err
+	}
+	beforeJSON, err := marshalJSON(beforeState)
+	if err != nil {
+		return result, err
+	}
+	afterJSON, err := marshalJSON(afterState)
+	if err != nil {
+		return result, err
+	}
+	_, err = tx.ExecContext(ctx, `INSERT INTO security_audit(namespace_id,namespace_version,principal_id,actor_json,author_credential_id,root_credential_id,operation,target,reason,before_json,after_json,recorded_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`, r.Command.NamespaceID.String(), int64(result.NamespaceVersion), r.PrincipalID, actor, r.CallerCredentialID.String(), rootCredentialID.String(), r.Command.Operation, target, r.Command.Reason, string(beforeJSON), string(afterJSON), encodeTime(r.Now))
 	if err != nil {
 		return result, mapSQLError("append security audit", err)
 	}
@@ -220,6 +225,136 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		return result, mapSQLError("persist security receipt", err)
 	}
 	return result, mapSQLError("commit security administration", tx.Commit())
+}
+
+func securityAdminBeforeTx(ctx context.Context, tx *sql.Tx, command ports.SecurityAdminCommand, now time.Time) (map[string]any, error) {
+	before := map[string]any{"exists": false}
+	switch command.Operation {
+	case "set_grant":
+		if command.Grant == nil {
+			return before, nil
+		}
+		var permissionsJSON string
+		var compatibility uint32
+		err := tx.QueryRowContext(ctx, `SELECT permissions_json,permission_compatibility_version FROM namespace_grants WHERE namespace_id=? AND principal_id=?`, command.NamespaceID.String(), command.Grant.PrincipalID).Scan(&permissionsJSON, &compatibility)
+		if errors.Is(err, sql.ErrNoRows) {
+			return ports.SecurityAuditGrantState(false, nil, 0), nil
+		}
+		if err != nil {
+			return nil, mapSQLError("read prior namespace grant", err)
+		}
+		var permissions []ports.Permission
+		if unmarshalJSON(permissionsJSON, &permissions) != nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidTransition, "stored namespace grant is corrupt")
+		}
+		return ports.SecurityAuditGrantState(true, permissions, compatibility), nil
+	case "issue_credential", "create_namespace":
+		return before, nil
+	case "update_credential", "rotate_credential", "revoke_credential":
+		record, err := readManagedCredential(ctx, tx, command.NamespaceID, command.CredentialID, now)
+		if err != nil {
+			return nil, err
+		}
+		return ports.SecurityAuditCredentialState(record), nil
+	default:
+		return before, nil
+	}
+}
+
+func securityAdminAfterTx(ctx context.Context, tx *sql.Tx, command ports.SecurityAdminCommand, result ports.SecurityAdminResult, now time.Time) (map[string]any, error) {
+	switch command.Operation {
+	case "set_grant":
+		if command.Grant == nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "grant required for audit")
+		}
+		var raw string
+		var compatibility uint32
+		if err := tx.QueryRowContext(ctx, `SELECT permissions_json,permission_compatibility_version FROM namespace_grants WHERE namespace_id=? AND principal_id=?`, command.NamespaceID.String(), command.Grant.PrincipalID).Scan(&raw, &compatibility); err != nil {
+			return nil, err
+		}
+		var permissions []ports.Permission
+		if unmarshalJSON(raw, &permissions) != nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidTransition, "stored namespace grant is corrupt")
+		}
+		return ports.SecurityAuditGrantState(true, permissions, compatibility), nil
+	case "issue_credential", "update_credential", "rotate_credential", "revoke_credential":
+		credentialID := command.CredentialID
+		if command.Operation == "issue_credential" || command.Operation == "rotate_credential" {
+			if result.Credential == nil {
+				return nil, domain.NewError(domain.ErrorCodeInvalidTransition, "credential result missing for audit")
+			}
+			credentialID = result.Credential.ID
+		}
+		record, err := readManagedCredential(ctx, tx, command.NamespaceID, credentialID, now)
+		if err != nil {
+			return nil, err
+		}
+		state := ports.SecurityAuditCredentialState(record)
+		if result.RevocationImpact != nil {
+			state["revocation_impact"] = result.RevocationImpact
+		}
+		return state, nil
+	case "create_namespace":
+		if result.CreatedNamespace == nil || result.Credential == nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidTransition, "namespace result missing for audit")
+		}
+		record, err := readManagedCredential(ctx, tx, result.CreatedNamespace.ID, result.Credential.ID, now)
+		if err != nil {
+			return nil, err
+		}
+		var raw string
+		var compatibility uint32
+		if err = tx.QueryRowContext(ctx, `SELECT permissions_json,permission_compatibility_version FROM namespace_grants WHERE namespace_id=? AND principal_id=?`, result.CreatedNamespace.ID.String(), result.Credential.PrincipalID).Scan(&raw, &compatibility); err != nil {
+			return nil, err
+		}
+		var permissions []ports.Permission
+		if unmarshalJSON(raw, &permissions) != nil {
+			return nil, domain.NewError(domain.ErrorCodeInvalidTransition, "stored initial Namespace grant is corrupt")
+		}
+		return map[string]any{"exists": true, "namespace_id": result.CreatedNamespace.ID, "name": result.CreatedNamespace.Name, "initial_grant": ports.SecurityAuditGrantState(true, permissions, compatibility), "initial_credential": ports.SecurityAuditCredentialState(record)}, nil
+	default:
+		return map[string]any{"exists": true}, nil
+	}
+}
+
+func ensureRecoverableAdminTx(ctx context.Context, tx *sql.Tx, ns domain.ID, now time.Time) error {
+	rows, err := tx.QueryContext(ctx, `SELECT c.id,c.expires_at,g.permissions_json,p.state_json FROM credentials c JOIN namespace_grants g ON g.namespace_id=c.namespace_id AND g.principal_id=c.principal_id JOIN principals pr ON pr.id=c.principal_id AND pr.lifecycle='active' LEFT JOIN credential_policies p ON p.namespace_id=c.namespace_id AND p.credential_id=c.id WHERE c.namespace_id=? AND c.parent_digest IS NULL AND c.revoked=0 AND c.expires_at>?`, ns.String(), encodeTime(now))
+	if err != nil {
+		return mapSQLError("check recoverable administrator", err)
+	}
+	defer rows.Close()
+	adminPermissions := []ports.Permission{ports.PermissionPermissionsManage, ports.PermissionCredentialsIssue, ports.PermissionCredentialsUpdate, ports.PermissionCredentialsRotate}
+	for rows.Next() {
+		var id string
+		var expires int64
+		var grantJSON string
+		var policyJSON sql.NullString
+		if err = rows.Scan(&id, &expires, &grantJSON, &policyJSON); err != nil {
+			return err
+		}
+		var granted []ports.Permission
+		if unmarshalJSON(grantJSON, &granted) != nil {
+			return domain.NewError(domain.ErrorCodeInvalidTransition, "stored namespace grant is corrupt")
+		}
+		var policy domain.CredentialPolicy
+		if policyJSON.Valid && unmarshalJSON(policyJSON.String, &policy) != nil {
+			return domain.NewError(domain.ErrorCodeInvalidTransition, "stored credential policy is corrupt")
+		}
+		for _, candidate := range adminPermissions {
+			grantHas := false
+			for _, grantedPermission := range granted {
+				grantHas = grantHas || candidate == grantedPermission
+			}
+			policyHas := !policyJSON.Valid || policy.PermitsWithCompatibility(string(candidate), "", "")
+			if grantHas && policyHas {
+				return nil
+			}
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	return domain.NewError(domain.ErrorCodeInvalidTransition, "operation would remove the last recoverable administrator credential")
 }
 
 func persistCredentialBundle(ctx context.Context, tx *sql.Tx, credential *ports.Credential, policy *domain.CredentialPolicy, metadata *ports.CredentialMetadata, grant ports.NamespaceGrant, now time.Time, issuerPrincipal string, issuerActor domain.ActorRef) error {
@@ -290,12 +425,35 @@ func persistCredentialBundle(ctx context.Context, tx *sql.Tx, credential *ports.
 }
 
 func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.SecurityAdminSnapshot, error) {
+	return s.readSecurityAdmin(ctx, ns, nil)
+}
+
+func (s *Store) ReadSecurityAdminAuthorized(ctx context.Context, access ports.SecurityAdminReadAccess) (ports.SecurityAdminSnapshot, error) {
+	return s.readSecurityAdmin(ctx, access.NamespaceID, &access)
+}
+
+func (s *Store) readSecurityAdmin(ctx context.Context, ns domain.ID, access *ports.SecurityAdminReadAccess) (ports.SecurityAdminSnapshot, error) {
 	var result ports.SecurityAdminSnapshot
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelSerializable})
 	if err != nil {
 		return result, err
 	}
 	defer tx.Rollback()
+	if access != nil {
+		if _, err = authorizeSecurityAdminReadTx(ctx, tx, *access); err != nil {
+			return result, err
+		}
+	}
+	result, err = readSecurityAdminTx(ctx, tx, ns)
+	if err != nil {
+		return ports.SecurityAdminSnapshot{}, err
+	}
+	return result, tx.Commit()
+}
+
+func readSecurityAdminTx(ctx context.Context, tx *sql.Tx, ns domain.ID) (ports.SecurityAdminSnapshot, error) {
+	var result ports.SecurityAdminSnapshot
+	var err error
 	result.Namespace.ID = ns
 	err = tx.QueryRowContext(ctx, `SELECT name,version FROM namespaces WHERE id=? AND lifecycle='active'`, ns.String()).Scan(&result.Namespace.Name, &result.NamespaceVersion)
 	if err != nil {
@@ -365,22 +523,39 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 	if err != nil {
 		return result, err
 	}
-	rows, err = tx.QueryContext(ctx, `SELECT namespace_version,principal_id,actor_json,operation,target,recorded_at FROM security_audit WHERE namespace_id=? ORDER BY namespace_version DESC LIMIT 101`, ns.String())
+	rows, err = tx.QueryContext(ctx, `SELECT namespace_version,principal_id,actor_json,author_credential_id,root_credential_id,operation,target,reason,before_json,after_json,recorded_at FROM security_audit WHERE namespace_id=? ORDER BY namespace_version DESC LIMIT 101`, ns.String())
 	if err != nil {
 		return result, err
 	}
 	for rows.Next() {
 		var a ports.SecurityAudit
-		var actor string
+		var actor, reason, beforeJSON, afterJSON string
+		var authorID, rootID sql.NullString
 		var at int64
-		if err = rows.Scan(&a.NamespaceVersion, &a.PrincipalID, &actor, &a.Operation, &a.Target, &at); err != nil {
+		if err = rows.Scan(&a.NamespaceVersion, &a.PrincipalID, &actor, &authorID, &rootID, &a.Operation, &a.Target, &reason, &beforeJSON, &afterJSON, &at); err != nil {
 			rows.Close()
 			return result, err
+		}
+		if authorID.Valid {
+			a.AuthorCredentialID, err = domain.ParseID(authorID.String)
+			if err != nil {
+				rows.Close()
+				return result, err
+			}
+		}
+		if rootID.Valid {
+			a.RootCredentialID, err = domain.ParseID(rootID.String)
+			if err != nil {
+				rows.Close()
+				return result, err
+			}
 		}
 		if err = unmarshalJSON(actor, &a.Actor); err != nil {
 			rows.Close()
 			return result, err
 		}
+		a.Reason = reason
+		a.Before, a.After = json.RawMessage(append([]byte(nil), beforeJSON...)), json.RawMessage(append([]byte(nil), afterJSON...))
 		a.RecordedAt = decodeTime(at)
 		result.Audit = append(result.Audit, a)
 	}
@@ -394,7 +569,7 @@ func (s *Store) ReadSecurityAdmin(ctx context.Context, ns domain.ID) (ports.Secu
 	result.Credentials = result.Credentials[:min(len(result.Credentials), 100)]
 	result.CredentialMetadata = result.CredentialMetadata[:min(len(result.CredentialMetadata), 100)]
 	result.Audit = result.Audit[:min(len(result.Audit), 100)]
-	return result, tx.Commit()
+	return result, nil
 }
 
 func (s *Store) ReadSecurityAdminVersion(ctx context.Context, ns domain.ID) (domain.Version, error) {
@@ -448,35 +623,8 @@ func (s *Store) ReadSecurityAdminReceipt(ctx context.Context, r ports.SecurityAd
 	if r.Command.Credential != nil && r.Command.Credential.Actor != r.Actor && !delegate {
 		return result, false, domain.NewError(domain.ErrorCodeForbidden, "actor delegation denied")
 	}
-	if r.CredentialDigest != "" {
-		var principal, ns, actor, parent, rootDigest string
-		var expires int64
-		var revoked int
-		err = tx.QueryRowContext(ctx, `SELECT principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=?`, r.CredentialDigest).Scan(&principal, &ns, &actor, &parent, &expires, &revoked)
-		var binding domain.ActorRef
-		if err != nil || principal != r.PrincipalID || ns != r.Command.NamespaceID.String() || revoked != 0 || expires <= encodeTime(r.Now) || unmarshalJSON(actor, &binding) != nil || binding != r.Actor {
-			return result, false, domain.NewError(domain.ErrorCodeForbidden, "credential inactive")
-		}
-		if parent != "" {
-			var active int
-			err = tx.QueryRowContext(ctx, `SELECT count(*) FROM credentials WHERE digest=? AND principal_id=? AND namespace_id=? AND revoked=0 AND expires_at>? AND parent_digest IS NULL`, parent, principal, ns, encodeTime(r.Now)).Scan(&active)
-			if err != nil || active != 1 {
-				return result, false, domain.NewError(domain.ErrorCodeForbidden, "session parent inactive")
-			}
-			rootDigest = parent
-		} else {
-			rootDigest = r.CredentialDigest
-		}
-		var policyJSON string
-		policyErr := tx.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE namespace_id=? AND credential_id=(SELECT id FROM credentials WHERE digest=?) AND principal_id=?`, r.Command.NamespaceID.String(), rootDigest, r.PrincipalID).Scan(&policyJSON)
-		if policyErr == nil {
-			var policy domain.CredentialPolicy
-			if unmarshalJSON(policyJSON, &policy) != nil || !policy.PermitsWithCompatibility(string(required), "", domain.ID("")) {
-				return result, false, domain.NewError(domain.ErrorCodeForbidden, "credential policy restricts security operation")
-			}
-		} else if !errors.Is(policyErr, sql.ErrNoRows) {
-			return result, false, mapSQLError("read issuer credential policy", policyErr)
-		}
+	if _, err = authorizeSecurityAdminReadTx(ctx, tx, ports.SecurityAdminReadAccess{NamespaceID: r.Command.NamespaceID, PrincipalID: r.PrincipalID, CredentialID: r.CallerCredentialID, CredentialDigest: r.CredentialDigest, Actor: r.Actor, Permissions: []ports.Permission{required}, Now: r.Now}); err != nil {
+		return result, false, err
 	}
 	var fingerprint, payload string
 	err = tx.QueryRowContext(ctx, `SELECT fingerprint,result_json FROM security_admin_results WHERE namespace_id=? AND principal_id=? AND idempotency_key=?`, r.Command.NamespaceID.String(), r.PrincipalID, r.IdempotencyKey).Scan(&fingerprint, &payload)

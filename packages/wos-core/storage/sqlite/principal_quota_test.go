@@ -231,7 +231,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			second, secondCtx := participant(f.cc.PrincipalID, d.ID(f.request.SignerKeyID), cp)
 			_, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 1)
 			must(e)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 			foreign, foreignCtx := participant("another-executor", foreignKey, cp)
 			_, e = acquire(foreignCtx, foreign.PrincipalID, foreign.Actor, foreignKey, 2)
@@ -239,7 +239,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); e == nil || !strings.Contains(e.Error(), "Namespace") {
 				t.Fatal("two Principals bypassed Namespace ceiling", e)
 			}
-			must(sec.RevokeCredential(adminCtx, ns, second.CredentialID))
+			must(sec.Store.RevokeCredential(adminCtx, second.CredentialID))
 			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); securityErrorCode(e) != d.ErrorCodeForbidden {
 				t.Fatal("stale authenticated context bypassed CID revocation", e)
 			}

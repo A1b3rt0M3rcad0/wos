@@ -26,12 +26,13 @@ func (h *Handler) setGrant(w http.ResponseWriter, r *http.Request) {
 	var b struct {
 		Permissions     []ports.Permission `json:"permissions"`
 		ExpectedVersion domain.Version     `json:"expected_namespace_version"`
+		Reason          string             `json:"reason"`
 	}
 	if err = decodeJSON(w, r, &b); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: r.PathValue("principal_id"), Permissions: b.Permissions}})
+	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: r.PathValue("principal_id"), Permissions: b.Permissions}, Reason: b.Reason})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -56,12 +57,13 @@ func (h *Handler) issueCredential(w http.ResponseWriter, r *http.Request) {
 		Permissions          []ports.Permission         `json:"permissions,omitempty"`
 		AllowedOutcomeIDs    []domain.ID                `json:"allowed_outcome_ids,omitempty"`
 		AllowedSigningKeyIDs []domain.ID                `json:"allowed_signing_key_ids,omitempty"`
+		Reason               string                     `json:"reason"`
 	}
 	if err = decodeJSON(w, r, &b); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}, CredentialName: b.CredentialName, CredentialDescription: b.Description, RoleTemplateID: b.RoleTemplateID, RoleTemplateVersion: b.RoleTemplateVersion, CredentialPermissions: b.Permissions, AllowedOutcomeIDs: b.AllowedOutcomeIDs, AllowedSigningKeyIDs: b.AllowedSigningKeyIDs})
+	result, token, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: b.ExpectedVersion, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: b.PrincipalID, Actor: b.Actor, ExpiresAt: b.ExpiresAt}, CredentialName: b.CredentialName, CredentialDescription: b.Description, RoleTemplateID: b.RoleTemplateID, RoleTemplateVersion: b.RoleTemplateVersion, CredentialPermissions: b.Permissions, AllowedOutcomeIDs: b.AllowedOutcomeIDs, AllowedSigningKeyIDs: b.AllowedSigningKeyIDs, Reason: b.Reason})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -82,16 +84,37 @@ func (h *Handler) revokeCredential(w http.ResponseWriter, r *http.Request) {
 	}
 	var body struct {
 		ExpectedVersion domain.Version `json:"expected_namespace_version"`
+		Reason          string         `json:"reason"`
 	}
 	if err = decodeJSON(w, r, &body); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: body.ExpectedVersion, Operation: "revoke_credential", CredentialID: id})
+	result, _, err := h.security.AdministrativeMutation(r.Context(), r.Header.Get("Idempotency-Key"), ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: body.ExpectedVersion, Operation: "revoke_credential", CredentialID: id, Reason: body.Reason})
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) previewCredentialRevocation(w http.ResponseWriter, r *http.Request) {
+	ns, err := parsePathID(r, "namespace_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "credential_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.security.PreviewCredentialRevocation(r.Context(), ns, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -179,12 +202,13 @@ func (h *Handler) updateCredential(w http.ResponseWriter, r *http.Request) {
 		Description              string                   `json:"description"`
 		ExpiresAt                *time.Time               `json:"expires_at,omitempty"`
 		Policy                   *domain.CredentialPolicy `json:"credential_policy,omitempty"`
+		Reason                   string                   `json:"reason"`
 	}
 	if err = decodeJSON(w, r, &body); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, err := h.security.UpdateCredential(r.Context(), r.Header.Get("Idempotency-Key"), application.CredentialUpdateIntent{NamespaceID: ns, CredentialID: id, ExpectedNamespaceVersion: body.ExpectedNamespaceVersion, ExpectedMetadataRevision: body.ExpectedMetadataRevision, ExpectedPolicyRevision: body.ExpectedPolicyRevision, Name: body.Name, Description: body.Description, ExpiresAt: body.ExpiresAt, Policy: body.Policy})
+	result, err := h.security.UpdateCredential(r.Context(), r.Header.Get("Idempotency-Key"), application.CredentialUpdateIntent{NamespaceID: ns, CredentialID: id, ExpectedNamespaceVersion: body.ExpectedNamespaceVersion, ExpectedMetadataRevision: body.ExpectedMetadataRevision, ExpectedPolicyRevision: body.ExpectedPolicyRevision, Name: body.Name, Description: body.Description, ExpiresAt: body.ExpiresAt, Policy: body.Policy, Reason: body.Reason})
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -212,12 +236,13 @@ func (h *Handler) rotateCredential(w http.ResponseWriter, r *http.Request) {
 		OverlapUntil             time.Time      `json:"overlap_until"`
 		Name                     string         `json:"name,omitempty"`
 		Description              string         `json:"description,omitempty"`
+		Reason                   string         `json:"reason"`
 	}
 	if err = decodeJSON(w, r, &body); err != nil {
 		writeError(w, r, err)
 		return
 	}
-	result, token, err := h.security.RotateCredential(r.Context(), r.Header.Get("Idempotency-Key"), application.CredentialRotationIntent{NamespaceID: ns, CredentialID: id, ExpectedNamespaceVersion: body.ExpectedNamespaceVersion, ExpectedMetadataRevision: body.ExpectedMetadataRevision, ExpectedPolicyRevision: body.ExpectedPolicyRevision, ExpiresAt: body.ExpiresAt, OverlapUntil: body.OverlapUntil, Name: body.Name, Description: body.Description})
+	result, token, err := h.security.RotateCredential(r.Context(), r.Header.Get("Idempotency-Key"), application.CredentialRotationIntent{NamespaceID: ns, CredentialID: id, ExpectedNamespaceVersion: body.ExpectedNamespaceVersion, ExpectedMetadataRevision: body.ExpectedMetadataRevision, ExpectedPolicyRevision: body.ExpectedPolicyRevision, ExpiresAt: body.ExpiresAt, OverlapUntil: body.OverlapUntil, Name: body.Name, Description: body.Description, Reason: body.Reason})
 	if err != nil {
 		writeError(w, r, err)
 		return

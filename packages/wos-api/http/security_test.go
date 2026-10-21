@@ -35,7 +35,7 @@ func TestLegacyCredentialRouteAcceptsAndReplaysIssuanceMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminCtx := application.WithIdentity(ctx, admin)
-	if err := security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err := security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	resolver := func(r *http.Request) (application.Identity, error) {
@@ -66,6 +66,7 @@ func TestLegacyCredentialRouteAcceptsAndReplaysIssuanceMetadata(t *testing.T) {
 		"permissions":                []ports.Permission{ports.PermissionStateRead},
 		"allowed_outcome_ids":        []domain.ID{},
 		"allowed_signing_key_ids":    []domain.ID{},
+		"reason":                     "Provision the worker credential",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -94,7 +95,15 @@ func TestLegacyCredentialRouteAcceptsAndReplaysIssuanceMetadata(t *testing.T) {
 	if issued.Token == "" || issued.Result.Credential == nil || issued.Result.CredentialMetadata == nil || issued.Result.CredentialMetadata.Name != "HTTP worker key" || issued.Result.CredentialMetadata.Description != "Issued by the legacy route with a receipt." {
 		t.Fatalf("route did not return issuance metadata and initial token: %+v", issued)
 	}
-	if err := security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{}}); err != nil {
+	previewPath := "/api/v1/namespaces/" + ns.String() + "/credentials/" + issued.Result.Credential.ID.String() + "/actions/revoke-preview"
+	previewRequest := httptest.NewRequest(http.MethodGet, previewPath, nil)
+	previewRequest.Header.Set("Authorization", "Bearer "+adminToken)
+	preview := httptest.NewRecorder()
+	handler.ServeHTTP(preview, previewRequest)
+	if preview.Code != http.StatusOK || !strings.Contains(preview.Body.String(), `"authority_removed_on_commit":true`) || !strings.Contains(preview.Body.String(), `"external_processes_stopped":false`) {
+		t.Fatalf("revocation preview status=%d body=%s", preview.Code, preview.Body.String())
+	}
+	if err := security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{}}); err != nil {
 		t.Fatal(err)
 	}
 

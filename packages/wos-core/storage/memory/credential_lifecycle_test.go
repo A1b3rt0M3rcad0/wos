@@ -52,7 +52,7 @@ func TestMemoryCredentialLifecycleUpdateRotationAndObservation(t *testing.T) {
 		t.Fatal(err)
 	}
 	adminCtx := application.WithIdentity(ctx, admin)
-	if err = security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "worker", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	version, err := store.ReadSecurityAdminVersion(ctx, ns)

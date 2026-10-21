@@ -157,6 +157,9 @@ func (s SecurityService) EndSession(ctx context.Context, token string) error {
 	if c.ParentDigest == "" {
 		return domain.NewError(domain.ErrorCodeForbidden, "credential is not a browser session")
 	}
+	// A browser logout revokes only the authenticated child session. Administrative
+	// credential revocation goes through AdministrativeMutation so it has CAS,
+	// idempotency, an explicit reason, and a durable audit record.
 	return s.Store.RevokeCredential(ctx, c.ID)
 }
 func (s SecurityService) Require(ctx context.Context, ns domain.ID, permission ports.Permission) error {
@@ -232,34 +235,6 @@ func newCredentialIssuanceKey() (string, error) {
 		return "", err
 	}
 	return "direct-" + base64.RawURLEncoding.EncodeToString(raw), nil
-}
-func (s SecurityService) SetGrant(ctx context.Context, grant ports.NamespaceGrant) error {
-	if err := s.Require(ctx, grant.NamespaceID, ports.PermissionPermissionsManage); err != nil {
-		return err
-	}
-	if grant.PermissionCompatibilityVersion != 0 {
-		return domain.NewError(domain.ErrorCodeInvalidArgument, "permission compatibility can only be changed by the migration service")
-	}
-	if strings.TrimSpace(grant.PrincipalID) == "" {
-		return domain.NewError(domain.ErrorCodeInvalidArgument, "principal is required")
-	}
-	if err := ports.ValidatePermissionValues(grant.Permissions); err != nil {
-		return err
-	}
-	return s.Store.PutGrant(ctx, grant)
-}
-func (s SecurityService) RevokeCredential(ctx context.Context, namespace domain.ID, credential domain.ID) error {
-	if err := s.Require(ctx, namespace, ports.PermissionCredentialsRevoke); err != nil {
-		return err
-	}
-	// Store validates the credential's principal belongs to this namespace in ScopedCredentialRevoker.
-	scoped, ok := s.Store.(interface {
-		RevokeScopedCredential(context.Context, domain.ID, domain.ID) error
-	})
-	if !ok {
-		return domain.NewError(domain.ErrorCodeInvalidConfig, "scoped credential revocation is unavailable")
-	}
-	return scoped.RevokeScopedCredential(ctx, namespace, credential)
 }
 func (s SecurityService) Namespaces(ctx context.Context) ([]ports.Namespace, error) {
 	id, ok := IdentityFromContext(ctx)

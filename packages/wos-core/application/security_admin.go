@@ -14,17 +14,27 @@ import (
 )
 
 func (s SecurityService) AdministrativeSnapshot(ctx context.Context, ns domain.ID) (ports.SecurityAdminSnapshot, error) {
-	if err := s.Require(ctx, ns, ports.PermissionCredentialsRead); err != nil {
-		return ports.SecurityAdminSnapshot{}, err
-	}
-	if err := s.Require(ctx, ns, ports.PermissionAuditRead); err != nil {
-		return ports.SecurityAdminSnapshot{}, err
-	}
-	store, ok := s.Store.(ports.SecurityAdministrationStore)
+	reader, ok := s.Store.(ports.AuthorizedSecurityAdministrationReader)
 	if !ok {
 		return ports.SecurityAdminSnapshot{}, domain.NewError(domain.ErrorCodeInvalidConfig, "security administration unavailable")
 	}
-	return store.ReadSecurityAdmin(ctx, ns)
+	access, err := s.securityAdminReadAccess(ctx, ns, []ports.Permission{ports.PermissionCredentialsRead, ports.PermissionAuditRead})
+	if err != nil {
+		return ports.SecurityAdminSnapshot{}, err
+	}
+	return reader.ReadSecurityAdminAuthorized(ctx, access)
+}
+
+func (s SecurityService) securityAdminReadAccess(ctx context.Context, ns domain.ID, permissions []ports.Permission) (ports.SecurityAdminReadAccess, error) {
+	id, ok := IdentityFromContext(ctx)
+	if !ok || id.NamespaceID != ns || id.PrincipalID == "" || id.CredentialDigest == "" || id.CredentialID.Validate() != nil || id.Actor.Validate() != nil {
+		return ports.SecurityAdminReadAccess{}, domain.NewError(domain.ErrorCodeForbidden, "authenticated root or session credential is required")
+	}
+	return ports.SecurityAdminReadAccess{
+		NamespaceID: ns, PrincipalID: id.PrincipalID, CredentialID: id.CredentialID,
+		CredentialDigest: id.CredentialDigest, Actor: id.Actor,
+		Permissions: append([]ports.Permission(nil), permissions...), Now: s.Clock.Now().UTC(),
+	}, nil
 }
 
 // AdministrativeMutation persists only hashed credentials. A replay returns a receipt;
@@ -46,6 +56,12 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 	}
 	id, _ := IdentityFromContext(ctx)
 	now := s.Clock.Now().UTC()
+	if strings.TrimSpace(cmd.Reason) == "" {
+		cmd.Reason = "Administrative operation"
+	}
+	if len(cmd.Reason) > 500 {
+		return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "reason is limited to 500 characters")
+	}
 	// Hash intent before creating ephemeral credential identity/secret.
 	intent := map[string]any{
 		"namespace_id": cmd.NamespaceID, "expected_namespace_version": cmd.ExpectedVersion,
@@ -59,6 +75,7 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		"expires_at":                 cmd.CredentialExpiresAt,
 		"overlap_until":              cmd.OverlapUntil,
 		"credential_policy":          cmd.CredentialPolicy,
+		"reason":                     cmd.Reason,
 	}
 	if cmd.Credential != nil {
 		c := cmd.Credential
@@ -76,7 +93,7 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 	if !ok {
 		return empty, "", domain.NewError(domain.ErrorCodeInvalidConfig, "security administration unavailable")
 	}
-	request := ports.SecurityAdminRequest{Command: cmd, PrincipalID: id.PrincipalID, Actor: id.Actor, CredentialDigest: id.CredentialDigest, IdempotencyKey: key, Fingerprint: hex.EncodeToString(hash[:]), Now: now}
+	request := ports.SecurityAdminRequest{Command: cmd, PrincipalID: id.PrincipalID, Actor: id.Actor, CallerCredentialID: id.CredentialID, CredentialDigest: id.CredentialDigest, IdempotencyKey: key, Fingerprint: hex.EncodeToString(hash[:]), Now: now}
 	if cmd.Operation == "issue_credential" || cmd.Operation == "rotate_credential" {
 		// A receipt is independent of mutable target state. Check it before
 		// reading the target Principal's current grant or generating a new secret.
@@ -122,6 +139,9 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 	case "set_grant":
 		if cmd.Grant == nil || cmd.Grant.NamespaceID != cmd.NamespaceID || strings.TrimSpace(cmd.Grant.PrincipalID) == "" || len(cmd.Grant.PrincipalID) > 256 {
 			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "invalid namespace grant")
+		}
+		if cmd.Grant.PermissionCompatibilityVersion != 0 {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "permission compatibility can only be changed by the migration service")
 		}
 		if err := ports.ValidatePermissionValues(cmd.Grant.Permissions); err != nil {
 			return empty, "", err
@@ -297,20 +317,21 @@ type AdministrativeIntent struct {
 	OverlapUntil             *time.Time                 `json:"overlap_until,omitempty"`
 	CredentialPolicy         *domain.CredentialPolicy   `json:"credential_policy,omitempty"`
 	NamespaceName            string                     `json:"namespace_name,omitempty"`
+	Reason                   string                     `json:"reason,omitempty"`
 }
 
 func (s SecurityService) Administer(ctx context.Context, key string, intent AdministrativeIntent) (ports.SecurityAdminResult, string, error) {
 	if intent.Operation == "update_credential" {
-		result, err := s.UpdateCredential(ctx, key, CredentialUpdateIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, Name: intent.CredentialName, Description: intent.CredentialDescription, ExpiresAt: intent.ExpiresAt, Policy: intent.CredentialPolicy})
+		result, err := s.UpdateCredential(ctx, key, CredentialUpdateIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, Name: intent.CredentialName, Description: intent.CredentialDescription, ExpiresAt: intent.ExpiresAt, Policy: intent.CredentialPolicy, Reason: intent.Reason})
 		return result, "", err
 	}
 	if intent.Operation == "rotate_credential" {
 		if intent.ExpiresAt == nil || intent.OverlapUntil == nil {
 			return ports.SecurityAdminResult{}, "", domain.NewError(domain.ErrorCodeInvalidArgument, "expires_at and overlap_until are required")
 		}
-		return s.RotateCredential(ctx, key, CredentialRotationIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, ExpiresAt: *intent.ExpiresAt, OverlapUntil: *intent.OverlapUntil, Name: intent.CredentialName, Description: intent.CredentialDescription})
+		return s.RotateCredential(ctx, key, CredentialRotationIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, ExpiresAt: *intent.ExpiresAt, OverlapUntil: *intent.OverlapUntil, Name: intent.CredentialName, Description: intent.CredentialDescription, Reason: intent.Reason})
 	}
-	cmd := ports.SecurityAdminCommand{NamespaceID: intent.NamespaceID, ExpectedVersion: intent.ExpectedVersion, Operation: intent.Operation, CredentialID: intent.CredentialID, NamespaceName: intent.NamespaceName, CredentialName: intent.CredentialName, CredentialDescription: intent.CredentialDescription, RoleTemplateID: intent.RoleTemplateID, RoleTemplateVersion: intent.RoleTemplateVersion, AllowedOutcomeIDs: intent.AllowedOutcomeIDs, AllowedSigningKeyIDs: intent.AllowedSigningKeyIDs}
+	cmd := ports.SecurityAdminCommand{NamespaceID: intent.NamespaceID, ExpectedVersion: intent.ExpectedVersion, Operation: intent.Operation, CredentialID: intent.CredentialID, NamespaceName: intent.NamespaceName, CredentialName: intent.CredentialName, CredentialDescription: intent.CredentialDescription, RoleTemplateID: intent.RoleTemplateID, RoleTemplateVersion: intent.RoleTemplateVersion, AllowedOutcomeIDs: intent.AllowedOutcomeIDs, AllowedSigningKeyIDs: intent.AllowedSigningKeyIDs, Reason: intent.Reason}
 	if intent.Operation == "set_grant" {
 		cmd.Grant = &ports.NamespaceGrant{NamespaceID: intent.NamespaceID, PrincipalID: intent.PrincipalID, Permissions: intent.Permissions}
 	}
