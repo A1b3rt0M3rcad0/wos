@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "d72e216",
+  "execution_head_sha": "1d951c01e14bd761cfc55699c225dfb3d2746a00",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -329,7 +329,7 @@
         "E14"
       ],
       "responsible": "primary",
-      "commit_sha": "d72e216",
+      "commit_sha": "d72e2169f5414e28b5a5001bc92a3be0239ad6ae",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E15.md",
       "tests_run": [
         "go test ./packages/wos-core/ports ./packages/wos-core/domain ./packages/wos-core/application ./packages/wos-core/storage/memory ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres ./packages/wos-api/commands ./packages/wos-api/web ./packages/wos-api/authentication/local ./packages/wos-api/internal/server ./packages/wos-api/mcp -count=1 -timeout=180s — pass",
@@ -345,16 +345,24 @@
     {
       "id": "E16",
       "title": "Aplicar escopo e requisitos compostos na transação",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E14",
         "E15"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "1d951c01e14bd761cfc55699c225dfb3d2746a00",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E16.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application -count=1 -timeout=180s — pass after E16 changes.",
+        "go test ./packages/wos-core/application ./packages/wos-core/storage/sqlite -run 'TestSignedReturnReplayPermissions|TestSignedAtomicReturnAndDurableAcceptance|TestOutcomeRestrictionsCoverLegacyReadsDiscoveryAndSnapshotRevocation|TestCreatePlanItemsCriteriaPermissionDenialIsAtomicAndReplayRechecked|TestIssueBlocker' -count=1 -timeout=300s — pass after replay receipt binding hardening.",
+        "go test ./packages/wos-core/application ./packages/wos-core/storage/sqlite -count=1 -timeout=300s — pass before the final receipt binding hardening; focused application and SQLite tests were rerun afterward.",
+        "gofmt checks and git diff --check — pass."
+      ],
+      "tests_not_run": [
+        "Full repository Go suite after E16 — not run.",
+        "Live PostgreSQL integration — WOS_TEST_POSTGRES_DSN was unset; PostgreSQL E16 transaction behavior remains unqualified."
+      ]
     },
     {
       "id": "E17",
