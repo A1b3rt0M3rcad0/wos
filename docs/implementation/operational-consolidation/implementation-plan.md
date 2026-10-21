@@ -161,7 +161,7 @@ A opção de perfil não altera o protocolo de autoridade do Namespace (`legacy`
 | Outcome | Continua dependendo de aceitação explícita, inclusive quando todos os Objectives estiverem Achieved. |
 | Issue | Pendência própria impede achievement do Objective; não cria Blocker e não impede toda Task indiscriminadamente. |
 | Reserva | Controle exclusivo por credencial canônica, claim/execution e fencing; atribuição permanece independente. |
-| UI | Drag prepara operação; comandos no inspector oferecem alternativa por clique/toque/teclado. Não recolocar select genérico de status nos cards. |
+| UI | Arrastar e soltar é a única interação para mudar a etapa de um card; deve ser acessível por teclado e toque usando o mesmo fluxo. Não recolocar select, menu ou ação separada de mudança de status nos cards. |
 | Autoridade assinada | Browser não adquire autoridade assinada nem assina resultados; oferece handoff explícito para host/CLI autorizado. |
 
 ### 3.3 Limites da automação

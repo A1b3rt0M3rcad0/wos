@@ -8,6 +8,42 @@
 
 Este documento substitui o brief anterior por decisões de arquitetura, contratos, invariantes, exemplos e uma sequência de implementação verificável. Os nomes de pacotes, comandos e endpoints são a proposta de contrato do projeto. Trechos de Go ilustram interfaces; o SQL apresenta uma base executável de schema, que deverá ser transformada em migrations e validada nos dois bancos.
 
+## Current operational consolidation addendum — 2026-10-21
+
+This addendum is the current normative architecture for the operational-consolidation work. It supersedes only the older statements below that directly conflict with these rules; all other domain, storage, transport, security, and scaling decisions remain in force. The accepted ADRs linked from [`docs/adr/README.md`](adr/README.md) define the detailed contracts. This document describes target behavior, not implementation status; consult `ROADMAP.md` for what has shipped.
+
+### Operational profile and authority are separate axes
+
+Every Outcome has an explicit operational profile: `compatibility_v1` preserves historical behavior during a controlled migration, while `operational_v2` applies the stricter readiness, ownership, planning, and verification gates. New Outcomes use v2 after rollout. Existing Outcomes remain v1 until a version-checked migration with a preview explicitly upgrades them; client omission must never silently select a legacy profile. The profile does not replace or weaken the Namespace authority protocol (`legacy`, contracts, or signed-v2). A signed operation remains signed and cannot fall back to an unsigned path.
+
+Profiles do not add persisted lifecycle states or Kanban lanes. `ready`, `blocked`, verification eligibility, and other workflow presentations remain projections of current lifecycle, dependencies, Issues/Blockers, policy, credentials, leases, deliveries, and decisions.
+
+### Operational hierarchy and Task gates
+
+Task and Issue ownership is explicit and belongs to one Objective in the same Outcome. Ownership is not a dependency edge. Objective parentage is structural, not a hidden `depends_on`; v2 may require the relevant Objective ancestors to be `in_progress` before a child can be activated or acquired. Such lifecycle gates must be visible, deterministic, and checked both when preparing an operation and when applying it. A change that would leave executable work permanently waiting on an impossible ancestor configuration must be rejected with a repair path.
+
+In v2, Task definition (instructions, criteria, placement, priority, schedule, and outgoing dependencies) is frozen after leaving Backlog, consistent with ADR-041. Backlog-to-To-do activation and later acquisition re-check Outcome state, Objective/ancestor lifecycle, required active criteria, dependency readiness, applicable Blockers, authorization, credential authority, and server time. A lane gesture is only a request to prepare the corresponding legitimate command; it is not a direct lifecycle write. Kanban card lane changes remain drag-and-drop only, with no status selector or card status menu.
+
+### Delivery, review, and acceptance
+
+In v2, Task acceptance requires a persisted delivery and an authorized persisted review decision. A Task completion request alone is not evidence of delivery or acceptance. Unsigned protocols may use a bounded native delivery/review path; it must not create a second Task or lease. Signed-v2 continues to use its existing signed submission, review case, credential identity, digest, envelope, fencing, and separation-of-duties checks without unsigned fallback. A shared read model may present both protocols, but their evidence and authority remain distinct.
+
+Assignment states who is expected to act; a credential-bound lease determines who is authorized to execute now. A lease claim must bind to the canonical authenticated credential, scope, expiry, and fencing token. Different keys for the same Principal do not establish independent reviewer identity. Authorization is checked at each operation, and profile/mode changes are versioned and audited.
+
+### Objective completion is an explicit policy
+
+`Outcome.CompletionPolicy` continues to describe the scope of work included in Outcome acceptance. `ObjectiveCompletionMode` is a separate policy with `manual` and `automatic`; it never means that an Outcome is automatically accepted. Existing Objectives migrate as manual unless an authorized previewed operation explicitly delegates automation. For new v2 Objectives, the automatic default is visible at creation only to an authorized delegator; without that authority, the client must explicitly choose manual or obtain administrator configuration.
+
+Automatic achievement is a deterministic, scoped, versioned delegation, not a judgment by the system. It requires an active Outcome and in-progress Objective, a non-empty applicable work set, valid accepted conclusions for all applicable Tasks, required descendants achieved, current required Objective criterion assessments actually met, satisfied hard dependencies, no applicable active Blocker, no pending owned Issue, and no open execution authority or review. Empty work sets, waivers/cancellations needing human acknowledgment, stale proof, incomplete reads, or unresolved policy prevent automatic closure. The system must never synthesize criteria, Evidence, assessments, independent reviewers, or Outcome acceptance. Derived achievement runs through a transactional Application primitive and records automation provenance and the policy cycle; it does not recursively call a public command handler.
+
+Hierarchy lifecycle gates are not operational dependencies, and automated Objective completion does not follow merely from child Task completion. A real current assessment for every required Objective criterion remains necessary. Reopening starts a new completion cycle; old assessments and conclusions remain history but cannot close the new cycle.
+
+### Migration and compatibility
+
+The rollout is expand/preview/backfill/verify/contract. Existing constraints and migrations are not recreated. Preview reports exact records that require repair; migration is explicit, scoped, version checked, idempotent, and auditable. Do not infer historical ownership, lease credentials, deliveries, reviews, or automation authority from current data that cannot establish those facts. Preserve signed payloads and accepted historical conclusions. Compatibility exists to permit controlled migration, not as an ordinary new-record bypass.
+
+These rules supersede the older sentence in §5.3 that permits `planned -> achieved` for any proven condition: v2 requires an Objective to be `in_progress` before achievement. They also supersede §5.4's unconditional statement that parent lifecycle is never a prerequisite, the general §7.1 description of optional Objective placement for Tasks, any example allowing post-Backlog definition edits, the §7.3 completion sketch that accepts a Task without delivery/review, and ADR-001's blanket prohibition on Task-triggered Objective achievement. Manual completion still requires an explicit authorized achievement command and all current gates. No older clause permits automatic Outcome acceptance.
+
 ## Sumário
 
 1. [Direção e decisões principais](#1-direção-e-decisões-principais)

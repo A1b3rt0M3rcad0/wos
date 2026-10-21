@@ -50,3 +50,14 @@ The original specification proposed numbers, not immutable file identities. Acce
 - [ADR-041 — Focused Kanban modal and Backlog-only Task planning](0041-focused-kanban-modal-and-backlog-planning.md)
 
 - [ADR-042 — Objective-owned Issues and mandatory Task placement](0042-objective-owned-issues-and-mandatory-work-placement.md)
+
+## Operational consolidation — 2026-10-21
+
+These owner-authorized implementation ADRs establish the target contract for
+PR #116. Code-level qualification and rollout remain tracked separately in
+`ROADMAP.md`.
+
+- [ADR-043 — Versioned operational profiles and Objective gates](0043-operational-objective-gates.md)
+- [ADR-044 — Credential-bound legacy lease authority](0044-credential-bound-authority.md)
+- [ADR-045 — Policy-driven Objective completion](0045-policy-driven-objective-completion.md)
+- [ADR-046 — Authenticated Task delivery and verification](0046-authenticated-task-verification.md)

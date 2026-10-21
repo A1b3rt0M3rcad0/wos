@@ -4,7 +4,7 @@
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
 **Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01 is verified at `623ba2e` and E02 is next
+**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01 is verified at `623ba2e`, E02 records the accepted implementation contract, and E03 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -18,7 +18,7 @@ The architecture document describes what should exist. This ROADMAP records what
 
 The owner authorized implementation of the [complete operational plan](docs/implementation/operational-consolidation/implementation-plan.md) in the existing Draft PR #116 and allowed subagent use. Its 84-stage manifest, pending acceptance matrix, baseline, corrected test fixtures and source-bound login screenshots are under [`docs/implementation/operational-consolidation/`](docs/implementation/operational-consolidation/). The source plan's historical “document delivery only” sentence is superseded by the owner's current implementation request; its architecture and rollout constraints remain active.
 
-E01 reconciles the earlier 44-stage plan against the actual branch: stages 01–26 are committed; stages 27–44 are still pending and mapped to the new plan. In particular, migrations 0035 and 0036 are already implemented and are not to be recreated. E01 baseline checks pass after correcting three stale test fixtures to satisfy Objective ownership. The current executor has no live PostgreSQL DSN, so real PostgreSQL qualification is explicitly pending. E02 is next; E03 and E04 are gated on the documented decisions and fixtures.
+E01 reconciles the earlier 44-stage plan against the actual branch: stages 01–26 are committed; stages 27–44 are still pending and mapped to the new plan. In particular, migrations 0035 and 0036 are already implemented and are not to be recreated. E01 baseline checks pass after correcting three stale test fixtures to satisfy Objective ownership. The current executor has no live PostgreSQL DSN, so real PostgreSQL qualification is explicitly pending. E02 is documented in ADR-043–ADR-046, `AGENTS.md`, and the current architecture addendum. These decisions are accepted for implementation under the owner's request; this documentation stage does not claim their product capabilities are implemented or enabled. The detailed contracts preserve signed authority, restrict Objective automation to explicitly delegated `operational_v2`, and keep Kanban lane changes drag-and-drop only. E03 characterization fixtures are next; code stages remain gated on their dependencies and SQLite/PostgreSQL parity checks.
 
 PR #116 remains open and Draft. No merge, release, tag, publication or version advancement is authorized.
 

@@ -12,6 +12,8 @@ The live implementation state is:
 
 The README explains the project publicly. The architecture document defines the intended design. The ROADMAP records what is actually implemented.
 
+The architecture document begins with the current Operational Consolidation Addendum. That addendum and its linked accepted ADRs supersede only the older clauses they explicitly replace; the rest of the canonical design remains in force.
+
 ---
 
 ## 1. Mandatory startup sequence
@@ -101,7 +103,7 @@ Preserve these semantics unless an explicit ADR changes them.
 
 - Outcome is the semantic root: a desired, verifiable state.
 - Outcome completion is explicit.
-- WorkItem completion never automatically achieves an Objective.
+- WorkItem completion may trigger Objective achievement only under an explicitly delegated, versioned automatic-completion policy and only after every current Objective gate passes. Completion must use real criterion assessments; it must never synthesize evidence or assessments from accepted Tasks.
 - Objective achievement never automatically achieves an Outcome.
 - Archival is separate from lifecycle.
 
@@ -109,7 +111,7 @@ Preserve these semantics unless an explicit ADR changes them.
 
 - Objective is a first-class aggregate, not a string.
 - An Objective represents a verifiable condition within an Outcome.
-- Parent/child hierarchy organizes decomposition; it does not imply execution dependency or automatic completion.
+- Parent/child hierarchy organizes decomposition; it is not a `depends_on` relation. A versioned operational profile may impose explicit ancestor lifecycle gates, and an explicit Objective completion policy may derive achievement; neither behavior is inferred from hierarchy alone.
 
 ### WorkItem
 
@@ -117,6 +119,7 @@ Preserve these semantics unless an explicit ADR changes them.
 - Persist lifecycle, not derived presentation states.
 - `ready`, `blocked`, `scheduled`, and `attention_needed` are projections.
 - Work acquisition is explicit and lease-based.
+- Assignment, lease acquisition, execution, delivery, review, and acceptance remain distinct facts and authorities.
 
 ### SuccessCriterion / Assessment
 
@@ -125,6 +128,16 @@ Preserve these semantics unless an explicit ADR changes them.
 - CriterionAssessment is the explicit evaluation.
 - A new criterion revision does not inherit proof from an older revision.
 - Achievement commands validate current required criteria.
+- Evidence, Artifact, Assessment, Conclusion, and delivery are distinct concepts with distinct histories and authorization.
+
+### Operational consolidation profiles
+
+- `compatibility_v1` preserves existing records and behavior during explicit migration; ordinary clients cannot silently choose it for new records after rollout.
+- `operational_v2` is the explicit new-record profile. It adds operational readiness and verification gates without adding persisted lifecycle states or Kanban lanes.
+- The operational profile and the Namespace authority protocol (`legacy`, contracts, or signed-v2) are independent policy axes. The profile never weakens a signed protocol or falls back from signed to unsigned operations.
+- Task and Issue ownership, ancestor lifecycle gates, dependency edges, blockers, and hierarchy are separately represented; ownership or hierarchy never fabricates a `depends_on` edge.
+- Automatic Objective completion is a delegated, scoped policy. Empty work sets, stale proof, unresolved required work, open authority/review, pending owned Issues, or incomplete current Objective criteria prevent automatic achievement. Outcome acceptance always remains explicit.
+- Kanban lane changes remain drag-and-drop only. Do not add card status selects or menu-based status mutation; every drop prepares and executes a legitimate domain operation through existing capabilities and validation.
 
 ### Roadmap
 
