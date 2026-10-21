@@ -136,7 +136,11 @@ func (h *Handler) routes() {
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
 		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/credentials", h.listCredentials)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}", h.getCredential)
+		h.mux.HandleFunc("PATCH "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}", h.updateCredential)
+		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/rotate", h.rotateCredential)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
 	} else {
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", func(w http.ResponseWriter, r *http.Request) {

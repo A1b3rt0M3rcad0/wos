@@ -113,7 +113,7 @@ func TestIssueObjectiveOwnerContractMigrationRejectsOrphanAndCanRetry(t *testing
 		t.Fatalf("retry after explicit owner mapping failed: %v", err)
 	}
 	version, err = store.SchemaVersion(ctx)
-	if err != nil || version != 39 {
-		t.Fatalf("retry schema version=%d err=%v; want 39", version, err)
+	if err != nil || version != 40 {
+		t.Fatalf("retry schema version=%d err=%v; want 40", version, err)
 	}
 }

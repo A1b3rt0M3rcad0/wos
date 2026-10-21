@@ -166,6 +166,22 @@ func (s *Store) ApplySecurityAdmin(ctx context.Context, r ports.SecurityAdminReq
 		}
 		result.Credential = c
 		result.CredentialMetadata = r.Command.CredentialMetadata
+	case "update_credential":
+		metadata, credential, err := updateCredentialTx(ctx, tx, r)
+		if err != nil {
+			return result, err
+		}
+		target = credential.ID.String()
+		result.Credential = &credential
+		result.CredentialMetadata = &metadata
+	case "rotate_credential":
+		metadata, credential, targetID, err := rotateCredentialTx(ctx, tx, r)
+		if err != nil {
+			return result, err
+		}
+		target = r.Command.CredentialID.String() + "->" + targetID.String()
+		result.Credential = &credential
+		result.CredentialMetadata = &metadata
 	case "revoke_credential":
 		target = r.Command.CredentialID.String()
 		updated, err := tx.ExecContext(ctx, `UPDATE credentials SET revoked=1 WHERE namespace_id=$1 AND id=$2`, r.Command.NamespaceID.String(), target)
@@ -217,7 +233,7 @@ func persistCredentialBundle(ctx context.Context, tx *sql.Tx, credential *ports.
 	if credential.NamespaceID != grant.NamespaceID || credential.PrincipalID != grant.PrincipalID || policy.NamespaceID != credential.NamespaceID || policy.CredentialID != credential.ID || policy.PrincipalID != credential.PrincipalID || policy.PermissionCompatibilityVersion != 0 {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "credential policy scope does not match its grant")
 	}
-	if metadata.NamespaceID != credential.NamespaceID || metadata.CredentialID != credential.ID || metadata.PolicyRevision != policy.Version || metadata.CreatedByPrincipalID != issuerPrincipal || metadata.CreatedByActor != issuerActor || metadata.CreatedAt.IsZero() || !metadata.CreatedAt.Equal(now) {
+	if metadata.NamespaceID != credential.NamespaceID || metadata.CredentialID != credential.ID || metadata.PolicyRevision != policy.Version || metadata.MetadataRevision != 1 || metadata.CreatedByPrincipalID != issuerPrincipal || metadata.CreatedByActor != issuerActor || metadata.CreatedAt.IsZero() || !metadata.CreatedAt.Equal(now) || !metadata.UpdatedAt.Equal(now) {
 		return domain.NewError(domain.ErrorCodeInvalidArgument, "credential metadata does not match issuance")
 	}
 	if utf8.RuneCountInString(metadata.Name) < 1 || utf8.RuneCountInString(metadata.Name) > 100 || utf8.RuneCountInString(metadata.Description) > 1000 {
@@ -268,7 +284,7 @@ func persistCredentialBundle(ctx context.Context, tx *sql.Tx, credential *ports.
 	if err != nil {
 		return err
 	}
-	if _, err = tx.ExecContext(ctx, `INSERT INTO credential_metadata(namespace_id,credential_id,name,description,created_at,created_by,created_by_actor_json,role_template_id,role_template_version,policy_revision) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, metadata.NamespaceID.String(), metadata.CredentialID.String(), metadata.Name, metadata.Description, encodeTime(metadata.CreatedAt), metadata.CreatedByPrincipalID, createdActorJSON, nullableString(string(metadata.RoleTemplateID)), metadata.RoleTemplateVersion, int64(metadata.PolicyRevision)); err != nil {
+	if _, err = tx.ExecContext(ctx, `INSERT INTO credential_metadata(namespace_id,credential_id,name,description,created_at,created_by,created_by_actor_json,role_template_id,role_template_version,policy_revision,updated_at,metadata_revision,replaced_by_credential_id,replaces_credential_id,rotation_overlap_until) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, metadata.NamespaceID.String(), metadata.CredentialID.String(), metadata.Name, metadata.Description, encodeTime(metadata.CreatedAt), metadata.CreatedByPrincipalID, createdActorJSON, nullableString(string(metadata.RoleTemplateID)), metadata.RoleTemplateVersion, int64(metadata.PolicyRevision), encodeTime(metadata.UpdatedAt), int64(metadata.MetadataRevision), nullableCredentialID(metadata.ReplacedByCredentialID), nullableCredentialID(metadata.ReplacesCredentialID), nullableTime(metadata.RotationOverlapUntil)); err != nil {
 		return mapSQLError("persist credential metadata", err)
 	}
 	return nil
@@ -391,14 +407,14 @@ func (s *Store) ReadSecurityAdminVersion(ctx context.Context, ns domain.ID) (dom
 	return version, nil
 }
 
-// ReadSecurityAdminReceipt authorizes a credential-issuance replay before the
-// application prepares a new credential bundle from mutable target state.
+// ReadSecurityAdminReceipt authorizes a credential issuance or rotation replay
+// before the application prepares a new secret from mutable target state.
 func (s *Store) ReadSecurityAdminReceipt(ctx context.Context, r ports.SecurityAdminRequest) (ports.SecurityAdminResult, bool, error) {
 	var result ports.SecurityAdminResult
 	if err := domain.ValidateIdempotencyKey(r.IdempotencyKey); err != nil {
 		return result, false, err
 	}
-	if r.Command.Operation != "issue_credential" || r.Command.NamespaceID.Validate() != nil || r.Command.ExpectedVersion == 0 || strings.TrimSpace(r.PrincipalID) == "" || r.Fingerprint == "" || r.Now.IsZero() {
+	if (r.Command.Operation != "issue_credential" && r.Command.Operation != "rotate_credential") || r.Command.NamespaceID.Validate() != nil || r.Command.ExpectedVersion == 0 || strings.TrimSpace(r.PrincipalID) == "" || r.Fingerprint == "" || r.Now.IsZero() {
 		return result, false, domain.NewError(domain.ErrorCodeInvalidArgument, "invalid credential receipt request")
 	}
 	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable, ReadOnly: true})

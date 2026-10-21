@@ -12,8 +12,8 @@ func TestCredentialManagementMigrationCreatesAtomicMetadataSchema(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if version != 39 {
-		t.Fatalf("schema version = %d, want 39", version)
+	if version != 40 {
+		t.Fatalf("schema version = %d, want 40", version)
 	}
 
 	rows, err := store.db.QueryContext(context.Background(), `PRAGMA table_info(credential_metadata)`)
@@ -34,7 +34,7 @@ func TestCredentialManagementMigrationCreatesAtomicMetadataSchema(t *testing.T) 
 	if err = rows.Err(); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"namespace_id", "credential_id", "name", "description", "created_at", "created_by", "created_by_actor_json", "role_template_id", "role_template_version", "policy_revision"} {
+	for _, name := range []string{"namespace_id", "credential_id", "name", "description", "created_at", "created_by", "created_by_actor_json", "role_template_id", "role_template_version", "policy_revision", "updated_at", "metadata_revision", "last_used_at", "replaced_by_credential_id", "replaces_credential_id", "rotation_overlap_until"} {
 		if !columns[name] {
 			t.Errorf("credential_metadata missing %q", name)
 		}
@@ -62,5 +62,9 @@ func TestCredentialManagementMigrationCreatesAtomicMetadataSchema(t *testing.T) 
 		if !parents[table] {
 			t.Errorf("credential_metadata missing foreign-key parent %q", table)
 		}
+	}
+	var indexCount int
+	if err = store.db.QueryRowContext(context.Background(), `SELECT count(*) FROM sqlite_master WHERE type='index' AND name='credential_metadata_namespace_last_used'`).Scan(&indexCount); err != nil || indexCount != 1 {
+		t.Fatalf("last-used coalescing index count=%d err=%v", indexCount, err)
 	}
 }

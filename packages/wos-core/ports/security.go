@@ -20,16 +20,22 @@ type Credential struct {
 // CredentialMetadata is a safe administrative projection. It never contains
 // bearer material; auth/session paths continue to use Credential alone.
 type CredentialMetadata struct {
-	NamespaceID          domain.ID            `json:"namespace_id"`
-	CredentialID         domain.ID            `json:"credential_id"`
-	Name                 string               `json:"name"`
-	Description          string               `json:"description"`
-	CreatedAt            time.Time            `json:"created_at"`
-	CreatedByPrincipalID string               `json:"created_by"`
-	CreatedByActor       domain.ActorRef      `json:"created_by_actor"`
-	RoleTemplateID       PermissionTemplateID `json:"role_template_id,omitempty"`
-	RoleTemplateVersion  uint32               `json:"role_template_version,omitempty"`
-	PolicyRevision       domain.Version       `json:"policy_revision,string"`
+	NamespaceID            domain.ID            `json:"namespace_id"`
+	CredentialID           domain.ID            `json:"credential_id"`
+	Name                   string               `json:"name"`
+	Description            string               `json:"description"`
+	CreatedAt              time.Time            `json:"created_at"`
+	UpdatedAt              time.Time            `json:"updated_at"`
+	MetadataRevision       domain.Version       `json:"metadata_revision,string"`
+	LastUsedAt             *time.Time           `json:"last_used_at,omitempty"`
+	ReplacedByCredentialID domain.ID            `json:"replaced_by_credential_id,omitempty"`
+	ReplacesCredentialID   domain.ID            `json:"replaces_credential_id,omitempty"`
+	RotationOverlapUntil   *time.Time           `json:"rotation_overlap_until,omitempty"`
+	CreatedByPrincipalID   string               `json:"created_by"`
+	CreatedByActor         domain.ActorRef      `json:"created_by_actor"`
+	RoleTemplateID         PermissionTemplateID `json:"role_template_id,omitempty"`
+	RoleTemplateVersion    uint32               `json:"role_template_version,omitempty"`
+	PolicyRevision         domain.Version       `json:"policy_revision,string"`
 }
 type NamespaceGrant struct {
 	NamespaceID                    domain.ID    `json:"namespace_id"`

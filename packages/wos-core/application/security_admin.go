@@ -53,7 +53,12 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		"credential_name": cmd.CredentialName, "credential_description": cmd.CredentialDescription,
 		"role_template_id": cmd.RoleTemplateID, "role_template_version": cmd.RoleTemplateVersion,
 		"permissions": cmd.CredentialPermissions, "allowed_outcome_ids": cmd.AllowedOutcomeIDs,
-		"allowed_signing_key_ids": cmd.AllowedSigningKeyIDs,
+		"allowed_signing_key_ids":    cmd.AllowedSigningKeyIDs,
+		"expected_metadata_revision": cmd.ExpectedMetadataRevision,
+		"expected_policy_revision":   cmd.ExpectedPolicyRevision,
+		"expires_at":                 cmd.CredentialExpiresAt,
+		"overlap_until":              cmd.OverlapUntil,
+		"credential_policy":          cmd.CredentialPolicy,
 	}
 	if cmd.Credential != nil {
 		c := cmd.Credential
@@ -72,7 +77,7 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		return empty, "", domain.NewError(domain.ErrorCodeInvalidConfig, "security administration unavailable")
 	}
 	request := ports.SecurityAdminRequest{Command: cmd, PrincipalID: id.PrincipalID, Actor: id.Actor, CredentialDigest: id.CredentialDigest, IdempotencyKey: key, Fingerprint: hex.EncodeToString(hash[:]), Now: now}
-	if cmd.Operation == "issue_credential" {
+	if cmd.Operation == "issue_credential" || cmd.Operation == "rotate_credential" {
 		// A receipt is independent of mutable target state. Check it before
 		// reading the target Principal's current grant or generating a new secret.
 		// The adapter still revalidates the caller's current permission/session.
@@ -165,6 +170,89 @@ func (s SecurityService) AdministrativeMutation(ctx context.Context, key string,
 		}
 		cmd.CredentialPolicy = &issuance.Policy
 		cmd.CredentialMetadata = &issuance.Metadata
+	case "update_credential":
+		if err := cmd.CredentialID.Validate(); err != nil {
+			return empty, "", err
+		}
+		if cmd.ExpectedMetadataRevision < 1 || cmd.ExpectedPolicyRevision < 0 || strings.TrimSpace(cmd.CredentialName) == "" || len(cmd.CredentialName) > 100 || len(cmd.CredentialDescription) > 1000 {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "credential name, metadata revision, and bounded description are required")
+		}
+		if cmd.CredentialExpiresAt != nil && (!cmd.CredentialExpiresAt.After(now) || cmd.CredentialExpiresAt.After(now.Add(366*24*time.Hour))) {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "credential expiration must be within one year")
+		}
+		if cmd.CredentialPolicy != nil {
+			if err := cmd.CredentialPolicy.Validate(); err != nil {
+				return empty, "", err
+			}
+			if cmd.CredentialPolicy.Version != cmd.ExpectedPolicyRevision+1 || cmd.CredentialPolicy.NamespaceID != cmd.NamespaceID || cmd.CredentialPolicy.CredentialID != cmd.CredentialID {
+				return empty, "", domain.NewError(domain.ErrorCodeVersionConflict, "credential policy revision or scope changed")
+			}
+		}
+	case "rotate_credential":
+		if err := cmd.CredentialID.Validate(); err != nil {
+			return empty, "", err
+		}
+		if cmd.ExpectedMetadataRevision < 1 || cmd.ExpectedPolicyRevision < 0 || cmd.CredentialExpiresAt == nil || cmd.OverlapUntil == nil || !cmd.CredentialExpiresAt.After(now) || cmd.CredentialExpiresAt.After(now.Add(366*24*time.Hour)) || !cmd.OverlapUntil.After(now) || cmd.OverlapUntil.After(*cmd.CredentialExpiresAt) {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "rotation requires bounded expiration and explicit overlap")
+		}
+		reader, ok := s.Store.(ports.CredentialManagementReader)
+		if !ok {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidConfig, "credential management unavailable")
+		}
+		previous, readErr := reader.ReadManagedCredential(ctx, cmd.NamespaceID, cmd.CredentialID, now)
+		if readErr != nil {
+			return empty, "", readErr
+		}
+		if previous.Status != "active" || previous.Metadata.MetadataRevision != cmd.ExpectedMetadataRevision || previous.EffectivePolicy.Version != cmd.ExpectedPolicyRevision {
+			return empty, "", domain.NewError(domain.ErrorCodeVersionConflict, "credential changed or is not active")
+		}
+		if previous.Metadata.MetadataRevision == 0 {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidTransition, "legacy credentials must be replaced through a newly issued credential")
+		}
+		if previous.Credential.ExpiresAt.Before(*cmd.OverlapUntil) {
+			return empty, "", domain.NewError(domain.ErrorCodeInvalidArgument, "overlap cannot extend the old credential expiration")
+		}
+		if previous.Credential.Actor != id.Actor {
+			if err := s.Require(ctx, cmd.NamespaceID, ports.PermissionActorDelegate); err != nil {
+				return empty, "", err
+			}
+		}
+		newID, idErr := s.IDs.NewID()
+		if idErr != nil {
+			return empty, "", idErr
+		}
+		secret := make([]byte, 32)
+		if _, idErr = rand.Read(secret); idErr != nil {
+			return empty, "", idErr
+		}
+		token = base64.RawURLEncoding.EncodeToString(secret)
+		policy := previous.EffectivePolicy
+		policy.CredentialID = newID
+		policy.Version = 1
+		policy.PermissionCompatibilityVersion = 0
+		policy.UpdatedAt = now
+		policy.PermittedOperations = append([]string(nil), previous.EffectivePolicy.PermittedOperations...)
+		if err := policy.Validate(); err != nil {
+			return empty, "", err
+		}
+		name := strings.TrimSpace(cmd.CredentialName)
+		if name == "" {
+			name = previous.Metadata.Name
+		}
+		if name == "" || name == "Legacy credential" {
+			name = "Rotated credential"
+		}
+		description := cmd.CredentialDescription
+		if description == "" {
+			description = previous.Metadata.Description
+		}
+		metadata := ports.CredentialMetadata{NamespaceID: cmd.NamespaceID, CredentialID: newID, Name: name, Description: description, CreatedAt: now, UpdatedAt: now, MetadataRevision: 1, CreatedByPrincipalID: id.PrincipalID, CreatedByActor: id.Actor, RoleTemplateID: previous.Metadata.RoleTemplateID, RoleTemplateVersion: previous.Metadata.RoleTemplateVersion, PolicyRevision: policy.Version, ReplacesCredentialID: cmd.CredentialID}
+		overlap := cmd.OverlapUntil.UTC()
+		metadata.RotationOverlapUntil = &overlap
+		prepared := ports.Credential{NamespaceID: cmd.NamespaceID, ID: newID, PrincipalID: previous.Credential.PrincipalID, Actor: previous.Credential.Actor, ExpiresAt: cmd.CredentialExpiresAt.UTC(), Digest: TokenDigest(token)}
+		cmd.Credential = &prepared
+		cmd.CredentialPolicy = &policy
+		cmd.CredentialMetadata = &metadata
 	case "revoke_credential":
 		if err := cmd.CredentialID.Validate(); err != nil {
 			return empty, "", err
@@ -190,24 +278,38 @@ func securityAdminPermission(operation string) (ports.Permission, error) {
 
 // AdministrativeIntent is the shared flat HTTP/MCP administration contract.
 type AdministrativeIntent struct {
-	NamespaceID           domain.ID                  `json:"namespace_id"`
-	ExpectedVersion       domain.Version             `json:"expected_namespace_version"`
-	Operation             string                     `json:"operation"`
-	PrincipalID           string                     `json:"principal_id,omitempty"`
-	Permissions           []ports.Permission         `json:"permissions,omitempty"`
-	CredentialName        string                     `json:"credential_name,omitempty"`
-	CredentialDescription string                     `json:"credential_description,omitempty"`
-	RoleTemplateID        ports.PermissionTemplateID `json:"role_template_id,omitempty"`
-	RoleTemplateVersion   uint32                     `json:"role_template_version,omitempty"`
-	AllowedOutcomeIDs     []domain.ID                `json:"allowed_outcome_ids,omitempty"`
-	AllowedSigningKeyIDs  []domain.ID                `json:"allowed_signing_key_ids,omitempty"`
-	Actor                 *domain.ActorRef           `json:"actor_ref,omitempty"`
-	ExpiresAt             *time.Time                 `json:"expires_at,omitempty"`
-	CredentialID          domain.ID                  `json:"credential_id,omitempty"`
-	NamespaceName         string                     `json:"namespace_name,omitempty"`
+	NamespaceID              domain.ID                  `json:"namespace_id"`
+	ExpectedVersion          domain.Version             `json:"expected_namespace_version"`
+	Operation                string                     `json:"operation"`
+	PrincipalID              string                     `json:"principal_id,omitempty"`
+	Permissions              []ports.Permission         `json:"permissions,omitempty"`
+	CredentialName           string                     `json:"credential_name,omitempty"`
+	CredentialDescription    string                     `json:"credential_description,omitempty"`
+	RoleTemplateID           ports.PermissionTemplateID `json:"role_template_id,omitempty"`
+	RoleTemplateVersion      uint32                     `json:"role_template_version,omitempty"`
+	AllowedOutcomeIDs        []domain.ID                `json:"allowed_outcome_ids,omitempty"`
+	AllowedSigningKeyIDs     []domain.ID                `json:"allowed_signing_key_ids,omitempty"`
+	Actor                    *domain.ActorRef           `json:"actor_ref,omitempty"`
+	ExpiresAt                *time.Time                 `json:"expires_at,omitempty"`
+	CredentialID             domain.ID                  `json:"credential_id,omitempty"`
+	ExpectedMetadataRevision domain.Version             `json:"expected_metadata_revision,omitempty"`
+	ExpectedPolicyRevision   domain.Version             `json:"expected_policy_revision,omitempty"`
+	OverlapUntil             *time.Time                 `json:"overlap_until,omitempty"`
+	CredentialPolicy         *domain.CredentialPolicy   `json:"credential_policy,omitempty"`
+	NamespaceName            string                     `json:"namespace_name,omitempty"`
 }
 
 func (s SecurityService) Administer(ctx context.Context, key string, intent AdministrativeIntent) (ports.SecurityAdminResult, string, error) {
+	if intent.Operation == "update_credential" {
+		result, err := s.UpdateCredential(ctx, key, CredentialUpdateIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, Name: intent.CredentialName, Description: intent.CredentialDescription, ExpiresAt: intent.ExpiresAt, Policy: intent.CredentialPolicy})
+		return result, "", err
+	}
+	if intent.Operation == "rotate_credential" {
+		if intent.ExpiresAt == nil || intent.OverlapUntil == nil {
+			return ports.SecurityAdminResult{}, "", domain.NewError(domain.ErrorCodeInvalidArgument, "expires_at and overlap_until are required")
+		}
+		return s.RotateCredential(ctx, key, CredentialRotationIntent{NamespaceID: intent.NamespaceID, CredentialID: intent.CredentialID, ExpectedNamespaceVersion: intent.ExpectedVersion, ExpectedMetadataRevision: intent.ExpectedMetadataRevision, ExpectedPolicyRevision: intent.ExpectedPolicyRevision, ExpiresAt: *intent.ExpiresAt, OverlapUntil: *intent.OverlapUntil, Name: intent.CredentialName, Description: intent.CredentialDescription})
+	}
 	cmd := ports.SecurityAdminCommand{NamespaceID: intent.NamespaceID, ExpectedVersion: intent.ExpectedVersion, Operation: intent.Operation, CredentialID: intent.CredentialID, NamespaceName: intent.NamespaceName, CredentialName: intent.CredentialName, CredentialDescription: intent.CredentialDescription, RoleTemplateID: intent.RoleTemplateID, RoleTemplateVersion: intent.RoleTemplateVersion, AllowedOutcomeIDs: intent.AllowedOutcomeIDs, AllowedSigningKeyIDs: intent.AllowedSigningKeyIDs}
 	if intent.Operation == "set_grant" {
 		cmd.Grant = &ports.NamespaceGrant{NamespaceID: intent.NamespaceID, PrincipalID: intent.PrincipalID, Permissions: intent.Permissions}

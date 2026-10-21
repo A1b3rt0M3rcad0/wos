@@ -148,6 +148,8 @@ func PrepareCredentialIssuance(selection CredentialIssuanceSelection, grant port
 		Name:                 name,
 		Description:          description,
 		CreatedAt:            now.UTC(),
+		UpdatedAt:            now.UTC(),
+		MetadataRevision:     1,
 		CreatedByPrincipalID: selection.CreatedByPrincipalID,
 		CreatedByActor:       selection.CreatedByActor,
 		RoleTemplateID:       preview.Materialization.TemplateID,

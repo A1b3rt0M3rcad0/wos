@@ -31,6 +31,17 @@ func (s SecurityService) Authenticate(ctx context.Context, token string) (Identi
 	if err != nil || s.validateCredential(ctx, c) != nil {
 		return Identity{}, domain.NewError(domain.ErrorCodeForbidden, "invalid or expired credential")
 	}
+	// Last-used is an administrative hint, not part of request authorization.
+	// Adapters coalesce the write; telemetry failure never blocks authentication.
+	if observer, ok := s.Store.(ports.CredentialUseObserver); ok {
+		observed := c
+		if c.ParentDigest != "" {
+			if parent, parentErr := s.Store.GetCredential(ctx, c.ParentDigest); parentErr == nil {
+				observed = parent
+			}
+		}
+		_ = observer.ObserveCredentialUse(ctx, observed.NamespaceID, observed.ID, s.Clock.Now().UTC(), 5*time.Minute)
+	}
 	identity := Identity{CredentialID: c.ID, PrincipalID: c.PrincipalID, Actor: c.Actor, NamespaceID: c.NamespaceID, CredentialDigest: c.Digest}
 	if reader, ok := s.Store.(ports.CredentialPolicyReader); ok {
 		policy, err := reader.CredentialPolicy(ctx, c.NamespaceID, c.ID)
