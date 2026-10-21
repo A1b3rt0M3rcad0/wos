@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "88ed20f3f6a41e4ed0d1ca67d8bae320e8642a2f",
+  "execution_head_sha": "321e2d9fbc6f44f0a6152e8fdc1302226548440a",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -127,29 +127,45 @@
     {
       "id": "E06",
       "title": "Criar preview e migração explícita de perfil",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E05"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "4fb1f247ffe134ad662b675328e9ebba9dca5a02",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E06.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go test ./packages/wos-core/application ./packages/wos-core/domain -count=1 — pass",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go vet ./packages/wos-core/application ./packages/wos-core/domain — pass",
+        "SQLite and PostgreSQL application-adapter preview probe against schema 37 — pass",
+        "operational_profile_audit.py against populated SQLite and PostgreSQL schema-37 databases — valid read-only JSON, one eligible Outcome per database",
+        "python3 -m py_compile tools/acceptance/operational_profile_audit.py; --help; git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "The full repository Go suite was not run at E06; the focused application/domain suites were run.",
+        "The full ConfigureOutcomeOperationalProfile mutation was tested with the memory adapter; SQL adapter probes exercised the read-only preview path."
+      ]
     },
     {
       "id": "E07",
       "title": "Implementar predicados compartilhados de execução",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E04",
         "E05"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "321e2d9fbc6f44f0a6152e8fdc1302226548440a",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E07.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go test ./packages/wos-core/application ./packages/wos-core/domain -count=1 — pass",
+        "GOCACHE=/tmp/wos-go-cache GOPATH=/tmp/wos-gopath GOROOT=/tmp/wos-go-1.27.2 GOTOOLCHAIN=local GOPROXY=direct go vet ./packages/wos-core/application ./packages/wos-core/domain — pass",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Acquisition and activation command wiring is E08/E09; these gates are currently validated through direct readiness evaluation tests.",
+        "Full repository Go suite and transport/browser parity were not run at E07."
+      ]
     },
     {
       "id": "E08",
