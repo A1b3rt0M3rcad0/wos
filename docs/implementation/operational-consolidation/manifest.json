@@ -4,7 +4,7 @@
   "pull_request": 116,
   "branch": "fix/workspace-operational-density",
   "baseline_sha": "2aab252129f548ab54ad4232095e1bc83d76d372",
-  "execution_head_sha": "1d951c01e14bd761cfc55699c225dfb3d2746a00",
+  "execution_head_sha": "c7b3b73a2985c72e36e9ea5811964003d4f0c7f3",
   "source_plan": {
     "path": "docs/implementation/operational-consolidation/implementation-plan.md",
     "sha256": "bf9dccca3a5d39cbedb78c8484709ab9474d8138cae4bf3233348f00103c569d",
@@ -367,29 +367,50 @@
     {
       "id": "E17",
       "title": "Migrar direitos legados sem conceder poderes futuros",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E15",
         "E16"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "9099f9bf008287697062edce5eb9ee174216e8c5",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E17.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test -p 1 -count=1 ./packages/wos-core/application ./packages/wos-core/storage/sqlite -timeout=300s — pass",
+        "go test ./tests/acceptance -run '^TestSignedPublicEnrollmentHTTPAcquireMCPReturnSDKRead$' -count=1 -v -timeout=240s — Memory and SQLite pass; PostgreSQL skipped without WOS_TEST_POSTGRES_DSN",
+        "go test ./packages/wos-core/application -run 'PermissionCompatibility|PermissionMigration|PermissionTemplate|TestEveryCommandHasExplicitExposure|TestAuthorizationCatalogCoversEveryPublicCommand' -count=1 -timeout=180s — pass",
+        "go test ./packages/wos-core/storage/sqlite -run 'PermissionMigration|CredentialManagementMigration' -count=1 -timeout=180s — pass",
+        "go test ./packages/wos-core/storage/postgres -run 'PermissionMigration' -count=1 -timeout=180s — package pass; live PostgreSQL skipped without WOS_TEST_POSTGRES_DSN",
+        "python3 tools/postgresgen/generate.py — pass",
+        "go run ./tools/openapigen — pass; migration operation remains internal",
+        "python3 tools/eventcatalog/check.py — pass; 111 public event types and mappings checked",
+        "node --test tools/distribution/test.mjs tools/distribution/native-go-tests.test.mjs — 9 passed",
+        "git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full repository Go suite — not run.",
+        "Live PostgreSQL transaction/migration acceptance — WOS_TEST_POSTGRES_DSN was unset."
+      ]
     },
     {
       "id": "E18",
       "title": "Implementar presets de papéis versionados",
-      "state": "planned",
+      "state": "verified",
       "depends_on": [
         "E17"
       ],
       "responsible": "primary",
-      "commit_sha": null,
+      "commit_sha": "c7b3b73a2985c72e36e9ea5811964003d4f0c7f3",
       "evidence_path": "docs/implementation/operational-consolidation/evidence/E18.md",
-      "tests_run": [],
-      "tests_not_run": []
+      "tests_run": [
+        "go test ./packages/wos-core/application -run 'PermissionCompatibility|PermissionMigration|PermissionTemplate|TestEveryCommandHasExplicitExposure|TestAuthorizationCatalogCoversEveryPublicCommand' -count=1 -timeout=180s — pass",
+        "go test -p 1 -count=1 ./packages/wos-core/application ./packages/wos-core/storage/sqlite -timeout=300s — pass",
+        "gofmt and git diff --check — pass"
+      ],
+      "tests_not_run": [
+        "Full repository Go suite — not run.",
+        "Live PostgreSQL transaction/migration acceptance — WOS_TEST_POSTGRES_DSN was unset."
+      ]
     },
     {
       "id": "E19",
@@ -1717,5 +1738,5 @@
       "evidence": "pending in consolidated plan"
     }
   ],
-  "execution_copy_sha256": "6b85802a38dfd5086677bb597c9536ecc72332f8b0c88130812aff5d8eb300bf"
+  "execution_copy_sha256": "8e382bd1b32fb98035d590ff318014d911dc8e4c82920aef6b57d8d238207eef"
 }
