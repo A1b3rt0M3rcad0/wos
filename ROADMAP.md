@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-20
+**Last reviewed:** 2026-10-21
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Implement the owner's operational workspace plan in draft PR #116
+**Current wave:** Implement the owner's 44-stage hierarchy, Issue, dependency, and Kanban plan in draft PR #116; stage 23 is next
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -83,8 +83,19 @@ audit and reviewed mappings.
 
 The existing contract still permits direct-Outcome Tasks and Issues without an
 Objective owner until the relevant implementation and migration stages pass.
-This roadmap section will be updated as each stage is completed; the Draft PR
-must remain unmerged and no release/tag is part of this work.
+Stages 18–21 add the Issue achievement gate, bounded Issue coverage, independent
+Issue/Blocker closure and atomic Issue-plus-many-Blocker creation. Stage 22 adds
+a bounded, revision-pinned dependency impact query over the existing graph read
+port. It returns deterministic paths, current lifecycle summaries, direct
+Blockers, unsatisfied hard prerequisites, advisory context and explicit partial
+coverage without persisting projections or propagating Blockers over dependency
+edges. The graph read adapters now expose hard/advisory strength metadata;
+Memory, SQLite and PostgreSQL contract tests pass. Focused Application tests
+cover A→B→C, both directions, Objective dependencies, satisfied prerequisites,
+independent Blockers, depth bounds, pagination and stale-revision rejection.
+The approved plan records the test commands and the remaining transport work.
+Stage 23 (dependency preview and atomic batch edits) is next. The Draft PR must
+remain unmerged and no release/tag is part of this work.
 
 ## Operational Kanban UX audit — 2026-10-20
 

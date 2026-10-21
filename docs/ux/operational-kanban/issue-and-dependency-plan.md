@@ -1,6 +1,6 @@
 # WOS — Plano executivo de implementação: hierarquia, Issues, Blockers, dependências e Kanban contextual
 
-> **Status:** plano aprovado; etapas 01–21 concluídas; etapa 22 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
+> **Status:** plano aprovado; etapas 01–22 concluídas; etapa 23 é a próxima nesta branch/PR #116. Cada etapa exige seu próprio commit e aceite; o PR permanece Draft. Sem merge, release ou tag.
 > **Baseline verificado:** `A1b3rt0M3rcad0/wos`, PR [#116](https://github.com/A1b3rt0M3rcad0/wos/pull/116), branch `fix/workspace-operational-density`, commit `d80d8329e097b7252b65b9c75f49e00d6cdcfa39`, Draft/Open, verificado em 2026-10-20.  
 > **Execução autorizada:** branch `fix/workspace-operational-density`, PR Draft #116. **Um commit por etapa**, sem merge, release ou tag até aceite do conjunto.  
 > **Nível de confiança:** alto para contratos inspecionados; médio para rotas HTTP, schemas e migrations não inspecionados integralmente. Tais pontos incluem uma etapa obrigatória de inspeção e confirmação antes de escrever código.
@@ -494,6 +494,10 @@ O formato e procedimento operacional estão em [`issue-ownership-backfill.md`](i
 **Trabalho:** Algoritmo bounded em grafo de hard/advisory: upstream/downstream, caminho, estado atual, coverage, revisão.
 
 **Aceite verificável:** A blocked não 'propaga' Blocker para B; mostra B waiting apenas se hard incompleta; DAG segura.
+
+**Execução em 2026-10-21:** Implementado `GetDependencyImpact` sobre o `GraphReadRepository` já paginado e revisionado, sem adicionar uma segunda consulta de grafo ao `WorkspaceReadRepository`. O adaptador de grafo agora inclui a força hard/advisory em metadados de `depends_on`; a resposta diferencia `direct_blocked`, `hard_waiting` e `advisory_related`, preserva a direção `source_ref depends on target_ref`, oferece caminho mínimo determinístico, resumo do lifecycle, amostras limitadas e coverage explícita. A travessia limita profundidade a 8, 500 nós, 2.000 leituras de dependência e 500 Blockers; páginas usam cursor vinculado ao filtro e `outcome_revision`. Limites, referências ausentes, arestas malformadas e ciclos observados falham fechados ou retornam coverage parcial, sem persistir estados derivados. Blockers aparecem somente no alvo explícito; dependência hard incompleta produz espera sem criar/herdar Blocker; advisory permanece informativa; itens concluídos não perdem lifecycle retrospectivamente.
+
+**Verificação:** quatro testes focados de Application cobrem a cadeia A→B→C, Blocker sem propagação e Blocker próprio do dependente, hard/advisory, leitura upstream/downstream, dependência entre Objectives, tarefa concluída como pré-requisito, limite de profundidade, paginação obsoleta e ausência de mutação. Os testes de preservação de força passaram em Memory, SQLite e PostgreSQL; os testes focados de Application, SQLite e PostgreSQL passaram com Go 1.27.2. O espelho PostgreSQL foi regenerado via `tools/postgresgen/generate.py`; todos os arquivos gerados incidentais foram descartados. `gofmt` e `git diff --check` passaram. Nenhum transporte foi adicionado nesta etapa.
 
 **Regra transversal:** testes/contratos relevantes no mesmo commit, sem alterações de onboarding ou mudança não justificada de identidade; diff/revision/event logs consistentes.
 

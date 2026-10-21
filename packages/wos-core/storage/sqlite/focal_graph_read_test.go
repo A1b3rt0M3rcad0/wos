@@ -253,3 +253,84 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 		})
 	}
 }
+
+func TestGraphAdjacentPreservesHardAndAdvisoryDependencyStrength(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "dependency-strength.db"))
+			}
+			ctx := context.Background()
+			now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+			service, err := a.NewService(store, portClock{now}, &portIDs{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			created, err := service.CreateOutcome(ctx, sqliteCommandContext(portID(1).String(), ""), a.CreateOutcomeCommand{
+				NamespaceID: portID(2), Title: "Dependency strengths", DesiredState: "Strength is retained in adjacency reads", Priority: d.PriorityNormal,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			scope := created.Value.Scope()
+			u, err := store.Begin(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			first, err := d.NewWorkItem(portID(100), scope, "First", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			second, err := d.NewWorkItem(portID(101), scope, "Second", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			third, err := d.NewWorkItem(portID(102), scope, "Third", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, work := range []d.WorkItem{first, second, third} {
+				if err = u.WorkItems().Insert(ctx, work); err != nil {
+					t.Fatal(err)
+				}
+			}
+			hard, err := d.NewDependencyRelation(portID(200), first.Ref(), second.Ref(), d.DependencyStrengthHard, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			advisory, err := d.NewDependencyRelation(portID(201), first.Ref(), third.Ref(), d.DependencyStrengthAdvisory, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, relation := range []d.Relation{hard, advisory} {
+				if err = u.Relations().Insert(ctx, relation); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err = u.Coordination().AdvanceOutcome(ctx, scope); err != nil {
+				t.Fatal(err)
+			}
+			if err = u.Commit(); err != nil {
+				t.Fatal(err)
+			}
+			read, err := store.Begin(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer read.Rollback()
+			graph := read.(ports.ContinuityReadUnitOfWork).ContinuityReads().(ports.GraphReadRepository)
+			edges, err := graph.GraphAdjacent(ctx, scope, []d.EntityRef{first.Ref()}, "out", []string{"depends_on"}, "", 10)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := map[string]d.DependencyStrength{}
+			for _, edge := range edges {
+				got[edge.ID] = edge.Strength
+			}
+			if got[hard.ID.String()] != d.DependencyStrengthHard || got[advisory.ID.String()] != d.DependencyStrengthAdvisory {
+				t.Fatalf("dependency strength lost by bounded graph adapter: %+v", edges)
+			}
+		})
+	}
+}

@@ -54,7 +54,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 	}
 	branches := []string{}
 	// All expressions are fixed adapter code. No client text becomes SQL syntax.
-	add := func(table, id, sk, si, tk, ti, kind, truth, predicate string) {
+	add := func(table, id, sk, si, tk, ti, kind, truth, strength, predicate string) {
 		matches := []string{}
 		if direction != "in" {
 			switch table {
@@ -72,19 +72,19 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 		// Separate orientations retain indexable endpoint predicates. UNION
 		// removes the duplicate when both endpoints occur in the frontier.
 		for _, match := range matches {
-			branches = append(branches, fmt.Sprintf("SELECT %s AS edge_id,%s AS source_kind,%s AS source_id,%s AS target_kind,%s AS target_id,%s AS edge_kind,'%s' AS truth FROM frontier f JOIN %s t ON (%s) WHERE t.namespace_id=? AND t.outcome_id=? AND (%s)", id, sk, si, tk, ti, kind, truth, table, match, predicate))
+			branches = append(branches, fmt.Sprintf("SELECT %s AS edge_id,%s AS source_kind,%s AS source_id,%s AS target_kind,%s AS target_id,%s AS edge_kind,'%s' AS truth,%s AS strength FROM frontier f JOIN %s t ON (%s) WHERE t.namespace_id=? AND t.outcome_id=? AND (%s)", id, sk, si, tk, ti, kind, truth, strength, table, match, predicate))
 			args = append(args, scope.NamespaceID.String(), scope.OutcomeID.String())
 		}
 	}
-	add("objectives", "'objective:'||t.id", "CASE WHEN t.parent_objective_id IS NULL THEN 'outcome' ELSE 'objective' END", "COALESCE(t.parent_objective_id,t.outcome_id)", "'objective'", "t.id", "'hierarchy'", "objective", "1=1")
-	add("work_items", "'work:'||t.id", "CASE WHEN t.objective_id IS NULL THEN 'outcome' ELSE 'objective' END", "COALESCE(t.objective_id,t.outcome_id)", "'work_item'", "t.id", "'ownership'", "work_item", "1=1")
-	add("blockers", "t.id", "'blocker'", "t.id", "t.blocked_kind", "t.blocked_id", "'blocks'", "blocker", "t.lifecycle='active'")
-	add("blockers", "t.id||':cause'", "t.cause_kind", "t.cause_id", "'blocker'", "t.id", "'causes'", "blocker", "t.lifecycle='active' AND t.cause_id IS NOT NULL")
-	add("evidence", "t.id||':artifact'", "'evidence'", "t.id", "'artifact'", "t.artifact_id", "'artifact_source'", "evidence", "t.artifact_id IS NOT NULL")
-	add("decisions", "t.id||':supersedes'", "'decision'", "t.id", "'decision'", "t.supersedes_decision_id", "'supersedes'", "decision", "t.supersedes_decision_id IS NOT NULL")
-	add("relations", "t.id", "t.source_kind", "t.source_id", "t.target_kind", "t.target_id", "t.relation_type", "relation", "t.lifecycle='active'")
-	add("evidence_links", "t.id", "'evidence'", "t.evidence_id", "t.target_kind", "t.target_id", "t.stance", "evidence_link", "t.lifecycle='active'")
-	query := "WITH frontier(kind,id) AS (VALUES " + strings.Join(values, ",") + "), edges AS (" + strings.Join(branches, " UNION ") + ") SELECT edge_id,source_kind,source_id,target_kind,target_id,edge_kind,truth FROM edges WHERE edge_id>?"
+	add("objectives", "'objective:'||t.id", "CASE WHEN t.parent_objective_id IS NULL THEN 'outcome' ELSE 'objective' END", "COALESCE(t.parent_objective_id,t.outcome_id)", "'objective'", "t.id", "'hierarchy'", "objective", "''", "1=1")
+	add("work_items", "'work:'||t.id", "CASE WHEN t.objective_id IS NULL THEN 'outcome' ELSE 'objective' END", "COALESCE(t.objective_id,t.outcome_id)", "'work_item'", "t.id", "'ownership'", "work_item", "''", "1=1")
+	add("blockers", "t.id", "'blocker'", "t.id", "t.blocked_kind", "t.blocked_id", "'blocks'", "blocker", "''", "t.lifecycle='active'")
+	add("blockers", "t.id||':cause'", "t.cause_kind", "t.cause_id", "'blocker'", "t.id", "'causes'", "blocker", "''", "t.lifecycle='active' AND t.cause_id IS NOT NULL")
+	add("evidence", "t.id||':artifact'", "'evidence'", "t.id", "'artifact'", "t.artifact_id", "'artifact_source'", "evidence", "''", "t.artifact_id IS NOT NULL")
+	add("decisions", "t.id||':supersedes'", "'decision'", "t.id", "'decision'", "t.supersedes_decision_id", "'supersedes'", "decision", "''", "t.supersedes_decision_id IS NOT NULL")
+	add("relations", "t.id", "t.source_kind", "t.source_id", "t.target_kind", "t.target_id", "t.relation_type", "relation", "COALESCE(t.strength,'')", "t.lifecycle='active'")
+	add("evidence_links", "t.id", "'evidence'", "t.evidence_id", "t.target_kind", "t.target_id", "t.stance", "evidence_link", "''", "t.lifecycle='active'")
+	query := "WITH frontier(kind,id) AS (VALUES " + strings.Join(values, ",") + "), edges AS (" + strings.Join(branches, " UNION ") + ") SELECT edge_id,source_kind,source_id,target_kind,target_id,edge_kind,truth,strength FROM edges WHERE edge_id>?"
 	args = append(args, after)
 	if len(kinds) > 0 {
 		marks := make([]string, len(kinds))
@@ -105,7 +105,7 @@ func (r continuityReadRepository) GraphAdjacent(ctx context.Context, scope d.Sco
 	for rows.Next() {
 		var v ports.GraphReadEdge
 		var sk, si, tk, ti string
-		if e = rows.Scan(&v.ID, &sk, &si, &tk, &ti, &v.Kind, &v.SourceOfTruth); e != nil {
+		if e = rows.Scan(&v.ID, &sk, &si, &tk, &ti, &v.Kind, &v.SourceOfTruth, &v.Strength); e != nil {
 			return nil, e
 		}
 		sid, e := d.ParseID(si)
