@@ -1,6 +1,6 @@
 {
   "name": "wosctl",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Unified native Go wos command for service, signed work, review and offline skills on Linux/Windows x64",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE",

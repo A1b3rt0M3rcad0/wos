@@ -238,12 +238,12 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 ## Project status
 
 <!-- wos-release:start -->
-**Source version: [1.1.0](docs/releases/1.1.0.md).** The product, npm package metadata and release notes use this version. The badges above show the latest versions actually published to GitHub and npm.
+**Source version: [1.2.0](docs/releases/1.2.0.md).** The product, npm package metadata and release notes use this version. The badges above show the latest versions actually published to GitHub and npm.
 
 | Item | State |
 | --- | --- |
-| Source and release manifest | 1.1.0 |
-| npm package built from this checkout | `wosctl@1.1.0` |
+| Source and release manifest | 1.2.0 |
+| npm package built from this checkout | `wosctl@1.2.0` |
 | Published distributions | [GitHub Release](https://github.com/A1b3rt0M3rcad0/wos/releases/latest) · [npm](https://www.npmjs.com/package/wosctl) · [GHCR](https://github.com/A1b3rt0M3rcad0/wos/pkgs/container/wos) |
 | Source vs installation | `wosctl@latest` installs npm's published version; this checkout and its captures can contain changes awaiting coordinated publication |
 | Compatibility | Existing HTTP/CLI contracts and checked forward migrations follow the [compatibility policy](docs/stable/compatibility.md); no blanket 1.0 certification |
