@@ -57,6 +57,26 @@ test("deep links restore area and scoped item through reload, back and forward",
   await expect(page.locator("#detail-dialog")).not.toBeVisible();
   expect(url).not.toContain(wos.token);
 });
+
+test("browser Back returns to the Outcome chooser and Forward restores the selected Outcome", async ({ page, wos }) => {
+  const outcome = await wos.outcome("Return to the Outcome chooser");
+  await wos.login(page);
+  await expect(page.locator("#empty")).toBeVisible();
+  await openOutcome(page, outcome.value.title, { area: null });
+  await expect(page.locator("#title")).toHaveText(outcome.value.title);
+  await expect(page).toHaveURL(/outcome=/);
+
+  await page.goBack();
+  await expect(page).not.toHaveURL(/outcome=/);
+  await expect(page.locator("#empty")).toBeVisible();
+  await expect(page.locator("#outcome")).toBeHidden();
+  await expect(page.locator("#outcomes").getByRole("button", { name: outcome.value.title })).toHaveAttribute("aria-pressed", "false");
+
+  await page.goForward();
+  await expect(page.locator("#title")).toHaveText(outcome.value.title);
+  await expect(page).toHaveURL(/outcome=/);
+});
+
 test("all Task search and priority filter find an off-page item in 1,001 records", async ({
   page,
   wos,

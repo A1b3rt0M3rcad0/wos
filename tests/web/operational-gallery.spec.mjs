@@ -147,12 +147,22 @@ async function capture(page, metadata, name, state, extra = {}) {
 }
 
 async function seed(wos) {
-  const data = await seedCanvas(wos, { title: "Plan, deliver, and verify together" });
+  // Criteria and other planning records must be authored while the Task is
+  // still in Backlog. The gallery then activates the real work through the
+  // domain command rather than bypassing its planning freeze.
+  const data = await seedCanvas(wos, { title: "Plan, deliver, and verify together", planningTasks: true });
   const owner = data.ref("work_item", data.tasks.ready);
   const criterion = await wos.command("add_criterion", { owner,
     expected_version: data.tasks.ready.version,
     title: "A new participant can resume the work from the recorded state", required: true,
     verification_mode: "evidence_review" });
+  // The added criterion advances only its owner Task's version. Activate the
+  // full fixture with the current optimistic-concurrency token.
+  data.tasks.ready = (await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${owner.id}`)).value;
+  for (const [name, task] of Object.entries(data.tasks))
+    data.tasks[name] = await wos.command("activate_work_item", {
+      scope: data.scope, work_item_id: task.id, expected_version: task.version,
+    });
   let task = (await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${owner.id}`)).value;
   await wos.command("set_work_item_assignees", { scope: data.scope, work_item_id: task.id,
     expected_version: task.version, assignee_refs: [{ kind: "agent", provider: "gallery-fixture", id: "coding-agent" }] });

@@ -1527,13 +1527,62 @@ function writeRoute(item = undefined, replace = false, { allowDuringRestore = fa
   history[replace ? "replaceState" : "pushState"]({}, "", target);
 }
 async function restoreRoute(route) {
-  if (!route) return;
   if (!allowCanvasNavigation()) {
     writeRoute(undefined, true);
     return;
   }
   state.restoringRoute = true;
   try {
+    if (!route) {
+      // Browser Back from an Outcome must restore the same chooser shown before
+      // it was opened. Invalidate pending reads before clearing their scope,
+      // and keep the authenticated Workspace and its discovered Outcome list.
+      if (contextualKanban.isOpen) {
+        contextualKanban.close();
+        if (contextualKanban.isOpen) {
+          writeRoute(undefined, true);
+          return;
+        }
+      }
+      const previousOutcomeId = state.outcome?.id;
+      resetCanvas();
+      contextualKanban.reset();
+      workspaceDisclosures.clear();
+      state.generation++;
+      state.renderId++;
+      state.refreshGeneration++;
+      state.outcome = null;
+      state.snapshot = null;
+      state.selected = null;
+      state.criterion = null;
+      state.contractView = null;
+      state.submission = null;
+      state.workspaceView = null;
+      state.entities.clear();
+      state.loaded.clear();
+      state.boardLoaded.clear();
+      state.area = "canvas";
+      state.section = "work_items";
+      state.view = "canvas";
+      for (const button of $("outcomes").children) {
+        button.classList.remove("selected");
+        button.setAttribute("aria-pressed", "false");
+      }
+      const sidebar = document.querySelector(".sidebar");
+      sidebar.classList.remove("navigation-collapsed");
+      $("navigation-toggle").setAttribute("aria-expanded", "true");
+      $("detail-dialog").close();
+      $("command-dialog").close();
+      $("action-dialog").close();
+      $("workspace-loading").hidden = true;
+      $("outcome").hidden = true;
+      $("empty").hidden = false;
+      const previous = [...$("outcomes").children].find(
+        (button) => button.dataset.outcomeId === previousOutcomeId,
+      );
+      (previous || $("text")).focus({ preventScroll: true });
+      return;
+    }
     if (state.namespace !== route.namespace) {
       const option = [...$("namespace").options].find(
         (n) => n.value === route.namespace,
@@ -1560,14 +1609,14 @@ async function restoreRoute(route) {
     else closeDetail();
   } finally {
     state.restoringRoute = false;
-    if (state.area === "work" && state.section !== route.section)
+    if (route && state.area === "work" && state.section !== route.section)
       writeRoute(route.item, true);
   }
 }
 window.addEventListener("popstate", () => {
   try {
     const route = readRoute(location.search);
-    if (route) restoreRoute(route).catch(report);
+    restoreRoute(route).catch(report);
   } catch (error) {
     report(error);
   }
