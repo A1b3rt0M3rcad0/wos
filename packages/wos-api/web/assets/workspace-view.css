@@ -1,0 +1,304 @@
+/* Coherent inspector facets share the existing editorial surface and type. */
+.workspace-conclusion-impact {
+  display: grid;
+  gap: .7rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-conclusion-impact > h3 {
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-conclusion-impact p,
+.workspace-conclusion-impact ul {
+  margin: 0;
+  line-height: 1.55;
+}
+.workspace-conclusion-impact ul {
+  padding-inline-start: 1.25rem;
+}
+.workspace-conclusion-impact li + li {
+  margin-top: .5rem;
+}
+.workspace-structural-editor,
+.workspace-move-preview,
+.workspace-move-change,
+.workspace-blocking-preview-body {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  gap: .7rem;
+  overflow-wrap: anywhere;
+}
+.workspace-move-preview h3,
+.workspace-move-preview h4,
+.workspace-move-preview h5,
+.workspace-blocking-preview-body h4 {
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-move-preview p {
+  margin: 0;
+  line-height: 1.55;
+}
+.workspace-move-preview .field-context {
+  display: grid;
+  gap: .25rem;
+}
+.workspace-move-change {
+  padding: .8rem;
+  border: 1px solid var(--wos-border);
+  background: var(--wos-workspace);
+}
+.workspace-move-blockers {
+  display: grid;
+  gap: .45rem;
+}
+.workspace-move-blockers small {
+  display: block;
+  color: var(--wos-muted);
+}
+.workspace-view {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-view .workspace-section {
+  display: grid;
+  align-content: start;
+  gap: .65rem;
+  padding-block: 1rem;
+  border-bottom: 1px solid var(--wos-border);
+}
+.workspace-view .workspace-section > h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 600;
+}
+.workspace-view h4 {
+  margin: .25rem 0 0;
+  font: inherit;
+  font-weight: 600;
+}
+.workspace-view p,
+.workspace-view ul {
+  margin: 0;
+}
+.workspace-view .detail-description {
+  font-size: 1rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+.workspace-path,
+.workspace-state,
+.workspace-criterion-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+.workspace-state {
+  margin-block: .5rem 1rem !important;
+}
+.workspace-path .workspace-reference {
+  max-width: 100%;
+}
+.workspace-reference,
+.workspace-criterion-title {
+  min-height: 44px;
+  padding: .65rem .8rem;
+  text-align: start;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.workspace-meaning,
+.workspace-empty,
+.workspace-coverage,
+.workspace-section small {
+  color: var(--wos-muted);
+  line-height: 1.55;
+}
+.workspace-person,
+.workspace-record-fact,
+.workspace-activity-entry,
+.workspace-criterion,
+.workspace-relationship {
+  display: grid;
+  align-content: start;
+  gap: .4rem;
+  min-width: 0;
+}
+.workspace-person,
+.workspace-criterion,
+.workspace-activity-entry {
+  padding: .8rem;
+  background: var(--wos-workspace);
+  border: 1px solid var(--wos-border);
+}
+.workspace-criterion-title {
+  width: 100%;
+  font-weight: 600;
+}
+.workspace-criterion-state > span,
+.workspace-criterion-state > strong {
+  font-size: .86rem;
+}
+.workspace-activity-entry p,
+.workspace-assessment-rationale {
+  white-space: pre-wrap;
+}
+.workspace-relationship {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  padding-block: .45rem;
+  border-bottom: 1px solid var(--wos-border);
+}
+.workspace-relationship-label {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  font-size: .86rem;
+  color: var(--wos-muted);
+}
+.workspace-relationship small {
+  grid-column: 1 / -1;
+}
+.workspace-record-fact > small,
+.workspace-placement-summary > small {
+  display: block;
+}
+.workspace-record-fact a {
+  color: var(--wos-copper);
+}
+.workspace-audit {
+  margin-block: 1rem;
+}
+.workspace-audit pre {
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.workspace-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: .5rem;
+  min-width: 0;
+}
+.workspace-primary-actions > button {
+  min-height: 44px;
+  padding: .65rem .8rem;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.workspace-primary-actions > .workspace-primary-action,
+.workspace-primary-actions > button:last-child:nth-child(even) {
+  grid-column: 1 / -1;
+}
+.workspace-primary-actions button small {
+  display: block;
+  font-weight: 400;
+  margin-top: .3rem;
+}
+/* The detail footer contains one primary, two secondary actions and More.
+   Share two rows rather than stacking the primary and More as full-width rows.
+   The existing control nodes, reading order and focus handlers stay intact. */
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer:has(.workspace-actions) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .45rem;
+  padding: .6rem .85rem;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .workspace-actions {
+  display: contents;
+}
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail .workspace-actions > button,
+#outcome[data-editorial-area="canvas"] .canvas-inspector-detail > footer #entity-actions {
+  grid-column: auto;
+  min-height: 44px;
+  padding: .55rem .65rem;
+}
+@media (max-width: 760px), (max-height: 800px) {
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-heading {
+    padding: .7rem .85rem;
+  }
+  #outcome[data-editorial-area="canvas"] .canvas-context-panel .dialog-body {
+    padding: .6rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-path .workspace-reference {
+    min-height: 44px;
+    padding: .4rem .55rem;
+    font-size: .85714rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-state {
+    margin-block: .15rem .25rem !important;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-description-intro {
+    padding-block-start: 0;
+  }
+  /* The entity title already identifies an authored documentary description.
+     Retain its section heading for assistive navigation without spending the
+     first reading lines on a second visual label. Operational headings remain. */
+  #outcome[data-editorial-area="canvas"] .workspace-description-intro > h3 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 760px) {
+  #outcome[data-editorial-area="canvas"] .canvas-inspector-detail > .dialog-heading {
+    padding-block: .2rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > nav.workspace-path {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: .35rem;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > nav.workspace-path > .workspace-reference {
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    min-height: 44px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #outcome[data-editorial-area="canvas"] .workspace-view > [data-workspace-facet="work"] {
+    padding-block-start: 0;
+    gap: .35rem;
+  }
+}
+.workspace-placement-summary {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+}
+.workspace-criteria-rows,
+.workspace-plan-preview {
+  display: grid;
+  gap: 1rem;
+}
+.workspace-criterion-row,
+.workspace-plan-row,
+.workspace-issue-impact,
+.workspace-evidence-source {
+  display: grid;
+  gap: .65rem;
+  min-width: 0;
+}
+.workspace-plan-preview {
+  margin-block: .8rem;
+}
+.workspace-evidence-form > [hidden],
+.workspace-issue-impact[hidden] {
+  display: none;
+}

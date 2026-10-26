@@ -1,4 +1,6 @@
 import { node, badge, kindName, display } from "./presentation.js";
+import { copy, message } from "./en-US.js";
+import { canvasWorkLayer, canvasRecordExplorer, canvasCardPresentation, MAX_CONTEXT_RECORDS } from "./workspace-card-summary.js";
 
 // Coordinates describe presentation only. They never imply ownership,
 // dependencies, readiness, execution authority, or a server-side mutation.
@@ -49,7 +51,7 @@ export function canvasNodeSize(kind) {
       : kind === "objective" ||
           ["phase", "milestone", "plan_reference"].includes(kind)
         ? 252
-        : 284;
+        : kind === "work_item" ? 304 : 284;
   return {
     width,
     height: paperFor(kind)[0] === "square" ? width : (width * 730) / 1000,
@@ -301,8 +303,8 @@ export function layoutCanvas(
     if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
       const entry = {
         ...item,
-        x: Math.max(16, saved.x),
-        y: Math.max(16, saved.y),
+        x: saved.x,
+        y: saved.y,
       };
       placed.set(item.key, entry);
       occupied.push(entry);
@@ -326,6 +328,14 @@ export function layoutCanvas(
     occupied.push(entry);
   }
   const nodes = visible.map((item) => placed.get(item.key));
+  // The map has no top/left wall. Bounds describe only its loaded cards and
+  // their reading margin; they do not constrain a user's local arrangement.
+  const x = nodes.length ? Math.min(...nodes.map((item) => item.x - 48)) : 0,
+    y = nodes.length ? Math.min(...nodes.map((item) => item.y - 48)) : 0;
+  const width =
+      Math.max(600, ...nodes.map((item) => item.x + item.width + 112 - x)),
+    height =
+      Math.max(400, ...nodes.map((item) => item.y + item.height + 48 - y));
   return {
     nodes,
     byKey: placed,
@@ -335,8 +345,9 @@ export function layoutCanvas(
       (edge) => placed.has(edge.sourceKey) && placed.has(edge.targetKey),
     ),
     hiddenCount: sorted.length - nodes.length,
-    width: Math.max(600, ...nodes.map((item) => item.x + item.width + 112)),
-    height: Math.max(400, ...nodes.map((item) => item.y + item.height + 48)),
+    bounds: { x, y, width, height },
+    width,
+    height,
   };
 }
 
@@ -370,9 +381,9 @@ export function canvasVisibleEdges(edges, selectedKey, filter = "context") {
 }
 
 export function canvasEdgeLabel(edge) {
-  if (edge.label) return edge.label;
   if (edge.kind === "depends_on")
     return `Depends on · ${edge.mode === "hard" ? "hard" : edge.mode === "advisory" ? "advisory" : "strength not loaded"}`;
+  if (edge.label) return edge.label;
   return (
     {
       hierarchy: "Objective hierarchy",
@@ -439,12 +450,21 @@ export function mountWorkspaceCanvas(host, options) {
   }
   filterWrap.append(edgeFilter);
   edgeFilter.value = "context";
+  const layerWrap = node("label", copy.text.boardLayers, "canvas-layer-filter");
+  const layerSelect = node("select");
+  layerSelect.setAttribute("aria-label", copy.text.boardLayers);
+  for (const [value, label] of [["work", copy.text.boardWorkMap], ["records", copy.text.boardAllRecords]]) {
+    const option = node("option", label);
+    option.value = value;
+    layerSelect.append(option);
+  }
+  layerWrap.append(layerSelect);
   const viewport = node("div", undefined, "canvas-viewport");
   viewport.tabIndex = 0;
   viewport.setAttribute("role", "region");
   viewport.setAttribute(
     "aria-label",
-    "Outcome Board map. Drag the background to pan; use arrow keys to move focus, plus and minus to zoom.",
+    "Outcome Board map. Drag cards to arrange them; drag the background or scroll to pan. Use Control or Command with scroll to zoom, arrow keys to navigate, plus and minus to zoom.",
   );
   const world = node("div", undefined, "canvas-world");
   const edges = document.createElementNS(SVG, "svg");
@@ -499,6 +519,9 @@ export function mountWorkspaceCanvas(host, options) {
     manualPositions = new Map(),
     opened = new Set(),
     nodeButtons = new Map();
+  let layer = options.initialLayer === "records" ? "records" : "work",
+    recordRoots = new Set(), recordsFor = () => new Set(), hiddenRecordCount = 0;
+  layerSelect.value = layer;
   let camera = { x: 24, y: 24, zoom: 1 },
     gesture = null,
     queued = null;
@@ -568,7 +591,11 @@ export function mountWorkspaceCanvas(host, options) {
     render();
     fit();
   }, "quiet canvas-auto-layout");
-  toolbar.append(switcher, searchWrap, filterWrap, autoLayout);
+  layerSelect.onchange = () => {
+    layer = layerSelect.value;
+    render();
+  };
+  toolbar.append(switcher, searchWrap, layerWrap, filterWrap, autoLayout);
   const more = control("Load more map items", () => invoke(options.onLoadMore));
   footer.insertBefore(more, legend);
 
@@ -589,7 +616,7 @@ export function mountWorkspaceCanvas(host, options) {
   }
   function announce() {
     const prefix = model?.partial ? "Partial map · " : "Loaded context · ";
-    status.textContent = `${prefix}${model?.nodes?.length || 0} loaded items · ${model?.edges?.length || 0} loaded connections · revision ${model?.revision ?? "not loaded"}${layout?.hiddenCount ? ` · ${layout.hiddenCount} items inside collapsed groups` : ""}.${model?.boundary?.scopeLimited ? " Graph depth and query limits apply." : ""}${root.dataset.detail === "overview" ? " Overview scale: select an item for details, or use List view for full controls." : ""}${connectionDescription ? " " + connectionDescription : ""}${lastError ? " " + lastError : ""}`;
+    status.textContent = `${prefix}${model?.nodes?.length || 0} loaded items · ${model?.edges?.length || 0} loaded connections · revision ${model?.revision ?? "not loaded"}${layout?.hiddenCount ? ` · ${layout.hiddenCount} items inside collapsed groups` : ""}.${hiddenRecordCount ? " " + message("boardRecordsHidden", hiddenRecordCount) : ""}${model?.boundary?.scopeLimited ? " Graph depth and query limits apply." : ""}${root.dataset.detail === "overview" ? " Overview scale: select an item for details, or use List view for full controls." : ""}${connectionDescription ? " " + connectionDescription : ""}${lastError ? " " + lastError : ""}`;
     root.dataset.partial = String(Boolean(model?.partial));
     more.hidden = !model?.hasMore || !options.onLoadMore;
   }
@@ -637,8 +664,12 @@ export function mountWorkspaceCanvas(host, options) {
     if (!layout) return;
     const area = cameraArea(),
       scale = uiUnit();
-    camera.x = (area.width - layout.width * scale * camera.zoom) / 2;
-    camera.y = (area.height - layout.height * scale * camera.zoom) / 2;
+    camera.x =
+      (area.width - layout.width * scale * camera.zoom) / 2 -
+      layout.bounds.x * scale * camera.zoom;
+    camera.y =
+      (area.height - layout.height * scale * camera.zoom) / 2 -
+      layout.bounds.y * scale * camera.zoom;
     cameraPaint();
   }
   function zoom(factor, point) {
@@ -670,8 +701,12 @@ export function mountWorkspaceCanvas(host, options) {
     // Initial entry keeps notes readable. An explicit Fit may use overview
     // scale to show the whole loaded map; List/details keep full-size content.
     camera.zoom = initial ? Math.max(desired, 0.75) : desired;
-    camera.x = Math.max(24, (area.width - width * camera.zoom) / 2);
-    camera.y = Math.max(24, (area.height - height * camera.zoom) / 2);
+    camera.x =
+      Math.max(24, (area.width - width * camera.zoom) / 2) -
+      layout.bounds.x * scale * camera.zoom;
+    camera.y =
+      Math.max(24, (area.height - height * camera.zoom) / 2) -
+      layout.bounds.y * scale * camera.zoom;
     if (initial && desired < 0.75) {
       const anchor =
         layout.byKey.get(selectedKey) ||
@@ -709,6 +744,7 @@ export function mountWorkspaceCanvas(host, options) {
     selectedKey = item.key;
     selectedEdgeKey = null;
     connectionDescription = "";
+    if (!layout?.byKey.has(item.key) && model.nodes.some((entry) => entry.key === item.key)) render();
     paintSelection();
     if (focus) reveal(item.key);
     invoke(options.onSelect, item.ref || null, item);
@@ -759,13 +795,14 @@ export function mountWorkspaceCanvas(host, options) {
       const source = layout.byKey.get(edge.sourceKey),
         target = layout.byKey.get(edge.targetKey);
       if (source && target) {
-        const scale = uiUnit() * camera.zoom;
+        const scale = uiUnit() * camera.zoom,
+          area = cameraArea();
         camera.x =
-          viewport.clientWidth / 2 -
+          area.width / 2 -
           ((source.x + source.width / 2 + target.x + target.width / 2) / 2) *
             scale;
         camera.y =
-          viewport.clientHeight / 2 -
+          area.height / 2 -
           ((source.y + source.height / 2 + target.y + target.height / 2) / 2) *
             scale;
         cameraPaint();
@@ -788,11 +825,16 @@ export function mountWorkspaceCanvas(host, options) {
       current = parent;
     }
     if (changed) render();
+    if (!layout.byKey.has(key) && layer === "work" && raw.has(key)) {
+      recordRoots.add(key);
+      render();
+    }
     const item = layout.byKey.get(key);
     if (!item) return false;
-    const scale = uiUnit() * camera.zoom;
-    camera.x = viewport.clientWidth / 2 - (item.x + item.width / 2) * scale;
-    camera.y = viewport.clientHeight / 2 - (item.y + item.height / 2) * scale;
+    const scale = uiUnit() * camera.zoom,
+      area = cameraArea();
+    camera.x = area.width / 2 - (item.x + item.width / 2) * scale;
+    camera.y = area.height / 2 - (item.y + item.height / 2) * scale;
     cameraPaint();
     const button =
       view() === "list"
@@ -811,53 +853,96 @@ export function mountWorkspaceCanvas(host, options) {
         ? `${item.collapsed ? "Show" : "Hide"} ${item.childCount}`
         : "Explore";
       const expand = control(label, () => toggle(item), "quiet canvas-expand");
-      expand.setAttribute(
-        "aria-label",
-        `${item.collapsed || !item.childCount ? "Expand" : "Collapse"} ${item.title}`,
-      );
+      expand.setAttribute("aria-label", `${item.collapsed || !item.childCount ? "Expand" : "Collapse"} ${item.title}`);
       expand.setAttribute("aria-expanded", String(!item.collapsed));
       actions.append(expand);
     }
-    if (item.canCreate?.length && options.onCreate) {
+    const records = recordsFor(item.key);
+    const canCreate = Boolean(item.canCreate?.length && options.onCreate);
+    const canDepend = Boolean(item.canConnect && item.ref && options.onConnect && ["objective", "work_item"].includes(item.kind));
+    const canExplore = layer === "work" && records.size && ["outcome", "objective", "work_item"].includes(item.kind);
+    if (canCreate || canDepend || canExplore) {
       const menu = node("div", undefined, "canvas-node-menu");
       menu.hidden = true;
-      const add = control(
-        "Add…",
-        () => {
-          const opening = menu.hidden;
-          closeMenus();
-          menu.hidden = !opening;
-          add.setAttribute("aria-expanded", String(opening));
-          if (opening) menu.querySelector("button")?.focus();
-        },
-        "quiet canvas-add",
-      );
-      add.setAttribute("aria-label", `Add an item within ${item.title}`);
+      const add = control(canCreate ? "Add…" : copy.text.boardMoreActions, () => {
+        const opening = menu.hidden;
+        closeMenus();
+        menu.hidden = !opening;
+        add.setAttribute("aria-expanded", String(opening));
+        if (opening) menu.querySelector("button")?.focus();
+      }, "quiet canvas-add");
+      add.setAttribute("aria-label", canCreate ? `Add an item within ${item.title}` : message("boardMoreActionsFor", item.title));
       add.setAttribute("aria-expanded", "false");
-      for (const kind of item.canCreate)
-        menu.append(
-          control(kind === "objective" ? "Add objective" : "New task", () => {
-            menu.hidden = true;
-            add.setAttribute("aria-expanded", "false");
+      const close = () => { menu.hidden = true; add.setAttribute("aria-expanded", "false"); };
+      if (canCreate)
+        for (const kind of item.canCreate)
+          menu.append(control(kind === "objective" ? "Add objective" : "New task", () => {
+            close();
             invoke(options.onCreate, kind, item.ref || null);
-          }),
-        );
+          }));
+      if (canDepend) {
+        const depend = control(copy.text.boardAddDependency, () => {
+          close();
+          invoke(options.onConnect, { sourceRef: item.ref, targetRef: null });
+        }, "quiet canvas-connect");
+        depend.setAttribute("aria-label", message("boardAddDependencyFor", item.title));
+        menu.append(depend);
+      }
+      if (canExplore) {
+        const expanded = recordRoots.has(item.key);
+        const label = expanded ? copy.text.boardHideRecords : copy.text.boardShowRecords;
+        const trigger = control(label, () => {
+          close();
+          if (recordRoots.has(item.key)) recordRoots.delete(item.key);
+          else {
+            recordRoots.add(item.key);
+            arrangeContextRecords(item, records);
+          }
+          render();
+          if (recordRoots.has(item.key) && view() === "map")
+            showRecordInViewport([...records][0]);
+          const origin = view() === "list"
+            ? [...list.querySelectorAll("[data-canvas-list-node]")].find((entry) => entry.dataset.canvasListNode === item.key)
+            : nodeButtons.get(item.key)?.closest(".canvas-node");
+          origin?.querySelector(".canvas-add")?.focus({ preventScroll: true });
+        }, "quiet canvas-records");
+        trigger.setAttribute("aria-expanded", String(expanded));
+        trigger.setAttribute("aria-label", `${label}: ${item.title}. ${message("boardLinkedRecords", records.size)}`);
+        if (records.size > MAX_CONTEXT_RECORDS) trigger.title = message("boardContextPreview", MAX_CONTEXT_RECORDS);
+        menu.append(trigger);
+      }
       actions.append(add, menu);
     }
-    if (item.canConnect && item.ref && options.onConnect) {
-      const connect = control(
-        "Connect",
-        () =>
-          invoke(options.onConnect, { sourceRef: item.ref, targetRef: null }),
-        "quiet canvas-connect",
-      );
-      connect.setAttribute(
-        "aria-label",
-        `Connect ${item.title} using an explicit relationship`,
-      );
-      actions.append(connect);
-    }
     return actions;
+  }
+  function arrangeContextRecords(source, records) {
+    const byKey = new Map(model.nodes.map((item) => [item.key, item]));
+    const occupied = [...positions].map(([key, point]) => ({ ...point, ...canvasNodeSize(byKey.get(key)?.kind) }));
+    let y = source.y;
+    for (const key of [...records].slice(0, MAX_CONTEXT_RECORDS)) {
+      if (positions.has(key)) continue;
+      const candidate = { x: source.x + source.width + 48, y, ...canvasNodeSize(byKey.get(key)?.kind) };
+      let collision;
+      do {
+        collision = occupied.find((other) => candidate.x < other.x + other.width + 16 && candidate.x + candidate.width + 16 > other.x && candidate.y < other.y + other.height + 16 && candidate.y + candidate.height + 16 > other.y);
+        if (collision) candidate.y = collision.y + collision.height + 32;
+      } while (collision);
+      positions.set(key, { x: candidate.x, y: candidate.y });
+      occupied.push(candidate);
+      y = candidate.y + candidate.height + 32;
+    }
+  }
+  function showRecordInViewport(key) {
+    const record = layout.byKey.get(key);
+    if (!record) return;
+    const scale = uiUnit() * camera.zoom, area = cameraArea(), margin = 16;
+    const left = camera.x + record.x * scale, top = camera.y + record.y * scale;
+    const right = left + record.width * scale, bottom = top + record.height * scale;
+    if (left < margin) camera.x += margin - left;
+    else if (right > area.width - margin) camera.x -= right - (area.width - margin);
+    if (top < margin) camera.y += margin - top;
+    else if (bottom > area.height - margin) camera.y -= bottom - (area.height - margin);
+    cameraPaint();
   }
   function render() {
     if (disposed || !model) return;
@@ -872,8 +957,12 @@ export function mountWorkspaceCanvas(host, options) {
       "canvas-expand",
       "canvas-add",
       "canvas-connect",
+      "canvas-records",
     ].find((name) => focused?.classList.contains(name));
-    layout = layoutCanvas(model, { collapsed, positions });
+    recordsFor = canvasRecordExplorer(model);
+    const projection = canvasWorkLayer(model, { layer, recordRoots, selectedKey, selectedEdgeKey, recordsFor });
+    hiddenRecordCount = projection.hiddenRecordCount;
+    layout = layoutCanvas(projection.model, { collapsed, positions });
     const indicators = canvasNodeIndicators(model);
     for (const item of layout.nodes)
       positions.set(item.key, { x: item.x, y: item.y });
@@ -887,6 +976,7 @@ export function mountWorkspaceCanvas(host, options) {
       article.dataset.canvasNode = item.key;
       article.dataset.kind = item.kind;
       article.dataset.paper = paperFor(item.kind)[1];
+      article.dataset.cardFacts = String(Boolean(item.cardSummary));
       article.dataset.state = item.displayState || item.lifecycle || "";
       article.dataset.selected = String(item.key === selectedKey);
       article.setAttribute("role", "group");
@@ -927,21 +1017,25 @@ export function mountWorkspaceCanvas(host, options) {
         node("span", item.title || "Untitled item", "canvas-node-title"),
       );
       const meta = node("span", undefined, "canvas-node-meta");
+      const card = canvasCardPresentation(item);
       if (item.displayState || item.lifecycle)
         meta.append(badge(item.displayState || item.lifecycle));
-      if (item.priority)
+      if (item.priority && !item.cardSummary)
         meta.append(
           node("span", display(item.priority), "canvas-node-priority"),
         );
       main.append(meta);
-      if (item.kind === "outcome" && item.summary)
-        main.append(node("span", item.summary, "canvas-node-summary"));
+      if (card.required) meta.append(node("span", card.required, "canvas-node-obligation"));
+      if (card.person) main.append(node("span", card.person, "canvas-node-person"));
+      if (card.summary) main.append(node("span", card.summary, "canvas-node-summary"));
+      else if (card.description) main.append(node("span", card.description, "canvas-node-summary"));
       const indicator = indicators.get(item.key);
       if (indicator?.label) {
         const summary = node("span", indicator.label, "canvas-node-indicators");
         summary.title = indicator.description;
         main.append(summary);
       }
+      if (item.cardSummary) main.setAttribute("aria-label", `${main.getAttribute("aria-label")}. ${[card.required, card.person, card.summary, message("boardCanonicalLifecycle", display(card.lifecycle))].filter(Boolean).join(". ")}`);
       main.onkeydown = (event) => nodeKey(event, item);
       content.append(main, nodeActions(item));
       article.append(paper, content);
@@ -959,6 +1053,10 @@ export function mountWorkspaceCanvas(host, options) {
       );
       if (item.displayState || item.lifecycle)
         listMain.append(badge(item.displayState || item.lifecycle));
+      if (card.required) listMain.append(node("span", card.required, "canvas-node-obligation"));
+      if (card.person) listMain.append(node("span", card.person, "canvas-node-person"));
+      if (card.summary) listMain.append(node("span", card.summary, "canvas-node-summary"));
+      else if (card.description) listMain.append(node("span", card.description, "canvas-node-summary"));
       if (indicator?.label) {
         const summary = node("span", indicator.label, "canvas-node-indicators");
         summary.title = indicator.description;
@@ -968,6 +1066,7 @@ export function mountWorkspaceCanvas(host, options) {
           `${kindName(item.kind)}: ${item.title}${item.displayState || item.lifecycle ? ", " + display(item.displayState || item.lifecycle) : ""}. ${indicator.description}`,
         );
       }
+      if (item.cardSummary) listMain.setAttribute("aria-label", `${listMain.getAttribute("aria-label") || `${kindName(item.kind)}: ${item.title}`}. ${[card.required, card.person, card.summary, message("boardCanonicalLifecycle", display(card.lifecycle))].filter(Boolean).join(". ")}`);
       row.append(listMain, nodeActions(item));
       list.append(row);
     }
@@ -997,7 +1096,12 @@ export function mountWorkspaceCanvas(host, options) {
     const focusedEdge =
       document.activeElement?.closest?.("[data-edge-key]")?.dataset.edgeKey;
     edges.replaceChildren();
-    edges.setAttribute("viewBox", `0 0 ${layout.width} ${layout.height}`);
+    edges.setAttribute(
+      "viewBox",
+      `${layout.bounds.x} ${layout.bounds.y} ${layout.width} ${layout.height}`,
+    );
+    edges.style.left = unit(layout.bounds.x);
+    edges.style.top = unit(layout.bounds.y);
     edges.style.width = unit(layout.width);
     edges.style.height = unit(layout.height);
     const defs = document.createElementNS(SVG, "defs"),
@@ -1052,13 +1156,16 @@ export function mountWorkspaceCanvas(host, options) {
       );
       group.setAttribute("role", "button");
       group.setAttribute("tabindex", "0");
+      const description = edge.kind === "depends_on"
+        ? `${source.title} depends on ${target.title}: ${canvasEdgeLabel(edge)}`
+        : `${source.title} → ${target.title}: ${canvasEdgeLabel(edge)}`;
       group.setAttribute(
         "aria-label",
-        `${source.title} → ${target.title}: ${canvasEdgeLabel(edge)}`,
+        description,
       );
       const activate = () => {
         selectedEdgeKey = edge.key;
-        connectionDescription = `${source.title} → ${target.title}: ${canvasEdgeLabel(edge)}.`;
+        connectionDescription = `${description}.`;
         renderEdges();
         announce();
         if (edge.ref) {
@@ -1081,7 +1188,7 @@ export function mountWorkspaceCanvas(host, options) {
         }
       };
       const title = document.createElementNS(SVG, "title");
-      title.textContent = `${source.title} → ${target.title}: ${canvasEdgeLabel(edge)}`;
+      title.textContent = description;
       const path = document.createElementNS(SVG, "path");
       path.classList.add("canvas-edge-line");
       path.setAttribute(
@@ -1350,13 +1457,47 @@ export function mountWorkspaceCanvas(host, options) {
   viewport.addEventListener(
     "wheel",
     (event) => {
-      if (!(event.ctrlKey || event.metaKey)) return;
+      // Leave native controls and any scrollable record content alone. The
+      // map owns its background/card surface, not the inspector or toolbar.
+      if (
+        gesture ||
+        event.target.closest(
+          ".canvas-node-actions, button:not(.canvas-node-main), a[href], input, select, textarea, [contenteditable]:not([contenteditable=false])",
+        )
+      )
+        return;
+      for (
+        let element = event.target;
+        element && element !== viewport;
+        element = element.parentElement
+      ) {
+        const style = getComputedStyle(element);
+        if (
+          (/auto|scroll/.test(style.overflowY) &&
+            element.scrollHeight > element.clientHeight) ||
+          (/auto|scroll/.test(style.overflowX) &&
+            element.scrollWidth > element.clientWidth)
+        )
+          return;
+      }
       event.preventDefault();
-      const rect = viewport.getBoundingClientRect();
-      zoom(Math.exp(-event.deltaY * 0.003), {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top,
-      });
+      const deltaUnit =
+        event.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? 16
+          : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? viewport.clientHeight
+            : 1;
+      if (event.ctrlKey || event.metaKey) {
+        const rect = viewport.getBoundingClientRect();
+        zoom(Math.exp(-event.deltaY * deltaUnit * 0.003), {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        });
+      } else {
+        camera.x -= event.deltaX * deltaUnit;
+        camera.y -= event.deltaY * deltaUnit;
+        cameraPaint();
+      }
     },
     { signal: abort.signal, passive: false },
   );
@@ -1368,6 +1509,9 @@ export function mountWorkspaceCanvas(host, options) {
         event.target.closest(".canvas-node-actions, .canvas-edge[role=button]")
       )
         return;
+      // A new press is a new intention. Only the trailing click of the
+      // preceding drag is suppressed; its timer must not swallow this click.
+      ignoreClickUntil = 0;
       const card = event.target.closest("[data-canvas-node]");
       const item = card && layout.byKey.get(card.dataset.canvasNode);
       gesture = {
@@ -1399,8 +1543,8 @@ export function mountWorkspaceCanvas(host, options) {
       if (gesture.item) {
         const scale = uiUnit() * camera.zoom;
         const position = {
-          x: Math.max(16, gesture.position.x + dx / scale),
-          y: Math.max(16, gesture.position.y + dy / scale),
+          x: gesture.position.x + dx / scale,
+          y: gesture.position.y + dy / scale,
         };
         positions.set(gesture.item.key, position);
         manualPositions.set(gesture.item.key, position);
@@ -1482,6 +1626,13 @@ export function mountWorkspaceCanvas(host, options) {
     }
     const scopeChanged = !model || model.scopeKey !== next.scopeKey;
     const revisionChanged = model && model.revision !== next.revision;
+    const planningOpened = model && !model.nodes.some((entry) => entry.roadmapRef) && next.nodes.some((entry) => entry.roadmapRef);
+    if (!scopeChanged && planningOpened) {
+      // Loading a published revision or draft is an explicit exploration
+      // request. Keep its planning cards available in the records layer.
+      layer = "records";
+      layerSelect.value = layer;
+    }
     const hasSelection = Object.hasOwn(selection, "selectedKey");
     let incomingSelectedKey = selection.selectedKey;
     if (
@@ -1514,6 +1665,9 @@ export function mountWorkspaceCanvas(host, options) {
       manualPositions = new Map();
       opened = new Set();
       collapsed = new Set();
+      recordRoots = new Set();
+      layer = options.initialLayer === "records" ? "records" : "work";
+      layerSelect.value = layer;
       camera = { x: 24, y: 24, zoom: 1 };
       selectedEdgeKey = null;
       connectionDescription = "";

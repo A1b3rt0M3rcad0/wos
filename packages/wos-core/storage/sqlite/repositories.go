@@ -24,36 +24,40 @@ func (r outcomeRepository) Get(ctx context.Context, namespaceID, outcomeID domai
 		version                          int64
 		title, description, desiredState string
 		externalContext                  string
+		completionPolicy                 string
+		operationalProfile               string
 		lifecycle, priority              string
 		archivedAt                       sql.NullInt64
 		createdAt, updatedAt             int64
 	)
 	err := r.uow.tx.QueryRowContext(ctx, `
 SELECT version, title, description, desired_state, lifecycle, priority,
-       archived_at, created_at, updated_at,external_context_json
+       archived_at, created_at, updated_at,external_context_json,completion_policy,operational_profile
 FROM outcomes
 WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
 		namespaceID.String(), outcomeID.String(), outcomeID.String(),
 	).Scan(
 		&version, &title, &description, &desiredState, &lifecycle, &priority,
-		&archivedAt, &createdAt, &updatedAt, &externalContext,
+		&archivedAt, &createdAt, &updatedAt, &externalContext, &completionPolicy, &operationalProfile,
 	)
 	if err != nil {
 		return domain.Outcome{}, mapSQLError("get outcome", err)
 	}
 
 	value := domain.Outcome{
-		ID:           outcomeID,
-		NamespaceID:  namespaceID,
-		Version:      domain.Version(version),
-		Title:        title,
-		Description:  description,
-		DesiredState: desiredState,
-		Lifecycle:    domain.OutcomeLifecycle(lifecycle),
-		Priority:     domain.Priority(priority),
-		CreatedAt:    decodeTime(createdAt),
-		UpdatedAt:    decodeTime(updatedAt),
-		Criteria:     domain.NewCriterionSet(),
+		ID:                 outcomeID,
+		NamespaceID:        namespaceID,
+		CompletionPolicy:   domain.CompletionPolicy(completionPolicy),
+		OperationalProfile: domain.OperationalProfile(operationalProfile),
+		Version:            domain.Version(version),
+		Title:              title,
+		Description:        description,
+		DesiredState:       desiredState,
+		Lifecycle:          domain.OutcomeLifecycle(lifecycle),
+		Priority:           domain.Priority(priority),
+		CreatedAt:          decodeTime(createdAt),
+		UpdatedAt:          decodeTime(updatedAt),
+		Criteria:           domain.NewCriterionSet(),
 	}
 	if err := unmarshalJSON(externalContext, &value.ExternalContext); err != nil {
 		return domain.Outcome{}, err
@@ -100,8 +104,8 @@ func (r outcomeRepository) Insert(ctx context.Context, outcome domain.Outcome) e
 	_, err = r.uow.tx.ExecContext(ctx, `
 INSERT INTO outcomes (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, desired_state, lifecycle, archived_at,external_context_json
-) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    title, description, priority, desired_state, lifecycle, archived_at,external_context_json,completion_policy,operational_profile
+) VALUES (?, ?, ?, 'outcome', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		outcome.ID.String(),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
@@ -115,6 +119,8 @@ INSERT INTO outcomes (
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
+		string(outcome.OperationalProfile.Effective()),
 	)
 	if err != nil {
 		return mapSQLError("insert outcome", err)
@@ -139,6 +145,9 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	if outcome.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "outcome version must advance exactly once per save")
 	}
+	if err := r.validateExistingObjectivePolicies(ctx, outcome); err != nil {
+		return err
+	}
 	contextJSON, err := marshalJSON(outcome.ExternalContext)
 	if err != nil {
 		return err
@@ -146,7 +155,7 @@ func (r outcomeRepository) Save(ctx context.Context, outcome domain.Outcome, exp
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE outcomes
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?
+    desired_state = ?, lifecycle = ?, archived_at = ?,external_context_json=?,completion_policy=?,operational_profile=?
 WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		int64(outcome.Version),
 		encodeTime(outcome.UpdatedAt),
@@ -157,6 +166,8 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 		string(outcome.Lifecycle),
 		encodeOptionalTime(outcome.ArchivedAt),
 		contextJSON,
+		string(outcome.CompletionPolicy.Effective()),
+		string(outcome.OperationalProfile.Effective()),
 		outcome.NamespaceID.String(),
 		outcome.ID.String(),
 		outcome.ID.String(),
@@ -179,17 +190,61 @@ WHERE namespace_id = ? AND id = ? AND outcome_id = ? AND version = ?`,
 	)
 }
 
+// validateExistingObjectivePolicies prevents an Outcome policy update from
+// leaving persisted automatic Objectives in a configuration that is no longer
+// allowed. The check is scoped to actual policy changes, so ordinary Outcome
+// edits do not scan the Objective set.
+func (r outcomeRepository) validateExistingObjectivePolicies(ctx context.Context, outcome domain.Outcome) error {
+	var oldProfile, oldCompletionPolicy string
+	err := r.uow.tx.QueryRowContext(ctx, `
+SELECT operational_profile, completion_policy
+FROM outcomes
+WHERE namespace_id = ? AND id = ? AND outcome_id = ?`,
+		outcome.NamespaceID.String(), outcome.ID.String(), outcome.ID.String(),
+	).Scan(&oldProfile, &oldCompletionPolicy)
+	if err != nil {
+		return mapSQLError("read current outcome completion policy", err)
+	}
+	if domain.OperationalProfile(oldProfile).Effective() == outcome.OperationalProfile.Effective() &&
+		domain.CompletionPolicy(oldCompletionPolicy).Effective() == outcome.CompletionPolicy.Effective() {
+		return nil
+	}
+
+	rows, err := r.uow.tx.QueryContext(ctx, `
+SELECT completion_mode
+FROM objectives
+WHERE namespace_id = ? AND outcome_id = ?`, outcome.NamespaceID.String(), outcome.ID.String())
+	if err != nil {
+		return mapSQLError("check objective completion policies", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var mode string
+		if err := rows.Scan(&mode); err != nil {
+			return err
+		}
+		objective := domain.Objective{Scope: outcome.Scope(), CompletionMode: domain.ObjectiveCompletionMode(mode)}
+		if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+			return domain.WrapError(domain.ErrorCodeInvalidArgument, "outcome policy change would invalidate an objective completion configuration", err)
+		}
+	}
+	return rows.Err()
+}
+
 func (r objectiveRepository) Get(ctx context.Context, scope domain.Scope, id domain.ID) (domain.Objective, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return domain.Objective{}, err
 	}
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
-       required_for_outcome, created_at, updated_at
+       required_for_outcome, created_at, updated_at, completion_mode, completion_cycle
 FROM objectives
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+	WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanObjective(row, scope)
 	if err != nil {
+		return domain.Objective{}, err
+	}
+	if err := r.validateObjectivePolicy(ctx, value); err != nil {
 		return domain.Objective{}, err
 	}
 	actors, criteria, current, history, err := loadOwnedState(ctx, r.uow.tx, value.Ref(), "owner")
@@ -206,20 +261,32 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(
 	return value, nil
 }
 
+func (r objectiveRepository) validateObjectivePolicy(ctx context.Context, objective domain.Objective) error {
+	outcome, err := r.uow.outcomes.Get(ctx, objective.Scope.NamespaceID, objective.Scope.OutcomeID)
+	if err != nil {
+		return err
+	}
+	if err := objective.ValidateCompletionConfiguration(outcome); err != nil {
+		return domain.WrapError(domain.ErrorCodeInvalidArgument, "objective completion configuration is invalid", err)
+	}
+	return nil
+}
+
 func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, error) {
 	var rawID string
 	var (
-		version              int64
-		title, description   string
-		parent               sql.NullString
-		lifecycle, priority  string
-		required             int
-		createdAt, updatedAt int64
+		version                         int64
+		title, description              string
+		parent                          sql.NullString
+		lifecycle, priority             string
+		required                        int
+		createdAt, updatedAt            int64
+		completionMode, completionCycle string
 	)
 	err := scanner.Scan(
 		&rawID,
 		&version, &title, &description, &parent, &lifecycle, &priority,
-		&required, &createdAt, &updatedAt,
+		&required, &createdAt, &updatedAt, &completionMode, &completionCycle,
 	)
 	if err != nil {
 		return domain.Objective{}, mapSQLError("get objective", err)
@@ -239,8 +306,13 @@ func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, er
 		RequiredForOutcome: required == 1,
 		CreatedAt:          decodeTime(createdAt),
 		UpdatedAt:          decodeTime(updatedAt),
+		CompletionMode:     domain.ObjectiveCompletionMode(completionMode),
 		Criteria:           domain.NewCriterionSet(),
 		OwnerRefs:          []domain.ActorRef{}, ConclusionHistory: []domain.Conclusion{},
+	}
+	value.CompletionCycle, err = parseObjectiveCompletionCycle(completionCycle)
+	if err != nil {
+		return domain.Objective{}, err
 	}
 	if parent.Valid {
 		parsed, err := domain.ParseID(parent.String)
@@ -252,16 +324,27 @@ func scanObjective(scanner rowScanner, scope domain.Scope) (domain.Objective, er
 	return value, nil
 }
 
+func parseObjectiveCompletionCycle(value string) (uint64, error) {
+	cycle, err := strconv.ParseUint(value, 10, 64)
+	if err != nil || cycle == 0 {
+		if err == nil {
+			err = fmt.Errorf("completion_cycle must be at least 1")
+		}
+		return 0, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective completion_cycle is invalid", err)
+	}
+	return cycle, nil
+}
+
 func (r objectiveRepository) ListByOutcome(ctx context.Context, scope domain.Scope) ([]domain.Objective, error) {
 	if err := r.uow.ensureOpen(); err != nil {
 		return nil, err
 	}
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, parent_objective_id, lifecycle, priority,
-       required_for_outcome, created_at, updated_at
+       required_for_outcome, created_at, updated_at, completion_mode, completion_cycle
 FROM objectives
 WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list objective aggregates", err)
 	}
@@ -282,6 +365,10 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	}
 	if len(values) == 0 {
 		return values, nil
+	}
+	owner, err := r.uow.outcomes.Get(ctx, scope.NamespaceID, scope.OutcomeID)
+	if err != nil {
+		return nil, err
 	}
 	owned, err := ownedAggregateIDs(ctx, r.uow.tx, scope)
 	if err != nil {
@@ -307,6 +394,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective is invalid", err)
 		}
+		if err := values[i].ValidateCompletionConfiguration(owner); err != nil {
+			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted objective completion configuration is invalid", err)
+		}
 	}
 	return values, nil
 }
@@ -318,14 +408,17 @@ func (r objectiveRepository) Insert(ctx context.Context, objective domain.Object
 	if err := objective.Validate(); err != nil {
 		return err
 	}
+	if err := r.validateObjectivePolicy(ctx, objective); err != nil {
+		return err
+	}
 	if err := insertEntityRef(ctx, r.uow.tx, objective.Ref()); err != nil {
 		return err
 	}
 	_, err := r.uow.tx.ExecContext(ctx, `
 INSERT INTO objectives (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
-    title, description, priority, parent_objective_id, lifecycle, required_for_outcome
-) VALUES (?, ?, ?, 'objective', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	title, description, priority, parent_objective_id, lifecycle, required_for_outcome, completion_mode, completion_cycle
+) VALUES (?, ?, ?, 'objective', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		objective.ID.String(),
 		objective.Scope.NamespaceID.String(),
 		objective.Scope.OutcomeID.String(),
@@ -338,6 +431,8 @@ INSERT INTO objectives (
 		nullableID(objective.ParentObjectiveID),
 		string(objective.Lifecycle),
 		boolInt(objective.RequiredForOutcome),
+		string(objective.CompletionMode.Effective()),
+		strconv.FormatUint(objective.EffectiveCompletionCycle(), 10),
 	)
 	if err != nil {
 		return mapSQLError("insert objective", err)
@@ -356,13 +451,16 @@ func (r objectiveRepository) Save(ctx context.Context, objective domain.Objectiv
 	if err := objective.Validate(); err != nil {
 		return err
 	}
+	if err := r.validateObjectivePolicy(ctx, objective); err != nil {
+		return err
+	}
 	if objective.Version != expected+1 {
 		return domain.NewError(domain.ErrorCodeVersionConflict, "objective version must advance exactly once per save")
 	}
 	result, err := r.uow.tx.ExecContext(ctx, `
 UPDATE objectives
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
-    parent_objective_id = ?, lifecycle = ?, required_for_outcome = ?
+    parent_objective_id = ?, lifecycle = ?, required_for_outcome = ?, completion_mode = ?, completion_cycle = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(objective.Version),
 		encodeTime(objective.UpdatedAt),
@@ -372,6 +470,8 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		nullableID(objective.ParentObjectiveID),
 		string(objective.Lifecycle),
 		boolInt(objective.RequiredForOutcome),
+		string(objective.CompletionMode.Effective()),
+		strconv.FormatUint(objective.EffectiveCompletionCycle(), 10),
 		objective.Scope.NamespaceID.String(),
 		objective.Scope.OutcomeID.String(),
 		objective.ID.String(),
@@ -398,9 +498,13 @@ func (r workItemRepository) Get(ctx context.Context, scope domain.Scope, id doma
 	row := r.uow.tx.QueryRowContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id,
+       delivery_state.pending_delivery_id, delivery_state.latest_delivery_id, delivery_state.latest_decision_id, delivery_state.latest_withdrawal_id, delivery_state.delivery_round, delivery_state.replan_authorized
 FROM work_items
-WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
+LEFT JOIN task_delivery_work_state AS delivery_state
+  ON delivery_state.namespace_id=work_items.namespace_id AND delivery_state.outcome_id=work_items.outcome_id AND delivery_state.work_item_id=work_items.id
+WHERE work_items.namespace_id = ? AND work_items.outcome_id = ? AND work_items.id = ?`, scope.NamespaceID.String(), scope.OutcomeID.String(), id.String())
 	value, err := scanWorkItem(row, scope)
 	if err != nil {
 		return domain.WorkItem{}, err
@@ -416,29 +520,39 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ?`, scope.NamespaceID.String(
 	if err := value.Validate(); err != nil {
 		return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
 	}
+	if err := r.uow.taskDeliveries.validateWorkItemNavigation(ctx, value); err != nil {
+		return domain.WorkItem{}, err
+	}
 	return value, nil
 }
 
 func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, error) {
 	var rawID string
 	var (
-		version                                       int64
-		title, description                            string
-		objectiveID                                   sql.NullString
-		lifecycle, priority, resultSummary            string
-		lastFencing                                   string
-		contractsEnabled                              int
-		contractID, executionSpec                     sql.NullString
-		pendingReview, latestReview, correctionReview sql.NullString
-		claimID, leasePrincipal, leaseActor           sql.NullString
-		notBefore, acquiredAt, expiresAt              sql.NullInt64
-		createdAt, updatedAt                          int64
+		version                                                           int64
+		title, description                                                string
+		objectiveID                                                       sql.NullString
+		lifecycle, priority, resultSummary                                string
+		lastFencing                                                       string
+		contractsEnabled                                                  int
+		contractID, executionSpec                                         sql.NullString
+		pendingReview, latestReview, correctionReview                     sql.NullString
+		pendingDelivery, latestDelivery, latestDecision, latestWithdrawal sql.NullString
+		deliveryRound                                                     sql.NullString
+		replanAuthorized                                                  sql.NullInt64
+		claimID, leasePrincipal, leaseActor                               sql.NullString
+		holderCredentialID, sessionCredentialID                           sql.NullString
+		credentialBindingVersion                                          int64
+		notBefore, acquiredAt, expiresAt                                  sql.NullInt64
+		createdAt, updatedAt                                              int64
 	)
 	err := scanner.Scan(
 		&rawID,
 		&version, &title, &description, &objectiveID, &lifecycle, &priority,
 		&notBefore, &resultSummary, &lastFencing, &claimID, &leasePrincipal, &leaseActor,
 		&acquiredAt, &expiresAt, &createdAt, &updatedAt, &contractsEnabled, &contractID, &executionSpec, &pendingReview, &latestReview, &correctionReview,
+		&credentialBindingVersion, &holderCredentialID, &sessionCredentialID,
+		&pendingDelivery, &latestDelivery, &latestDecision, &latestWithdrawal, &deliveryRound, &replanAuthorized,
 	)
 	if err != nil {
 		return domain.WorkItem{}, mapSQLError("get work item", err)
@@ -479,6 +593,31 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 			}
 			*field.target = &id
 		}
+	}
+	for _, field := range []struct {
+		raw    sql.NullString
+		target **domain.ID
+	}{{pendingDelivery, &value.PendingDeliveryID}, {latestDelivery, &value.LatestDeliveryID}, {latestDecision, &value.LatestDeliveryDecisionID}, {latestWithdrawal, &value.LatestDeliveryWithdrawalID}} {
+		if field.raw.Valid {
+			parsed, parseErr := domain.ParseID(field.raw.String)
+			if parseErr != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery reference is invalid", parseErr)
+			}
+			*field.target = &parsed
+		}
+	}
+	if deliveryRound.Valid {
+		parsed, parseErr := strconv.ParseUint(deliveryRound.String, 10, 64)
+		if parseErr != nil || deliveryRound.String != strconv.FormatUint(parsed, 10) {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery round is invalid")
+		}
+		value.DeliveryRound = parsed
+	}
+	if replanAuthorized.Valid {
+		if replanAuthorized.Int64 != 0 && replanAuthorized.Int64 != 1 {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeInvalidArgument, "persisted TaskDelivery replan authorization is invalid")
+		}
+		value.TaskDeliveryReplanAuthorized = replanAuthorized.Int64 == 1
 	}
 	if contractID.Valid {
 		parsed, err := domain.ParseID(contractID.String)
@@ -525,6 +664,29 @@ func scanWorkItem(scanner rowScanner, scope domain.Scope) (domain.WorkItem, erro
 			AcquiredAt:   decodeTime(acquiredAt.Int64),
 			ExpiresAt:    decodeTime(expiresAt.Int64),
 		}
+		if credentialBindingVersion < 0 || credentialBindingVersion > int64(^uint8(0)) {
+			return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted lease credential binding version is invalid")
+		}
+		value.CurrentLease.CredentialBindingVersion = uint8(credentialBindingVersion)
+		if holderCredentialID.Valid {
+			parsed, err := domain.ParseID(holderCredentialID.String)
+			if err != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted lease holder credential id is invalid", err)
+			}
+			value.CurrentLease.HolderCredentialID = parsed
+		}
+		if sessionCredentialID.Valid {
+			parsed, err := domain.ParseID(sessionCredentialID.String)
+			if err != nil {
+				return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted lease session credential id is invalid", err)
+			}
+			value.CurrentLease.SessionCredentialID = &parsed
+		}
+		if err := value.CurrentLease.Validate(); err != nil {
+			return domain.WorkItem{}, domain.WrapError(domain.ErrorCodeLease, "persisted work lease is invalid", err)
+		}
+	} else if credentialBindingVersion != 0 || holderCredentialID.Valid || sessionCredentialID.Valid {
+		return domain.WorkItem{}, domain.NewError(domain.ErrorCodeLease, "persisted lease credential binding has no lease")
 	}
 	return value, nil
 }
@@ -536,10 +698,14 @@ func (r workItemRepository) ListByOutcome(ctx context.Context, scope domain.Scop
 	rows, err := r.uow.tx.QueryContext(ctx, `
 SELECT id, version, title, description, objective_id, lifecycle, priority,
        not_before, result_summary, COALESCE(fencing_token_decimal, CAST(last_fencing_token AS TEXT)), lease_claim_id, lease_principal_id,
-       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id
+       lease_actor_json, lease_acquired_at, lease_expires_at, created_at, updated_at, contracts_enabled, current_contract_id, execution_spec_json, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+       lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id,
+       delivery_state.pending_delivery_id, delivery_state.latest_delivery_id, delivery_state.latest_decision_id, delivery_state.latest_withdrawal_id, delivery_state.delivery_round, delivery_state.replan_authorized
 FROM work_items
-WHERE namespace_id = ? AND outcome_id = ?
-ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+LEFT JOIN task_delivery_work_state AS delivery_state
+  ON delivery_state.namespace_id=work_items.namespace_id AND delivery_state.outcome_id=work_items.outcome_id AND delivery_state.work_item_id=work_items.id
+WHERE work_items.namespace_id = ? AND work_items.outcome_id = ?
+ORDER BY work_items.id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if err != nil {
 		return nil, mapSQLError("list work item aggregates", err)
 	}
@@ -585,6 +751,9 @@ ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 		if err := values[i].Validate(); err != nil {
 			return nil, domain.WrapError(domain.ErrorCodeInvalidArgument, "persisted work item is invalid", err)
 		}
+		if err := r.uow.taskDeliveries.validateWorkItemNavigation(ctx, values[i]); err != nil {
+			return nil, err
+		}
 	}
 	return values, nil
 }
@@ -613,8 +782,9 @@ INSERT INTO work_items (
     id, namespace_id, outcome_id, kind, version, created_at, updated_at,
     title, description, priority, objective_id, lifecycle, not_before, result_summary,
     last_fencing_token, lease_claim_id, lease_principal_id, lease_actor_json,
-    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id
-) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    lease_acquired_at, lease_expires_at, contracts_enabled, current_contract_id, execution_spec_json, fencing_token_decimal, pending_review_case_id, latest_review_case_id, correction_review_case_id,
+    lease_credential_binding_version, lease_holder_credential_id, lease_session_credential_id
+) VALUES (?, ?, ?, 'work_item', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ID.String(),
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
@@ -635,9 +805,13 @@ INSERT INTO work_items (
 		lease.acquiredAt,
 		lease.expiresAt,
 		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
+		lease.credentialBindingVersion, lease.holderCredentialID, lease.sessionCredentialID,
 	)
 	if err != nil {
 		return mapSQLError("insert work item", err)
+	}
+	if err := saveTaskDeliveryWorkState(ctx, r.uow.tx, item); err != nil {
+		return err
 	}
 	return syncOwnedState(
 		ctx, r.uow.tx, item.Ref(), "assignee", item.AssigneeRefs, item.Criteria,
@@ -670,7 +844,8 @@ UPDATE work_items
 SET version = ?, updated_at = ?, title = ?, description = ?, priority = ?,
     objective_id = ?, lifecycle = ?, not_before = ?, result_summary = ?, last_fencing_token = ?,
     lease_claim_id = ?, lease_principal_id = ?, lease_actor_json = ?,
-    lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?, pending_review_case_id = ?, latest_review_case_id = ?, correction_review_case_id = ?
+    lease_acquired_at = ?, lease_expires_at = ?, contracts_enabled = ?, current_contract_id = ?, execution_spec_json = ?, fencing_token_decimal = ?, pending_review_case_id = ?, latest_review_case_id = ?, correction_review_case_id = ?,
+    lease_credential_binding_version = ?, lease_holder_credential_id = ?, lease_session_credential_id = ?
 WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		int64(item.Version),
 		encodeTime(item.UpdatedAt),
@@ -688,6 +863,7 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 		lease.acquiredAt,
 		lease.expiresAt,
 		boolInt(item.ContractsEnabled), nullableID(item.CurrentContractID), executionSpecJSON(item.ExecutionSpec), strconv.FormatUint(item.LastFencingToken, 10), nullableID(item.PendingReviewCaseID), nullableID(item.LatestReviewCaseID), nullableID(item.CorrectionReviewCaseID),
+		lease.credentialBindingVersion, lease.holderCredentialID, lease.sessionCredentialID,
 		item.Scope.NamespaceID.String(),
 		item.Scope.OutcomeID.String(),
 		item.ID.String(),
@@ -698,6 +874,9 @@ WHERE namespace_id = ? AND outcome_id = ? AND id = ? AND version = ?`,
 	}
 	if err := requireVersionedUpdate(ctx, r.uow.tx, result, "work_items",
 		item.Scope.NamespaceID, item.Scope.OutcomeID, item.ID, expected); err != nil {
+		return err
+	}
+	if err := saveTaskDeliveryWorkState(ctx, r.uow.tx, item); err != nil {
 		return err
 	}
 	return syncOwnedState(
@@ -872,16 +1051,19 @@ func boolInt(value bool) int {
 }
 
 type encodedLease struct {
-	claimID     any
-	principalID any
-	actorJSON   any
-	acquiredAt  any
-	expiresAt   any
+	claimID                  any
+	principalID              any
+	actorJSON                any
+	acquiredAt               any
+	expiresAt                any
+	credentialBindingVersion int64
+	holderCredentialID       any
+	sessionCredentialID      any
 }
 
 func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 	if lease == nil {
-		return encodedLease{}, nil
+		return encodedLease{credentialBindingVersion: 0}, nil
 	}
 	if err := lease.Validate(); err != nil {
 		return encodedLease{}, err
@@ -891,12 +1073,22 @@ func encodeLease(lease *domain.WorkLease) (encodedLease, error) {
 		return encodedLease{}, err
 	}
 	return encodedLease{
-		claimID:     lease.ClaimID.String(),
-		principalID: lease.PrincipalID,
-		actorJSON:   actorJSON,
-		acquiredAt:  encodeTime(lease.AcquiredAt),
-		expiresAt:   encodeTime(lease.ExpiresAt),
+		claimID:                  lease.ClaimID.String(),
+		principalID:              lease.PrincipalID,
+		actorJSON:                actorJSON,
+		acquiredAt:               encodeTime(lease.AcquiredAt),
+		expiresAt:                encodeTime(lease.ExpiresAt),
+		credentialBindingVersion: int64(lease.CredentialBindingVersion),
+		holderCredentialID:       credentialID(lease.CredentialBindingVersion, lease.HolderCredentialID),
+		sessionCredentialID:      nullableID(lease.SessionCredentialID),
 	}, nil
+}
+
+func credentialID(version uint8, id domain.ID) any {
+	if version == 0 {
+		return nil
+	}
+	return id.String()
 }
 
 func nowUTC() time.Time {

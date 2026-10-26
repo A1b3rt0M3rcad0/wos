@@ -62,7 +62,7 @@ func TestNamespaceProtocolCutoverAndRestart(t *testing.T) {
 		t.Fatal("migration changed identity/version/fence", err, migrated)
 	}
 	cc.IdempotencyKey = "protocol-create-new-work"
-	created, err := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: w.Scope, Title: "New contract work", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo, ExecutionSpec: &d.ExecutionSpec{Instructions: []string{"bounded task"}}})
+	created, err := service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: w.Scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, w.Scope), Title: "New contract work", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo, ExecutionSpec: &d.ExecutionSpec{Instructions: []string{"bounded task"}}})
 	if err != nil || !created.Value.ContractsEnabled || created.Value.ExecutionSpec == nil {
 		t.Fatal("new work protocol", err, created)
 	}

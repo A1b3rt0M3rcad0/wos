@@ -253,8 +253,8 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 			return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "completion intent must be auto/direct/review")
 		}
 		if direct {
-			for _, permission := range []ports.Permission{ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
-				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID); err != nil {
+			for _, permission := range []ports.Permission{ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite} {
+				if _, _, err = s.signedAccess(ctx, u, scope, permission, key.ID, legacyPermissionForCommand("ReturnSignedWork", permission)); err != nil {
 					return zero, 0, err
 				}
 			}
@@ -303,22 +303,22 @@ func (s *Service) ReturnSignedWork(ctx context.Context, cc d.CommandContext, cmd
 			return zero, 0, err
 		}
 		cv, lv, wv := contract.Version, contract.LeaseVersion, work.Version
+		candidate := work
+		candidate.Lifecycle = d.WorkItemLifecycleTodo
+		candidate.CurrentLease = nil
+		if err = requireWorkItemReady(ctx, u, candidate, now); err != nil {
+			return zero, 0, err
+		}
+		if err = requireNotBlocked(ctx, u, work.Ref()); err != nil {
+			return zero, 0, err
+		}
+		if err = requireHardDependenciesSatisfied(ctx, u, work.Ref()); err != nil {
+			return zero, 0, err
+		}
 		var review *d.ReviewCase
 		disposition := "completed"
 		if direct {
 			if err = s.recordSignedAssessments(ctx, u, cc, &work, submission, request.Material.Assessments, registered.LocalKeys, now); err != nil {
-				return zero, 0, err
-			}
-			candidate := work
-			candidate.Lifecycle = d.WorkItemLifecycleTodo
-			candidate.CurrentLease = nil
-			if err = requireWorkItemReady(ctx, u, candidate, now); err != nil {
-				return zero, 0, err
-			}
-			if err = requireNotBlocked(ctx, u, work.Ref()); err != nil {
-				return zero, 0, err
-			}
-			if err = requireHardDependenciesSatisfied(ctx, u, work.Ref()); err != nil {
 				return zero, 0, err
 			}
 			id, e := s.ids.NewID()

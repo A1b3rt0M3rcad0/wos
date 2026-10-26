@@ -140,6 +140,7 @@ function buildModel(
   plans,
   protocolMode,
   contexts = new Map(),
+  cardSummaries = new Map(),
 ) {
   const nodes = new Map(),
     edges = new Map(),
@@ -209,6 +210,15 @@ function buildModel(
   for (const graph of graphs.values()) {
     for (const summary of graph.page.nodes || []) addNode(summary);
     for (const edge of graph.page.edges || []) {
+      // Legacy/direct Task edges do not establish a valid Outcome placement.
+      // Tasks are owned by Objectives; keep the Task as an unplaced record,
+      // but never project the Outcome as its parent.
+      if (
+        edge.kind === "ownership" &&
+        edge.source_of_truth === "work_item" &&
+        edge.source_ref?.kind === "outcome" &&
+        edge.target_ref?.kind === "work_item"
+      ) continue;
       addEdge(
         `graph:${edge.source_of_truth}:${edge.id}`,
         edge.source_ref,
@@ -332,6 +342,21 @@ function buildModel(
         ? "Awaiting independent review."
         : undefined;
     }
+  }
+
+  // Card facts are a bounded server projection from this exact Outcome
+  // revision. They never hydrate inspectors or infer authority from assignees.
+  for (const [key, summary] of cardSummaries) {
+    const entry = nodes.get(key);
+    if (!entry) continue;
+    entry.cardSummary = clone(summary);
+    entry.title = summary.title || entry.title;
+    entry.lifecycle = summary.lifecycle || entry.lifecycle;
+    if (summary.display_state && (!entry.reportedOperationalState ||
+        ["awaiting_review", "corrections_requested"].includes(summary.display_state)))
+      entry.displayState = summary.display_state;
+    if (!entry.authorityKnown)
+      entry.authorityUnknown = summary.authority_state === "unknown";
   }
 
   const planHeaders = [];
@@ -519,6 +544,7 @@ export function createCanvasData({
     graphs = new Map(),
     plans = new Map(),
     contexts = new Map(),
+    cardSummaries = new Map(),
     model = null,
     pending = Promise.resolve(),
     lastMoreWasGraph = false;
@@ -551,6 +577,7 @@ export function createCanvasData({
     nextGraphs = graphs,
     nextPlans = plans,
     nextContexts = contexts,
+    nextCards = cardSummaries,
   ) => {
     const next = buildModel(
       scope,
@@ -560,11 +587,13 @@ export function createCanvasData({
       nextPlans,
       protocolMode,
       nextContexts,
+      nextCards,
     );
     sections = nextSections;
     graphs = nextGraphs;
     plans = nextPlans;
     contexts = nextContexts;
+    cardSummaries = nextCards;
     model = next;
     return next;
   };
@@ -620,9 +649,31 @@ export function createCanvasData({
       graphs = nextGraphs;
       plans = nextPlans;
       contexts = new Map();
+      cardSummaries = new Map();
       model = nextModel;
       lastMoreWasGraph = false;
       return nextModel;
+    },
+    summaries(page) {
+      if (!active(epoch) || !model) return null;
+      assertRevision(page, model.revision);
+      if (!Array.isArray(page.items) || page.items.length > 100)
+        throw failure("Card summaries must be a bounded batch of at most 100 records.");
+      const next = new Map(cardSummaries);
+      const seen = new Set();
+      for (const summary of page.items) {
+        const ref = checkedRef(summary.ref, scope), key = canvasKey(ref);
+        if (seen.has(key)) throw failure("A card summary batch contains a duplicate record.");
+        seen.add(key);
+        canvasRevision(summary.version);
+        const current = model.nodes.find((entry) => entry.key === key);
+        if (!current)
+          throw failure("Card summaries may enrich only records already loaded in this map.");
+        if (current.version != null && canvasRevision(current.version) !== canvasRevision(summary.version))
+          throw failure("Card summaries do not match the loaded entity version.", "precondition_failed");
+        next.set(key, clone(summary));
+      }
+      return publish(sections, graphs, plans, contexts, next);
     },
     more() {
       return enqueue(async (token) => {
@@ -753,17 +804,15 @@ export function createCanvasData({
       append("relations", value.dependencies || []);
       append("evidence_links", value.evidence_links || []);
       const nextContexts = new Map(contexts);
-      const parents = [
-        {
-          id: `work:${work.id}`,
-          source: work.objective_id
-            ? { ...scope, kind: "objective", id: work.objective_id }
-            : { ...scope, kind: "outcome", id: scope.outcome_id },
-          target: workRef,
-          kind: "ownership",
-          truth: "work_item",
-        },
-      ];
+      const parents = work.objective_id
+        ? [{
+            id: `work:${work.id}`,
+            source: { ...scope, kind: "objective", id: work.objective_id },
+            target: workRef,
+            kind: "ownership",
+            truth: "work_item",
+          }]
+        : [];
       if (value.objective)
         parents.push({
           id: `objective:${value.objective.id}`,

@@ -2,10 +2,17 @@ package sqlite
 
 import (
 	"context"
+	"crypto/ed25519"
+	"encoding/base64"
+	"encoding/json"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing"
 	"path/filepath"
+	"reflect"
+	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -50,6 +57,13 @@ func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
 	}
 	if _, err = security.Authenticate(context.Background(), secret); err != nil {
 		t.Fatal(err)
+	}
+	policy, err := store.CredentialPolicy(context.Background(), ns, issued.Credential.ID)
+	if err != nil || !reflect.DeepEqual(policy.PermittedOperations, []string{string(ports.PermissionStateRead)}) {
+		t.Fatalf("issued credential did not receive its frozen restrictive policy: %+v %v", policy, err)
+	}
+	if issued.CredentialMetadata == nil || issued.CredentialMetadata.Name != "Issued credential" || issued.CredentialMetadata.PolicyRevision != policy.Version {
+		t.Fatalf("issuance metadata missing or inconsistent: %+v", issued.CredentialMetadata)
 	}
 	replay, hidden, err := security.AdministrativeMutation(ctx, "admin-issue-key-0001", credential)
 	if err != nil || hidden != "" || !replay.TokenOmitted || replay.Credential.ID != issued.Credential.ID {
@@ -103,12 +117,218 @@ func TestSecurityAdministrationCASReceiptsSecretsAndRevocation(t *testing.T) {
 		t.Fatalf("restart: %+v %v", snapshot, err)
 	}
 	// Current permission must be checked before revealing the old receipt.
-	if err = security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.Store.PutGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	if _, _, err = security.AdministrativeMutation(ctx, "admin-issue-key-0001", credential); securityErrorCode(err) != domain.ErrorCodeForbidden {
 		t.Fatalf("revoked administration replay: %v", err)
 	}
+}
+
+func TestCredentialRevocationPreviewAuditAndRecoverableAdministrator(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "revocation-impact.db"))
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: &sqliteSequenceIDs{prefix: "0199d0a1", next: 1}}
+	ns := testID("0199d0a1-0000-7000-8000-000000000010")
+	rootToken := "revocation-impact-root-token-at-least-32"
+	if err := security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "Revocation impact"}, "operator", rootToken); err != nil {
+		t.Fatal(err)
+	}
+	rootIdentity, err := security.Authenticate(ctx, rootToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rootCtx := application.WithIdentity(ctx, rootIdentity)
+	rootVersion, err := store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err = security.AdministrativeMutation(rootCtx, "revoke-only-admin-0001", ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: rootVersion, Operation: "revoke_credential", CredentialID: rootIdentity.CredentialID, Reason: "Retire the only administrator"}); securityErrorCode(err) != domain.ErrorCodeInvalidTransition {
+		t.Fatalf("revoking the only administrator path should be blocked, got %v", err)
+	}
+
+	_, sessionToken, err := security.CreateSession(ctx, rootToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backupActor := rootIdentity.Actor
+	version, err := store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backup, backupToken, err := security.AdministrativeMutation(rootCtx, "issue-backup-admin-0001", ports.SecurityAdminCommand{
+		NamespaceID: ns, ExpectedVersion: version, Operation: "issue_credential",
+		Credential: &ports.Credential{NamespaceID: ns, PrincipalID: "operator", Actor: backupActor, ExpiresAt: clock.Now().Add(2 * time.Hour)},
+		Reason:     "Keep a second recovery credential active",
+	})
+	if err != nil || backup.Credential == nil || backupToken == "" {
+		t.Fatalf("issue backup admin: %+v %v", backup, err)
+	}
+	backupIdentity, err := security.Authenticate(ctx, backupToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backupCtx := application.WithIdentity(ctx, backupIdentity)
+
+	impact, err := security.PreviewCredentialRevocation(rootCtx, ns, rootIdentity.CredentialID)
+	if err != nil || impact.ActiveSessions != 1 || !impact.AuthorityRemovedOnCommit || impact.ExternalProcessesStopped || !impact.LegacyLeasesMayBeUnattributed {
+		t.Fatalf("revocation preview: %+v %v", impact, err)
+	}
+	version, err = store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revoked, _, err := security.AdministrativeMutation(rootCtx, "revoke-old-admin-0001", ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: version, Operation: "revoke_credential", CredentialID: rootIdentity.CredentialID, Reason: "Replace the original root credential"})
+	if err != nil || revoked.RevocationImpact == nil || revoked.RevocationImpact.ActiveSessions != 1 {
+		t.Fatalf("revoke result missing impact: %+v %v", revoked, err)
+	}
+	if _, err = security.AdministrativeSnapshot(rootCtx, ns); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatalf("revoked root still read administration: %v", err)
+	}
+	if _, err = security.ListCredentials(rootCtx, ns, ports.CredentialManagementQuery{}); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatalf("revoked root still listed credentials: %v", err)
+	}
+	if _, err = security.GetCredential(rootCtx, ns, backup.Credential.ID); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatalf("revoked root still read credential detail: %v", err)
+	}
+	snapshot, err := security.AdministrativeSnapshot(backupCtx, ns)
+	if err != nil || len(snapshot.Audit) == 0 {
+		t.Fatalf("backup admin snapshot: %+v %v", snapshot, err)
+	}
+	var revokeAudit *ports.SecurityAudit
+	for i := range snapshot.Audit {
+		if snapshot.Audit[i].Operation == "revoke_credential" && snapshot.Audit[i].Target == rootIdentity.CredentialID.String() {
+			revokeAudit = &snapshot.Audit[i]
+			break
+		}
+	}
+	if revokeAudit == nil || revokeAudit.AuthorCredentialID != rootIdentity.CredentialID || revokeAudit.RootCredentialID != rootIdentity.CredentialID || revokeAudit.Reason != "Replace the original root credential" || len(revokeAudit.Before) == 0 || len(revokeAudit.After) == 0 {
+		t.Fatalf("structured audit provenance missing: %+v", revokeAudit)
+	}
+	for _, raw := range []string{string(revokeAudit.Before), string(revokeAudit.After)} {
+		if strings.Contains(raw, rootIdentity.CredentialDigest) || strings.Contains(raw, rootToken) || strings.Contains(raw, sessionToken) || strings.Contains(raw, backupToken) {
+			t.Fatalf("secret material entered audit state: %s", raw)
+		}
+	}
+}
+
+func TestCredentialIssueIsAtomicAndWorksWithIssueOnlyAuthority(t *testing.T) {
+	store := openTestStore(t, filepath.Join(t.TempDir(), "atomic-credential.db"))
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: &sqliteSequenceIDs{prefix: "0199d088", next: 1}}
+	ns := testID("0199d088-0000-7000-8000-000000000010")
+	adminToken := "atomic-credential-admin-token-at-least-32"
+	if err := security.Bootstrap(context.Background(), ports.Namespace{ID: ns, Name: "Atomic credential issuance"}, "admin", adminToken); err != nil {
+		t.Fatal(err)
+	}
+	adminIdentity, err := security.Authenticate(context.Background(), adminToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	adminCtx := application.WithIdentity(context.Background(), adminIdentity)
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "issuer", Permissions: []ports.Permission{ports.PermissionCredentialsIssue}}); err != nil {
+		t.Fatal(err)
+	}
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "target", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		t.Fatal(err)
+	}
+	issuerActor := domain.ActorRef{Kind: domain.ActorKindHuman, Provider: "test", ID: "issuer"}
+	issuerCredential, issuerToken, err := security.IssueCredential(adminCtx, ns, "issuer", issuerActor, clock.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuerIdentity, err := security.Authenticate(context.Background(), issuerToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issuerCtx := application.WithIdentity(context.Background(), issuerIdentity)
+	if err = security.Require(issuerCtx, ns, ports.PermissionCredentialsIssue); err != nil {
+		policy, _ := store.CredentialPolicy(context.Background(), ns, issuerCredential.ID)
+		t.Fatalf("issued issue-only credential cannot exercise its frozen permission: policy=%+v identity=%+v err=%v", policy, issuerIdentity, err)
+	}
+	if _, err = security.AdministrativeSnapshot(issuerCtx, ns); securityErrorCode(err) != domain.ErrorCodeForbidden {
+		t.Fatalf("credentials:issue-only Principal unexpectedly read administration: %v", err)
+	}
+	// Inject a failure after credential and policy inserts. The transaction must
+	// leave no credential, policy, metadata, namespace revision, audit, or receipt.
+	if _, err = store.db.Exec(`CREATE TRIGGER reject_credential_metadata BEFORE INSERT ON credential_metadata BEGIN SELECT RAISE(ABORT, 'injected metadata failure'); END`); err != nil {
+		t.Fatal(err)
+	}
+	issue := ports.SecurityAdminCommand{NamespaceID: ns, Operation: "issue_credential", Credential: &ports.Credential{NamespaceID: ns, PrincipalID: "target", Actor: issuerActor, ExpiresAt: clock.Now().Add(time.Hour)}}
+	beforeVersion, err := store.ReadSecurityAdminVersion(context.Background(), ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issue.ExpectedVersion = beforeVersion
+	if _, _, err = security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue); err == nil {
+		t.Fatal("injected metadata failure unexpectedly committed")
+	}
+	assertCounts := func(expectedCredentials, expectedPolicies, expectedMetadata, expectedAudit, expectedReceipts int) {
+		t.Helper()
+		var credentials, policies, metadata, audit, receipts int
+		queries := []struct {
+			query string
+			dst   *int
+		}{
+			{`SELECT count(*) FROM credentials WHERE namespace_id=? AND principal_id='target'`, &credentials},
+			{`SELECT count(*) FROM credential_policies WHERE namespace_id=? AND principal_id='target'`, &policies},
+			{`SELECT count(*) FROM credential_metadata WHERE namespace_id=?`, &metadata},
+			{`SELECT count(*) FROM security_audit WHERE namespace_id=? AND operation='issue_credential'`, &audit},
+			{`SELECT count(*) FROM security_admin_results WHERE namespace_id=? AND idempotency_key='atomic-credential-retry-0001'`, &receipts},
+		}
+		for _, q := range queries {
+			if err := store.db.QueryRow(q.query, ns.String()).Scan(q.dst); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if credentials != expectedCredentials || policies != expectedPolicies || metadata != expectedMetadata || audit != expectedAudit || receipts != expectedReceipts {
+			t.Fatalf("atomic counts credentials/policies/metadata/audit/receipts=%d/%d/%d/%d/%d, want %d/%d/%d/%d/%d", credentials, policies, metadata, audit, receipts, expectedCredentials, expectedPolicies, expectedMetadata, expectedAudit, expectedReceipts)
+		}
+	}
+	assertCounts(0, 0, 2, 1, 0) // the bootstrap and issuer metadata already exist
+	afterVersion, err := store.ReadSecurityAdminVersion(context.Background(), ns)
+	if err != nil || afterVersion != beforeVersion {
+		t.Fatalf("failed issuance changed Namespace version: %d => %d (%v)", beforeVersion, afterVersion, err)
+	}
+	if _, err = store.db.Exec(`DROP TRIGGER reject_credential_metadata`); err != nil {
+		t.Fatal(err)
+	}
+	result, secret, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || secret == "" || result.Credential == nil || result.CredentialMetadata == nil {
+		t.Fatalf("retry after rollback: %+v %v", result, err)
+	}
+	assertCounts(1, 1, 3, 2, 1)
+	replay, hidden, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || hidden != "" || !replay.IdempotentReplay || !replay.TokenOmitted {
+		t.Fatalf("replay leaked token or failed: %+v %v", replay, err)
+	}
+	assertCounts(1, 1, 3, 2, 1)
+	var receipt string
+	if err = store.db.QueryRow(`SELECT result_json FROM security_admin_results WHERE namespace_id=? AND idempotency_key='atomic-credential-retry-0001'`, ns.String()).Scan(&receipt); err != nil {
+		t.Fatal(err)
+	}
+	var audit string
+	if err = store.db.QueryRow(`SELECT target FROM security_audit WHERE namespace_id=? AND operation='issue_credential' ORDER BY namespace_version DESC LIMIT 1`, ns.String()).Scan(&audit); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(receipt, secret) || strings.Contains(receipt, "digest") || strings.Contains(audit, secret) {
+		t.Fatal("bearer token or credential digest entered durable receipt/audit")
+	}
+	if _, err = security.Authenticate(context.Background(), secret); err != nil {
+		t.Fatalf("issued retry token did not authenticate: %v", err)
+	}
+	if err = security.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "target", Permissions: []ports.Permission{}}); err != nil {
+		t.Fatal(err)
+	}
+	replayAfterGrantChange, hiddenAfterGrantChange, err := security.AdministrativeMutation(issuerCtx, "atomic-credential-retry-0001", issue)
+	if err != nil || hiddenAfterGrantChange != "" || !replayAfterGrantChange.IdempotentReplay || replayAfterGrantChange.Credential == nil || replayAfterGrantChange.Credential.ID != result.Credential.ID {
+		t.Fatalf("receipt replay failed after target grant change: %+v %v", replayAfterGrantChange, err)
+	}
+	if _, directToken, directErr := security.IssueCredential(issuerCtx, ns, "target", issuerActor, clock.Now().Add(time.Hour)); directErr != nil || directToken == "" {
+		t.Fatalf("credentials:issue-only Principal could not use the legacy atomic issuance entry point: %v", directErr)
+	}
+	_ = issuerCredential
 }
 
 func securityErrorCode(err error) domain.ErrorCode { code, _ := domain.ErrorCodeOf(err); return code }
@@ -123,8 +343,8 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 	}
 	identity, _ := security.Authenticate(context.Background(), token)
 	ctx := application.WithIdentity(context.Background(), identity)
-	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}
-	if err := security.SetGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: permissions}); err != nil {
+	permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionPermissionsManage}
+	if err := security.Store.PutGrant(ctx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: permissions}); err != nil {
 		t.Fatal(err)
 	}
 	intent := application.AdministrativeIntent{NamespaceID: ns, ExpectedVersion: 1, Operation: "create_namespace", NamespaceName: "Created"}
@@ -133,7 +353,7 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 		t.Fatalf("create namespace: %+v %v", result, err)
 	}
 	grant, err := store.GetGrant(context.Background(), result.CreatedNamespace.ID, "operator")
-	if err != nil || len(grant.Permissions) != 2 {
+	if err != nil || len(grant.Permissions) != 3 {
 		t.Fatalf("permission escalation: %+v %v", grant, err)
 	}
 	createdIdentity, err := security.Authenticate(context.Background(), createdToken)
@@ -147,6 +367,295 @@ func TestNamespaceCreationCopiesOnlyGrantedPermissions(t *testing.T) {
 	if err != nil || hidden != "" || !replay.IdempotentReplay || replay.CreatedNamespace.ID != result.CreatedNamespace.ID {
 		t.Fatalf("namespace replay: %+v %v", replay, err)
 	}
+}
+
+func TestCreateNamespaceRequiresRecoverableAdministration(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "namespace-recovery.db"))
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}
+	ids := &sqliteSequenceIDs{prefix: "0199d094", next: 0}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: ids}
+	ns := testID("0199d094-0000-7000-8000-000000000010")
+	token := "namespace-recovery-source-token-at-least-32"
+	if err := security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "Source"}, "operator", token); err != nil {
+		t.Fatal(err)
+	}
+	identity, err := security.Authenticate(ctx, token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	adminCtx := application.WithIdentity(ctx, identity)
+	insufficient := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}
+	if err := store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: insufficient}); err != nil {
+		t.Fatal(err)
+	}
+	before, err := store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deniedNamespaceID := testID("0199d094-0000-7000-8000-000000000000")
+	intent := application.AdministrativeIntent{NamespaceID: ns, ExpectedVersion: before, Operation: "create_namespace", NamespaceName: "Unrecoverable"}
+	result, secret, err := security.Administer(adminCtx, "create-unrecoverable-namespace-01", intent)
+	if securityErrorCode(err) != domain.ErrorCodeInvalidTransition || secret != "" {
+		t.Fatalf("creation without an administrative recovery path should roll back, result=%+v token_present=%t err=%v", result, secret != "", err)
+	}
+	if result.CreatedNamespace != nil {
+		deniedNamespaceID = result.CreatedNamespace.ID
+	}
+	if _, err = store.ReadSecurityAdminVersion(ctx, deniedNamespaceID); securityErrorCode(err) != domain.ErrorCodeNotFound {
+		t.Fatalf("rejected creation left a Namespace behind: %v", err)
+	}
+	after, err := store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil || after != before {
+		t.Fatalf("rejected creation changed its source Namespace version: before=%d after=%d err=%v", before, after, err)
+	}
+
+	recoverable := []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin, ports.PermissionPermissionsManage}
+	if err = store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: recoverable}); err != nil {
+		t.Fatal(err)
+	}
+	intent.NamespaceName = "Recoverable"
+	result, secret, err = security.Administer(adminCtx, "create-recoverable-namespace-01", intent)
+	if err != nil || secret == "" || result.CreatedNamespace == nil {
+		t.Fatalf("creation with a recoverable administrator should succeed: %+v token_present=%t err=%v", result, secret != "", err)
+	}
+	grant, err := store.GetGrant(ctx, result.CreatedNamespace.ID, "operator")
+	if err != nil || !slices.Contains(grant.Permissions, ports.PermissionPermissionsManage) {
+		t.Fatalf("created Namespace lacks recoverable administrator permissions: %+v err=%v", grant, err)
+	}
+	snapshot, err := store.ReadSecurityAdmin(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createdAudit := findSecurityAdminAudit(t, snapshot, "create_namespace", result.CreatedNamespace.ID.String())
+	createdAfter := decodeSecurityAuditObject(t, createdAudit.After)
+	initialGrant, hasGrant := createdAfter["initial_grant"].(map[string]any)
+	initialCredential, hasCredential := createdAfter["initial_credential"].(map[string]any)
+	initialPolicy, hasPolicy := initialCredential["effective_policy"].(map[string]any)
+	if !hasGrant || !hasCredential || !hasPolicy || initialGrant["permission_compatibility_version"] != float64(0) || initialPolicy["permission_compatibility_version"] != float64(0) {
+		t.Fatalf("Namespace creation audit omitted the recoverable grant/policy projection: %s", createdAudit.After)
+	}
+	auditJSON, err := json.Marshal(snapshot.Audit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(auditJSON), secret) || strings.Contains(string(auditJSON), "digest") {
+		t.Fatal("security audit contains a credential secret or digest field")
+	}
+}
+
+func TestSecurityAuditProjectionReconstructsGrantAndCredentialChanges(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "security-audit-projection.db"))
+	clock := sqliteFixedClock{now: time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)}
+	security := application.SecurityService{Store: store, Clock: clock, IDs: &sqliteSequenceIDs{prefix: "0199d095", next: 1}}
+	ns := testID("0199d095-0000-7000-8000-000000000010")
+	adminToken := "security-audit-projection-token-at-least-32"
+	if err := security.Bootstrap(ctx, ports.Namespace{ID: ns, Name: "Security audit"}, "operator", adminToken); err != nil {
+		t.Fatal(err)
+	}
+	identity, err := security.Authenticate(ctx, adminToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	adminCtx := application.WithIdentity(ctx, identity)
+	agentActor := domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "audit-agent"}
+	if err = store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+		t.Fatal(err)
+	}
+	allowedOutcome := testID("0199d095-0000-7000-8000-000000000020")
+	allowedKey := testID("0199d095-0000-7000-8000-000000000021")
+	outcomeService, err := application.NewService(store, clock, &sqliteSequenceIDs{prefix: "0199d096", next: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	createdOutcome, err := outcomeService.CreateOutcome(ctx, sqliteCommandContext("0199d095-0000-7000-8000-000000000030", ""), application.CreateOutcomeCommand{NamespaceID: ns, Title: "Scoped Outcome", DesiredState: "Audit captures its scope", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	allowedOutcome = createdOutcome.Value.ID
+	privateKey := ed25519.NewKeyFromSeed(make([]byte, ed25519.SeedSize))
+	publicKey := privateKey.Public().(ed25519.PublicKey)
+	fingerprint, err := signing.Fingerprint(publicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyUnit, err := store.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keyRepo := keyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity()
+	if err = keyRepo.SaveKey(ctx, domain.SigningKey{ID: allowedKey, NamespaceID: ns, PrincipalID: "agent", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(publicKey), Fingerprint: fingerprint, Version: 1, Status: "active", CreatedAt: clock.Now(), UpdatedAt: clock.Now()}, 0); err != nil {
+		_ = keyUnit.Rollback()
+		t.Fatal(err)
+	}
+	if err = keyUnit.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	expires := clock.Now().Add(4 * time.Hour)
+	version, err := store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	issued, issuedToken, err := security.Administer(adminCtx, "audit-issue-agent-credential-01", application.AdministrativeIntent{
+		NamespaceID: ns, ExpectedVersion: version, Operation: "issue_credential", PrincipalID: "agent", Actor: &agentActor,
+		CredentialName: "Audit agent", Permissions: []ports.Permission{ports.PermissionStateRead},
+		AllowedOutcomeIDs: []domain.ID{allowedOutcome}, AllowedSigningKeyIDs: []domain.ID{allowedKey}, ExpiresAt: &expires,
+	})
+	if err != nil || issued.Credential == nil || issuedToken == "" {
+		t.Fatalf("issue auditable credential: %+v token_present=%t err=%v", issued, issuedToken != "", err)
+	}
+	credentialID := issued.Credential.ID
+	page, err := security.ListCredentials(adminCtx, ns, ports.CredentialManagementQuery{Limit: 100})
+	if err != nil || len(page.Items) != 2 {
+		t.Fatalf("list issued credential: %+v err=%v", page, err)
+	}
+	var current ports.CredentialAdministrativeRecord
+	for _, item := range page.Items {
+		if item.Credential.ID == credentialID {
+			current = item
+		}
+	}
+	if current.Credential.ID.IsZero() {
+		t.Fatal("issued credential missing from administrative projection")
+	}
+	policy := current.EffectivePolicy
+	policy.AcceptanceFloor = domain.AcceptanceIndependentReview
+	policy.PermissionCompatibilityVersion = domain.PermissionCompatibilityLegacyV1
+	policy.AllowedOutcomeIDs = []domain.ID{allowedOutcome}
+	policy.AllowedSigningKeyIDs = []domain.ID{allowedKey}
+	policy.MaxActiveWorkContracts = 9
+	policy.MaxActiveReviewContracts = 4
+	version, err = store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	policyUpdate, err := security.UpdateCredential(adminCtx, "audit-policy-update-agent-01", application.CredentialUpdateIntent{
+		NamespaceID: ns, CredentialID: credentialID, ExpectedNamespaceVersion: version,
+		ExpectedMetadataRevision: current.Metadata.MetadataRevision, ExpectedPolicyRevision: current.EffectivePolicy.Version,
+		Name: current.Metadata.Name, Description: current.Metadata.Description, ExpiresAt: &current.Credential.ExpiresAt,
+		Policy: &policy, Reason: "Record the complete bounded policy",
+	})
+	if err != nil || policyUpdate.Credential == nil {
+		t.Fatalf("update credential policy: %+v %v", policyUpdate, err)
+	}
+	snapshot, err := store.ReadSecurityAdmin(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	policyAudit := findSecurityAdminAudit(t, snapshot, "update_credential", credentialID.String())
+	policyAfter := decodeSecurityAuditObject(t, policyAudit.After)
+	effectivePolicy, ok := policyAfter["effective_policy"].(map[string]any)
+	if !ok {
+		t.Fatalf("updated credential audit omitted effective policy: %s", policyAudit.After)
+	}
+	if effectivePolicy["acceptance_floor"] != string(domain.AcceptanceIndependentReview) || effectivePolicy["permission_compatibility_version"] != float64(0) || policyAfter["grant_permission_compatibility_version"] != float64(0) || effectivePolicy["max_active_work_contracts"] != float64(9) || effectivePolicy["max_active_review_contracts"] != float64(4) || !reflect.DeepEqual(effectivePolicy["allowed_outcome_ids"], []any{allowedOutcome.String()}) || !reflect.DeepEqual(effectivePolicy["allowed_signing_key_ids"], []any{allowedKey.String()}) {
+		t.Fatalf("audit omitted policy scope or limits: %s", policyAudit.After)
+	}
+	if !reflect.DeepEqual(policyAfter["permissions"], []any{string(ports.PermissionStateRead)}) {
+		t.Fatalf("audit omitted effective operations: %s", policyAudit.After)
+	}
+
+	page, err = security.ListCredentials(adminCtx, ns, ports.CredentialManagementQuery{Limit: 100})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range page.Items {
+		if item.Credential.ID == credentialID {
+			current = item
+		}
+	}
+	version, err = store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = security.UpdateCredential(adminCtx, "audit-metadata-update-agent-01", application.CredentialUpdateIntent{
+		NamespaceID: ns, CredentialID: credentialID, ExpectedNamespaceVersion: version,
+		ExpectedMetadataRevision: current.Metadata.MetadataRevision, ExpectedPolicyRevision: current.EffectivePolicy.Version,
+		Name: "Renamed audit agent", Description: current.Metadata.Description, ExpiresAt: &current.Credential.ExpiresAt,
+		Reason: "Rename without changing authority",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.ReadSecurityAdmin(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	metadataAudit := findSecurityAdminAudit(t, snapshot, "update_credential", credentialID.String())
+	metadataBefore := decodeSecurityAuditObject(t, metadataAudit.Before)
+	metadataAfter := decodeSecurityAuditObject(t, metadataAudit.After)
+	if !reflect.DeepEqual(metadataBefore["effective_policy"], metadataAfter["effective_policy"]) {
+		t.Fatalf("metadata-only audit failed to preserve the complete effective policy: before=%s after=%s", metadataAudit.Before, metadataAudit.After)
+	}
+
+	version, err = store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = security.AdministrativeMutation(adminCtx, "audit-revoke-agent-credential-01", ports.SecurityAdminCommand{
+		NamespaceID: ns, ExpectedVersion: version, Operation: "revoke_credential", CredentialID: credentialID, Reason: "Retire the agent credential",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.ReadSecurityAdmin(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	revokeAudit := findSecurityAdminAudit(t, snapshot, "revoke_credential", credentialID.String())
+	revokeBefore := decodeSecurityAuditObject(t, revokeAudit.Before)
+	revokeAfter := decodeSecurityAuditObject(t, revokeAudit.After)
+	if revokeBefore["status"] != "active" || revokeAfter["status"] != "revoked" || !reflect.DeepEqual(revokeBefore["effective_policy"], revokeAfter["effective_policy"]) {
+		t.Fatalf("revocation audit lost credential policy state: before=%s after=%s", revokeAudit.Before, revokeAudit.After)
+	}
+
+	// Seed a migration-era grant marker, then verify that the atomic grant edit
+	// records both the marker it replaced and the normalized marker it wrote.
+	if _, err = store.db.ExecContext(ctx, `UPDATE namespace_grants SET permission_compatibility_version=1 WHERE namespace_id=? AND principal_id=?`, ns.String(), "agent"); err != nil {
+		t.Fatal(err)
+	}
+	version, err = store.ReadSecurityAdminVersion(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _, err = security.AdministrativeMutation(adminCtx, "audit-normalize-agent-grant-01", ports.SecurityAdminCommand{
+		NamespaceID: ns, ExpectedVersion: version, Operation: "set_grant",
+		Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err = store.ReadSecurityAdmin(ctx, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
+	grantAudit := findSecurityAdminAudit(t, snapshot, "set_grant", "agent")
+	grantBefore := decodeSecurityAuditObject(t, grantAudit.Before)
+	grantAfter := decodeSecurityAuditObject(t, grantAudit.After)
+	if grantBefore["permission_compatibility_version"] != float64(1) || grantAfter["permission_compatibility_version"] != float64(0) {
+		t.Fatalf("grant audit omitted compatibility transition: before=%s after=%s", grantAudit.Before, grantAudit.After)
+	}
+}
+
+func findSecurityAdminAudit(t *testing.T, snapshot ports.SecurityAdminSnapshot, operation, target string) ports.SecurityAudit {
+	t.Helper()
+	for _, entry := range snapshot.Audit {
+		if entry.Operation == operation && entry.Target == target {
+			return entry
+		}
+	}
+	t.Fatalf("audit entry %q for %q not found", operation, target)
+	return ports.SecurityAudit{}
+}
+
+func decodeSecurityAuditObject(t *testing.T, raw json.RawMessage) map[string]any {
+	t.Helper()
+	var state map[string]any
+	if err := json.Unmarshal(raw, &state); err != nil {
+		t.Fatalf("decode security audit state %q: %v", raw, err)
+	}
+	return state
 }
 
 type revokeBeforeTransaction struct {
@@ -175,7 +684,13 @@ func TestPermissionRevokedWhileAwaitingTransactionCannotMutate(t *testing.T) {
 	identity, _ := security.Authenticate(context.Background(), token)
 	ctx := application.WithIdentity(context.Background(), identity)
 	manager := &revokeBeforeTransaction{store: store, before: func() {
-		_, _, err := security.AdministrativeMutation(ctx, "revoke-awaiting-tx-0001", ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: 1, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionNamespaceAdmin}}})
+		permissions := make([]ports.Permission, 0, len(ports.AllPermissions())-1)
+		for _, permission := range ports.AllPermissions() {
+			if permission != ports.PermissionOutcomeWrite {
+				permissions = append(permissions, permission)
+			}
+		}
+		_, _, err := security.AdministrativeMutation(ctx, "revoke-awaiting-tx-0001", ports.SecurityAdminCommand{NamespaceID: ns, ExpectedVersion: 1, Operation: "set_grant", Grant: &ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "operator", Permissions: permissions}})
 		if err != nil {
 			t.Fatal(err)
 		}

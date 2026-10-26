@@ -1,0 +1,223 @@
+{
+  "plan": "owner-plan-workspace-mode.md",
+  "qualification": "See test-results.json for exact source and executed results; this maps contracts, not additional test counts.",
+  "cases": [
+    {
+      "id": "A01",
+      "contract": "Outcome entry and unchanged Canvas camera",
+      "evidence": "contextual-kanban.spec.mjs; kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A02",
+      "contract": "Objective direct Tasks/Subobjectives and hierarchy",
+      "evidence": "contextual-kanban.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A03",
+      "contract": "Selection retains the same mounted lanes; no mutation",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A04",
+      "contract": "Selection and context restoration",
+      "evidence": "contextual-kanban.spec.mjs; contextual-kanban-guards.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A05",
+      "contract": "Native Backlog drop prepares activation; explicit confirmation persists To do",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A06",
+      "contract": "Native To do drop prepares real claim; full journey persists authority",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A07",
+      "contract": "Blocked and read-only movement performs no unauthorized write",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A08",
+      "contract": "Backlog to execution requires two explicit confirmations",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A09",
+      "contract": "StartObjective uses actual capability and canonical confirmation",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A10",
+      "contract": "Eligible planned Objective achieves directly without Start",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A11",
+      "contract": "Blocked achievement adds criterion and assessment, then rechecks intention",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A12",
+      "contract": "Legacy proof inspection does not invent Verification",
+      "evidence": "kanban-operations.spec.mjs; kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A13",
+      "contract": "Actual signed pending review projects Verification, not Accepted",
+      "evidence": "signed.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A14",
+      "contract": "Missing current assessment blocks conclusion and exposes criterion",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A15",
+      "contract": "Artifact, Evidence and Assessment remain distinct writes",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A16",
+      "contract": "Explicit Task conclusion leaves parent Objective planned",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A17",
+      "contract": "Signed contract acquisition/delivery remains external",
+      "evidence": "kanban-operations.spec.mjs; signed.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A18",
+      "contract": "Actual holder renewal and expired/foreign authority gates",
+      "evidence": "kanban-operations.spec.mjs; workspace_objective_capability_test.go and existing application lease tests",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A19",
+      "contract": "Issue resolution leaves Blocker active until explicit release",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A20",
+      "contract": "Conflict preserves authored input and requires explicit review",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A21",
+      "contract": "Response loss retries identical intention/body/key with one created record",
+      "evidence": "kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A22",
+      "contract": "Confirmed command plus failed refresh retries reads only",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A23",
+      "contract": "Canvas camera, selection and rebuilt origin focus survive delayed read",
+      "evidence": "contextual-kanban.spec.mjs; kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A24",
+      "contract": "Scope/revocation invalidates frames and pending responses",
+      "evidence": "contextual-kanban-guards.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A25",
+      "contract": "Keyboard card actions, real modal Tab trap, Escape and return focus",
+      "evidence": "contextual-kanban.spec.mjs; kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A26",
+      "contract": "Emulated touch opens menu and prepares/cancels movement without hover",
+      "evidence": "kanban-workspace.spec.mjs",
+      "status": "automated_contract_covered",
+      "limitation": "Emulated touch only; physical-device touch remains untested.",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A27",
+      "contract": "Native 125/150/200/400 percent zoom, short viewport, operation fields and exit",
+      "evidence": "contextual-kanban.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A28",
+      "contract": "Loaded counts, scrolling pagination and stale revision rejection",
+      "evidence": "contextual-kanban.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A29",
+      "contract": "Strict-work and cancellation acknowledgements retain canonical domain gates",
+      "evidence": "contextual-kanban.spec.mjs; existing application strict-completion tests",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    },
+    {
+      "id": "A30",
+      "contract": "Long/dense work at ten widths plus HD/QHD/4K/mobile full journeys",
+      "evidence": "contextual-kanban.spec.mjs; kanban-operations.spec.mjs",
+      "status": "automated_contract_covered",
+      "qualification": "test-results.json"
+    }
+  ],
+  "manual_gates": [
+    "Manual screen-reader/browser combinations",
+    "Physical touch devices",
+    "Independent participant comprehension; no usability gains claimed"
+  ],
+  "qualified_runtime_source": "57e76f4741c4e483c304cf35c648550c0349c460"
+}

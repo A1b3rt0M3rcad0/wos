@@ -1,0 +1,3217 @@
+{
+  "source_revision": "5d945d3081f85927b80c686d695849bd1df73a5d",
+  "owner_plan_sha256": "2785364fd8fe055b1837b9c3d504741eab7c606a2220b9a5c73f2181bedef65d",
+  "units": [
+    {
+      "id": "WOS-01",
+      "owner_title": "Baseline e preservação da branch",
+      "status": "implemented",
+      "verification_status": "verified",
+      "evidence": [
+        "tests/web/canvas.spec.mjs"
+      ],
+      "notes": "Owner baseline and immutable source plan are retained with exact source hashes. Source-bound qualification, historical failures and final captures are consolidated without overwriting prior evidence."
+    },
+    {
+      "id": "WOS-02",
+      "owner_title": "ADR de experiência e contratos",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-api/commands/workspace_schema_test.go"
+      ],
+      "notes": "ADR-038 and the public workspace contract document the accepted domain boundaries and additive defaults."
+    },
+    {
+      "id": "WOS-03",
+      "owner_title": "Fixtures e testes de caracterização",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/planning_creation_test.go",
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+        "tests/web/canvas-races.spec.mjs"
+      ],
+      "notes": "Small, signed, partial, proof and persistent fixtures executed on Memory/SQLite/actual PostgreSQL. Source-stamped schema-30 to 32 upgrades pass on both adapters. The complete 164-case browser run and 75-image gallery pass; F08 results retain their hardware/transport limitations and historical miss."
+    },
+    {
+      "id": "WOS-04",
+      "owner_title": "Erros de precondição e preparação coerente",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-api/http/workspace_error_test.go",
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/canvas-races.spec.mjs",
+        "packages/wos-cli/workspace_planning_test.go"
+      ],
+      "notes": "Typed preparation remedies, retained drafts and exact-intent recovery are implemented and exercised in the complete 164-case browser run; scenario-specific combinations without dedicated assertions remain partial."
+    },
+    {
+      "id": "WOS-05",
+      "owner_title": "Predicados, elegibilidade e proteção de comandos",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/domain/workspace_eligibility_test.go",
+        "packages/wos-core/application/work_editing_test.go",
+        "packages/wos-core/storage/sqlite/workspace_read_test.go",
+        "packages/wos-core/application/workspace_time_test.go"
+      ],
+      "notes": "Common authorization, Outcome guard, replay and canonical eligibility have executed SQL/race coverage; generated compatibility passed. The a8571c5 regression pins five capabilities to frame time and separately rechecks three actual mutations. Full UI action-by-action matrices remain separate."
+    },
+    {
+      "id": "WOS-06",
+      "owner_title": "Notas documentais persistentes",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/entity_notes_test.go",
+        "packages/wos-core/storage/sqlite/workspace_timeline_test.go"
+      ],
+      "notes": "Append-only notes, authenticated authorship, scoped corrections, replay and terminal/archive restrictions have persistent tests."
+    },
+    {
+      "id": "WOS-07",
+      "owner_title": "Criação com critérios e lotes de planejamento",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/planning_creation_test.go",
+        "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+        "tests/web/operational-workspace.spec.mjs"
+      ],
+      "notes": "Initial Criteria and bounded atomic planning batches persist with stable local-key identities and explicit human defaults."
+    },
+    {
+      "id": "WOS-08",
+      "owner_title": "Edição posterior de detalhes e participação",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/work_editing_test.go",
+        "tests/web/human-forms.spec.mjs",
+        "tests/web/operational-workspace.spec.mjs"
+      ],
+      "notes": "Post-creation specification, scheduling and declared participant edits preserve authority, explicit clearing and version checks."
+    },
+    {
+      "id": "WOS-09",
+      "owner_title": "Reorganização persistente e dependências",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/work_editing_test.go",
+        "packages/wos-core/storage/sqlite/workspace_editing_test.go",
+        "packages/wos-core/application/work_attention_test.go"
+      ],
+      "notes": "Guarded structure edits preserve identity/history and reject cycles, frozen branches and impossible own-Objective hard dependencies."
+    },
+    {
+      "id": "WOS-10",
+      "owner_title": "Operações documentais compostas",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/documentary_contextual_test.go",
+        "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+        "packages/wos-core/storage/sqlite/workspace_observation_test.go"
+      ],
+      "notes": "Contextual Evidence, Artifact and Decision intentions are atomic; observations resolve real provenance without assessment."
+    },
+    {
+      "id": "WOS-11",
+      "owner_title": "Timeline coerente e paginada",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/workspace_timeline_test.go"
+      ],
+      "notes": "Frozen paginated timeline preserves origin, commit order, bounded previews and WorkActivity deduplication."
+    },
+    {
+      "id": "WOS-12",
+      "owner_title": "EntityWorkspaceView e capabilities",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/workspace_read_test.go",
+        "packages/wos-core/application/workspace_read_types_test.go",
+        "packages/wos-core/application/workspace_frame_postgres_test.go",
+        "packages/wos-core/application/workspace_time_test.go"
+      ],
+      "notes": "Coherent-frame facts, actual-PostgreSQL concurrent-writer tests and expiry-boundary races passed. The final complete browser run and source-bound gallery qualify integration within their recorded scope, without weakening current mutation guards."
+    },
+    {
+      "id": "WOS-13",
+      "owner_title": "Resumo de cards em lote",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/workspace_read_test.go",
+        "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go",
+        "tests/web/unit/canvas-data.test.mjs"
+      ],
+      "notes": "Bounded batch/no-hydration assertions and both final quiet local benchmarks passed. Concurrent Task-read p95 was 216.09 ms on SQLite and 183.16 ms on PostgreSQL. The earlier PostgreSQL 834.39 ms miss is retained; prescribed hardware/RTT/HTTP/browser first-map targets remain unqualified."
+    },
+    {
+      "id": "WOS-14",
+      "owner_title": "Inspector comum e navegação de contexto",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "tests/web/canvas-races.spec.mjs"
+      ],
+      "notes": "Board and specialist views share a typed inspector; focused race, native-parity and relationship tests passed."
+    },
+    {
+      "id": "WOS-15",
+      "owner_title": "Critérios, comprovação e notas no inspector",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/entity-communication.spec.mjs",
+        "packages/wos-core/storage/sqlite/workspace_proof_test.go"
+      ],
+      "notes": "Current Criteria, documentary updates and explicit Evidence are visible in one Task reading surface; proof never implies acceptance."
+    },
+    {
+      "id": "WOS-16",
+      "owner_title": "Criação rápida e editor de estrutura",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/human-forms.spec.mjs",
+        "tests/web/unit/plan-editor.test.mjs"
+      ],
+      "notes": "Quick/full/batch forms retain actual parent context; the real small-plan and progressive workflows passed focused runs."
+    },
+    {
+      "id": "WOS-17",
+      "owner_title": "Fluxos de problemas e registros relacionados",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/issues_blockers_compound_test.go",
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "tests/web/human-forms.spec.mjs"
+      ],
+      "notes": "Issue association, explicit impediment, selected impact release and contextual material use distinct canonical operations."
+    },
+    {
+      "id": "WOS-18",
+      "owner_title": "Ação principal, protocolo e conclusão guiada",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/storage/sqlite/workspace_read_test.go",
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/unit/workspace-view.test.mjs",
+        "packages/wos-core/storage/sqlite/workspace_conclusion_test.go",
+        "packages/wos-core/storage/sqlite/workspace_scope_preview_test.go"
+      ],
+      "notes": "Compact actions, scoped signed handoff and typed remedies have executed evidence. Snapshot-bound open-child conclusion impact includes optional fresh-review guards and unchanged child lifecycles. Final complete Go qualification and 164 browser cases pass at their recorded sources; dedicated signed-role/protocol/state combinations remain partially verified."
+    },
+    {
+      "id": "WOS-19",
+      "owner_title": "Relações e movimentos na interface",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "packages/wos-core/application/work_editing_test.go",
+        "tests/web/canvas-races.spec.mjs",
+        "tests/web/entity-communication.spec.mjs"
+      ],
+      "notes": "Named relation endpoints, direction/stance/strength and explicit structural setters are implemented; free dragging stays local."
+    },
+    {
+      "id": "WOS-20",
+      "owner_title": "Mapa principal, cards e camadas",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/canvas-interactions.spec.mjs",
+        "tests/web/unit/workspace-card-summary.test.mjs",
+        "tests/web/unit/canvas-data.test.mjs"
+      ],
+      "notes": "Work-first layers, bounded contextual records, exact-revision summaries and original paper assets are implemented."
+    },
+    {
+      "id": "WOS-21",
+      "owner_title": "Responsividade, teclado e acabamento",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/workspace-inspector-view.spec.mjs",
+        "tests/web/canvas-interactions.spec.mjs",
+        "tests/web/operational-gallery.spec.mjs"
+      ],
+      "notes": "Final Chromium desktop/mobile CSS viewport, HD/low-height and keyboard assertions pass. Actual native Chromium zoom 125%, 150%, 200% also passes geometry, readable controls and contextual focus return. Real mobile software keyboards, text-only font enlargement and other browser engines remain unqualified; the gallery has separate source provenance."
+    },
+    {
+      "id": "WOS-22",
+      "owner_title": "Paridade de API, CLI, MCP e compatibilidade",
+      "status": "implemented",
+      "verification_status": "verified",
+      "evidence": [
+        "packages/wos-api/http/workspace_test.go",
+        "packages/wos-api/commands/workspace_schema_test.go",
+        "packages/wos-cli/workspace_planning_test.go",
+        "packages/wos-core/application/workspace_read_types_test.go",
+        "packages/wos-api/web/exposure_test.go",
+        "packages/wos-api/internal/server/release_matrix_test.go",
+        "tools/releases/compatibility.test.mjs",
+        "docs/ux/operational-workspace/backend-qualification.json",
+        "packages/wos-api/commands/conclusion_impact_schema_test.go"
+      ],
+      "notes": "HTTP/MCP/SDK/CLI parity, all-command Core permission/exposure inventory, actual-PostgreSQL runtime catalog/schema/idempotency checks, exact versions, clean deterministic CI generation and all 16 release/compatibility checks passed at the reported snapshots. Broad pre-clock and targeted final-clock qualification are distinguished; browser and human acceptance are separate. The e36a8f4 impact-preview additions separately pass exact optional-revision/legacy-intention and strict nullable-query tests, deterministic API generation and all 16 released-wire compatibility checks. Final complete actual-PostgreSQL Go suite (1703 passing tests/subtests; nine explicit skips; ten packages without tests), vet and full clean CI regeneration also pass with one unchanged final Go/SQL fingerprint."
+    },
+    {
+      "id": "WOS-23",
+      "owner_title": "Qualificação integrada e usabilidade",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/operational-workspace.spec.mjs",
+        "tests/web/operational-gallery.spec.mjs",
+        "tools/acceptance/workspace-notes-upgrade.py",
+        "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go"
+      ],
+      "notes": "Complete actual-PostgreSQL Go suite passes 1703 tests/subtests, nine explicit skips and ten packages without tests; vet, targeted races, generation and compatibility pass. Final 164-case browser run and 74 JS units pass at 36d7d2e; capture-only d458d478 passes 11 jobs/75 images with identical production assets. Source-stamped upgrades pass on both adapters. Independent participants, actual mobile keyboards, other engines and prescribed reference performance remain pending; historical failures and the earlier PostgreSQL latency miss are retained."
+    },
+    {
+      "id": "WOS-24",
+      "owner_title": "Consolidação do PR e documentação final",
+      "status": "implemented",
+      "verification_status": "partially_verified",
+      "evidence": [
+        "tests/web/operational-gallery.spec.mjs"
+      ],
+      "notes": "Operator/API guides, 24-unit/108-scenario matrix, source/binary/upgrade/performance receipts, 75-image manifest and English six-task study protocol are consolidated. Study template records zero participants/not_run. Published metadata remains 1.1.0 with existing 1.2.0 release queue; no merge or release is authorized. Owner acceptance and explicitly partial validation remain separate."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "T001",
+      "owner_requirement": "Criar Outcome com nome e estado desejado: permanece draft e não ganha critério inventado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Draft Outcome retains its desired state; omitted initial Criteria create no invented Criterion.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T002",
+      "owner_requirement": "Salvar Outcome e critérios iniciais: nenhum estado intermediário parcialmente persistido.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Initial Criteria belong to the created aggregate; a later validation failure rolls back the transaction.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+          "coverage": "Persisted create/replay results retain initial Criterion identities.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T003",
+      "owner_requirement": "Criar Objective no Outcome: vínculo e default obrigatório visíveis e corretos.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Human Objective creation sends required_for_outcome=true explicitly with named context.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Real contextual creation persists the selected Outcome and visible requirement.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T004",
+      "owner_requirement": "Criar subobjetivo: pai persistido correto; obrigatoriedade refere-se ao Outcome, não a uma herança fictícia.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Forward local Objective parents resolve to persisted identities.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "The requirement remains explicitly for the Outcome rather than for a parent.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final integrated browser run qualifies subobjective placement and its visible requirement together."
+    },
+    {
+      "id": "T005",
+      "owner_requirement": "Tornar novo Objective opcional: flag false realmente enviada e respeitada.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Unchecking Required for Outcome sends false, preserving the public optional default.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Explicit false persists without inheritance from the parent.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T006",
+      "owner_requirement": "Criar Task no Objective apenas com título: backlog, vínculo correto, nenhuma aquisição.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Title-only Task under the selected Objective persists in backlog without a lease or current contract.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T007",
+      "owner_requirement": "Criar Task diretamente no Outcome: associação null e leitura explícita, sem objetivo artificial.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "A Task may be created without an Objective.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Direct-in-Outcome context and explicit null association are represented.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final browser qualification of direct Task creation and reload is tracked separately."
+    },
+    {
+      "id": "T008",
+      "owner_requirement": "Disponibilizar Task: passa a todo por intenção explícita; não concede lease automaticamente.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Full Task form sends availability only through an explicit choice.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Availability lifecycle transitions retain their domain checks.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final end-to-end quick-create then make-available journey must not be inferred from a component form assertion."
+    },
+    {
+      "id": "T009",
+      "owner_requirement": "Adicionar instruções, constraints, deliverables e referências depois de criar: persistência e leitura corretas.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Progressive details replace, clear, persist and replay; foreign context references are rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Instructions, constraints and deliverables remain visible after reload and in a second client.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T010",
+      "owner_requirement": "Limpar lista/data/Objective: distinguir clear explícito de campo omitido.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-api/commands/workspace_schema_test.go",
+          "coverage": "Required nullable setters distinguish omitted fields from explicit null.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Spec, date and Objective clears are explicit; no-op still checks observed versions.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Exact quoted versions and clear payloads are preserved.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T011",
+      "owner_requirement": "Lote de novos itens com local keys: IDs retornados estáveis e vínculos válidos entre itens novos.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Forward local parents resolve in one transaction and replay returns the same local-key identities.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T012",
+      "owner_requirement": "Lote com último item inválido: rollback de todos os itens e eventos; repetição não deixa órfãos.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Invalid final entries roll back the batch and reject partial state.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+          "coverage": "Persisted replay and rollback leave no orphan records or duplicate IDs.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T013",
+      "owner_requirement": "Chaves duplicadas, ciclos e pai local ausente: erro localizado antes de salvar, sem inferência silenciosa.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Duplicate keys, missing local parents, incompatible parents and cycles are rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/plan-editor.test.mjs",
+          "coverage": "Preview validation identifies invalid local structures before dispatch.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T014",
+      "owner_requirement": "Limites de lote/bytes/critério: rejeição previsível no boundary, sem exceção ou write parcial.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Item and Criterion bounds reject oversized planning intentions.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-api/http/workspace_test.go",
+          "coverage": "Oversized result receipts retain every identity without repeating the write.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "The 51-item/101-Criterion/byte subtests assert rejection, and a separate invalid-last-item case asserts rollback. Per-limit post-rejection state/event comparisons and a complete boundary-specific API matrix are not inferred from those separate checks."
+    },
+    {
+      "id": "T015",
+      "owner_requirement": "Enter cria e permite continuar; Escape não salva; falha mantém texto e contexto.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Quick creation and batch preview retain explicit named context.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Native keyboard controls and discarded callback errors retain focus and command boundaries.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "The complete repeated Enter/create, Escape/cancel and failed-save sequence needs final integrated browser confirmation."
+    },
+    {
+      "id": "T016",
+      "owner_requirement": "Outcome só com critério opcional não está pronto para ativar.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-api/http/workspace_error_test.go",
+          "coverage": "Preparation is classified as a typed precondition, not an edit conflict.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "A missing active required Criterion is remediated without automatic acceptance.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated optional-only activation UI matrix is not claimed from the missing-Criterion journey."
+    },
+    {
+      "id": "T017",
+      "owner_requirement": "Critério obrigatório retired não satisfaz preparação.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Retiring the required Criterion while a conclusion form is open rejects the operation and retains its draft.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T018",
+      "owner_requirement": "Critério obrigatório ativo ainda sem assessment permite preparação onde a regra pede definição, não prova.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Creating Criteria never creates assessments.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Outcome activation with an active required but unassessed Criterion precedes a separate authorized assessment.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T019",
+      "owner_requirement": "Registrar Evidence já no Criterion: owner/id corretos, revisão observada validada e avaliação continua pendente.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Criterion-specific Evidence preserves owner, Criterion ID and observed revision while assessment stays pending.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Stale Criterion revisions and target versions are rejected atomically.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T020",
+      "owner_requirement": "Mesmo documento em dois alvos: uma Evidence, vínculos distintos, stances independentes.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Evidence reuse creates link-local stances on distinct valid targets without duplicating the Evidence.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T021",
+      "owner_requirement": "Evidence contraditória: não é ocultada por filtro de suporte e não vira aprovação.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Supports, Contradicts and Provides context remain separate named relationships; browsing does not assess the Criterion.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T022",
+      "owner_requirement": "Evidence retraída: não aceita novo vínculo e não satisfaz comprovação vigente indevidamente.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_proof_test.go",
+          "coverage": "Retracted Evidence agrees across attention, Criteria, cards and conclusions after persistent restart.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Reusing retracted Evidence for a new contextual link is rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T023",
+      "owner_requirement": "Assessment da revisão antiga: aparece no histórico, não atende critério revisado.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_proof_test.go",
+          "coverage": "Current proof respects Criterion revision and retraction applicability.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/wave10_assessment_test.go",
+          "coverage": "Assessments validate the current Criterion and Evidence.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "The complete older-assessment historical display after revising a Criterion still needs a dedicated final browser assertion."
+    },
+    {
+      "id": "T024",
+      "owner_requirement": "Assessment de submissão/digest anterior: não aprova nova entrega mesmo com o mesmo criterion ID/revision.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_contract_results_test.go",
+          "coverage": "Contract completion requires the current reviewed material.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/work_attention_test.go",
+          "coverage": "Current attention and review obligations remain separate from declared Evidence.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final signed browser review must explicitly demonstrate that an old submission/digest is displayed as inapplicable."
+    },
+    {
+      "id": "T025",
+      "owner_requirement": "Waiver autorizada: resultado explícito, motivo preservado e contador separado de comprovados.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/proof_progress_test.go",
+          "coverage": "Waivers do not count as verified proof.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/wave10_assessment_test.go",
+          "coverage": "Authorized waiver requires the explicit mode and rationale.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Met and waived counters remain separate.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated final browser waiver counter/rationale journey remains to be recorded."
+    },
+    {
+      "id": "T026",
+      "owner_requirement": "Usuário sem waiver permission: não recebe nem consegue executar dispensa.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/wave10_assessment_test.go",
+          "coverage": "A principal without waiver permission cannot record a waiver.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-view.test.mjs",
+          "coverage": "Unavailable or unauthorized capability hints do not become runnable operations.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Backend waiver permission denial is executed and the human form filters the waived option using current assessment:waive permission. A dedicated no-waiver UI dropdown/attempt assertion has not been executed; the generic workspace-action unit test is not that assertion."
+    },
+    {
+      "id": "T027",
+      "owner_requirement": "Modos attestation/evidence_review/external_evaluation: formulário e validação correspondem ao modo real.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "The human Objective fixture defaults a new Criterion to evidence_review and persists that mode; it does not exercise external_evaluation evaluator controls or the complete mode matrix.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/wave10_assessment_test.go",
+          "coverage": "Application validates real assessment modes and Evidence.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "All three modes need one final real-browser matrix; component rendering alone is not end-to-end verification."
+    },
+    {
+      "id": "T028",
+      "owner_requirement": "Target Decision permitido; target Blocker proibido; Issue/Decision não recebem criterion_id.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/domain/workspace_eligibility_test.go",
+          "coverage": "Canonical Evidence targets include Decision and exclude Blocker; Criterion ownership is restricted.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Link-local eligibility rejects forged invalid targets.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Selectors consume the server eligibility contract.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T029",
+      "owner_requirement": "Registros antigos com links incompletos: mostrar ausência de contexto conhecido, não inventar avaliação.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Unknown authority, dependency strength and Evidence stance are not fabricated from partial data.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Coverage keeps incomplete facts separate from empty facts.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "A dedicated imported legacy incomplete-link browser fixture has not been claimed as executed."
+    },
+    {
+      "id": "T030",
+      "owner_requirement": "Evidência de observação interna: origem resolvível, autor real, sem alegar execução de teste pelo servidor.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_observation_test.go",
+          "coverage": "Actual note authorship and times override forged client display metadata; invalid reserved sources remain unavailable.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "A participant observation is registered as a real note and remains unassessed.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T031",
+      "owner_requirement": "URL de Artifact/Evidence: não buscar conteúdo no servidor nem executar dados como código.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Contextual registration stores external references without fetching their contents.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Artifact and Evidence reference payloads stay documentary inputs.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "A dedicated malicious-URI browser execution/remote-fetch probe is not claimed by these contextual form tests."
+    },
+    {
+      "id": "T032",
+      "owner_requirement": "Transação de Evidence com vínculo inválido: nenhum Artifact, nota ou Evidence parcial é criado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "An invalid final Evidence link rolls back Evidence, Artifact and observation together.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+          "coverage": "Persistent compound rollback and replay remain atomic.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T033",
+      "owner_requirement": "Critério retirado/revisado enquanto formulário aberto: nova decisão exigida, entradas preservadas.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Stale Criterion definition and target versions are rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Retiring a Criterion while a form is open retains the original conclusion draft and requires a new review.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated stale Evidence-link form correction after Criterion revision is still separate from conclusion preparation."
+    },
+    {
+      "id": "T034",
+      "owner_requirement": "Owner/assignee atribuído: não se torna automaticamente executor, autenticado ou autorizado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Declared participants grant no lease; participation no-op still validates the observed version.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Inspector explicitly separates declared responsibility from execution authority.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Cards do not promote declared assignees to executors.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T035",
+      "owner_requirement": "Contrato vigente de outro principal: UI não oferece iniciar como se estivesse livre.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_contract_test.go",
+          "coverage": "Only one current acquisition can hold authority; replay/takeover retain fencing.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Capabilities derive current authority from the authorized snapshot.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final two-principal signed-browser action presentation is tracked separately."
+    },
+    {
+      "id": "T036",
+      "owner_requirement": "Contrato expirado: não mostrar atividade física presumida; oferecer recuperação legítima quando suportada.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Neither active nor expired contracts are silently revoked by definition edits.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/work_attention_test.go",
+          "coverage": "Expired execution authority does not become a presence assertion.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Legitimate recovery presentation must be qualified per active protocol; no online-activity claim is made."
+    },
+    {
+      "id": "T037",
+      "owner_requirement": "Resumo assinado sem autoridade suficiente: mostrar desconhecido, não usar expiração do lease legado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Signed summary expiry remains unknown until explicit authority inspection; a legacy lease is not reused.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Unknown authority is shown without an invented executor.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T038",
+      "owner_requirement": "Revisor corrente e executor anterior: papéis distintos e provenientes dos contratos/casos corretos.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_attention_test.go",
+          "coverage": "Current review is an obligation independent of expired execution authority.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Current roles are read from actual authority and review records.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final two-identity current-reviewer/previous-executor browser fixture remains separate."
+    },
+    {
+      "id": "T039",
+      "owner_requirement": "Entrega recebida: não aparece como aprovada ou concluída por mero recebimento.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_contract_results_test.go",
+          "coverage": "Received material requires current reviewed-result conditions before completion.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "The coherent inspector exposes delivery and review facts without accepting linked proof.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T040",
+      "owner_requirement": "Correções solicitadas: achados atuais aparecem antes de sugerir nova conclusão.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_attention_test.go",
+          "coverage": "Current correction and review obligations remain explicit.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/work_contract_results_test.go",
+          "coverage": "Current reviewed material gates completion.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final signed corrections-requested browser journey is not replaced by these Application assertions."
+    },
+    {
+      "id": "T041",
+      "owner_requirement": "Execução assinada: browser não recebe chave privada, não assina e não faz fallback para claim legado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_contract_test.go",
+          "coverage": "Signed authority retains acquisition and recovery checks.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "Planning commands reject execution operations and foreign scope before dispatch.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-view.test.mjs",
+          "coverage": "Signed-host capabilities remain a distinct channel.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/signed.spec.mjs",
+          "coverage": "Both approved and changes-requested journeys keep private signing material in the external CLI host environment; the browser receives the access credential, follows protected profile/handoff controls and emits no command mutation, unsigned substitute or fabricated signature.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "signed work shows accepted delivery, independent review and protected profile actions: approved",
+            "signed work shows accepted delivery, independent review and protected profile actions: changes_requested"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T042",
+      "owner_requirement": "Snippet de perfil: alvo, versão e escopo corretos, sem interpolar shell não confiável.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "The selected Profile pins identity, scope and durable intention; foreign scope is rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-actions.test.mjs",
+          "coverage": "Exact version strings survive action preparation.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated hostile-title shell snippet and signed handoff target/version browser tests remain pending."
+    },
+    {
+      "id": "T043",
+      "owner_requirement": "Edição de especificação/criteria/estrutura congelada: bloqueada no servidor, não apenas escondida na UI.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Active or expired frozen contracts, open review and executing descendant branches block definition or structural edits without revocation.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T044",
+      "owner_requirement": "Nova mutação registrada: coberta por autorização, guard, replay e event factory; nenhum bypass por tipo novo.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Constituent permission rejection leaves no partial state; replay rechecks revoked permission; initial Criteria and batches retain auditable ordered events and stable identities.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestCreatePlanItemsChecksPermissionsForEachKindInsideTransaction",
+            "TestPlanningReplayRechecksConstituentPermissions",
+            "TestPlanningCreationInitialCriteriaPreserveExplicitLifecycleAndAssessments"
+          ]
+        },
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Typed definition/placement setters preserve replay and no-op event behavior, reject stale versions/previews and guard cycles or frozen descendants.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestProgressiveWorkDetailsPersistReplaceClearAndReplay",
+            "TestStructureMovementRejectsStaleImpactPreviewWithoutChangingSource",
+            "TestConcurrentOppositeObjectiveMovesCannotCreateCycle"
+          ]
+        },
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "The new contextual commands emit one ordered revision/event batch, replay the original records and roll back all documentary records/events if the last link is invalid.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestRegisterEvidenceWithLinksObservationIsAtomicAndDoesNotApprove",
+            "TestRegisterEvidenceWithLinksInvalidLastLinkRollsBackEveryRecord"
+          ]
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+          "coverage": "SQLite compound plan/documentary commands preserve stable identities after restart and do not acquire work or create an assessment; the generated PostgreSQL counterpart passes the same assertions.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceCompoundsPersistAndReplayWithoutPartialWrites"
+          ]
+        },
+        {
+          "path": "packages/wos-api/internal/server/release_matrix_test.go",
+          "coverage": "Every registered mutation, including the new nine, shares the HTTP/MCP schema and rejects missing idempotency keys on SQLite and actual PostgreSQL.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema"
+          ]
+        },
+        {
+          "path": "packages/wos-api/web/exposure_test.go",
+          "coverage": "Every command has an explicit exposure and permission matching Core metadata; signed operations cannot silently become human-browser operations.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestEveryCommandHasExplicitExposure"
+          ]
+        },
+        {
+          "path": "docs/ux/operational-workspace/backend-qualification.json",
+          "coverage": "The common-pipeline implementation audit is backed by actual SQL/race execution, deterministic generated registration and reviewed public compatibility.",
+          "run": "generated_transport_parity",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "Executed automated assertions at the source snapshots recorded by the cited runs; not independent human acceptance or a uniform-final-SHA full-suite claim."
+    },
+    {
+      "id": "T045",
+      "owner_requirement": "Objective planned já comprovado: conclusão canônica permitida sem Start artificial.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Canonical Objective lifecycle permits eligible explicit achievement without an artificial Start.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final browser action/checklist proof for planned-to-achieved remains to be recorded."
+    },
+    {
+      "id": "T046",
+      "owner_requirement": "Todas as Tasks done, critério do Objective pendente: não marcar Objective alcançado.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/proof_progress_test.go",
+          "coverage": "Work progress does not count as verified Criterion proof.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Objective completion uses its own Criteria rather than automatic child completion.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated all-Tasks-done/current-Objective-Criterion-pending browser journey is not claimed by these tests."
+    },
+    {
+      "id": "T047",
+      "owner_requirement": "Todos os Objectives alcançados, critério próprio do Outcome pendente: não concluir Outcome.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Outcome conclusion is explicit and subject to its own Criteria.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "A newly required unassessed condition still rejects conclusion after a preparation remedy.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated all-required-Objectives-achieved/current-Outcome-Criterion-pending browser case remains separate."
+    },
+    {
+      "id": "T048",
+      "owner_requirement": "Objective opcional incompleto: não transformá-lo em gate obrigatório por posição na árvore.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Optional Objective flags are persisted explicitly without inherited obligation.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Workspace placement and required-Objective summaries use actual persisted requirements.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/conclusion-impact.spec.mjs",
+          "coverage": "At 2560 px and 390 px, actual Objective and Outcome conclusion shows named open-child scope and consequences, refuses an unacknowledged submit, rejects a stale revision while retaining the rationale, then explicitly accepts the refreshed scope. Nested optional unfinished Objectives and Tasks retain lifecycle, criteria, version and absent authority; they do not become Outcome acceptance gates. The late-error regression also preserves another selected Task route, focus and notice.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "concluding parents reviews actual open work, rejects stale impact and preserves children at 2560px",
+            "concluding parents reviews actual open work, rejects stale impact and preserves children at 390px",
+            "a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T049",
+      "owner_requirement": "Concluir com trabalho aberto: explicitar consequência sobre o escopo, sem cancelamento/conclusão dos filhos.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Conclusion and archival are separate and do not imply child lifecycle rewrites.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "Contextual current facts and actions share the canonical read model.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-api/commands/conclusion_impact_schema_test.go",
+          "coverage": "Exact optional observed revision and explicit nullable placement query preserve old client omission and intention bytes. This contract qualification does not substitute for the browser impact review journey.",
+          "run": "preview_contract_compatibility",
+          "result": "passed",
+          "tests": [
+            "TestObservedImpactRevisionIsOptionalExactAndPreservesLegacyIntention",
+            "TestWorkspacePreviewQueryRequiresExplicitNullableParent"
+          ]
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_conclusion_test.go",
+          "coverage": "Outcome and Objective impact has complete open-child totals and a bounded named sample; stale snapshot guards reject without writes, fresh conclusions retain persisted child lifecycle/proof, and blocking compound replay preserves original records. Generated PostgreSQL parity executes against the real database.",
+          "run": "uniform_final_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren",
+            "TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound"
+          ]
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_scope_preview_test.go",
+          "coverage": "Scope counts retain open descendants under terminal parents without crossing scope; direct/subtree previews use canonical eligibility and perform no mutation. Real PostgreSQL mirror passes the same assertions.",
+          "run": "uniform_final_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope",
+            "TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting"
+          ]
+        },
+        {
+          "path": "tests/web/conclusion-impact.spec.mjs",
+          "coverage": "At 2560 px and 390 px, actual Objective and Outcome conclusion shows named open-child scope and consequences, refuses an unacknowledged submit, rejects a stale revision while retaining the rationale, then explicitly accepts the refreshed scope. Nested optional unfinished Objectives and Tasks retain lifecycle, criteria, version and absent authority; they do not become Outcome acceptance gates. The late-error regression also preserves another selected Task route, focus and notice.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "concluding parents reviews actual open work, rejects stale impact and preserves children at 2560px",
+            "concluding parents reviews actual open work, rejects stale impact and preserves children at 390px",
+            "a late failed conclusion-impact review cannot report an obsolete error or replace another Task's inspector"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T050",
+      "owner_requirement": "Reabertura: histórico preservado e estado/revisões atuais usados na próxima ação.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/lifecycle_service_test.go",
+          "coverage": "Reopening preserves conclusion history and uses current aggregate versions.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/entity_notes_test.go",
+          "coverage": "Persistent historical conclusion identity cannot be rewritten after archive/reopen.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final browser reopen/reassess/conclude sequence remains separate."
+    },
+    {
+      "id": "T051",
+      "owner_requirement": "Nota “terminei a Task”: aparece como declaração, sem transição de lifecycle.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "The note stating I finished the Task persists while the Task stays backlog with no authority or assessment.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Appending documentary updates changes no Task lifecycle or version.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T052",
+      "owner_requirement": "Nota “encontrei problema”: não cria Issue/Blocker sem intenção explícita.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "A documentary note changes no work lifecycle or operational authority.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Documentary note input is separate from report-Issue and Blocker intentions.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T053",
+      "owner_requirement": "AppendWorkActivity sem autoridade assinada válida: continua rejeitado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/work_activity_application_test.go",
+          "coverage": "The live authenticated signed-acquisition fixture rejects changed authority digest, execution, fencing, contract version and unissued signer; each probe compares records, revision, events and durable operations to ensure no write. This helper is executed by the named acquisition test.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/*/activity_guard_authority_digest",
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/*/activity_guard_fencing",
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/*/activity_guard_unissued_signer"
+          ]
+        },
+        {
+          "path": "packages/wos-core/storage/postgres/work_activity_application_test.go",
+          "coverage": "The generated actual-PostgreSQL signed fixture executes the same authority/fencing/signer rejection and unchanged-state assertions.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/sql/activity_guard_authority_digest",
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/sql/activity_guard_fencing",
+            "TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota/sql/activity_guard_unissued_signer"
+          ]
+        },
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "The unsigned planning channel rejects execution/activity operations before sending a request, rather than substituting them for signed execution.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspacePlanningRefusesExecutionAndForeignScopeBeforeSending"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "Executed automated assertions at the source snapshots recorded by the cited runs; not independent human acceptance or a uniform-final-SHA full-suite claim."
+    },
+    {
+      "id": "T054",
+      "owner_requirement": "Correção de nota do próprio autor: nova nota, mesmo contexto; conteúdo original preservado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/entity_notes_test.go",
+          "coverage": "Corrections require the same author and subject; previous notes stay immutable.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Idempotent correction appears with original author and stable history.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T055",
+      "owner_requirement": "Tentar sobrescrever nota de outro autor: rejeitado; novo comentário não falsifica autoria.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/entity_notes_test.go",
+          "coverage": "A different authenticated author cannot replace another author's note or forge correction context.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T056",
+      "owner_requirement": "Nota em item terminal não arquivado: documental permitida; novo trabalho operacional continua protegido.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Documentary notes on terminal non-archived work succeed without reopening or changing lifecycle.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/issues_blockers_test.go",
+          "coverage": "A terminal target rejects a new operational Blocker.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T057",
+      "owner_requirement": "Nota em Outcome arquivado: comportamento de bloqueio consistente com as regras do escopo.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Archived Outcome notes are rejected by the same scope write restrictions.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T058",
+      "owner_requirement": "Timeline carregada ao abrir item: primeiras entradas acessíveis sem caçar botão de cobertura.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Recent activity is part of the initial coherent Task view.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "A separately paginated real note history does not require a coverage-discovery click.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T059",
+      "owner_requirement": "WorkActivity e seu evento: uma entrada documental representativa, sem duplicação enganosa.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "WorkActivity and its registration event produce one representative activity entry, preserving distinct facts.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T060",
+      "owner_requirement": "Vários fatos na mesma revisão: cursor não pula nem repete entradas.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Same-commit revision/event-index ordering and bounded pages neither skip nor repeat facts.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T061",
+      "owner_requirement": "Novo evento durante paginação: fronteira congelada e aviso de novidades, sem mistura invisível.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "New ordinary facts stay beyond the frozen frontier and set newer-history information.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "Obsolete history failures cannot replace the current subject or notice.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T062",
+      "owner_requirement": "Atividade do descendente no pai: origem e caminho identificados; não atribuída ao pai.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Descendant history retains the actual origin; structural placement changes invalidate incompatible cursors.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T063",
+      "owner_requirement": "Datas de observação diferentes da ordem de registro: ambas corretas, sem cronologia inventada.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Recorded order is independent of occurrence time; both timestamps are retained.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T064",
+      "owner_requirement": "Issue criada na Task: affected_refs preenchido; nenhuma pesquisa repetida do alvo.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Contextual issue forms pin affected work instead of asking for a repeated lookup.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "The shared inspector names the real affected work.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final real-browser create-Issue-from-Task then reload/second-client path remains separately qualified."
+    },
+    {
+      "id": "T065",
+      "owner_requirement": "Issue sem “impede continuar”: não altera prontidão por si só.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Issue affected scope is distinct from explicit Blocker impacts.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "An affected association alone does not make the Task blocked.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T066",
+      "owner_requirement": "Issue com impedimento: comando composto cria os dois registros com target correto.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/issues_blockers_compound_test.go",
+          "coverage": "Issue plus Blocker saves atomically and emits facts for the actual target.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "The blocking choice selects the explicit compound operation with current target.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T067",
+      "owner_requirement": "Propagação incompatível com Task/Outcome: opção não oferecida e API rejeita entrada forjada.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/domain/workspace_eligibility_test.go",
+          "coverage": "Canonical Blocker propagation validates Task direct and compatible Objective/Outcome scopes.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "The propagation selector consumes server-defined eligibility.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T068",
+      "owner_requirement": "Resolver Issue sem liberar Blocker: trabalho continua impedido e isso fica explícito.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/issues_blockers_compound_test.go",
+          "coverage": "Issue resolution releases only explicitly listed impacts.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "The relationship journey asserts that resolving an Issue retains its Blocker until explicitly released.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T069",
+      "owner_requirement": "Liberar um de vários Blockers: os restantes continuam aplicáveis.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/issues_blockers_compound_test.go",
+          "coverage": "Only selected Blockers resolve; other applicable impediments remain.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "The real contextual resolution flow selects one recorded impact rather than clearing all.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T070",
+      "owner_requirement": "Problema após conclusão: Issue documental possível, Blocker operacional exige reabertura conforme domínio.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/issues_blockers_test.go",
+          "coverage": "Terminal work rejects a new operational Blocker.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_timeline_test.go",
+          "coverage": "Non-archived terminal work can still retain documentary information.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final browser report-Issue-without-Blocker on terminal work remains a separate journey."
+    },
+    {
+      "id": "T071",
+      "owner_requirement": "Mover papel livremente: não envia comando de domínio nem altera parent/Objective.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Free drag and signed negative positions preserve local visual placement without a domain command.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Visual context reveals no false structural ownership.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T072",
+      "owner_requirement": "Reassociar Task: preserva ID, critérios, evidências e histórico, atualiza vínculo atual.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Task reassociation preserves identity, Criteria and documentary records.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_editing_test.go",
+          "coverage": "Task moves persist across restart and concurrent structural operations.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T073",
+      "owner_requirement": "Destino em outro Outcome/namespace: rejeitado antes de gravar; nenhuma informação privada revelada.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Foreign Objective and execution-context references are rejected before mutation.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/workspace_read_types_test.go",
+          "coverage": "Confused or foreign selectors cannot choose unauthorized subjects.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T074",
+      "owner_requirement": "Ciclo de Objective: rejeitado, inclusive em operações concorrentes.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Direct and concurrent opposite Objective moves cannot introduce a cycle.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_editing_test.go",
+          "coverage": "Persistent structural operations retain guarded atomicity.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T075",
+      "owner_requirement": "Movimento com subárvore em execução ou revisão aberta: motivo claro e nenhuma revogação implícita.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Executing descendants, frozen authority and open reviews reject a structural edit; no automatic contract revocation occurs.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T076",
+      "owner_requirement": "Dependência hard da Task em seu próprio Objective: reproduzir incompatibilidade; rejeitar criação/reassociação que a introduza.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Creation and reassociation reject a hard Task dependency on its own Objective.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/work_attention_test.go",
+          "coverage": "Legacy impossible hard dependencies are explained rather than silently removed.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T077",
+      "owner_requirement": "Relação advisory: continua informativa, sem bloqueio operacional inventado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "Actual advisory dependency inspection and exact authorized removal preserve Task lifecycle.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Advisory dependency rows remain explicitly informative.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T078",
+      "owner_requirement": "Preview de impacto fica obsoleto: commit detecta nova situação e pede revisão, não usa preview como autorização.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "A stale expected Outcome revision rejects the structure preview without changing the source.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T079",
+      "owner_requirement": "Artifact produzido versus apenas relacionado: tipo de Relation correto, sem EvidenceLink indevido.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Contextual Artifact production and reference relations use the canonical Relation type.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/human-forms.spec.mjs",
+          "coverage": "Artifact and Decision payloads do not substitute EvidenceLink for general context.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T080",
+      "owner_requirement": "Decision aceita substitui outra: inspector mostra cadeia real; Blocker associado não se libera por inferência.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/documentary_contextual_test.go",
+          "coverage": "Contextual Decision proposal retains its canonical relationship and does not accept work.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/issues_blockers_test.go",
+          "coverage": "Blockers resolve independently from their causal issue/decision context.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated accepted/superseding Decision chain with a still-active Blocker needs a final browser assertion."
+    },
+    {
+      "id": "T081",
+      "owner_requirement": "Falta de critério: precondition correto, ação adicionar, sem mensagem de edição concorrente.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-api/http/workspace_error_test.go",
+          "coverage": "Missing preparation conditions return typed precondition details instead of version_conflict.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Add-Criterion remedy retains the conclusion draft and never silently accepts it.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T082",
+      "owner_requirement": "Conflito real: versão base/local/atual disponíveis e nenhuma perda do rascunho.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "An obsolete comparison cannot replace another Task draft or introduce an old-target save.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "Inline conflict comparison retains local content and exact uncertain request identity.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T083",
+      "owner_requirement": "Timeout após commit de criação composta: retry retorna IDs originais, sem duplicatas.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Same-intent replay returns stable batch identities.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_compound_test.go",
+          "coverage": "Persistent compound replay retains original created IDs.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Repeated contextual Evidence intention returns the original receipt with no duplicate record.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T084",
+      "owner_requirement": "Write confirmado e refresh falho: não oferecer repetir a mutação como nova intenção.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "Confirmed writes and uncertain retry paths preserve exact intent and do not rebase bytes.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "Recovery freezes request bytes/key and blocks new intentions until reconciliation.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated confirmed-write/failed-refresh browser interception must be checked in the final suite; a replay test alone is not that scenario."
+    },
+    {
+      "id": "T085",
+      "owner_requirement": "Duas criações/avaliações concorrentes: guard e versões preservam invariantes do Outcome.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Concurrent opposite parent moves preserve structural invariants.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/wave10_concurrency_contestation_test.go",
+          "coverage": "Concurrent assessments retain a single current winner.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Atomic batch validation uses current scoped state.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Dedicated concurrent creation pair is not inferred from the opposite-move or assessment races."
+    },
+    {
+      "id": "T086",
+      "owner_requirement": "Revogação de permissão durante formulário/query: nenhuma gravação ou conteúdo antigo reaplicado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "Real permission revocation causes 403 and a delayed earlier refresh cannot restore private Board content.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "Replay reauthorizes the kinds and permissions in the original compound intention.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T087",
+      "owner_requirement": "Mudança de scope ou identidade com resposta atrasada: geração antiga descartada.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "Closing or replacing a selected Task invalidates late focal/history/compare results.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Replaced Outcome and scope generations ignore stale results and failures.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T088",
+      "owner_requirement": "Versão maior que Number.MAX_SAFE_INTEGER: comparação exata, cursor e payload preservados.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/workspace_read_types_test.go",
+          "coverage": "Nested versions/revisions round-trip as exact decimal strings.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-api/commands/workspace_schema_test.go",
+          "coverage": "New setters require exact quoted versions and explicit nullable values.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Already-rounded numeric revisions are rejected rather than compared as exact.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-actions.test.mjs",
+          "coverage": "Legacy numeric and new quoted command formats remain distinct.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T089",
+      "owner_requirement": "Facetas de revisões diferentes: view não publicada como coerente; leitura/refetch controlado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/workspace_frame_postgres_test.go",
+          "coverage": "A real PostgreSQL concurrent writer cannot mix revision facts and capabilities inside a Workspace frame.",
+          "run": "focused_postgres_snapshot",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Newer or foreign summary batches cannot silently merge into a loaded model.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Late independent graph expansion cannot splice its snapshot into inspector relationships.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/workspace_time_test.go",
+          "coverage": "Capability projection does not reread time and cross its pinned expiry frontier; actual mutations still use current authoritative time.",
+          "run": "pinned_capability_time",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime"
+          ]
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T090",
+      "owner_requirement": "Capability disponível seguida de mudança: comando revalida e pode recusar corretamente.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/work_editing_test.go",
+          "coverage": "Stale impact previews and version changes reject commands without implicit retries.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "A Criterion retired after the initial view is revalidated at conclusion commit.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/workspace_time_test.go",
+          "coverage": "Five advisory capabilities retain one pre-expiry frame time, while three actual mutations use fresh authoritative time after expiry. This qualifies clock coherence; the available-then-blocked UI transition remains the separately cited conclusion journey.",
+          "run": "pinned_capability_time",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime"
+          ]
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "An available Outcome conclusion is opened, another participant retires its Criterion, and the real submitted command rejects the changed state. Preparation preserves the rationale and adds only a definition; another actual submit remains unaccepted until independent verification.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "a preparation remedy retains the conclusion draft and never substitutes assessment or automatic acceptance"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T091",
+      "owner_requirement": "Referência maliciosa, ActorRef não autorizado ou source interna falsa: não ganha autoridade/procedência.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_observation_test.go",
+          "coverage": "A forged internal source cannot claim note provenance or supplied author/date.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/workspace_read_types_test.go",
+          "coverage": "Foreign and confused selectors are rejected.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "Planning input cannot override the Profile's scope or execute signed operations.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T092",
+      "owner_requirement": "Leitura de página parcial: ausência de item/evidência não vira total zero ou prontidão verdadeira.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Partial and unloaded facts retain explicit coverage rather than invented absence.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Unknown card summaries are not zero or verified proof.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "A bounded relationship page stays partial until its explicit next page is read.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T093",
+      "owner_requirement": "Task revela critérios, evidências, pessoas, histórico e pendências no resumo sem navegação global.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Real Task inspector and second client show instructions, note, Criterion and pending assessment.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "All seven pertinent Task sections are present together, with factual people/authority copy.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T094",
+      "owner_requirement": "Criterion/Evidence/Issue/Roadmap têm facetas pertinentes; não recebem executor ou critérios fictícios.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "EvidenceLink, Evidence, Issue and Blocker receive actual names, roles and pertinent relations.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "Documentary entities use the shared typed inspector without fictitious Task authority.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "The Roadmap case opens its actual inspector, follows Draft and immutable revision actions, publishes/activates explicitly and verifies the original revision and operational dependency state remain separate.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "Roadmap Draft, immutable publication and activation stay separate from operational dependency"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T095",
+      "owner_requirement": "Abrir, voltar, copiar deep link e recarregar: sujeito correto e retorno ao contexto preservado.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "Board default, contextual deep links and browser navigation preserve selected subject.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Reload and another authenticated browser read the same persisted Task and its context.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final back/forward, copied deep link and nested Criterion return qualification remain tracked with the complete browser run."
+    },
+    {
+      "id": "T096",
+      "owner_requirement": "Adicionar informação não reorganiza arbitrariamente o mapa nem perde câmera/seleção.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Revealing contextual records preserves saved/manual positions, source anchor and camera with no domain write.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/entity-communication.spec.mjs",
+          "coverage": "Late graph expansion preserves inspector keyboard focus and disclosure state.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T097",
+      "owner_requirement": "Busca server-backed encontra item fora do mapa carregado e indica seu contexto real.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas.spec.mjs",
+          "coverage": "Server-backed search finds authorized off-page Tasks and bounded large Outcome pages.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "large Outcomes declare partial data, load incrementally and find authorized off-page Tasks"
+          ]
+        },
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "Search/expansion do not silently merge a different revision or scope.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "The named executed backend and actual Chromium assertions cover this scenario; this does not imply all protocol/role permutations, mobile-device or human acceptance."
+    },
+    {
+      "id": "T098",
+      "owner_requirement": "Mapa grande usa lote/paginação; não faz uma sequência de chamadas completas por card.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_read_test.go",
+          "coverage": "Batch card queries and structural pages avoid full aggregate hydration.",
+          "run": "full_non_postgres_go",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go",
+          "coverage": "F08 fixture defines bounded card/view/timeline measurements.",
+          "run": "f08_performance",
+          "result": "pending"
+        },
+        {
+          "path": "tests/web/unit/canvas-data.test.mjs",
+          "coverage": "At most 100 summary refs enrich matching loaded records without one inspector request per card.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        },
+        {
+          "path": "docs/ux/operational-workspace/performance.md",
+          "coverage": "The quiet 100-Objective/1,000-Task/5,000-Evidence/10,000-note harness measured bounded batches and response bytes on both adapters. PostgreSQL ten-request p95 was 834.39 ms and missed the 400-ms comparison target; this is not reference-environment or browser timing acceptance.",
+          "run": "f08_performance",
+          "result": "passed"
+        },
+        {
+          "path": "docs/ux/operational-workspace/performance/quiet-results.json",
+          "coverage": "Seven final quiet local cases per adapter report bounded statement/byte counts and measured percentiles. Ten concurrent Task reads p95 are SQLite 216.09 ms/PostgreSQL 183.16 ms; all sampled p95 values are below the local 400 ms comparison. PostgreSQL untimed setup uses the separately preserved schema-scoped overlay; reference environment and HTTP/browser SLAs remain pending.",
+          "run": "f08_performance",
+          "result": "passed_local_only"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final quiet local seven-case runs pass on both adapters, including ten-concurrent Task read p95 SQLite 216.09 ms/PostgreSQL 183.16 ms below the 400 ms local comparison. The earlier a8571c5 PostgreSQL 834.39 ms miss remains historical evidence. Exact 2-vCPU/4-GiB/SSD/50-ms-RTT profile, ten authenticated browser sessions, full-map request-count/first-usable-map and local-feedback timing remain unqualified; backend harness and summary-injection units do not prove those browser/reference contracts."
+    },
+    {
+      "id": "T099",
+      "owner_requirement": "Ramo colapsado/fit explícito/zoom de trabalho: títulos e controles continuam compreensíveis.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Explicit fit and overview zoom preserve selection, accessible controls and list alternative.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Work layer preserves the full model and exposes documentary records deliberately.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Final 100/1000-Task branch-collapse and native zoom readability matrix is separate from renderer assertions."
+    },
+    {
+      "id": "T100",
+      "owner_requirement": "HD e telas baixas: mapa continua central, inspector não fica abaixo de uma página enorme.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "Viewport-driven inspector checks include HD/low-height layouts with reachable controls.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-gallery.spec.mjs",
+          "coverage": "Current-source screenshots qualify CSS viewport geometry instead of physical screen pixels.",
+          "run": "final_gallery",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/nested-task-density.spec.mjs",
+          "coverage": "Real nested Task inspectors at 320/390/430 px show the Requested work heading and at least three prose lines initially, retain named ancestry and keep compact contextual More actions reachable.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "a nested Task initially exposes authored prose and retains reachable actions at 320px",
+            "a nested Task initially exposes authored prose and retains reachable actions at 390px",
+            "a nested Task initially exposes authored prose and retains reachable actions at 430px"
+          ]
+        },
+        {
+          "path": "docs/design/editorial/operational-workspace/manifest.json",
+          "coverage": "75 source-bound images and receipts, 11 passing capture jobs, 40 served assets identical to complete functional qualification, verified hashes/dimensions and eleven representative final images visually inspected.",
+          "run": "final_gallery",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "This scenario is qualified within the recorded automated/representative-visual scope. Independent comprehension, actual mobile keyboards, other engines and the reference performance profile remain separate requirements; see the explicitly partial scenarios and qualification report."
+    },
+    {
+      "id": "T101",
+      "owner_requirement": "Mobile com teclado: salvar, cancelar e erro permanecem alcançáveis.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "The complete progressive creation/evidence journey passes at 390 CSS pixels.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "Small-screen inspector controls remain reachable.",
+          "run": "final_browser",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "A software keyboard on an actual mobile browser is not simulated by resizing Chromium; device verification remains pending."
+    },
+    {
+      "id": "T102",
+      "owner_requirement": "Teclado sem drag: criar, abrir, mover por comando, avaliar, voltar e fechar são operáveis.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Map selection, edge activation, native controls and list operations work without dragging.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas-races.spec.mjs",
+          "coverage": "Keyboard focus survives late restoration and graph expansion.",
+          "run": "focused_browser_races_relationships",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "The complete create/move/assess/return/close keyboard-only chain still needs a dedicated final acceptance record."
+    },
+    {
+      "id": "T103",
+      "owner_requirement": "Zoom nativo/texto aumentado: sem títulos cortados, botões microscópicos ou foco perdido.",
+      "status": "partially_verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Map overview zoom preserves accessible controls and selection.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/workspace-inspector-view.spec.mjs",
+          "coverage": "CSS viewport reflow and long content retain controls.",
+          "run": "final_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/canvas-workspace-layout.spec.mjs",
+          "coverage": "Actual native Chromium zoom 125%, 150%, 200% preserves a 1366x768 framebuffer, reachable Board/inspector controls and contextual focus return; the 200% case checks native select text width and touch dimensions. This differs from in-app Map zoom or viewport resizing.",
+          "run": "final_browser",
+          "result": "passed",
+          "tests": [
+            "native browser zoom at 125% and 150% preserves Outcome Board controls and contextual return",
+            "native browser zoom at 200% keeps short-window map controls and its scrolling inspector usable"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "Native Chromium 125%, 150%, 200% passes the named geometry/focus assertions. Text-only font enlargement, actual mobile keyboards and unexecuted browser engines/device combinations remain separate and unqualified."
+    },
+    {
+      "id": "T104",
+      "owner_requirement": "Assets originais: sem esticar papel, cortar robô, cobrir texto com dobra ou substituir identidade.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/canvas-interactions.spec.mjs",
+          "coverage": "Every map paper uses the original supplied asset with live accessible content in its safe area.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/unit/workspace-card-summary.test.mjs",
+          "coverage": "Documentary cards are contextual records, not substitute ownership or redrawn art.",
+          "run": "final_javascript_unit",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented"
+    },
+    {
+      "id": "T105",
+      "owner_requirement": "Upgrade de banco anterior: dados/contratos intactos, notas funcionam e nenhum default antigo muda.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "docs/ux/operational-workspace/migration-upgrade.json",
+          "coverage": "The a8571c5 source-verified SQLite and actual-PostgreSQL receipts preserve every original table row and signed fact across schema 30 to 32, replay an authenticated late note once without changing completed work, and verify old-binary newer-schema refusal.",
+          "run": "historical_upgrade",
+          "result": "passed"
+        },
+        {
+          "path": "tools/acceptance/workspace-notes-upgrade.py",
+          "coverage": "Independent verified historical producer archives, complete migration-chain checksums and a second candidate-source check bind both adapter upgrades to the recorded source.",
+          "run": "historical_upgrade",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "The old creation call with initial_criteria omitted still defaults to backlog, while adding a Criterion requires its separate authority.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestPlanningReplayRechecksConstituentPermissions"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "Executed automated assertions at the source snapshots recorded by the cited runs; not independent human acceptance or a uniform-final-SHA full-suite claim."
+    },
+    {
+      "id": "T106",
+      "owner_requirement": "Clientes antigos sem campos opcionais novos: continuam válidos e respeitam seus defaults.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-core/application/planning_creation_test.go",
+          "coverage": "The explicit legacy creation branch omits initial_criteria and lifecycle and asserts the previous backlog default; optional new Criteria do not gain authority through that old path.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestPlanningReplayRechecksConstituentPermissions"
+          ]
+        },
+        {
+          "path": "packages/wos-api/commands/required_nullable_test.go",
+          "coverage": "Old numeric version encoding and omitted optional title/description fields remain byte-shape compatible; required nullable presence applies to the new setters.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestNullableSetterChangeRetainsLegacyOptionalEncoding",
+            "TestRequiredNullableSettersPreserveClearAndRejectOmission"
+          ]
+        },
+        {
+          "path": "tools/releases/compatibility.test.mjs",
+          "coverage": "The immutable released-v0.4.2 guard checks all existing schema constraints/optionality/enum values and routes; reviewed candidate fingerprints and coordinated product metadata pass.",
+          "run": "public_contract_compatibility",
+          "result": "passed"
+        },
+        {
+          "path": "packages/wos-api/commands/workspace_schema_test.go",
+          "coverage": "The existing EvidenceLink target-kind schema remains unconstrained as released, while the new compound uses canonical eligibility.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceEligibilityContractMatchesCanonicalRules"
+          ]
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "Executed automated assertions at the source snapshots recorded by the cited runs; not independent human acceptance or a uniform-final-SHA full-suite claim."
+    },
+    {
+      "id": "T107",
+      "owner_requirement": "Exposição CLI/MCP/inventário: permissões e semântica equivalentes à API, sem endpoint humano privilegiado.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "packages/wos-api/http/workspace_test.go",
+          "coverage": "Real HTTP/MCP/SDK note creation/replay, coherent workspace reads, typed errors and compact receipt IDs share the same Core results.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspaceHTTPMCPAndSDKShareContextNotesAndTypedErrors",
+            "TestWorkspaceOversizedBatchRetainsEveryCreatedIDOnReplayAndReceiptLookup"
+          ]
+        },
+        {
+          "path": "packages/wos-api/internal/server/release_matrix_test.go",
+          "coverage": "SQLite and actual-PostgreSQL runtimes compare each HTTP/MCP mutation schema, require idempotency and verify catalog negotiation.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestReleaseEveryCatalogMutationRequiresIdempotencyAndSharesSchema",
+            "TestReleaseNegotiatedMCPProfilesExposeTheSameCatalog"
+          ]
+        },
+        {
+          "path": "packages/wos-api/web/exposure_test.go",
+          "coverage": "All 111 generated commands have explicit product exposure and Core-matching permission metadata; no signed operation becomes a privileged human command.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestEveryCommandHasExplicitExposure"
+          ]
+        },
+        {
+          "path": "packages/wos-cli/workspace_planning_test.go",
+          "coverage": "CLI recovery keeps the original payload/key and protects its Profile; execution bypass and foreign scope are rejected before transport.",
+          "run": "full_actual_postgres_go",
+          "result": "passed",
+          "tests": [
+            "TestWorkspacePlanningRecoveryFreezesNoteAndProtectsProfile",
+            "TestWorkspacePlanningRefusesExecutionAndForeignScopeBeforeSending"
+          ]
+        },
+        {
+          "path": "docs/ux/operational-workspace/backend-qualification.json",
+          "coverage": "Exact CI generator sequence is clean, repeated generated outputs match, and all 16 release/compatibility checks pass without changing old public constraints.",
+          "run": "generated_transport_parity",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "verification_scope": "Executed automated assertions at the source snapshots recorded by the cited runs; not independent human acceptance or a uniform-final-SHA full-suite claim."
+    },
+    {
+      "id": "T108",
+      "owner_requirement": "Relatório final identifica pass/fail/pending e ambiente; não confunde teste automatizado com compreensão humana.",
+      "status": "verified",
+      "evidence": [
+        {
+          "path": "tests/web/operational-gallery.spec.mjs",
+          "coverage": "Capture qualification checks actual served source hashes, viewport/DPR, PNG dimensions and visible geometry.",
+          "run": "final_gallery",
+          "result": "passed"
+        },
+        {
+          "path": "tests/web/operational-workspace.spec.mjs",
+          "coverage": "Task-oriented automated journeys operate real API and persistent state.",
+          "run": "prior_focused_browser",
+          "result": "passed"
+        },
+        {
+          "path": "docs/design/editorial/operational-workspace/manifest.json",
+          "coverage": "75 source-bound images and receipts, 11 passing capture jobs, 40 served assets identical to complete functional qualification, verified hashes/dimensions and eleven representative final images visually inspected.",
+          "run": "final_gallery",
+          "result": "passed"
+        }
+      ],
+      "implementation": "implemented",
+      "remaining_validation": "This scenario is qualified within the recorded automated/representative-visual scope. Independent comprehension, actual mobile keyboards, other engines and the reference performance profile remain separate requirements; see the explicitly partial scenarios and qualification report."
+    }
+  ],
+  "human_validation": {
+    "status": "pending",
+    "minimum_participants": 5,
+    "reason": "No independent participant sessions have been conducted. Automated journeys, screenshots and author walkthroughs are not comprehension results.",
+    "protocol_source": "docs/ux/operational-workspace/owner-plan-2026-10-19.md#6-teste-de-compreensão-humana",
+    "required_record": [
+      "Participant independence",
+      "Task times and completion",
+      "Errors and abandonment",
+      "Assistance provided",
+      "Responsibility/executor/reviewer distinctions",
+      "Evidence/assessment/acceptance distinctions"
+    ],
+    "participants_recorded": 0,
+    "study_protocol": "docs/ux/operational-workspace/human-study.md",
+    "blank_results_template": "docs/ux/operational-workspace/human-study-results.template.json",
+    "template_status": "not_run; no actual measurements, participant sessions or acceptance score"
+  },
+  "qualification": {
+    "status": "implemented_locally_qualified_pending_remaining_acceptance",
+    "mapping_date": "2026-10-19",
+    "baseline_revision": "5d945d3081f85927b80c686d695849bd1df73a5d",
+    "final_source_revision": "d458d4782d1813b75df4264605606837c9aff73d",
+    "scope": "Maps all 24 implementation units and all 108 owner scenarios. Evidence describes the assertion actually covered, not automatic satisfaction of the whole owner requirement.",
+    "status_definitions": {
+      "verified": "The cited executed checks cover this scenario at the reported test snapshot. This does not imply final committed-source or human acceptance.",
+      "partially_verified": "Implementation and useful executed assertions exist, but a stated part of the complete scenario or final integration qualification remains.",
+      "implemented": "Source implementation exists; scenario verification is not yet claimed.",
+      "pending": "No qualifying execution has been recorded."
+    },
+    "limitations": [
+      "Final complete functional browser suite passes 164/164 at strict source 36d7d2e with 74/74 JavaScript units and no failures/skips/retries/flaky cases. Capture-only d458d478 passes all 11 jobs and produces 75 images/receipts; all 40 served assets match that functional source. Eleven representative final images were visually inspected; this is not independent human acceptance.",
+      "Historical broad d5aecda and targeted a8571c5 runs are preserved. The final complete actual-PostgreSQL Go suite and vet pass at one unchanged 806-file Go/SQL/module fingerprint from e36a8f4 through the final UI/capture-only descendants.",
+      "Component form tests do not prove server authorization, persistence or a missing end-to-end journey; those assertions remain identified separately.",
+      "Actual mobile software-keyboard behavior and unexecuted browser engines remain pending; CSS viewport resizing is not device testing.",
+      "Final quiet local p95 for ten concurrent Task reads was SQLite 216.09 ms and PostgreSQL 183.16 ms, below the 400 ms local comparison. The earlier a8571c5 PostgreSQL 834.39 ms miss is retained as history. The prescribed 2-vCPU/4-GiB/50-ms-RTT reference profile, end-to-end authenticated HTTP/browser, first-map and local-feedback targets remain unqualified.",
+      "No independent five-participant comprehension study has been conducted."
+    ],
+    "final_backend_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+    "backend_evidence_reviewed_at": "2026-10-19T18:45:15.636385+00:00",
+    "backend_scenarios_upgraded": [
+      "T044",
+      "T053",
+      "T105",
+      "T106",
+      "T107"
+    ],
+    "final_backend_go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+    "tracker_integrity_review": {
+      "owner_requirements_match_verbatim_archive": true,
+      "units": 24,
+      "scenarios": 108,
+      "evidence_paths_and_run_references_resolve": true,
+      "review_corrections": [
+        "T026 remains partial without a dedicated no-waiver UI assertion.",
+        "T027 coverage narrowed to the actual evidence_review default fixture.",
+        "T094 now cites its exact executed Roadmap inspector case in the final 161-test browser qualification."
+      ]
+    },
+    "functional_browser_scenarios_upgraded": [
+      "T041",
+      "T048",
+      "T049",
+      "T090",
+      "T094",
+      "T097"
+    ],
+    "last_completed_functional_ui_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+    "last_reviewed_capture_harness_revision": "d458d4782d1813b75df4264605606837c9aff73d",
+    "final_functional_ui_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+    "final_capture_harness_revision": "d458d4782d1813b75df4264605606837c9aff73d"
+  },
+  "verification_runs": {
+    "full_non_postgres_go": {
+      "status": "passed",
+      "command": "go test ./...",
+      "environment": "Pinned repository Go toolchain; Memory/SQLite and non-PostgreSQL packages. PostgreSQL integration is a separate configured run.",
+      "execution_log": "/tmp/wos-plan-full-go.log",
+      "portable_evidence": "Concrete source test paths on each scenario; temporary log is local execution evidence, not a committed artifact."
+    },
+    "final_javascript_unit": {
+      "status": "passed",
+      "command": "npm run test:unit",
+      "execution_log": "/tmp/wos-plan-unit-final.log",
+      "tests_passed": 74,
+      "prior_tests_passed": 72,
+      "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "final_result_reported_by": "root",
+      "tests_failed": 0,
+      "tests_skipped": 0,
+      "duration_ms": 722.252836,
+      "evidence_document": "docs/ux/operational-workspace/browser-qualification.json",
+      "execution_log_scope": "Portable source-bound receipt above supersedes the historical temporary log."
+    },
+    "focused_browser_races_relationships": {
+      "status": "passed",
+      "command": "npx playwright test canvas-races.spec.mjs entity-communication.spec.mjs --workers=1",
+      "tests_passed": 9,
+      "duration_seconds_approx": 144,
+      "environment": "Chromium /usr/bin/chromium, sixth integration binary built 2026-10-19 17:12:51 UTC; real isolated SQLite servers; viewport 2560x1440 and 390x844 where specified; screenshot capture disabled.",
+      "execution_artifacts": "/tmp/wos-workspace-current-semantics"
+    },
+    "prior_focused_browser": {
+      "status": "passed_in_separate_focused_runs",
+      "environment": "Source test files identify scope. Prior runs include all five real operational-workspace tests, nine human-form fixture-browser tests, and eight renderer interaction checks. The inspector suite is being requalified in the final run. This is not a claim of one clean final suite or final source screenshots.",
+      "execution_log": "/tmp/wos-operational-targeted.log"
+    },
+    "focused_postgres_snapshot": {
+      "status": "passed",
+      "test": "TestPostgresWorkspaceFrameKeepsRevisionFactsAndCapabilitiesWhileWriterCommits",
+      "environment": "Actual PostgreSQL, race-enabled focused run; verifies a concurrent writer can commit while one coherent read frame retains its facts and capabilities."
+    },
+    "historical_upgrade": {
+      "status": "passed",
+      "source_revision": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+      "tool": "tools/acceptance/workspace-notes-upgrade.py",
+      "adapters": [
+        "sqlite",
+        "postgres"
+      ],
+      "baseline_revision": "5d945d3081f85927b80c686d695849bd1df73a5d",
+      "candidate_source_verified": true,
+      "source_verified_again_before_publication": true,
+      "assertions": "Independent schema-30 signed fixtures migrate to schema 32; 69 original tables/68 nonmigration tables, 30 prior migration rows and 39 signed facts are preserved. A late authenticated note is replayed once without changing the completed Task; the actual old binary refuses schema 32.",
+      "evidence_document": "docs/ux/operational-workspace/migration-upgrade.json",
+      "limitations": "Core/module/helper source is verified at e36a8f4, matching the later UI-only descendants. No mixed-version rolling upgrade, in-place downgrade, browser or human acceptance claim.",
+      "candidate_production_sha256": "f0d0705937ec9e9ce6f0fdd38edb015262884d58a41c436c64c8422f47a542cb",
+      "compiled_helper_source": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+      "source_scope": "Core production Go/SQL, go.mod, go.sum and migration helper source; transport and presentation are qualified separately"
+    },
+    "f08_performance": {
+      "status": "passed_local_reference_environment_pending",
+      "source_revision": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+      "core_implementation_revision": "505f2e637ec37a189c82365fcc7102cdaf038490",
+      "evidence_document": "docs/ux/operational-workspace/performance.md",
+      "results_document": "docs/ux/operational-workspace/performance/quiet-results.json",
+      "fixture": {
+        "objectives": 100,
+        "tasks": 1000,
+        "evidence": 5000,
+        "notes_with_events": 10000
+      },
+      "quiet_concurrent_task_read_p95_ms": {
+        "sqlite": 216.09,
+        "postgres": 183.16
+      },
+      "sampled_cases_per_adapter": 7,
+      "adapters": [
+        "sqlite",
+        "actual_postgresql"
+      ],
+      "all_sampled_local_p95_below_comparison": true,
+      "comparison_target_ms": 400,
+      "local_postgres_comparison_target_met": true,
+      "reference_environment_qualification": "pending",
+      "postgres_setup": "Initial untimed unqualified ANALYZE timed out across retained database schemas. The successful retry used a preserved schema-scoped setup-only Go overlay for its 71 fixture tables; timed loops and application queries were unchanged. No production code or timeout change.",
+      "historical_comparison": "Earlier a8571c5 PostgreSQL p95 was 834.39 ms, above 400 ms. That measured miss and its source/environment receipt remain retained; these are different measured snapshots, not a controlled optimization comparison.",
+      "remaining": "Actual runner is 4 CPU-equivalent quota/32 GiB with local databases and no controlled RTT. GOMAXPROCS=2 is not the prescribed 2-vCPU/4-GiB/SSD/50-ms-RTT environment. End-to-end HTTP, ten authenticated browser sessions, first-map SLA and local-feedback timing remain unqualified."
+    },
+    "final_browser": {
+      "status": "passed",
+      "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "command": "npm test",
+      "tests_passed": 164,
+      "tests_failed": 0,
+      "tests_skipped": 0,
+      "tests_flaky": 0,
+      "duration_ms": 542511.123,
+      "browser": {
+        "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+        "engine": "Chromium",
+        "platform": "Linux",
+        "playwright_version": "1.62.1",
+        "workers": 2,
+        "retries": 0
+      },
+      "source_integrity": {
+        "production_assets": 40,
+        "test_sources": 58,
+        "verification": "The binary commit equals the source commit. All relevant source JS, CSS and HTML, and test/helper sources were hashed before the run and rechecked when this report was written. The screenshot gallery separately compares the served asset bytes against the same source hashes."
+      },
+      "binary_sha256": "d5f33092ae723a79f7084e1d87e8a5bfd2112f863175445db1def618e4150111",
+      "evidence_document": "docs/ux/operational-workspace/browser-qualification.json",
+      "limitations": "Functional suite excludes the opt-in gallery. Automated Chromium/SQLite behavior is distinct from real mobile keyboards, other browser engines, reference-profile performance and an independent participant study."
+    },
+    "final_postgres_and_public_contracts": {
+      "status": "passed_with_explicit_skips_and_source_scope",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json",
+      "related_runs": [
+        "full_actual_postgres_go",
+        "final_core_storage_race",
+        "final_vet_application_lease",
+        "pinned_capability_time",
+        "public_contract_compatibility",
+        "generated_transport_parity",
+        "uniform_final_actual_postgres_go",
+        "preview_contract_compatibility",
+        "final_generated_transport_parity"
+      ],
+      "limitation": "Full actual-PG Go plus vet now qualify one unchanged final Go/SQL/module fingerprint. Gated native/load tests are explicitly skipped; final browser/gallery, reference performance and human acceptance remain separate."
+    },
+    "full_actual_postgres_go": {
+      "status": "passed",
+      "command": "go test -json -p 1 -count=1 -timeout 20m ./...",
+      "source_revision": "d5aecdafd191810d7d1af2eb06137743f1606a83",
+      "source_scope": "Broad run began at d5aecda before the approved readonly-clock follow-up; final vet/application/lease race and the separate pinned-clock regression qualify that correction. No uniform-final-SHA whole-suite claim.",
+      "tests_and_subtests_passed": 1661,
+      "skipped_tests": 9,
+      "packages_without_tests": 10,
+      "environment": "Go 1.27.2, GOMAXPROCS=2, one package at a time, actual PostgreSQL 18 plus Memory/SQLite; explicit isolated CI database configuration.",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "final_core_storage_race": {
+      "status": "passed",
+      "command": "go test -race -p 1 -count=1 -timeout 20m ./packages/wos-core/application ./packages/wos-core/storage/...",
+      "source_scope": "Earlier working-tree run; production edits during development were requalified by the scoped follow-up checks.",
+      "elapsed_seconds": 1184.227,
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "final_vet_application_lease": {
+      "status": "passed",
+      "source_revision": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+      "source_scope": "Commands ran after the readonly-clock production files landed.",
+      "checks": [
+        {
+          "command": "go vet ./...",
+          "elapsed_seconds": 17.436
+        },
+        {
+          "command": "go test -json -race -p 1 -count=1 -timeout 10m ./packages/wos-core/application",
+          "tests_and_subtests_passed": 108,
+          "elapsed_seconds": 8.798
+        },
+        {
+          "command": "go test -json -race -p 1 -count=1 -timeout 10m ./packages/wos-core/storage/sqlite ./packages/wos-core/storage/postgres -run ^TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand$",
+          "tests_and_subtests_passed": 6,
+          "elapsed_seconds": 17.023
+        }
+      ],
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "pinned_capability_time": {
+      "status": "passed",
+      "source_revision": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+      "test": "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime",
+      "path": "packages/wos-core/application/workspace_time_test.go",
+      "environment": "Memory, SQLite and actual PostgreSQL with race detector.",
+      "assertions": "Five capabilities keep the read-frame expiry frontier without rereading time; three actual mutations separately acquire their guard and recheck current authoritative time.",
+      "reported_duration_seconds": 8.95,
+      "evidence_document": "docs/ux/operational-workspace/performance.md"
+    },
+    "public_contract_compatibility": {
+      "status": "passed",
+      "command": "node --test tools/releases/test.mjs tools/releases/compatibility.test.mjs",
+      "tests_passed": 16,
+      "tests_failed": 0,
+      "tests_skipped": 0,
+      "assertions": "Strict candidate hashes and immutable released-v0.4.2 schema shapes, routes, optionality and existing constraints remain compatible; source/package/README version metadata stay synchronized.",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "generated_transport_parity": {
+      "status": "passed",
+      "assertions": "Exact CI signedgen/gofmt/postgresgen/mcpgen/openapigen/gofmt sequence produces no tracked adapter/catalog/MCP/SDK/OpenAPI drift; event-catalog check passes. Two independent catalog/MCP/SDK/OpenAPI generations have identical hashes.",
+      "source_scope": "The subsequent readonly-clock correction changes no public types, ports or generated contracts.",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "conclusion_impact_followup": {
+      "status": "passed",
+      "scope": "T049 coherent Core/read/optional-command and UI impact review is implemented; final-source full Go/browser qualification is running.",
+      "remaining": "None for the named Core and actual Chromium journey; broader human/device/protocol qualification remains separately identified.",
+      "browser_source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "evidence_document": "docs/ux/operational-workspace/browser-qualification.json"
+    },
+    "uniform_final_actual_postgres_go": {
+      "status": "passed",
+      "source_start_revision": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+      "source_end_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+      "go_sql_sources_unchanged": true,
+      "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+      "go_sql_files": 806,
+      "source_go_sql_worktree_clean_at_each_check": true,
+      "command": "go test -json -p 1 -count=1 -timeout 20m ./...; then go vet ./...",
+      "tests_and_subtests_passed": 1703,
+      "skipped_tests": 9,
+      "packages_without_tests": 10,
+      "elapsed_seconds": 696.309,
+      "vet_elapsed_seconds": 3.789,
+      "environment": "Go 1.27.2, GOMAXPROCS=2, one package at a time, actual PostgreSQL plus Memory/SQLite; explicit isolated CI database configuration. Connection details omitted.",
+      "source_scope": "Complete backend suite with one unchanged Go/SQL/module fingerprint across e36a8f4 and UI-only descendants. Frontend assets and their final browser/gallery source are qualified separately.",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "preview_contract_compatibility": {
+      "status": "passed",
+      "source_revision": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+      "tests": [
+        "TestObservedImpactRevisionIsOptionalExactAndPreservesLegacyIntention",
+        "TestWorkspacePreviewQueryRequiresExplicitNullableParent"
+      ],
+      "path": "packages/wos-api/commands/conclusion_impact_schema_test.go",
+      "checks": "Exact quoted observed revision above 2^53; legacy omitted fields preserve original Core intention bytes/numeric versions; absent or unknown placement parent key rejected while explicit null is accepted; old reads do not load previews. Two generation rounds match; all 16 release and recursive-v0.4.2 compatibility checks pass.",
+      "reviewed_openapi_sha256": "a7a9bb2554dae2bbb3818f86772b3f9755248a3b9d0c82506798fd0f68b8d5cb",
+      "old_route_or_property_constraint_changes": 0,
+      "evidence_document": "docs/stable/operational-contract-review.md"
+    },
+    "final_generated_transport_parity": {
+      "status": "passed",
+      "source_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+      "assertions": "The exact CI signedgen/gofmt/postgresgen/MCP/OpenAPI/gofmt sequence produces no generated-source drift; event catalog validates 108 event types. The final reviewed preview schemas remain unchanged.",
+      "evidence_document": "docs/ux/operational-workspace/backend-qualification.json"
+    },
+    "historical_upgrade_a857": {
+      "status": "passed",
+      "source_revision": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+      "tool": "tools/acceptance/workspace-notes-upgrade.py",
+      "adapters": [
+        "sqlite",
+        "postgres"
+      ],
+      "baseline_revision": "5d945d3081f85927b80c686d695849bd1df73a5d",
+      "candidate_source_verified": true,
+      "source_verified_again_before_publication": true,
+      "assertions": "Independent schema-30 signed fixtures migrate to schema 32; 69 original tables/68 nonmigration tables, 30 prior migration rows and 39 signed facts are preserved. A late authenticated note is replayed once without changing the completed Task; the actual old binary refuses schema 32.",
+      "evidence_document": "docs/ux/operational-workspace/migration-upgrade-a8571c5.json",
+      "limitations": "No mixed-version rolling upgrade, in-place downgrade, browser or human acceptance claim."
+    },
+    "capture_harness_asset_binding": {
+      "status": "passed",
+      "functional_source_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+      "capture_harness_revision": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+      "production_asset_count": 40,
+      "all_production_assets_match_functional_receipt": true,
+      "changed_paths_since_functional_source": [
+        "tests/web/operational-gallery.spec.mjs"
+      ],
+      "scope": "Historical binding at capture-only source 076550b: only opt-in screenshot harness differed and its 40 production assets matched the 6b2 functional receipt. Visual QA subsequently required a production narrow-inspector correction; the replacement source must be independently qualified."
+    },
+    "narrow_nested_task_followup": {
+      "status": "complete_functional_passed_gallery_pending",
+      "scope": "Visual QA found Requested work initially hidden for nested Tasks at 320/390/430 px. A whole-inspector narrow scroll/compact named-path correction and three real browser regressions are being implemented.",
+      "remaining": "Record the actual same-source 75-image gallery and final visual review.",
+      "focused_tests_passed": 13,
+      "source_scope": "Committed corrective source 36d7d2e; strict final functional receipt verifies all 40 production assets and 58 test/helper sources remained unchanged.",
+      "assertions": "Actual nested Task initial Requested work shows at least three prose lines at 320/390/430 px; original Evidence density, native Chromium 125/150/200% and real stale-guard movement also pass.",
+      "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "go_sql_identical_to_complete_suite": true,
+      "functional_tests_passed": 164,
+      "javascript_units_passed": 74
+    },
+    "f08_performance_a857": {
+      "status": "measured_reference_environment_not_accepted",
+      "source_revision": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+      "evidence_document": "docs/ux/operational-workspace/performance/quiet-results-a8571c5.json",
+      "fixture": {
+        "objectives": 100,
+        "tasks": 1000,
+        "evidence": 5000,
+        "notes_with_events": 10000
+      },
+      "quiet_concurrent_task_read_p95_ms": {
+        "sqlite": 277.27,
+        "postgres": 834.39
+      },
+      "comparison_target_ms": 400,
+      "local_postgres_comparison_target_met": false,
+      "reference_environment_qualification": "pending",
+      "remaining": "Actual runner is 4 CPU-equivalent quota/32 GiB, with local databases and no controlled RTT. GOMAXPROCS=2 is not the prescribed 2-vCPU/4-GiB/SSD/50-ms-RTT environment. End-to-end HTTP, ten authenticated browser sessions, first-map SLA and local feedback timing remain unqualified."
+    },
+    "human_study_materials": {
+      "status": "prepared_not_run",
+      "protocol": "docs/ux/operational-workspace/human-study.md",
+      "template": "docs/ux/operational-workspace/human-study-results.template.json",
+      "participants_recorded": 0,
+      "scope": "Six concrete independent-participant tasks with owner thresholds and a blank results schema. This is study preparation, not participant evidence or a scenario-verification upgrade."
+    },
+    "functional_browser_6b2_history": {
+      "status": "passed",
+      "source_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+      "command": "npm test",
+      "tests_passed": 161,
+      "tests_failed": 0,
+      "tests_skipped": 0,
+      "tests_flaky": 0,
+      "duration_ms": 631771.94,
+      "browser": {
+        "version": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+        "engine": "Chromium",
+        "platform": "Linux",
+        "playwright_version": "1.62.1",
+        "workers": 2,
+        "retries": 0
+      },
+      "source_integrity": {
+        "production_assets": 40,
+        "test_sources": 57,
+        "verification": "The binary commit equals the source commit. All relevant source JS, CSS and HTML, and test/helper sources were hashed before the run and rechecked when this report was written. The screenshot gallery separately compares the served asset bytes against the same source hashes."
+      },
+      "binary_sha256": "bb81a1624c5fbf40eeac2ad9eeaaef92531e4948b10016edf1473a01ad48f1f3",
+      "evidence_document": "docs/ux/operational-workspace/browser-qualification.json",
+      "limitations": "Functional suite excludes the opt-in gallery. Automated Chromium/SQLite behavior is distinct from real mobile keyboards, other browser engines, reference-profile performance and an independent participant study.",
+      "evidence_scope": "Historical summary of the prior executed candidate; the portable current browser receipt now records the stronger replacement source 36d7."
+    },
+    "final_gallery": {
+      "status": "passed",
+      "functional_source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "expected_qualified_gallery_images": 75,
+      "scope": "All 11 jobs pass at the exact capture source. Image/receipt/source/fixture hashes, binary identity, all 40 actual served assets, PNG dimensions and geometry are verified. Eleven representative final images were visually inspected; independent participant acceptance remains separate.",
+      "capture_harness_revision": "d458d4782d1813b75df4264605606837c9aff73d",
+      "qualified_gallery_images": 75,
+      "qualified_gallery_receipts": 75,
+      "passed_jobs": 11,
+      "failed_jobs": 0,
+      "manifest": "docs/design/editorial/operational-workspace/manifest.json"
+    },
+    "gallery_helper_failure_history": {
+      "status": "failed_prequalification",
+      "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "reported_by": "root",
+      "passed_capture_jobs": 10,
+      "failed_capture_jobs": 1,
+      "reason": "After the new 390 px More-actions capture, Escape correctly restores the footer trigger and its scroll position. The opt-in inspectorReady helper incorrectly expected the offscreen Close control before focusing it. The actual nested-Task functional regression focuses Close first and passed.",
+      "production_change_required": false,
+      "remaining": "Resolved by capture-only d458d478 and a fresh complete 11-job/75-image pass. The failed intermediate run is retained as history and is not counted as successful qualification."
+    },
+    "final_gallery_asset_binding": {
+      "status": "passed",
+      "functional_source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+      "capture_harness_revision": "d458d4782d1813b75df4264605606837c9aff73d",
+      "production_asset_count": 40,
+      "all_production_assets_match_functional_receipt": true,
+      "changed_paths_since_functional_source": [
+        "tests/web/operational-gallery.spec.mjs"
+      ],
+      "scope": "Only the opt-in helper differs from functional source36d7d2e. All75 final images and sidecars pass; the manifest verifies actual served assets and provenance. Representative visual review is recorded in the browser receipt."
+    }
+  },
+  "summary": {
+    "units": 24,
+    "scenarios": 108,
+    "scenario_status_counts": {
+      "verified": 74,
+      "partially_verified": 34,
+      "implemented": 0,
+      "pending": 0
+    },
+    "final_acceptance": "pending_explicit_partial_scenarios_reference_performance_and_independent_human_review"
+  }
+}

@@ -151,6 +151,9 @@ type WorkContract struct {
 	IssuedSpecificationID    *ID                    `json:"issued_specification_id,omitempty"`
 	LatestAuthorityID        *ID                    `json:"latest_authority_id,omitempty"`
 	SignedBinding            *SignedContractBinding `json:"signed_binding,omitempty"`
+	CredentialBindingVersion uint8                  `json:"credential_binding_version,omitempty"`
+	HolderCredentialID       ID                     `json:"holder_credential_id,omitempty"`
+	SessionCredentialID      *ID                    `json:"session_credential_id,omitempty"`
 	ID                       ID                     `json:"id"`
 	Scope                    Scope                  `json:"scope"`
 	WorkItemID               ID                     `json:"work_item_id"`
@@ -214,6 +217,9 @@ func (c WorkContract) ValidateHeader() error {
 		if err := c.SignedBinding.Validate(); err != nil {
 			return err
 		}
+	}
+	if err := c.validateCredentialBinding(); err != nil {
+		return err
 	}
 	if c.Status == ContractDelivered && c.SignedBinding == nil {
 		return NewError(ErrorCodeSignedProtocolRequired, "delivered is signed-v2 only")
@@ -312,22 +318,7 @@ func (c WorkContract) ValidAt(now time.Time) bool {
 	return c.Status == ContractActive && !now.Before(c.AcquiredAt) && now.Before(c.ExpiresAt)
 }
 func (c WorkContract) Authorize(principal string, execution ID, token FencingToken, now time.Time) error {
-	if c.EffectiveStatus(now) == ContractExpired {
-		return NewError(ErrorCodeContractExpired, "contract has expired")
-	}
-	if c.Status == ContractRevoked {
-		return NewError(ErrorCodeContractRevoked, "contract has been revoked")
-	}
-	if !c.ValidAt(now) {
-		return NewError(ErrorCodeInvalidTransition, "contract is not active")
-	}
-	if principal != c.HolderPrincipalID {
-		return NewError(ErrorCodeForbidden, "principal is not contract holder")
-	}
-	if execution != c.ExecutionID || token != c.FencingToken {
-		return NewError(ErrorCodeStaleExecution, "execution generation is stale")
-	}
-	return nil
+	return c.authorize(principal, nil, execution, token, now)
 }
 func (c *WorkContract) Renew(principal string, execution ID, token FencingToken, expected Version, ttl int, now time.Time) error {
 	if err := c.Authorize(principal, execution, token, now); err != nil {
@@ -350,7 +341,77 @@ func (c *WorkContract) Renew(principal string, execution ID, token FencingToken,
 	return nil
 }
 func (c *WorkContract) Resume(principal string, execution ID, token FencingToken, expected Version, newExecution ID, highWater uint64, now time.Time) error {
-	if err := c.Authorize(principal, execution, token, now); err != nil {
+	return c.resume(principal, nil, execution, token, expected, newExecution, highWater, now)
+}
+
+func (c WorkContract) authorize(principal string, credentialID *ID, execution ID, token FencingToken, now time.Time) error {
+	if err := c.validateCredentialBinding(); err != nil {
+		return err
+	}
+	if c.EffectiveStatus(now) == ContractExpired {
+		return NewError(ErrorCodeContractExpired, "contract has expired")
+	}
+	if c.Status == ContractRevoked {
+		return NewError(ErrorCodeContractRevoked, "contract has been revoked")
+	}
+	if !c.ValidAt(now) {
+		return NewError(ErrorCodeInvalidTransition, "contract is not active")
+	}
+	if principal != c.HolderPrincipalID {
+		return NewError(ErrorCodeForbidden, "principal is not contract holder")
+	}
+	switch c.CredentialBindingVersion {
+	case 0:
+		if credentialID != nil {
+			return NewError(ErrorCodeLease, "contract is not bound to a credential")
+		}
+	case WorkContractCredentialBindingV1:
+		if credentialID == nil || *credentialID != c.HolderCredentialID {
+			return NewError(ErrorCodeLease, "contract credential, principal, or authority does not match")
+		}
+	default:
+		return NewError(ErrorCodeLease, "contract credential binding version is unsupported")
+	}
+	if execution != c.ExecutionID || token != c.FencingToken {
+		return NewError(ErrorCodeStaleExecution, "execution generation is stale")
+	}
+	return nil
+}
+
+// AuthorizeForCredential enforces contracts_v1 ownership by canonical root
+// credential while preserving the existing Principal, execution, and fencing
+// checks. Application resolves and validates the presented/session credential.
+func (c WorkContract) AuthorizeForCredential(principal string, credentialID ID, execution ID, token FencingToken, now time.Time) error {
+	return c.authorize(principal, &credentialID, execution, token, now)
+}
+
+func (c *WorkContract) RenewForCredential(principal string, credentialID ID, execution ID, token FencingToken, expected Version, ttl int, now time.Time) error {
+	if err := c.AuthorizeForCredential(principal, credentialID, execution, token, now); err != nil {
+		return err
+	}
+	if expected != c.LeaseVersion {
+		return NewError(ErrorCodeVersionConflict, "lease version conflict")
+	}
+	duration, err := c.LeasePolicy.TTL(ttl)
+	if err != nil {
+		return err
+	}
+	next, err := c.LeaseVersion.Next()
+	if err != nil {
+		return err
+	}
+	c.LeaseVersion = next
+	c.ExpiresAt = now.UTC().Add(duration)
+	c.LastRenewedAt = now.UTC()
+	return nil
+}
+
+func (c *WorkContract) ResumeForCredential(principal string, credentialID ID, execution ID, token FencingToken, expected Version, newExecution ID, highWater uint64, now time.Time) error {
+	return c.resume(principal, &credentialID, execution, token, expected, newExecution, highWater, now)
+}
+
+func (c *WorkContract) resume(principal string, credentialID *ID, execution ID, token FencingToken, expected Version, newExecution ID, highWater uint64, now time.Time) error {
+	if err := c.authorize(principal, credentialID, execution, token, now); err != nil {
 		return err
 	}
 	if expected != c.LeaseVersion {
@@ -446,6 +507,10 @@ func (w *WorkItem) DetachContract(c WorkContract, now time.Time) error {
 		return err
 	}
 	w.CurrentContractID = nil
+	// A revoked or otherwise terminal execution contract no longer authorizes
+	// in-progress work. Return the Task to the acquisition queue so a new
+	// contract can be acquired through the normal readiness gates.
+	w.Lifecycle = WorkItemLifecycleTodo
 	w.Version = next
 	w.UpdatedAt = now.UTC()
 	return nil
@@ -460,7 +525,7 @@ func ValidateContractUpdate(old, next WorkContract) error {
 	if old.Status != ContractActive {
 		return NewError(ErrorCodeInvalidTransition, "terminal contract is immutable")
 	}
-	if !reflect.DeepEqual(old.IssuedSpecificationID, next.IssuedSpecificationID) || !reflect.DeepEqual(old.SignedBinding, next.SignedBinding) || old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
+	if !reflect.DeepEqual(old.IssuedSpecificationID, next.IssuedSpecificationID) || !reflect.DeepEqual(old.SignedBinding, next.SignedBinding) || old.CredentialBindingVersion != next.CredentialBindingVersion || old.HolderCredentialID != next.HolderCredentialID || !reflect.DeepEqual(old.SessionCredentialID, next.SessionCredentialID) || old.ID != next.ID || old.Scope != next.Scope || old.WorkItemID != next.WorkItemID || old.HolderPrincipalID != next.HolderPrincipalID || old.Actor != next.Actor || old.SpecDigest != next.SpecDigest || !old.AcquiredAt.Equal(next.AcquiredAt) || old.WorkItemVersionAtAcquire != next.WorkItemVersionAtAcquire || old.OutcomeRevisionAtAcquire != next.OutcomeRevisionAtAcquire {
 		return NewError(ErrorCodeContractSpecMismatch, "contract acquisition is immutable")
 	}
 	contentChanged := next.Version != old.Version

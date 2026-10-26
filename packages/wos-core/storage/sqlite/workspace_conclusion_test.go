@@ -1,0 +1,235 @@
+package sqlite
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"path/filepath"
+	"reflect"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+)
+
+func TestWorkspaceConclusionImpactIsBoundedCurrentAndNeverConcludesChildren(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		for _, ownerKind := range []d.EntityKind{d.EntityKindOutcome, d.EntityKindObjective} {
+			t.Run(backend+"/"+ownerKind.String(), func(t *testing.T) {
+				ctx := context.Background()
+				must := func(err error) {
+					t.Helper()
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				var store ports.TransactionManager = memory.New()
+				if backend == "sql" {
+					store = openTestStore(t, filepath.Join(t.TempDir(), "conclusion.db"))
+				}
+				service, err := a.NewService(store, portClock{time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}, &portIDs{})
+				must(err)
+				serial := 100
+				command := func() d.CommandContext { serial++; return sqliteCommandContext(portID(serial).String(), "") }
+				criterion := []a.InitialCriterion{{Title: "The explicit condition is verified", Required: true, VerificationMode: d.VerificationModeAttestation}}
+				outcome, err := service.CreateOutcome(ctx, command(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Conclude deliberately", DesiredState: "Review the real remaining work", Priority: d.PriorityNormal, InitialCriteria: criterion})
+				must(err)
+				scope := outcome.Value.Scope()
+				assess := func(owner d.EntityRef, version d.Version, condition d.SuccessCriterion) {
+					t.Helper()
+					_, e := service.RecordCriterionAssessment(ctx, command(), a.RecordCriterionAssessmentCommand{Owner: owner, ExpectedVersion: version, CriterionID: condition.ID, CriterionRevision: condition.Revision, Result: d.AssessmentResultMet, Rationale: "Independently checked the actual agreed condition"})
+					must(e)
+				}
+				assess(outcome.Value.Ref(), outcome.Value.Version, outcome.Value.Criteria.Items[0])
+				current, err := service.GetOutcome(ctx, scope)
+				must(err)
+				active, err := service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: current.Value.Version})
+				must(err)
+				owner := active.Value.Ref()
+				var parent *d.ID
+				if ownerKind == d.EntityKindObjective {
+					objective, e := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Eligible parent Objective", Priority: d.PriorityNormal, InitialCriteria: criterion})
+					must(e)
+					assess(objective.Value.Ref(), objective.Value.Version, objective.Value.Criteria.Items[0])
+					owner, parent = objective.Value.Ref(), &objective.Value.ID
+				}
+				child, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Optional unfinished child", Priority: d.PriorityNormal, ParentObjectiveID: parent})
+				must(err)
+				nested, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Nested unfinished child", Priority: d.PriorityNormal, ParentObjectiveID: &child.Value.ID})
+				must(err)
+				if parent == nil {
+					parent = &child.Value.ID
+				}
+				tasks := []d.WorkItem{}
+				for i := 0; i < 23; i++ {
+					placement := parent
+					if i%2 == 1 {
+						placement = &nested.Value.ID
+					}
+					work, e := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: fmt.Sprintf("Open Task %02d", i), Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog, ObjectiveID: placement})
+					must(e)
+					tasks = append(tasks, work.Value)
+				}
+				query := a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: owner}}
+				view, err := service.GetEntityWorkspaceView(ctx, scope, query)
+				must(err)
+				impact := view.ConclusionImpact
+				if impact == nil || impact.OpenObjectives != 2 || impact.OpenTasks != len(tasks) || len(impact.OpenItems) != 20 {
+					t.Fatalf("missing or unbounded actual impact: %+v", impact)
+				}
+				coverage := view.Coverage["conclusion_impact"]
+				if coverage.Status != "partial" || coverage.TotalCount == nil || *coverage.TotalCount != 25 || coverage.ReturnedCount == nil || *coverage.ReturnedCount != 20 {
+					t.Fatalf("sample presented as complete: %+v", coverage)
+				}
+				for _, item := range impact.OpenItems {
+					if item.Ref.Scope != scope || item.Title == "" || item.Ref.ID == owner.ID {
+						t.Fatal("impact returned an unresolved, wrong-owner or cross-scope entry")
+					}
+				}
+				if len(impact.Consequences) < 3 || impact.Consequences[2] != map[d.EntityKind]string{d.EntityKindOutcome: "outcome_operational_scope_closed", d.EntityKindObjective: "objective_closed_to_new_children"}[ownerKind] {
+					t.Fatalf("wrong scope consequences: %+v", impact.Consequences)
+				}
+				added, err := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: "Created after the impact review", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog, ObjectiveID: parent})
+				must(err)
+				tasks = append(tasks, added.Value)
+				fresh, err := service.GetEntityWorkspaceView(ctx, scope, query)
+				must(err)
+				achieve := func(version d.Version, observed *d.OutcomeRevision) error {
+					if ownerKind == d.EntityKindOutcome {
+						_, e := service.AchieveOutcome(ctx, command(), a.AchieveOutcomeCommand{Scope: scope, ExpectedVersion: version, ObservedOutcomeRevision: observed, Reason: "Explicitly accept the current scope"})
+						return e
+					}
+					_, e := service.AchieveObjective(ctx, command(), a.AchieveObjectiveCommand{Scope: scope, ObjectiveID: owner.ID, ExpectedVersion: version, ObservedOutcomeRevision: observed, Reason: "Explicitly accept this verified condition"})
+					return e
+				}
+				err = achieve(view.EntityVersion, &view.OutcomeRevision)
+				var detail *d.Error
+				if !errors.As(err, &detail) || detail.Code != d.ErrorCodePreconditionFailed || detail.Details == nil || detail.Details.ReasonCode != "conclusion_impact_changed" || len(detail.Details.Remedies) != 1 || detail.Details.Remedies[0].ActionID != "review_conclusion_impact" {
+					t.Fatalf("stale impact did not request a new deliberate review: %v", err)
+				}
+				afterFailure, err := service.GetEntityWorkspaceView(ctx, scope, query)
+				must(err)
+				if afterFailure.OutcomeRevision != fresh.OutcomeRevision || afterFailure.EntityVersion != fresh.EntityVersion || afterFailure.Header.Lifecycle != fresh.Header.Lifecycle {
+					t.Fatal("stale impact changed the parent or emitted a new revision")
+				}
+				if afterFailure.ConclusionImpact.OpenTasks != len(tasks) {
+					t.Fatal("fresh impact missed the concurrent child creation")
+				}
+				// Compare persisted snapshots on both sides, rather than a creation
+				// result whose empty collections may not yet be normalized by storage.
+				for i := range tasks {
+					stored, e := service.GetWorkItem(ctx, scope, tasks[i].ID)
+					must(e)
+					tasks[i] = stored.Value
+				}
+				children := []d.Objective{child.Value, nested.Value}
+				for i := range children {
+					stored, e := service.GetObjective(ctx, scope, children[i].ID)
+					must(e)
+					children[i] = stored.Value
+				}
+				must(achieve(afterFailure.EntityVersion, &afterFailure.OutcomeRevision))
+				for _, before := range tasks {
+					after, e := service.GetWorkItem(ctx, scope, before.ID)
+					must(e)
+					if !reflect.DeepEqual(after.Value, before) {
+						t.Fatalf("parent conclusion changed Task %s", before.ID)
+					}
+				}
+				for _, before := range children {
+					after, e := service.GetObjective(ctx, scope, before.ID)
+					must(e)
+					if !reflect.DeepEqual(after.Value, before) {
+						t.Fatalf("parent conclusion changed Objective %s", before.ID)
+					}
+				}
+				title := "An existing Task keeps its own workflow"
+				_, err = service.UpdateWorkItem(ctx, command(), a.UpdateWorkItemCommand{Scope: scope, WorkItemID: tasks[0].ID, ExpectedVersion: tasks[0].Version, Title: &title})
+				if ownerKind == d.EntityKindOutcome && err == nil {
+					t.Fatal("terminal Outcome retained an open operational scope")
+				}
+				if ownerKind == d.EntityKindObjective {
+					must(err)
+				}
+			})
+		}
+	}
+}
+
+func TestWorkspaceBlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			must := func(err error) {
+				t.Helper()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "blocking-impact.db"))
+			}
+			service, err := a.NewService(store, portClock{time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}, &portIDs{})
+			must(err)
+			serial := 100
+			command := func() d.CommandContext { serial++; return sqliteCommandContext(portID(serial).String(), "") }
+			outcome, err := service.CreateOutcome(ctx, command(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Review the blocking scope", DesiredState: "Only deliberate impediments affect work", Priority: d.PriorityNormal})
+			must(err)
+			scope := outcome.Value.Scope()
+			objective, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Affected branch", Priority: d.PriorityNormal})
+			must(err)
+			query := a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: objective.Value.Ref()}}
+			before, err := service.GetEntityWorkspaceView(ctx, scope, query)
+			must(err)
+			work, err := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: "Newly affected after the preview", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog, ObjectiveID: &objective.Value.ID})
+			must(err)
+			fresh, err := service.GetEntityWorkspaceView(ctx, scope, query)
+			must(err)
+			storedWork, err := service.GetWorkItem(ctx, scope, work.Value.ID)
+			must(err)
+			request := a.ReportIssueWithBlockerCommand{Scope: scope, ObjectiveID: objective.Value.ID, Title: "Missing required access", Description: "A documented issue affecting the selected branch", Severity: d.IssueSeverityMinor,
+				AffectedRefs: []d.EntityRef{objective.Value.Ref()}, BlockedRef: objective.Value.Ref(), BlockerDescription: "Wait for the documented access to be restored", Propagation: d.BlockerPropagationSubtree, ObservedOutcomeRevision: &before.OutcomeRevision}
+			_, err = service.ReportIssueWithBlocker(ctx, command(), request)
+			var detail *d.Error
+			if !errors.As(err, &detail) || detail.Code != d.ErrorCodePreconditionFailed || detail.Details == nil || detail.Details.ReasonCode != "blocker_impact_changed" || len(detail.Details.Remedies) != 1 || detail.Details.Remedies[0].ActionID != "review_blocker_impact" {
+				t.Fatalf("stale blocking scope did not request a fresh impact review: %v", err)
+			}
+			issues, revision, err := service.ListIssues(ctx, scope)
+			must(err)
+			if len(issues) != 0 || revision != fresh.OutcomeRevision {
+				t.Fatal("stale preview left an Issue or a new Outcome revision")
+			}
+			blockers, _, err := service.ListBlockers(ctx, scope)
+			must(err)
+			if len(blockers) != 0 {
+				t.Fatal("stale preview left a partial Blocker")
+			}
+			request.ObservedOutcomeRevision = &fresh.OutcomeRevision
+			intent := command()
+			intent.IdempotencyKey = "reviewed-blocker-report"
+			reported, err := service.ReportIssueWithBlocker(ctx, intent, request)
+			must(err)
+			replayed, err := service.ReportIssueWithBlocker(ctx, intent, request)
+			must(err)
+			if !replayed.IdempotentReplay || reported.Value.Issue.ID != replayed.Value.Issue.ID || reported.Value.Blocker.ID != replayed.Value.Blocker.ID || reported.OutcomeRevision != replayed.OutcomeRevision {
+				t.Fatal("reviewed compound replay did not retain its original facts and frontier")
+			}
+			issues, _, err = service.ListIssues(ctx, scope)
+			must(err)
+			blockers, _, err = service.ListBlockers(ctx, scope)
+			must(err)
+			if len(issues) != 1 || len(blockers) != 1 {
+				t.Fatal("replay created a duplicate Issue or Blocker")
+			}
+			after, err := service.GetWorkItem(ctx, scope, work.Value.ID)
+			must(err)
+			if !reflect.DeepEqual(after.Value, storedWork.Value) {
+				t.Fatal("recording an impediment rewrote Task lifecycle or proof")
+			}
+		})
+	}
+}

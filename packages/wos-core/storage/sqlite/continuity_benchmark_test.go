@@ -48,8 +48,9 @@ func BenchmarkContinuity(b *testing.B) {
 			first = v.Value
 		}
 	}
+	firstObjective := sqliteObjectiveForWorkFixture(b, service, first.Scope())
 	for i := 0; i < historySize; i++ {
-		if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: first.Scope(), Title: fmt.Sprintf("Work %03d", i), Priority: domain.PriorityNormal}); err != nil {
+		if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: first.Scope(), ObjectiveID: firstObjective, Title: fmt.Sprintf("Work %03d", i), Priority: domain.PriorityNormal}); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -58,9 +59,10 @@ func BenchmarkContinuity(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+	richObjective := sqliteObjectiveForWorkFixture(b, service, rich.Value.Scope())
 	var focalWorkID domain.ID
 	for i := 0; i < historySize; i++ {
-		work, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: rich.Value.Scope(), Title: fmt.Sprintf("Reviewed work %03d", i), Priority: domain.PriorityNormal})
+		work, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: rich.Value.Scope(), ObjectiveID: richObjective, Title: fmt.Sprintf("Reviewed work %03d", i), Priority: domain.PriorityNormal})
 		if err != nil {
 			b.Fatal(err)
 		}

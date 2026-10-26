@@ -109,7 +109,7 @@ func (s *Service) RenewSignedWorkContract(ctx context.Context, cc d.CommandConte
 		return MutationResult[WorkContractResult]{}, d.NewError(d.ErrorCodeInvalidArgument, "signed renewal requires idempotency intent")
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
-		return s.changeSignedWorkLease(ctx, uow, cc, cmd, false)
+		return s.changeSignedWorkLease(ctx, uow, cc, cmd, false, "RenewSignedWorkContract")
 	})
 }
 func (s *Service) ResumeSignedWorkContract(ctx context.Context, cc d.CommandContext, cmd ResumeSignedWorkContractCommand) (MutationResult[WorkContractResult], error) {
@@ -120,15 +120,15 @@ func (s *Service) ResumeSignedWorkContract(ctx context.Context, cc d.CommandCont
 		return MutationResult[WorkContractResult]{}, d.NewError(d.ErrorCodeInvalidArgument, "signed takeover requires idempotency intent")
 	}
 	return transactCommand(ctx, s, cc, cmd, func(uow ports.UnitOfWork) (WorkContractResult, d.OutcomeRevision, error) {
-		return s.changeSignedWorkLease(ctx, uow, cc, RenewSignedWorkContractCommand{Scope: cmd.Scope, ContractID: cmd.ContractID, SignerKeyID: cmd.SignerKeyID, Authority: cmd.Authority, AuthorityDigest: cmd.AuthorityDigest, ExpectedLeaseVersion: cmd.ExpectedLeaseVersion}, true)
+		return s.changeSignedWorkLease(ctx, uow, cc, RenewSignedWorkContractCommand{Scope: cmd.Scope, ContractID: cmd.ContractID, SignerKeyID: cmd.SignerKeyID, Authority: cmd.Authority, AuthorityDigest: cmd.AuthorityDigest, ExpectedLeaseVersion: cmd.ExpectedLeaseVersion}, true, "ResumeSignedWorkContract")
 	})
 }
-func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWork, cc d.CommandContext, cmd RenewSignedWorkContractCommand, takeover bool) (WorkContractResult, d.OutcomeRevision, error) {
+func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWork, cc d.CommandContext, cmd RenewSignedWorkContractCommand, takeover bool, commandName string) (WorkContractResult, d.OutcomeRevision, error) {
 	var zero WorkContractResult
 	if cmd.SignerKeyID.Validate() != nil {
 		return zero, 0, d.NewError(d.ErrorCodeInvalidArgument, "agent signer key required")
 	}
-	identity, policy, err := s.signedAccess(ctx, uow, cmd.Scope, ports.PermissionWorkWrite, cmd.SignerKeyID)
+	identity, policy, err := s.signedAccess(ctx, uow, cmd.Scope, ports.PermissionTaskRenew, cmd.SignerKeyID, legacyPermissionForCommand(commandName, ports.PermissionTaskRenew))
 	if err != nil {
 		return zero, 0, err
 	}
@@ -162,6 +162,12 @@ func (s *Service) changeSignedWorkLease(ctx context.Context, uow ports.UnitOfWor
 	}
 	work, err := uow.WorkItems().Get(ctx, cmd.Scope, contract.WorkItemID)
 	if err != nil {
+		return zero, 0, err
+	}
+	candidate := work
+	candidate.Lifecycle = d.WorkItemLifecycleTodo
+	candidate.CurrentLease = nil
+	if err = requireWorkItemReady(ctx, uow, candidate, now); err != nil {
 		return zero, 0, err
 	}
 	version, lease := contract.Version, contract.LeaseVersion

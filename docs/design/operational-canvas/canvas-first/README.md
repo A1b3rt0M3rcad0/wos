@@ -1,5 +1,11 @@
 # Outcome Board workspace
 
+The newer [operational density correction](../../editorial/operational-density.md)
+removes monitor-width enlargement and compacts small-screen controls. Its
+[source-bound gallery](../../editorial/board-communication/README.md) records the current
+sizes. The measurements and captures below remain historical qualification of
+`0d84588`; they do not describe the newer sizing rules.
+
 The Outcome Board is the main spatial workspace for an Outcome. It uses the viewport's remaining working region without a left sidebar. The warm editorial paper, fixed grid, original robots, post-it artwork, type and operational palette stay intact.
 
 Implementation source: `0d84588da082f9d2b3539d00e48527b31c8d7487`, on `feat/canvas-first-workspace`, based on `master` at `cba58d6`. [PR #115](https://github.com/A1b3rt0M3rcad0/wos/pull/115) includes these presentation changes and synchronized [1.1.0 release preparation](../../../releases/1.1.0.md). The owner has authorized integration after checks. Preparation, integration and publication remain distinct; the PR and release workflows expose their current status. The closed Tenant/scaling PR is outside this work.

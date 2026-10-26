@@ -81,7 +81,7 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	admin, err := security.Authenticate(ctx, adminToken)
 	must(err)
 	adminCtx := a.WithIdentity(ctx, admin)
-	must(security.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: "source-client", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionRecordsWrite}}))
+	applyAcceptanceGrant(t, security, adminCtx, "client-evidence-source-grant", ports.NamespaceGrant{NamespaceID: namespace, PrincipalID: "source-client", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionRecordsWrite}})
 	actor := d.ActorRef{Kind: d.ActorKindService, Provider: "generic-client", ID: "source-projector"}
 	oldCredential, oldToken, err := security.IssueCredential(adminCtx, namespace, "source-client", actor, time.Now().Add(time.Hour))
 	must(err)
@@ -151,7 +151,7 @@ func qualifyClientEvidence(t *testing.T, store interface {
 	if registrationCalls.Load() != 1 {
 		t.Fatal("SDK transport silently retried the lost mutation")
 	}
-	must(security.RevokeCredential(adminCtx, namespace, oldCredential.ID))
+	revokeAcceptanceCredential(t, security, adminCtx, "client-evidence-revoke-old", namespace, oldCredential.ID)
 	if _, err = oldClient.RegisterEvidence(ctx, key, command); err == nil {
 		t.Fatal("revoked token recovered protected evidence")
 	}

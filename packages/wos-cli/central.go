@@ -340,6 +340,9 @@ func removeCentralProfile(ctx context.Context, installationStore, store *Workspa
 	if len(profile.Local.PendingOperations) != 0 {
 		return result, usage("pending intentions must be reconciled before profile removal")
 	}
+	if e = store.ensureNoWorkspacePlanningPending(profile.Binding.CredentialID); e != nil {
+		return result, e
+	}
 	entries, e := store.readDirectoryV2(filepath.Join(".wos/profiles", name, "contract"))
 	if e != nil && !os.IsNotExist(e) {
 		return result, e

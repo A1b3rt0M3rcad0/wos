@@ -123,7 +123,7 @@ func (s *Service) boundedOutcomeGraph(ctx context.Context, scope d.Scope, q Grap
 	}
 	edges := make([]GraphEdge, 0, len(selected))
 	for _, edge := range selected {
-		edges = append(edges, GraphEdge(edge))
+		edges = append(edges, GraphEdge{ID: edge.ID, Source: edge.Source, Target: edge.Target, Kind: edge.Kind, SourceOfTruth: edge.SourceOfTruth})
 	}
 	sort.Slice(edges, func(i, j int) bool { return edges[i].ID < edges[j].ID })
 	page := GraphPage{Root: root, Nodes: []EntitySummary{}, Edges: edges[:min(n, len(edges))], OutcomeRevision: frame.revision, EvaluatedAt: frame.at, Limit: n, Depth: q.Depth}

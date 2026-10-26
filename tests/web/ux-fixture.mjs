@@ -6,18 +6,22 @@ import { resolve, join } from "node:path";
 import { createServer } from "node:net";
 import { once } from "node:events";
 import { randomUUID, randomBytes } from "node:crypto";
+import { revealMenuAction, expandWorkspaceDetails } from "./workspace-action-fixture.mjs";
 export { expect };
-// Specialist views live in the compact, native Views disclosure. Use the real
-// control rather than opening hidden content through DOM mutation in a test.
+// Overview exposes the specialist navigation. Follow real controls rather than
+// revealing hidden content through DOM mutation in a test.
 export async function openViews(page) {
   const views = page.locator("#outcome-views");
-  if (!(await views.evaluate((element) => element.open)))
-    await views.locator(":scope > summary").click();
+  if (!(await views.isVisible())) await page.locator('#area-tabs [data-area="overview"]').click();
   return views;
 }
 export async function chooseArea(page, area) {
   const key = area.toLowerCase() === "outcome board" ? "canvas" : area.toLowerCase();
-  if (key !== "canvas") await openViews(page);
+  if (key !== "canvas") {
+    const views=await openViews(page);
+    // An uncertain/submitting command legitimately blocks leaving the Board.
+    if (!(await views.isVisible())) return;
+  }
   await page.locator(`#area-tabs [data-area="${key}"]`).click();
 }
 export async function openWorkspaceTools(page) {
@@ -44,6 +48,7 @@ export async function reviewOutcome(page) {
   await chooseArea(page, "overview");
   await page.locator("#review-outcome").click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
+  await expandWorkspaceDetails(page.locator("#detail-dialog"), {history:false});
 }
 export async function outcomeActions(page) {
   await reviewOutcome(page);
@@ -184,7 +189,10 @@ export async function intent(page, label) {
     await quick.click();
   else {
     await outcomeActions(page);
-    await page.locator("#action-options").getByRole("button", { name: label, exact: true }).click();
+    const menuLabel = label === "New task" ? "New task · Backlog" : label;
+    const target = page.locator("#action-options").getByRole("button", { name: menuLabel, exact: true, includeHidden: true });
+    await revealMenuAction(target);
+    await target.click();
   }
   await expect(page.locator("#command-dialog")).toBeVisible();
   await expect(page.locator("#command-select")).not.toBeVisible();
@@ -232,4 +240,5 @@ export async function detail(page, section, title) {
     .first()
     .click();
   await expect(page.locator("#detail-dialog")).toBeVisible();
+  await expandWorkspaceDetails(page.locator("#detail-dialog"), {history:false});
 }

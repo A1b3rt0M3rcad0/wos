@@ -114,6 +114,9 @@ test("Evidence form submits the canonical context stance through its normal type
     const { humanForm } = await import("/assets/human-forms.js");
     window.evidenceForm = humanForm("create_evidence_link", {
       scope, entity: { id: "evidence", _kind: "evidence" },
+      eligibility: {
+        evidence_link_target_kinds: ["outcome", "objective", "work_item", "issue", "decision"],
+      },
       request: async () => ({ items: [{ ref: target, title: "Target task", lifecycle: "todo" }] }),
     });
     document.querySelector("#context").append(window.evidenceForm.node);

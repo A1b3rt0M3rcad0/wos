@@ -26,3 +26,204 @@ The local project schema makes only `default_outcome_id` optional. Namespace, se
 Migration `0030` adds immutable activity storage and scoped indexed chronology without rewriting earlier migrations. Activity is documentary and authorized under the live signed holder; it cannot renew authority or evaluate a criterion. Attention checks exact current submission bindings and distinguishes terminal state. The five new query parameters grant no additional read authority. See ADRs 035/036, authority/replay/restore and HTTP/MCP/SDK tests, and the [source-bound central workflow validation record](../central-agent-workflow/validation.md).
 
 Only the current OpenAPI and project-schema fingerprints were refreshed after this semantic review. All seven other frozen schema digests and the byte-preserved released baseline remain unchanged. This records reviewed compatibility, not release publication or native-platform certification.
+
+## Operational workspace review — 2026-10-19
+
+Compared with the current branch base, this candidate adds nine mutation routes
+and four bounded read routes. It removes or changes no existing route. The new
+commands cover immutable Entity notes, atomic planning and documentary creation,
+and typed Task/Objective setters. The new reads expose an authorized coherent
+workspace snapshot, compact cards, a documentary timeline and full Entity notes.
+All transports call the same Core methods; new capabilities grant no implicit
+execution or acceptance authority. The [workspace API guide](../operational-workspace-api.md)
+records the actual HTTP, MCP, SDK and CLI contracts.
+
+Existing create commands gain only optional `initial_criteria`; the existing
+Evidence-link command gains only optional observed target-version and
+criterion-revision fields. Its previously unconstrained target-kind wire schema
+is preserved for released clients. Canonical eligibility remains enforced by the
+Core and exposed as `workspace_rules`; the new compound Evidence-link input uses
+the canonical enum. The existing Work attention projection gains only optional
+criterion diagnostic reason codes. No old required field, constraint, enum value,
+command path, numeric counter format or signed canonical representation changes.
+
+New workspace counters are quoted decimal strings, including optimistic
+preconditions. Explicitly required nullable setter fields distinguish an omitted
+field from an intentional clear. Typed errors add optional structured details.
+New bounded mutation receipts preserve every generated identifier when a full
+result exceeds the response budget, so uncertain-response recovery never needs
+another mutation. CLI planning journals reuse frozen durable intentions and
+receipt lookup; they cannot invoke signed execution through an unsigned fallback.
+
+New workspace projections include revision-bound criteria, relationship and
+required-Objective cursors, honest partial coverage, and actual observation
+provenance. An unavailable internal note stays unavailable; external URLs are
+never fetched. These fields and commands are additive, rather than a claim that
+an older client can operate the new features.
+
+The current OpenAPI fingerprint alone was refreshed after inspecting all added
+routes/schemas and rerunning the recursive released-v0.4.2 compatibility guard.
+The eight CLI schema fingerprints and byte-preserved released reference remain
+unchanged. Two consecutive MCP/catalog/SDK/OpenAPI generations produced identical
+output hashes. This review records wire compatibility; the separate PostgreSQL,
+SQLite, transport, recovery, browser and upgrade qualification evidence still
+controls acceptance and does not imply release publication.
+
+
+## Reviewed impact previews — 2026-10-19
+
+The conclusion and relationship review adds no route and changes no existing
+property constraint. The existing `achieve_outcome`, `achieve_objective` and
+`report_issue_with_blocker` commands gain only optional, quoted-decimal
+`observed_outcome_revision`. Omitting it preserves the old Core intention bytes
+and the existing numeric `expected_version` encoding. A supplied revision is
+checked under the Outcome guard before mutation; changed scope returns typed
+`conclusion_impact_changed` or `blocker_impact_changed` and requires an explicit
+review. It grants no authority or automatic child conclusion.
+
+The workspace response adds bounded `conclusion_impact`, `placement_preview` and
+`blocker_preview` facets. The existing query adds only optional opt-in preview
+objects. Placement requires an explicit nullable `parent_id`; an omitted key is
+invalid, while `null` deliberately selects the Outcome. Both previews use the
+same authorized revision and evaluation time as the inspector, expose honest
+coverage and remain advisory reads. Structural setters retain their existing
+`expected_outcome_revision` precondition. Existing read routes, signed protocols
+and execution permissions are unchanged.
+
+Review against the preceding candidate found additions to five existing schema
+definitions and no changed old route, required input, constraint or field representation.
+The current OpenAPI digest alone was refreshed; the eight CLI schema digests
+and byte-preserved released reference remain unchanged. Tests exercise old
+omission, exact revisions above JavaScript's integer precision, numeric rejection
+for the new counters, and explicit nullable query binding. Two consecutive
+MCP/catalog/SDK/OpenAPI generations are deterministic; recursive released-wire
+compatibility and the release metadata tests remain required independently.
+
+## Contextual Kanbans and opt-in strict work — 2026-10-19
+
+Compared with PR source `184be7c32193a9e1369338128302088a0e37144d`, the command
+catalog adds optional `completion_policy` on creation and optional
+`acknowledged_cancelled_work` on the two parent achievement commands. Omission
+retains compatible historical semantics. A nonempty acknowledgement additionally
+requires the already supported observed revision; this new-input constraint does
+not change a historical request that omits the new field.
+
+`WorkspaceViewQuery.include_activity` is optional/nullable; omission preserves the
+old history behavior. Responses add server-classified card `stage`, completion
+policy/strict-work impact details and immutable acknowledgement references on
+Conclusion obligations. These are additive response properties; `stage` is always
+emitted on a current card response, not a newly required client input. Existing
+required input fields, routes, signing schemas and CLI YAML constraints remain.
+
+The current normalized OpenAPI fingerprint is
+`9cc1b9622f3131eb8e9474366790660185b6b06c29848947714aeef584dba3ba`.
+Only that current candidate digest was refreshed after inspecting the generated
+diff and passing the recursive released-v0.4.2 shape guard. All eight CLI schema
+digests and immutable released fixtures remain unchanged. The strict exact-hash
+gate remains enabled; no test or historical receipt is rewritten to hide drift.
+[ADR-039](../adr/0039-contextual-kanbans-and-strict-completion.md) defines the
+semantic scope; the [qualification](../ux/contextual-kanban/qualification.md)
+separates actual adapter tests, presentation checks and pending manual evidence.
+No release is prepared or published by this review.
+
+## Required Issue ownership — 2026-10-21
+
+The hierarchy implementation adds one intentional, breaking input requirement
+relative to the published v0.4.2 contract: `objective_id` is now required by
+`create_issue` and `report_issue_with_blocker`. Each Issue must belong to an
+Objective so workspace reads, blocker impact and relationship traversal share a
+canonical owner. The affected-resource list remains independent of that owner.
+
+The released v0.4.2 OpenAPI snapshot and its fingerprint are unchanged. The
+current normalized candidate fingerprint is
+`ff70a6ad2029ee71490a7755a7aa04d29cf555d6bab5c47b849dde2c92d7e3c5`, refreshed
+after reviewing the generated diff. The permission-policy `permitted_operations`
+schema now advertises the catalog's explicit `maxItems: 128` bound. The
+compatibility test permits exactly that bound and the two newly required Issue
+owner fields; it continues to reject all other removals, changed constraints
+and unreviewed new required inputs. CLI schemas and signed wire formats are
+unchanged. This is an explicit source-candidate compatibility break, not a
+promise that v0.4.2 clients can continue creating unowned Issues.
+
+The version and release decision remain pending. The read-only release planner
+currently calculates `1.2.0` from queued change manifests, which does not
+reflect this breaking request change. Release remains blocked until the owner
+chooses a compatible adapter or approves a semver-correct release plan. This
+review does not change `VERSION`, prepare a release or publish an artifact.
+
+## Permission migration command surface — 2026-10-21
+
+E17's generated command catalog exposes eight implemented operations through
+the existing HTTP/MCP/catalog/Go SDK surfaces: dependency-batch changes, issue
+assignment and unassignment, issue-to-Task relation add/remove, multi-blocker
+Issue reporting, Issue investigation start, and Outcome operational-profile
+configuration. Their request schemas use the existing scoped IDs, revision
+preconditions, and bounded command envelopes. No pre-existing route, field,
+required input, enum value, or constraint changed in this generated update.
+
+The permission compatibility migration itself remains internal. There is no
+public preview/apply command or route. Existing broad grants map only through
+the frozen `legacy-v1` command crosswalk; `ConfigureOutcomeOperationalProfile`
+has no legacy alias and still requires its explicit `policy:manage` capability.
+`permission_compatibility_version` is an optional migration-managed Credential
+Policy metadata field in the identity view/intent shapes. Ordinary policy writes
+ignore a client-supplied marker and preserve only the persisted marker, so it
+cannot grant the legacy alias.
+
+The normalized current-candidate OpenAPI fingerprint is
+`5a83403cac1fe2ec6bed8093c41b4e6035950bcff755b66c9aa8527e428a9098`. The
+contract test pins the exact candidate and checks the eight reviewed operations,
+the optional metadata marker, and the absence of a public migration route. The
+recursive released-v0.4.2 guard continues to pass, and its immutable fixture is
+unchanged. This refresh records the E17 public-surface addition; it does not
+change product version or release status.
+
+## Operational command contracts (E49) — 2026-10-21
+
+The reviewed candidate adds five implemented Application commands to the shared
+HTTP command catalog, MCP and generated Go SDK: `submit_task_for_review`,
+`accept_task_delivery`, `request_task_delivery_changes`, `withdraw_task_delivery`
+and `set_objective_completion_mode`. They add five command routes and no removal.
+The eight unreleased E17 command routes gain typed response annotations. Existing
+released path annotations, numeric field encodings, signed envelopes, canonical
+material digests and CLI schemas remain unchanged.
+
+New native delivery preconditions use quoted decimal Task versions and delivery
+rounds, including the exact uint64 maximum. Submission describes the exclusive
+legacy-lease and contracts-v1 authority/material variants, with the implemented
+inline material and findings limits. Historical embedded WorkItem and material
+counter encodings are retained. Signed-v2 continues to use its signed host and
+return protocol; the native commands provide no unsigned fallback.
+
+The previously optional-looking observed revisions on the unreleased Outcome
+profile configuration and plural Issue/Blocker commands are now required and
+non-null in discovery and normalization, matching their existing Application
+guards. Completion-mode configuration has the same explicit revision contract.
+Required nullable placement setters retain their separate explicit-clear
+semantics. Dependency-batch required fields and bounds likewise describe the
+implemented validator rather than new execution behavior.
+
+The public descriptor and the additive `x-wos-command-metadata` OpenAPI extension
+describe the Core registry's primary/composite permission requirements,
+non-authoritative conditional permission branches and authenticated transport
+requirements. They never grant execution authority. New schema components cover
+implemented completion, native delivery, verification, credential metadata,
+dependency reads and structured error details. A schema component alone does not
+claim that a dedicated HTTP route or MCP read adapter has been implemented.
+
+Bounded compact receipts add native delivery ID/digest/round, withdrawal ID and
+completion-authority ID. They preserve canonical recovery targets through typed
+SDK mutation results and receipt lookup without copying material, reasons,
+delegator credentials or secrets. An integration delivery is not interpreted as
+a TaskDelivery, and unrelated withdrawal/authority bindings are excluded.
+
+The reviewed normalized OpenAPI fingerprint is
+`1520579d31e089d4274be9b01012c6fc6a7ab096cab88528bb4a7d15cfdff772`.
+Two documented MCP/catalog/SDK and OpenAPI generations produced identical hashes
+for all four generated outputs. The recursive released-v0.4.2 compatibility
+guard passed, with its existing, explicitly reviewed Issue-owner requirement
+exception unchanged. Only the current candidate OpenAPI digest is refreshed;
+all eight CLI schema digests and immutable released reference files are retained.
+The strict candidate fingerprint gate remains enabled. This review does not
+prepare a release, publish a version, or establish the later transport and CLI
+journeys' acceptance.

@@ -14,10 +14,15 @@ import (
 // compact commit receipt from a full stored response; neither a state GET nor an
 // HTTP status alone substitutes for this observation.
 type CommandReceipt struct {
-	CommandID       domain.ID              `json:"command_id"`
-	OutcomeRevision domain.OutcomeRevision `json:"outcome_revision"`
-	ResponseJSON    json.RawMessage        `json:"response_json,omitempty"`
-	ResultOmitted   bool                   `json:"result_omitted,omitempty"`
+	CommandID             domain.ID              `json:"command_id"`
+	OutcomeRevision       domain.OutcomeRevision `json:"outcome_revision"`
+	ResponseJSON          json.RawMessage        `json:"response_json,omitempty"`
+	ResultOmitted         bool                   `json:"result_omitted,omitempty"`
+	DeliveryID            *domain.ID             `json:"delivery_id,omitempty"`
+	DeliveryDigest        string                 `json:"delivery_digest,omitempty"`
+	DeliveryRound         uint64                 `json:"delivery_round,omitempty,string"`
+	WithdrawalID          *domain.ID             `json:"withdrawal_id,omitempty"`
+	CompletionAuthorityID *domain.ID             `json:"completion_authority_id,omitempty"`
 }
 
 // GetCommandReceiptObservation reads the original Principal-bound result, without retrying

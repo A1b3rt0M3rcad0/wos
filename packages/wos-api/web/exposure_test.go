@@ -7,7 +7,26 @@ import (
 	"testing"
 
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 )
+
+func TestEveryPermissionHasCentralizedLabelAndDescription(t *testing.T) {
+	raw, err := assets.ReadFile("assets/actions.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := string(raw)
+	for _, permission := range domain.PermissionOperationNames() {
+		label := `"` + permission + `": copy.text.`
+		description := `"` + permission + `": "`
+		if !strings.Contains(source, label) {
+			t.Errorf("permission %q has no centralized label", permission)
+		}
+		if !strings.Contains(source, description) {
+			t.Errorf("permission %q has no centralized description", permission)
+		}
+	}
+}
 
 // A new public operation requires an explicit product decision. No name-prefix
 // heuristic can silently expose it in a human or signed execution surface.

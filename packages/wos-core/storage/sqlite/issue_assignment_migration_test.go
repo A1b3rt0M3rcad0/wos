@@ -1,0 +1,199 @@
+package sqlite
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+)
+
+func openStoreAtSchema33(t *testing.T) (*Store, string) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "issue-assignment.db")
+	store, err := Open(path, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	if _, err := store.db.ExecContext(context.Background(), `CREATE TABLE schema_migrations (
+		version BIGINT PRIMARY KEY,
+		name TEXT NOT NULL,
+		checksum TEXT NOT NULL,
+		applied_at BIGINT NOT NULL
+	)`); err != nil {
+		t.Fatal(err)
+	}
+	migrations, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range migrations {
+		if item.version > 33 {
+			break
+		}
+		if err := store.applyMigration(context.Background(), item); err != nil {
+			t.Fatalf("apply historical migration %s: %v", item.name, err)
+		}
+	}
+	version, err := store.SchemaVersion(context.Background())
+	if err != nil || version != 33 {
+		t.Fatalf("fixture schema version = %d, err=%v; want 33", version, err)
+	}
+	return store, path
+}
+
+func createIssueForExpandMigration(t *testing.T, store *Store) (domain.Scope, domain.Issue) {
+	t.Helper()
+	ctx := context.Background()
+	namespaceID := testID("0199f133-0000-7000-8000-000000000001")
+	outcomeID := testID("0199f133-0000-7000-8000-000000000002")
+	objectiveID := testID("0199f133-0000-7000-8000-000000000003")
+	scope := seedLegacyOutcomeObjective(t, store, namespaceID, outcomeID, objectiveID,
+		"Legacy Issue migration fixture", "Existing issue state stays valid during expand migration", "Legacy owner target")
+	now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+	issue, err := domain.NewIssue(
+		testID("0199f134-0000-7000-8000-000000000002"), scope,
+		"Preserve this issue", "Legacy lifecycle and affected reference survive expansion and restore.",
+		domain.IssueSeverityMajor, []domain.EntityRef{{Scope: scope, Kind: domain.EntityKindObjective, ID: objectiveID}}, sqliteCommandContext("0199f132-0000-7000-8000-000000000003", "").Actor, now,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reporterJSON, err := marshalJSON(issue.ReportedBy)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback()
+	if err := insertEntityRef(ctx, tx, issue.Ref()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO issues (
+		id, namespace_id, outcome_id, kind, version, title, description, severity,
+		lifecycle, reported_by_json, resolution_summary, duplicate_of_issue_id,
+		created_at, updated_at
+	) VALUES (?, ?, ?, 'issue', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		issue.ID.String(), issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), int64(issue.Version),
+		issue.Title, issue.Description, string(issue.Severity), string(issue.Lifecycle), reporterJSON,
+		issue.ResolutionSummary, nullableID(issue.DuplicateOfIssueID), encodeTime(issue.CreatedAt), encodeTime(issue.UpdatedAt),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.ExecContext(ctx, `INSERT INTO issue_affected_refs (
+		namespace_id, outcome_id, issue_id, affected_id, affected_kind
+	) VALUES (?, ?, ?, ?, ?)`,
+		issue.Scope.NamespaceID.String(), issue.Scope.OutcomeID.String(), issue.ID.String(),
+		objectiveID.String(), domain.EntityKindObjective.String(),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
+	}
+	return scope, issue
+}
+
+func assertIssueExpandData(t *testing.T, store *Store, scope domain.Scope, issue domain.Issue) {
+	t.Helper()
+	ctx := context.Background()
+	var title, reporter string
+	var objectiveID, assigneeRefJSON sql.NullString
+	if err := store.db.QueryRowContext(ctx, `SELECT title, reported_by_json, objective_id, assignee_ref_json
+		FROM issues WHERE namespace_id = ? AND outcome_id = ? AND id = ?`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), issue.ID.String(),
+	).Scan(&title, &reporter, &objectiveID, &assigneeRefJSON); err != nil {
+		t.Fatalf("read expanded Issue: %v", err)
+	}
+	if title != issue.Title || reporter == "" {
+		t.Fatalf("legacy Issue data changed: title=%q reporter=%q", title, reporter)
+	}
+	if objectiveID.Valid || assigneeRefJSON.Valid {
+		t.Fatalf("new optional values must remain NULL for legacy rows: objective=%v assignee=%v", objectiveID, assigneeRefJSON)
+	}
+	var affected int
+	if err := store.db.QueryRowContext(ctx, `SELECT count(*) FROM issue_affected_refs
+		WHERE namespace_id = ? AND outcome_id = ? AND issue_id = ?`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), issue.ID.String(),
+	).Scan(&affected); err != nil {
+		t.Fatalf("read preserved affected refs: %v", err)
+	}
+	if affected != 1 {
+		t.Fatalf("Issue affected refs count = %d, want 1", affected)
+	}
+}
+
+func TestIssueObjectiveAssigneeExpandMigrationUpgradeAndIdempotency(t *testing.T) {
+	ctx := context.Background()
+	store, _ := openStoreAtSchema33(t)
+	scope, issue := createIssueForExpandMigration(t, store)
+	migrations, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var expand *migration
+	for i := range migrations {
+		if migrations[i].version == 34 {
+			expand = &migrations[i]
+			break
+		}
+	}
+	if expand == nil || expand.name != "0034_issue_objective_assignment.sql" {
+		t.Fatalf("version 34 migration = %#v", expand)
+	}
+	if err := store.applyMigration(ctx, *expand); err != nil {
+		t.Fatalf("upgrade schema 33 to 34: %v", err)
+	}
+	assertIssueExpandData(t, store, scope, issue)
+	version, err := store.SchemaVersion(ctx)
+	if err != nil || version != 34 {
+		t.Fatalf("upgraded schema version = %d, err=%v; want 34", version, err)
+	}
+	if err := store.applyMigration(ctx, *expand); err != nil {
+		t.Fatalf("idempotent version 34 migration replay: %v", err)
+	}
+	assertIssueExpandData(t, store, scope, issue)
+}
+
+func TestIssueObjectiveAssigneeExpandMigrationRollsBackDDLAtomically(t *testing.T) {
+	ctx := context.Background()
+	store, _ := openStoreAtSchema33(t)
+	failed := migration{
+		version:  34,
+		name:     "0034_test_rollback.sql",
+		sql:      "CREATE TABLE issue_expand_rollback_probe (id TEXT); CREATE TABLE issue_expand_rollback_probe (id TEXT);",
+		checksum: fmt.Sprintf("rollback-%d", time.Now().UnixNano()),
+	}
+	if err := store.applyMigration(ctx, failed); err == nil {
+		t.Fatal("duplicate DDL unexpectedly succeeded")
+	}
+	version, err := store.SchemaVersion(ctx)
+	if err != nil || version != 33 {
+		t.Fatalf("schema version after failed migration = %d, err=%v; want 33", version, err)
+	}
+	if _, err := store.db.ExecContext(ctx, `CREATE TABLE issue_expand_rollback_probe (id TEXT)`); err != nil {
+		t.Fatalf("failed migration left partial DDL behind: %v", err)
+	}
+	if _, err := store.db.ExecContext(ctx, `DROP TABLE issue_expand_rollback_probe`); err != nil {
+		t.Fatal(err)
+	}
+	migrations, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range migrations {
+		if item.version == 34 {
+			if err := store.applyMigration(ctx, item); err != nil {
+				t.Fatalf("valid migration after rollback: %v", err)
+			}
+			return
+		}
+	}
+	t.Fatal("version 34 migration missing")
+}

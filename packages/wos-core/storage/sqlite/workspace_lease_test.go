@@ -1,0 +1,87 @@
+package sqlite
+
+import (
+	"context"
+	"path/filepath"
+	"testing"
+	"time"
+
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+)
+
+func TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "workspace-lease.db"))
+			}
+			must := func(err error) {
+				t.Helper()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			service, err := a.NewService(store, portClock{now}, &portIDs{})
+			must(err)
+			serial := 100
+			command := func() d.CommandContext {
+				serial++
+				return sqliteCommandContext(portID(serial).String(), "")
+			}
+			outcome, err := service.CreateOutcome(ctx, command(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Explicit legacy reservation", DesiredState: "Release the actual holder's reservation", Priority: d.PriorityNormal, InitialCriteria: []a.InitialCriterion{{Title: "An agreed condition", Required: true, VerificationMode: d.VerificationModeAttestation}}})
+			must(err)
+			scope := outcome.Value.Scope()
+			_, err = service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: outcome.Value.Version})
+			must(err)
+			work, err := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, ObjectiveID: sqliteObjectiveForWorkFixture(t, service, scope), Title: "Reserved outside the browser", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleTodo})
+			must(err)
+			owner := command()
+			claimed, err := service.ClaimWorkItem(ctx, owner, a.ClaimWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: work.Value.Version, TTL: 5 * time.Minute})
+			must(err)
+			ownerContext := a.WithIdentity(ctx, a.Identity{NamespaceID: scope.NamespaceID, PrincipalID: owner.PrincipalID, Actor: owner.Actor})
+			query := a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: work.Value.Ref()}}
+			availability := func(context context.Context) string {
+				t.Helper()
+				view, err := service.GetEntityWorkspaceView(context, scope, query)
+				must(err)
+				for _, capability := range view.Capabilities {
+					if capability.ActionID == "ReleaseWorkItem" {
+						return capability.Availability
+					}
+				}
+				return "absent"
+			}
+			if availability(ownerContext) != "available" {
+				t.Fatal("the actual lease holder cannot discover release")
+			}
+			other := command()
+			other.PrincipalID = "another-principal"
+			other.Actor.ID = other.PrincipalID
+			otherContext := a.WithIdentity(ctx, a.Identity{NamespaceID: scope.NamespaceID, PrincipalID: other.PrincipalID, Actor: other.Actor})
+			if availability(otherContext) != "blocked" {
+				t.Fatal("another reader received the holder's release authority")
+			}
+			lease := claimed.Value.CurrentLease
+			request := a.ReleaseWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: claimed.Value.Version, ClaimID: lease.ClaimID, FencingToken: lease.FencingToken}
+			if _, err = service.ReleaseWorkItem(otherContext, other, request); err == nil {
+				t.Fatal("a capability read authorized another Principal's release")
+			}
+			persisted, err := service.GetWorkItem(ownerContext, scope, work.Value.ID)
+			must(err)
+			if persisted.Value.CurrentLease == nil || persisted.Value.Version != claimed.Value.Version || persisted.Value.CurrentLease.ClaimID != lease.ClaimID {
+				t.Fatal("query predicates mutated the actual lease")
+			}
+			released, err := service.ReleaseWorkItem(ownerContext, command(), request)
+			must(err)
+			if released.Value.CurrentLease != nil || released.Value.Lifecycle != d.WorkItemLifecycleTodo || availability(ownerContext) != "absent" {
+				t.Fatal("release did not clear the actual reservation and its capability")
+			}
+		})
+	}
+}

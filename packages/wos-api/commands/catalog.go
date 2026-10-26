@@ -8,27 +8,34 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 const MaxPayloadBytes = 256 << 10
 
 type Descriptor struct {
-	Name   string         `json:"name"`
-	Schema map[string]any `json:"schema"`
+	Name          string                                      `json:"name"`
+	Schema        map[string]any                              `json:"schema"`
+	Description   string                                      `json:"description"`
+	Authorization application.CommandAuthorizationDescription `json:"authorization"`
+	Transport     TransportDescription                        `json:"transport"`
 }
 type Catalog struct {
 	validators  map[string]func(json.RawMessage) (json.RawMessage, error)
 	ids         ports.IDGenerator
 	descriptors map[string]Descriptor
 	handlers    map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error)
+	authorizers map[string]func(json.RawMessage) ([]ports.Permission, error)
 }
 
 func newCatalog(ids ports.IDGenerator) *Catalog {
-	return &Catalog{ids: ids, validators: map[string]func(json.RawMessage) (json.RawMessage, error){}, descriptors: map[string]Descriptor{}, handlers: map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error){}}
+	return &Catalog{ids: ids, validators: map[string]func(json.RawMessage) (json.RawMessage, error){}, descriptors: map[string]Descriptor{}, handlers: map[string]func(context.Context, domain.CommandContext, json.RawMessage) (any, error){}, authorizers: map[string]func(json.RawMessage) ([]ports.Permission, error){}}
 }
 func register[C any](c *Catalog, name string, run func(context.Context, domain.CommandContext, C) (any, error)) {
+	commandType := reflect.TypeFor[C]()
+	commandName := strings.TrimSuffix(commandType.Name(), "Command")
 	c.validators[name] = func(raw json.RawMessage) (json.RawMessage, error) {
-		normalized, err := Normalize(raw, reflect.TypeFor[C]())
+		normalized, err := Normalize(raw, commandType)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +45,7 @@ func register[C any](c *Catalog, name string, run func(context.Context, domain.C
 		}
 		return Encode(cmd)
 	}
-	c.descriptors[name] = Descriptor{Name: name, Schema: Schema(reflect.TypeFor[C]())}
+	c.descriptors[name] = commandDescriptor(name, commandType)
 	c.handlers[name] = func(ctx context.Context, cc domain.CommandContext, raw json.RawMessage) (any, error) {
 		normalized, err := Normalize(raw, reflect.TypeFor[C]())
 		if err != nil {
@@ -50,6 +57,21 @@ func register[C any](c *Catalog, name string, run func(context.Context, domain.C
 		}
 		return run(ctx, cc, cmd)
 	}
+	c.authorizers[name] = func(raw json.RawMessage) ([]ports.Permission, error) {
+		normalized, err := Normalize(raw, commandType)
+		if err != nil {
+			return nil, err
+		}
+		var cmd C
+		if err = Decode(normalized, &cmd); err != nil {
+			return nil, err
+		}
+		permissions, ok := application.CommandAuthorizationPermissions(commandName, cmd)
+		if !ok {
+			return nil, domain.NewError(domain.ErrorCodeInvalidConfig, "command authorization requirement is not registered")
+		}
+		return permissions, nil
+	}
 }
 func (c *Catalog) Descriptors() []Descriptor {
 	v := make([]Descriptor, 0, len(c.descriptors))
@@ -59,6 +81,22 @@ func (c *Catalog) Descriptors() []Descriptor {
 	sort.Slice(v, func(i, j int) bool { return v[i].Name < v[j].Name })
 	return v
 }
+
+// AuthorizationRequirements returns the registered permissions for a public
+// command payload, including any conditional requirements. It is exposed to
+// presentation and generator code without adding authorization metadata to
+// the existing descriptor/OpenAPI output.
+func (c *Catalog) AuthorizationRequirements(name string, raw json.RawMessage) ([]ports.Permission, error) {
+	if len(raw) > MaxPayloadBytes {
+		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "command exceeds byte limit")
+	}
+	resolve, ok := c.authorizers[name]
+	if !ok {
+		return nil, domain.NewError(domain.ErrorCodeNotFound, "unknown command authorization requirement")
+	}
+	return resolve(raw)
+}
+
 func (c *Catalog) Execute(ctx context.Context, name, key, correlation string, raw json.RawMessage) (any, error) {
 	if len(raw) > MaxPayloadBytes {
 		return nil, domain.NewError(domain.ErrorCodeInvalidArgument, "command exceeds byte limit")

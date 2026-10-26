@@ -150,6 +150,69 @@ func (h *Handler) reopenObjective(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) setObjectiveCompletionMode(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "objective_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request objectiveCompletionModeRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	expected, err := expectedVersion(r, request.ExpectedVersion, domain.EntityKindObjective, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var expectedRevision *domain.OutcomeRevision
+	if request.ExpectedOutcomeRevision != nil {
+		revision := domain.OutcomeRevision(*request.ExpectedOutcomeRevision)
+		expectedRevision = &revision
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.SetObjectiveCompletionMode(r.Context(), cc, application.SetObjectiveCompletionModeCommand{
+		Scope: scope, ObjectiveID: id, Mode: request.Mode, ExpectedVersion: expected,
+		ExpectedOutcomeRevision: expectedRevision, Reason: request.Reason,
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	setETag(w, domain.EntityKindObjective, result.Value.Objective.ID, result.Value.Objective.Version)
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) listObjectiveCompletionAuthorities(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	id, err := parsePathID(r, "objective_id")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.ListObjectiveCompletionAuthorities(r.Context(), scope, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (h *Handler) objectiveVersionAction(
 	w http.ResponseWriter,
 	r *http.Request,

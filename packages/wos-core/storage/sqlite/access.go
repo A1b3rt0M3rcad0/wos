@@ -2,9 +2,78 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 )
+
+// authorizeSecurityAdminReadTx keeps the credential, its root/session parent,
+// current namespace grant and policy in the same snapshot as administrative
+// projections. The caller provides trusted identity resolved by the adapter.
+func authorizeSecurityAdminReadTx(ctx context.Context, tx *sql.Tx, access ports.SecurityAdminReadAccess) (domain.ID, error) {
+	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
+	if access.NamespaceID.Validate() != nil || access.CredentialID.Validate() != nil || access.PrincipalID == "" || access.CredentialDigest == "" || access.Actor.Validate() != nil || access.Now.IsZero() || len(access.Permissions) == 0 {
+		return "", denied
+	}
+	var lifecycle string
+	if err := tx.QueryRowContext(ctx, `SELECT lifecycle FROM namespaces WHERE id=?`, access.NamespaceID.String()).Scan(&lifecycle); err != nil || lifecycle != "active" {
+		return "", denied
+	}
+	var raw string
+	if err := tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, access.NamespaceID.String(), access.PrincipalID).Scan(&raw); err != nil {
+		return "", denied
+	}
+	var granted []ports.Permission
+	if unmarshalJSON(raw, &granted) != nil {
+		return "", denied
+	}
+	for _, required := range access.Permissions {
+		allowed := false
+		for _, permission := range granted {
+			allowed = allowed || permission == required
+		}
+		if !allowed {
+			return "", denied
+		}
+	}
+	var principal, namespace, actorJSON, parent string
+	var expires int64
+	var revoked bool
+	var caller domain.ID
+	err := tx.QueryRowContext(ctx, `SELECT id,principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=?`, access.CredentialDigest).Scan(&caller, &principal, &namespace, &actorJSON, &parent, &expires, &revoked)
+	var actor domain.ActorRef
+	if err != nil || caller != access.CredentialID || principal != access.PrincipalID || namespace != access.NamespaceID.String() || revoked || expires <= encodeTime(access.Now) || unmarshalJSON(actorJSON, &actor) != nil || actor != access.Actor {
+		return "", denied
+	}
+	rootID := caller
+	if parent != "" {
+		var rootPrincipal, rootNamespace, rootActorJSON, rootParent string
+		var rootExpires int64
+		var rootRevoked bool
+		err = tx.QueryRowContext(ctx, `SELECT id,principal_id,namespace_id,actor_json,COALESCE(parent_digest,''),expires_at,revoked FROM credentials WHERE digest=?`, parent).Scan(&rootID, &rootPrincipal, &rootNamespace, &rootActorJSON, &rootParent, &rootExpires, &rootRevoked)
+		var rootActor domain.ActorRef
+		if err != nil || rootParent != "" || rootPrincipal != principal || rootNamespace != namespace || rootRevoked || rootExpires <= encodeTime(access.Now) || unmarshalJSON(rootActorJSON, &rootActor) != nil || rootActor != actor {
+			return "", denied
+		}
+	}
+	var policyJSON string
+	err = tx.QueryRowContext(ctx, `SELECT state_json FROM credential_policies WHERE namespace_id=? AND credential_id=? AND principal_id=?`, access.NamespaceID.String(), rootID.String(), access.PrincipalID).Scan(&policyJSON)
+	if err == nil {
+		var policy domain.CredentialPolicy
+		if unmarshalJSON(policyJSON, &policy) != nil {
+			return "", denied
+		}
+		for _, permission := range access.Permissions {
+			if !policy.PermitsWithCompatibility(string(permission), "", "") {
+				return "", denied
+			}
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return "", mapSQLError("read administrative credential policy", err)
+	}
+	return rootID, nil
+}
 
 func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.AccessSnapshotRequest) error {
 	denied := domain.NewError(domain.ErrorCodeForbidden, "credential or namespace permission inactive")
@@ -13,7 +82,8 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 		return denied
 	}
 	var raw string
-	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw)
+	var compatibility uint32
+	err := u.tx.QueryRowContext(ctx, `SELECT g.permissions_json,g.permission_compatibility_version FROM namespace_grants g JOIN principals p ON p.id=g.principal_id WHERE g.namespace_id=? AND g.principal_id=? AND p.lifecycle='active'`, r.Authorization.NamespaceID.String(), r.Authorization.PrincipalID).Scan(&raw, &compatibility)
 	if err != nil {
 		return denied
 	}
@@ -23,7 +93,7 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 	}
 	allowed := false
 	for _, p := range permissions {
-		allowed = allowed || p == r.Authorization.Permission
+		allowed = allowed || p == r.Authorization.Permission || (r.Authorization.LegacyPermission != "" && compatibility == ports.PermissionCompatibilityLegacyV1 && p == r.Authorization.LegacyPermission)
 	}
 	if !allowed {
 		return denied
@@ -58,7 +128,7 @@ func (u *unitOfWork) AuthorizeAccessSnapshot(ctx context.Context, r ports.Access
 		}
 	}
 	policy, err := signing.CredentialPolicy(ctx, credential.NamespaceID, credential.ID)
-	if err == nil && !policy.Permits(string(r.Authorization.Permission), r.Authorization.OutcomeID) {
+	if err == nil && !policy.PermitsWithCompatibility(string(r.Authorization.Permission), string(r.Authorization.LegacyPermission), r.Authorization.OutcomeID) {
 		return denied
 	}
 	if err != nil {

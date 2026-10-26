@@ -80,7 +80,12 @@ func renderWorkContractView(ctx context.Context, uow ports.UnitOfWork, scope d.S
 	}
 
 	live := w.CurrentContractID != nil && *w.CurrentContractID == c.ID
-	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: live && c.ValidAt(now) && ready.Ready, Recoverable: (live || w.CurrentContractID == nil) && w.Lifecycle == d.WorkItemLifecycleInProgress && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
+	canReacquire := w.Lifecycle == d.WorkItemLifecycleTodo && w.CurrentContractID == nil
+	canReconcile := live && w.Lifecycle == d.WorkItemLifecycleInProgress
+	pendingVerification := w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil
+	// Delivery permanently ends this signed authority. A changes-requested Case
+	// acquires a new correction contract; it cannot resume the delivered one.
+	v := WorkContractView{Contract: c, EffectiveStatus: c.EffectiveStatus(now), EvaluatedAt: now, ExecutionAllowed: !pendingVerification && live && c.ValidAt(now) && ready.Ready, Recoverable: c.Status != d.ContractDelivered && !pendingVerification && (canReacquire || canReconcile) && !c.ValidAt(now) && ready.Ready, Reasons: ready.Reasons}
 	if c.LatestCheckpointID != nil {
 		p, err := repo.GetCheckpoint(ctx, scope, *c.LatestCheckpointID)
 		if err != nil {
@@ -339,6 +344,7 @@ func (s *Service) GetCommandReceipt(ctx context.Context, ns, id d.ID) (d.StoredC
 }
 
 type ExecutionCapabilities struct {
+	WorkspaceRules         WorkspaceRules     `json:"workspace_rules"`
 	WorkActivityVersion    int                `json:"work_activity_version,omitempty"`
 	WorkAttentionVersion   int                `json:"work_attention_version,omitempty"`
 	SignedReturnResolution bool               `json:"signed_return_resolution,omitempty"`
@@ -352,7 +358,7 @@ type ExecutionCapabilities struct {
 }
 
 func ContractCapabilities() ExecutionCapabilities {
-	return ExecutionCapabilities{WorkActivityVersion: 1, WorkAttentionVersion: 1, SignedReturnResolution: true, Protocols: []string{"legacy", "contracts_v1"}, YAMLVersions: []int{1}, MaxCommandBytes: MaxSnapshotBytes, MaxQueryLimit: MaxQueryLimit, LeasePolicy: d.DefaultContractLeasePolicy(), TerminalCauses: []d.ContractStatus{d.ContractExpired, d.ContractRevoked, d.ContractCompleted}, AgentExecution: false}
+	return ExecutionCapabilities{WorkspaceRules: CanonicalWorkspaceRules(), WorkActivityVersion: 1, WorkAttentionVersion: 1, SignedReturnResolution: true, Protocols: []string{"legacy", "contracts_v1"}, YAMLVersions: []int{1}, MaxCommandBytes: MaxSnapshotBytes, MaxQueryLimit: MaxQueryLimit, LeasePolicy: d.DefaultContractLeasePolicy(), TerminalCauses: []d.ContractStatus{d.ContractExpired, d.ContractRevoked, d.ContractCompleted}, AgentExecution: false}
 }
 
 func (s *Service) GetWorkCheckpoint(ctx context.Context, scope d.Scope, id d.ID) (ReadResult[d.WorkCheckpoint], error) {

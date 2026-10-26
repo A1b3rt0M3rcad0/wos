@@ -1,0 +1,13 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkWorkspaceF08/cards_100-2         	      20	  25025429 ns/op	  24986905 p50_ns	  37605536 p95_ns	  48865262 p99_ns	     66648 response_bytes	        10.00 sql_statements/op
+BenchmarkWorkspaceF08/structural_page_50-2         	      20	  16091021 ns/op	  16014522 p50_ns	  25887708 p95_ns	  28045461 p99_ns	     32628 response_bytes	        12.00 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector-2             	      20	  24232841 ns/op	  23273888 p50_ns	  35392256 p95_ns	  36397067 p99_ns	     18272 response_bytes	        55.00 sql_statements/op
+BenchmarkWorkspaceF08/objective_inspector-2        	      20	  56835070 ns/op	  51852847 p50_ns	  82517279 p95_ns	 109405609 p99_ns	     16375 response_bytes	        40.00 sql_statements/op
+BenchmarkWorkspaceF08/outcome_inspector-2          	      20	  20989214 ns/op	  16235267 p50_ns	  40355194 p95_ns	  40834445 p99_ns	     24064 response_bytes	        26.00 sql_statements/op
+BenchmarkWorkspaceF08/timeline_5-2                 	      20	   1608731 ns/op	   1412318 p50_ns	   2359932 p95_ns	   2500309 p99_ns	      6985 response_bytes	         6.000 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector_10_sessions-2 	      20	 403670130 ns/op	 193555497 p50_request_ns	 473026456 p95_request_ns	 565518694 p99_request_ns	        10.00 requests/batch	     18272 response_bytes	        55.00 sql_statements/request
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	25.242s

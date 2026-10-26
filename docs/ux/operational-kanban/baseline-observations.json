@@ -1,0 +1,2177 @@
+[
+  {
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "dialog": {
+      "x": 16,
+      "y": 16,
+      "width": 1248,
+      "height": 688,
+      "top": 16,
+      "right": 1264,
+      "bottom": 704,
+      "left": 16
+    },
+    "columns": {
+      "x": 17,
+      "y": 291.796875,
+      "width": 906,
+      "height": 320.203125,
+      "top": 291.796875,
+      "right": 923,
+      "bottom": 612,
+      "left": 17
+    },
+    "inspection": {
+      "x": 923,
+      "y": 291.796875,
+      "width": 340,
+      "height": 320.203125,
+      "top": 291.796875,
+      "right": 1263,
+      "bottom": 612,
+      "left": 923
+    },
+    "draggable": 0,
+    "visibleDialogs": 1
+  },
+  {
+    "viewport": {
+      "width": 2560,
+      "height": 1440
+    },
+    "dialog": {
+      "x": 530,
+      "y": 16,
+      "width": 1500,
+      "height": 1408,
+      "top": 16,
+      "right": 2030,
+      "bottom": 1424,
+      "left": 530
+    },
+    "columns": {
+      "x": 531,
+      "y": 291.796875,
+      "width": 1158,
+      "height": 1040.203125,
+      "top": 291.796875,
+      "right": 1689,
+      "bottom": 1332,
+      "left": 531
+    },
+    "inspection": {
+      "x": 1689,
+      "y": 291.796875,
+      "width": 340,
+      "height": 1040.203125,
+      "top": 291.796875,
+      "right": 2029,
+      "bottom": 1332,
+      "left": 1689
+    },
+    "draggable": 0,
+    "visibleDialogs": 1
+  },
+  {
+    "viewport": {
+      "width": 3840,
+      "height": 2160
+    },
+    "dialog": {
+      "x": 1170,
+      "y": 16,
+      "width": 1500,
+      "height": 2128,
+      "top": 16,
+      "right": 2670,
+      "bottom": 2144,
+      "left": 1170
+    },
+    "columns": {
+      "x": 1171,
+      "y": 291.796875,
+      "width": 1158,
+      "height": 1760.203125,
+      "top": 291.796875,
+      "right": 2329,
+      "bottom": 2052,
+      "left": 1171
+    },
+    "inspection": {
+      "x": 2329,
+      "y": 291.796875,
+      "width": 340,
+      "height": 1760.203125,
+      "top": 291.796875,
+      "right": 2669,
+      "bottom": 2052,
+      "left": 2329
+    },
+    "draggable": 0,
+    "visibleDialogs": 1
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "dialog": {
+      "x": 6,
+      "y": 6,
+      "width": 378,
+      "height": 832,
+      "top": 6,
+      "right": 384,
+      "bottom": 838,
+      "left": 6
+    },
+    "columns": {
+      "x": 7,
+      "y": 309.796875,
+      "width": 376,
+      "height": 392.203125,
+      "top": 309.796875,
+      "right": 383,
+      "bottom": 702,
+      "left": 7
+    },
+    "inspection": {
+      "x": 23,
+      "y": 309.796875,
+      "width": 360,
+      "height": 392.203125,
+      "top": 309.796875,
+      "right": 383,
+      "bottom": 702,
+      "left": 23
+    },
+    "draggable": 0,
+    "visibleDialogs": 1
+  },
+  {
+    "name": "blocked",
+    "view": {
+      "activity": {
+        "evaluated_at": "2026-10-20T00:20:58.726335426Z",
+        "has_newer_entries": false,
+        "history_through_revision": "20",
+        "items": [
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-ba7f-7248-a21c-2cbd32a3c044",
+            "context_origin": "self",
+            "descendant_origin": false,
+            "description": "A bounded, independently verifiable step.",
+            "event_id": "01a156ae-ba81-757c-a221-0f511325a0d4",
+            "event_index": 0,
+            "event_type": "work_item.created",
+            "id": "01a156ae-ba81-757c-a221-0f511325a0d4",
+            "origin": "domain_event",
+            "outcome_revision": "7",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:54.017777Z",
+            "source": {
+              "id": "01a156ae-ba81-757c-a221-0f511325a0d4",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "limit": 5,
+        "order": "newest_first",
+        "outcome_revision": "20",
+        "scope_basis": "current_placement"
+      },
+      "attention": {
+        "awaiting_review": false,
+        "correction_required": false,
+        "evaluated_at": "2026-10-20T00:20:58.726335426Z",
+        "evidence_search_complete": true,
+        "execution_allowed": false,
+        "obligations": [
+          {
+            "description": "blocked",
+            "evidence_linked": false,
+            "kind": "readiness",
+            "status": "requires_attention"
+          }
+        ],
+        "operational_state": {
+          "display_state": "blocked",
+          "evaluated_at": "2026-10-20T00:20:58.726335426Z",
+          "is_blocked": true,
+          "lease_status": "none",
+          "lifecycle": "todo",
+          "readiness_reasons": [
+            "blocked"
+          ],
+          "ref": {
+            "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+            "kind": "work_item",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          }
+        },
+        "outcome_revision": "20",
+        "status": "blocked",
+        "truncated": false,
+        "work_item_id": "01a156ae-ba7f-78c0-997b-eb971ade377b"
+      },
+      "capabilities": [
+        {
+          "action_id": "AppendEntityNote",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterArtifactInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "ProposeDecisionInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreateIssue",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterEvidenceWithLinks",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 35,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "AddCriterion",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 15,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemExecutionSpec",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemNotBefore",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemObjective",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "UpdateWorkItem",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 25,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemAssignees",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "ClaimWorkItem",
+          "availability": "blocked",
+          "observed_version": "1",
+          "presentation_priority": 10,
+          "reason_codes": [
+            "precondition_failed"
+          ],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        }
+      ],
+      "coverage": {
+        "activity": {
+          "returned_count": 1,
+          "status": "complete"
+        },
+        "attention": {
+          "status": "complete"
+        },
+        "blocker_preview": {
+          "status": "not_loaded"
+        },
+        "capabilities": {
+          "returned_count": 12,
+          "status": "complete"
+        },
+        "conclusion_impact": {
+          "status": "not_applicable"
+        },
+        "criteria": {
+          "returned_count": 0,
+          "status": "complete",
+          "total_count": 0
+        },
+        "delivery": {
+          "returned_count": 0,
+          "status": "complete"
+        },
+        "entity": {
+          "reason": "Selected record preview; load the canonical record before editing",
+          "status": "partial"
+        },
+        "people": {
+          "reason": "Declared responsibility and current recorded authority; no online presence is inferred",
+          "returned_count": 1,
+          "status": "partial"
+        },
+        "placement": {
+          "reason": "Outcome and direct parent; ancestor path is not expanded",
+          "status": "partial"
+        },
+        "placement_preview": {
+          "status": "not_loaded"
+        },
+        "relationships": {
+          "returned_count": 2,
+          "status": "complete"
+        },
+        "required_objectives": {
+          "status": "not_applicable"
+        },
+        "work": {
+          "status": "complete"
+        }
+      },
+      "entity": {
+        "created_at": "2026-10-20T00:20:54.015881Z",
+        "description": "A bounded, independently verifiable step.",
+        "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+        "last_fencing_token": "0",
+        "lifecycle": "todo",
+        "objective_id": "01a156ae-ba68-7434-a419-332276a874a6",
+        "priority": "normal",
+        "scope": {
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        },
+        "title": "Publish the verified handoff",
+        "updated_at": "2026-10-20T00:20:54.015881Z",
+        "version": "1"
+      },
+      "entity_version": "1",
+      "evaluated_at": "2026-10-20T00:20:58.726335426Z",
+      "header": {
+        "description": "A bounded, independently verifiable step.",
+        "display_state": "blocked",
+        "kind": "work_item",
+        "lifecycle": "todo",
+        "title": "Publish the verified handoff"
+      },
+      "outcome_revision": "20",
+      "people": [
+        {
+          "actor_ref": {
+            "id": "owner",
+            "kind": "human",
+            "provider": "wos"
+          },
+          "at": "2026-10-20T00:20:54.017777Z",
+          "principal_id": "owner",
+          "role": "last_activity_author",
+          "source": "domain_event"
+        }
+      ],
+      "placement": {
+        "outcome": {
+          "detail_omitted": true,
+          "lifecycle": "active",
+          "priority": "normal",
+          "ref": {
+            "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+            "kind": "outcome",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "Ship a connected workspace",
+          "version": "3"
+        },
+        "parent": {
+          "detail_omitted": true,
+          "lifecycle": "planned",
+          "priority": "high",
+          "ref": {
+            "id": "01a156ae-ba68-7434-a419-332276a874a6",
+            "kind": "objective",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "A clear path from intent to evidence",
+          "version": "1"
+        },
+        "path": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "active",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+              "kind": "outcome",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Ship a connected workspace",
+            "version": "3"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "high",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A clear path from intent to evidence",
+            "version": "1"
+          }
+        ]
+      },
+      "relationships": {
+        "items": [
+          {
+            "id": "01a156ae-bab7-7670-8a83-bdc5dfa219da",
+            "kind": "blocks",
+            "source_of_truth": "blocker",
+            "source_ref": {
+              "id": "01a156ae-bab7-7670-8a83-bdc5dfa219da",
+              "kind": "blocker",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "work:01a156ae-ba7f-78c0-997b-eb971ade377b",
+            "kind": "ownership",
+            "source_of_truth": "work_item",
+            "source_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "nodes": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "active",
+            "ref": {
+              "id": "01a156ae-bab7-7670-8a83-bdc5dfa219da",
+              "kind": "blocker",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Wait for verified environment access",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Publish the verified handoff",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "high",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A clear path from intent to evidence",
+            "version": "1"
+          }
+        ]
+      },
+      "rules": {
+        "blocker_propagation": {
+          "objective": [
+            "direct",
+            "subtree"
+          ],
+          "outcome": [
+            "subtree"
+          ],
+          "work_item": [
+            "direct"
+          ]
+        },
+        "evidence_link_target_kinds": [
+          "outcome",
+          "objective",
+          "work_item",
+          "issue",
+          "decision"
+        ],
+        "version": 1
+      },
+      "subject": {
+        "kind": "entity",
+        "ref": {
+          "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+          "kind": "work_item",
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        }
+      },
+      "work": {
+        "constraints": [
+          "Keep execution and independent review separate"
+        ],
+        "context_refs": [],
+        "deliverables": [
+          "A reviewable result"
+        ],
+        "instructions": [
+          "Perform only the scoped task",
+          "Record the actual result"
+        ],
+        "scope_hints": []
+      }
+    }
+  },
+  {
+    "name": "ready",
+    "view": {
+      "activity": {
+        "evaluated_at": "2026-10-20T00:20:58.744106166Z",
+        "has_newer_entries": false,
+        "history_through_revision": "20",
+        "items": [
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-bae4-795d-b712-8c668f3cb3dd",
+            "context_origin": "related_record",
+            "descendant_origin": false,
+            "description": "Observation stance is explicit and does not assess a criterion",
+            "event_id": "01a156ae-bae7-7fb5-b2b1-efe5e6a421f5",
+            "event_index": 0,
+            "event_type": "evidence.link_created",
+            "id": "01a156ae-bae7-7fb5-b2b1-efe5e6a421f5",
+            "origin": "domain_event",
+            "outcome_revision": "20",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:54.119545Z",
+            "source": {
+              "id": "01a156ae-bae7-7fb5-b2b1-efe5e6a421f5",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-bae4-7a48-8ef6-bcfa8548ae63",
+              "kind": "evidence_link",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-bad5-7ef0-bc69-807b7f5040ef",
+            "context_origin": "related_record",
+            "descendant_origin": false,
+            "description": "Observation stance is explicit and does not assess a criterion",
+            "event_id": "01a156ae-bad8-7f9d-998a-ac93c4755a87",
+            "event_index": 0,
+            "event_type": "evidence.link_created",
+            "id": "01a156ae-bad8-7f9d-998a-ac93c4755a87",
+            "origin": "domain_event",
+            "outcome_revision": "18",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:54.104148Z",
+            "source": {
+              "id": "01a156ae-bad8-7f9d-998a-ac93c4755a87",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-bad5-7fc2-9e96-36a98320fd08",
+              "kind": "evidence_link",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-bac7-7f32-a682-2e7117dc1739",
+            "context_origin": "related_record",
+            "descendant_origin": false,
+            "description": "Observation stance is explicit and does not assess a criterion",
+            "event_id": "01a156ae-bacb-77cf-b3f2-8bfe75f01ab5",
+            "event_index": 0,
+            "event_type": "evidence.link_created",
+            "id": "01a156ae-bacb-77cf-b3f2-8bfe75f01ab5",
+            "origin": "domain_event",
+            "outcome_revision": "16",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:54.0914Z",
+            "source": {
+              "id": "01a156ae-bacb-77cf-b3f2-8bfe75f01ab5",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-bac7-7916-97de-e0bda452f838",
+              "kind": "evidence_link",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-ba77-7fbb-9701-3b721fa9d059",
+            "context_origin": "self",
+            "descendant_origin": false,
+            "description": "A bounded, independently verifiable step.",
+            "event_id": "01a156ae-ba7a-7141-ba5b-86ad97d8866a",
+            "event_index": 0,
+            "event_type": "work_item.created",
+            "id": "01a156ae-ba7a-7141-ba5b-86ad97d8866a",
+            "origin": "domain_event",
+            "outcome_revision": "6",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:54.0101Z",
+            "source": {
+              "id": "01a156ae-ba7a-7141-ba5b-86ad97d8866a",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "limit": 5,
+        "order": "newest_first",
+        "outcome_revision": "20",
+        "scope_basis": "current_placement"
+      },
+      "attention": {
+        "awaiting_review": false,
+        "correction_required": false,
+        "evaluated_at": "2026-10-20T00:20:58.744106166Z",
+        "evidence_search_complete": true,
+        "execution_allowed": false,
+        "obligations": [],
+        "operational_state": {
+          "display_state": "ready",
+          "evaluated_at": "2026-10-20T00:20:58.744106166Z",
+          "is_blocked": false,
+          "lease_status": "none",
+          "lifecycle": "todo",
+          "ref": {
+            "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+            "kind": "work_item",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          }
+        },
+        "outcome_revision": "20",
+        "status": "ready",
+        "truncated": false,
+        "work_item_id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6"
+      },
+      "capabilities": [
+        {
+          "action_id": "AppendEntityNote",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterArtifactInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "ProposeDecisionInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreateIssue",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterEvidenceWithLinks",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 35,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "AddCriterion",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 15,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemExecutionSpec",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemNotBefore",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemObjective",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "UpdateWorkItem",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 25,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetWorkItemAssignees",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "ClaimWorkItem",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 10,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        }
+      ],
+      "coverage": {
+        "activity": {
+          "returned_count": 4,
+          "status": "complete"
+        },
+        "attention": {
+          "status": "complete"
+        },
+        "blocker_preview": {
+          "status": "not_loaded"
+        },
+        "capabilities": {
+          "returned_count": 12,
+          "status": "complete"
+        },
+        "conclusion_impact": {
+          "status": "not_applicable"
+        },
+        "criteria": {
+          "returned_count": 0,
+          "status": "complete",
+          "total_count": 0
+        },
+        "delivery": {
+          "returned_count": 0,
+          "status": "complete"
+        },
+        "entity": {
+          "reason": "Selected record preview; load the canonical record before editing",
+          "status": "partial"
+        },
+        "people": {
+          "reason": "Declared responsibility and current recorded authority; no online presence is inferred",
+          "returned_count": 1,
+          "status": "partial"
+        },
+        "placement": {
+          "reason": "Outcome and direct parent; ancestor path is not expanded",
+          "status": "partial"
+        },
+        "placement_preview": {
+          "status": "not_loaded"
+        },
+        "relationships": {
+          "returned_count": 6,
+          "status": "complete"
+        },
+        "required_objectives": {
+          "status": "not_applicable"
+        },
+        "work": {
+          "status": "complete"
+        }
+      },
+      "entity": {
+        "created_at": "2026-10-20T00:20:54.00729Z",
+        "description": "A bounded, independently verifiable step.",
+        "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+        "last_fencing_token": "0",
+        "lifecycle": "todo",
+        "objective_id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+        "priority": "high",
+        "scope": {
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        },
+        "title": "Map the first-time experience",
+        "updated_at": "2026-10-20T00:20:54.00729Z",
+        "version": "1"
+      },
+      "entity_version": "1",
+      "evaluated_at": "2026-10-20T00:20:58.744106166Z",
+      "header": {
+        "description": "A bounded, independently verifiable step.",
+        "display_state": "ready",
+        "kind": "work_item",
+        "lifecycle": "todo",
+        "title": "Map the first-time experience"
+      },
+      "outcome_revision": "20",
+      "people": [
+        {
+          "actor_ref": {
+            "id": "owner",
+            "kind": "human",
+            "provider": "wos"
+          },
+          "at": "2026-10-20T00:20:54.119545Z",
+          "principal_id": "owner",
+          "role": "last_activity_author",
+          "source": "domain_event"
+        }
+      ],
+      "placement": {
+        "outcome": {
+          "detail_omitted": true,
+          "lifecycle": "active",
+          "priority": "normal",
+          "ref": {
+            "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+            "kind": "outcome",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "Ship a connected workspace",
+          "version": "3"
+        },
+        "parent": {
+          "detail_omitted": true,
+          "lifecycle": "planned",
+          "priority": "normal",
+          "ref": {
+            "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+            "kind": "objective",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "A reviewable delivery",
+          "version": "1"
+        },
+        "path": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "active",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+              "kind": "outcome",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Ship a connected workspace",
+            "version": "3"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A reviewable delivery",
+            "version": "1"
+          }
+        ]
+      },
+      "relationships": {
+        "items": [
+          {
+            "id": "01a156ae-ba9d-7213-a5ef-b838ca563aa0",
+            "kind": "depends_on",
+            "rationale": "Review requires the actual completed delivery",
+            "source_of_truth": "relation",
+            "source_ref": {
+              "id": "01a156ae-ba87-79be-90ca-7238c7c6757f",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "strength": "hard",
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "01a156ae-baa6-7cef-85a2-a7585756ffc2",
+            "kind": "depends_on",
+            "rationale": "Editorial checking benefits from the delivery but may start earlier",
+            "source_of_truth": "relation",
+            "source_ref": {
+              "id": "01a156ae-ba8f-7324-9670-145649c2d468",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "strength": "advisory",
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "01a156ae-bac7-7916-97de-e0bda452f838",
+            "kind": "supports",
+            "rationale": "Observation stance is explicit and does not assess a criterion",
+            "source_of_truth": "evidence_link",
+            "source_ref": {
+              "id": "01a156ae-bac0-7fdf-938c-2bc96d563fca",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "stance": "supports",
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "01a156ae-bad5-7fc2-9e96-36a98320fd08",
+            "kind": "contradicts",
+            "rationale": "Observation stance is explicit and does not assess a criterion",
+            "source_of_truth": "evidence_link",
+            "source_ref": {
+              "id": "01a156ae-bad0-7697-b773-8632bd28123c",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "stance": "contradicts",
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "01a156ae-bae4-7a48-8ef6-bcfa8548ae63",
+            "kind": "context",
+            "rationale": "Observation stance is explicit and does not assess a criterion",
+            "source_of_truth": "evidence_link",
+            "source_ref": {
+              "id": "01a156ae-badd-78d8-b74a-dac67bde7770",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "stance": "context",
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "work:01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+            "kind": "ownership",
+            "source_of_truth": "work_item",
+            "source_ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "nodes": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "high",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Map the first-time experience",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba87-79be-90ca-7238c7c6757f",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Review the completed delivery",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba8f-7324-9670-145649c2d468",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Check the editorial details",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "registered",
+            "ref": {
+              "id": "01a156ae-bac0-7fdf-938c-2bc96d563fca",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "supports: review observation",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "registered",
+            "ref": {
+              "id": "01a156ae-bad0-7697-b773-8632bd28123c",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "contradicts: review observation",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "registered",
+            "ref": {
+              "id": "01a156ae-badd-78d8-b74a-dac67bde7770",
+              "kind": "evidence",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "context: review observation",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A reviewable delivery",
+            "version": "1"
+          }
+        ]
+      },
+      "rules": {
+        "blocker_propagation": {
+          "objective": [
+            "direct",
+            "subtree"
+          ],
+          "outcome": [
+            "subtree"
+          ],
+          "work_item": [
+            "direct"
+          ]
+        },
+        "evidence_link_target_kinds": [
+          "outcome",
+          "objective",
+          "work_item",
+          "issue",
+          "decision"
+        ],
+        "version": 1
+      },
+      "subject": {
+        "kind": "entity",
+        "ref": {
+          "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+          "kind": "work_item",
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        }
+      },
+      "work": {
+        "constraints": [
+          "Keep execution and independent review separate"
+        ],
+        "context_refs": [],
+        "deliverables": [
+          "A reviewable result"
+        ],
+        "instructions": [
+          "Perform only the scoped task",
+          "Record the actual result"
+        ],
+        "scope_hints": []
+      }
+    }
+  },
+  {
+    "name": "objective",
+    "view": {
+      "activity": {
+        "evaluated_at": "2026-10-20T00:20:58.759637624Z",
+        "has_newer_entries": false,
+        "history_through_revision": "20",
+        "items": [
+          {
+            "actor_ref": {
+              "id": "owner",
+              "kind": "human",
+              "provider": "wos"
+            },
+            "command_id": "01a156ae-ba68-7326-9e71-c8f15f3067f5",
+            "context_origin": "self",
+            "descendant_origin": false,
+            "description": "Keep planning and real operational state connected.",
+            "event_id": "01a156ae-ba6b-735c-bd33-0d9cb1578442",
+            "event_index": 0,
+            "event_type": "objective.created",
+            "id": "01a156ae-ba6b-735c-bd33-0d9cb1578442",
+            "origin": "domain_event",
+            "outcome_revision": "4",
+            "preview_truncated": false,
+            "principal_id": "owner",
+            "recorded_at": "2026-10-20T00:20:53.995401Z",
+            "source": {
+              "id": "01a156ae-ba6b-735c-bd33-0d9cb1578442",
+              "kind": "domain_event"
+            },
+            "subject_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "limit": 5,
+        "order": "newest_first",
+        "outcome_revision": "20",
+        "scope_basis": "current_placement"
+      },
+      "capabilities": [
+        {
+          "action_id": "AppendEntityNote",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterArtifactInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "ProposeDecisionInContext",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreateIssue",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 40,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "RegisterEvidenceWithLinks",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 35,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "UpdateObjective",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 25,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetObjectiveOwners",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreatePlanItems",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 25,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreateWorkItem",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 10,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "CreateObjective",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 20,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "AddCriterion",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 5,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "SetObjectiveParent",
+          "availability": "available",
+          "observed_version": "1",
+          "presentation_priority": 30,
+          "reason_codes": [],
+          "related_refs": [],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        },
+        {
+          "action_id": "AchieveObjective",
+          "availability": "blocked",
+          "observed_version": "1",
+          "presentation_priority": 15,
+          "reason_codes": [
+            "missing_required_criterion"
+          ],
+          "related_refs": [],
+          "remedies": [
+            {
+              "action_id": "add_criterion"
+            }
+          ],
+          "subject": {
+            "kind": "entity",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          "transport": "browser_command"
+        }
+      ],
+      "conclusion_impact": {
+        "completion_policy": "compatible",
+        "consequences": [
+          "child_lifecycles_unchanged",
+          "child_proof_unchanged",
+          "objective_closed_to_new_children",
+          "descendant_workflow_unchanged"
+        ],
+        "open_items": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A reviewable delivery",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "high",
+            "ref": {
+              "id": "01a156ae-ba77-7ed6-866a-fba3c18ae2d6",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Map the first-time experience",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Publish the verified handoff",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba87-79be-90ca-7238c7c6757f",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Review the completed delivery",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba8f-7324-9670-145649c2d468",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Check the editorial details",
+            "version": "1"
+          }
+        ],
+        "open_objectives": 1,
+        "open_tasks": 4
+      },
+      "coverage": {
+        "activity": {
+          "returned_count": 1,
+          "status": "complete"
+        },
+        "attention": {
+          "status": "not_applicable"
+        },
+        "blocker_preview": {
+          "status": "not_loaded"
+        },
+        "capabilities": {
+          "returned_count": 13,
+          "status": "complete"
+        },
+        "conclusion_impact": {
+          "returned_count": 5,
+          "status": "complete",
+          "total_count": 5
+        },
+        "criteria": {
+          "returned_count": 0,
+          "status": "complete",
+          "total_count": 0
+        },
+        "delivery": {
+          "status": "not_applicable"
+        },
+        "entity": {
+          "reason": "Selected record preview; load the canonical record before editing",
+          "status": "partial"
+        },
+        "people": {
+          "reason": "Declared responsibility and current recorded authority; no online presence is inferred",
+          "returned_count": 1,
+          "status": "partial"
+        },
+        "placement": {
+          "status": "complete"
+        },
+        "placement_preview": {
+          "status": "not_loaded"
+        },
+        "relationships": {
+          "returned_count": 4,
+          "status": "complete"
+        },
+        "required_objectives": {
+          "status": "not_applicable"
+        },
+        "work": {
+          "status": "not_applicable"
+        }
+      },
+      "entity": {
+        "created_at": "2026-10-20T00:20:53.99286Z",
+        "description": "Keep planning and real operational state connected.",
+        "id": "01a156ae-ba68-7434-a419-332276a874a6",
+        "lifecycle": "planned",
+        "priority": "high",
+        "required_for_outcome": false,
+        "scope": {
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        },
+        "title": "A clear path from intent to evidence",
+        "updated_at": "2026-10-20T00:20:53.99286Z",
+        "version": "1"
+      },
+      "entity_version": "1",
+      "evaluated_at": "2026-10-20T00:20:58.759637624Z",
+      "header": {
+        "description": "Keep planning and real operational state connected.",
+        "kind": "objective",
+        "lifecycle": "planned",
+        "title": "A clear path from intent to evidence"
+      },
+      "outcome_revision": "20",
+      "people": [
+        {
+          "actor_ref": {
+            "id": "owner",
+            "kind": "human",
+            "provider": "wos"
+          },
+          "at": "2026-10-20T00:20:53.995401Z",
+          "principal_id": "owner",
+          "role": "last_activity_author",
+          "source": "domain_event"
+        }
+      ],
+      "placement": {
+        "outcome": {
+          "detail_omitted": true,
+          "lifecycle": "active",
+          "priority": "normal",
+          "ref": {
+            "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+            "kind": "outcome",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "Ship a connected workspace",
+          "version": "3"
+        },
+        "parent": {
+          "detail_omitted": true,
+          "lifecycle": "active",
+          "priority": "normal",
+          "ref": {
+            "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+            "kind": "outcome",
+            "namespace_id": "01a11992-0000-7000-8000-000000000001",
+            "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+          },
+          "title": "Ship a connected workspace",
+          "version": "3"
+        },
+        "path": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "active",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+              "kind": "outcome",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Ship a connected workspace",
+            "version": "3"
+          }
+        ]
+      },
+      "relationships": {
+        "items": [
+          {
+            "id": "objective:01a156ae-ba68-7434-a419-332276a874a6",
+            "kind": "hierarchy",
+            "source_of_truth": "objective",
+            "source_ref": {
+              "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+              "kind": "outcome",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "objective:01a156ae-ba70-7ee1-bb28-40739d25605e",
+            "kind": "hierarchy",
+            "source_of_truth": "objective",
+            "source_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "work:01a156ae-ba7f-78c0-997b-eb971ade377b",
+            "kind": "ownership",
+            "source_of_truth": "work_item",
+            "source_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          },
+          {
+            "id": "work:01a156ae-ba8f-7324-9670-145649c2d468",
+            "kind": "ownership",
+            "source_of_truth": "work_item",
+            "source_ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "target_ref": {
+              "id": "01a156ae-ba8f-7324-9670-145649c2d468",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            }
+          }
+        ],
+        "nodes": [
+          {
+            "detail_omitted": true,
+            "lifecycle": "active",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-b9fd-7ef6-8b59-115b802659a0",
+              "kind": "outcome",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Ship a connected workspace",
+            "version": "3"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "high",
+            "ref": {
+              "id": "01a156ae-ba68-7434-a419-332276a874a6",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A clear path from intent to evidence",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "planned",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba70-7ee1-bb28-40739d25605e",
+              "kind": "objective",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "A reviewable delivery",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba7f-78c0-997b-eb971ade377b",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Publish the verified handoff",
+            "version": "1"
+          },
+          {
+            "detail_omitted": true,
+            "lifecycle": "todo",
+            "priority": "normal",
+            "ref": {
+              "id": "01a156ae-ba8f-7324-9670-145649c2d468",
+              "kind": "work_item",
+              "namespace_id": "01a11992-0000-7000-8000-000000000001",
+              "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+            },
+            "title": "Check the editorial details",
+            "version": "1"
+          }
+        ]
+      },
+      "rules": {
+        "blocker_propagation": {
+          "objective": [
+            "direct",
+            "subtree"
+          ],
+          "outcome": [
+            "subtree"
+          ],
+          "work_item": [
+            "direct"
+          ]
+        },
+        "evidence_link_target_kinds": [
+          "outcome",
+          "objective",
+          "work_item",
+          "issue",
+          "decision"
+        ],
+        "version": 1
+      },
+      "subject": {
+        "kind": "entity",
+        "ref": {
+          "id": "01a156ae-ba68-7434-a419-332276a874a6",
+          "kind": "objective",
+          "namespace_id": "01a11992-0000-7000-8000-000000000001",
+          "outcome_id": "01a156ae-b9fd-7ef6-8b59-115b802659a0"
+        }
+      }
+    }
+  }
+]

@@ -49,3 +49,10 @@ type PlanningUnitOfWork interface {
 	Roadmaps() RoadmapRepository
 	RoadmapActivations() RoadmapActivationStore
 }
+
+// TaskDeliveryUnitOfWork exposes the append-only handoff and review history
+// without expanding the base UnitOfWork contract for adapters that do not
+// provide the unsigned delivery capability.
+type TaskDeliveryUnitOfWork interface {
+	TaskDeliveries() TaskDeliveryRepository
+}

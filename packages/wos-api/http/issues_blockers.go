@@ -18,6 +18,11 @@ func (h *Handler) createIssue(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, err)
 		return
 	}
+	objectiveID, err := domain.ParseID(request.ObjectiveID)
+	if err != nil {
+		writeError(w, r, domain.WrapError(domain.ErrorCodeInvalidArgument, "objective_id is required and must be a valid ID", err))
+		return
+	}
 	affected, err := requestEntityRefs(scope, request.AffectedRefs)
 	if err != nil {
 		writeError(w, r, err)
@@ -29,7 +34,7 @@ func (h *Handler) createIssue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.service.CreateIssue(r.Context(), cc, application.CreateIssueCommand{
-		Scope: scope, Title: request.Title, Description: request.Description,
+		Scope: scope, ObjectiveID: objectiveID, Title: request.Title, Description: request.Description,
 		Severity: request.Severity, AffectedRefs: affected,
 	})
 	if err != nil {
@@ -186,6 +191,11 @@ func (h *Handler) reportIssueWithBlocker(w http.ResponseWriter, r *http.Request)
 		writeError(w, r, err)
 		return
 	}
+	objectiveID, err := domain.ParseID(request.Issue.ObjectiveID)
+	if err != nil {
+		writeError(w, r, domain.WrapError(domain.ErrorCodeInvalidArgument, "issue.objective_id is required and must be a valid ID", err))
+		return
+	}
 	affected, err := requestEntityRefs(scope, request.Issue.AffectedRefs)
 	if err != nil {
 		writeError(w, r, err)
@@ -202,9 +212,63 @@ func (h *Handler) reportIssueWithBlocker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	result, err := h.service.ReportIssueWithBlocker(r.Context(), cc, application.ReportIssueWithBlockerCommand{
-		Scope: scope, Title: request.Issue.Title, Description: request.Issue.Description,
+		Scope: scope, ObjectiveID: objectiveID, Title: request.Issue.Title, Description: request.Issue.Description,
 		Severity: request.Issue.Severity, AffectedRefs: affected, BlockedRef: blocked,
 		BlockerDescription: request.Blocker.Description, Propagation: request.Blocker.Propagation,
+	})
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, result)
+}
+
+func (h *Handler) reportIssueWithBlockers(w http.ResponseWriter, r *http.Request) {
+	scope, err := parseScope(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	var request reportIssueWithBlockersRequest
+	if err := decodeJSON(w, r, &request); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	revision, err := requiredBodyOutcomeRevision(request.ObservedOutcomeRevision, "observed_outcome_revision")
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	objectiveID, err := domain.ParseID(request.Issue.ObjectiveID)
+	if err != nil {
+		writeError(w, r, domain.WrapError(domain.ErrorCodeInvalidArgument, "issue.objective_id is required and must be a valid ID", err))
+		return
+	}
+	affected, err := requestEntityRefs(scope, request.Issue.AffectedRefs)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	blockers := make([]application.IssueBlockerInput, 0, len(request.Blockers))
+	for _, item := range request.Blockers {
+		blocked, err := relationEndpoint(scope, item.BlockedRef)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+		blockers = append(blockers, application.IssueBlockerInput{
+			BlockedRef: blocked, Description: item.Description, Propagation: item.Propagation,
+		})
+	}
+	cc, err := h.commandContext(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	result, err := h.service.ReportIssueWithBlockers(r.Context(), cc, application.ReportIssueWithBlockersCommand{
+		Scope: scope, ObjectiveID: objectiveID, Title: request.Issue.Title, Description: request.Issue.Description,
+		Severity: request.Issue.Severity, AffectedRefs: affected, Blockers: blockers,
+		ObservedOutcomeRevision: &revision,
 	})
 	if err != nil {
 		writeError(w, r, err)
@@ -554,6 +618,13 @@ func requiredBodyVersion(raw *uint64, field string) (domain.Version, error) {
 		return 0, err
 	}
 	return version, nil
+}
+
+func requiredBodyOutcomeRevision(raw *uint64, field string) (domain.OutcomeRevision, error) {
+	if raw == nil {
+		return 0, &contractError{status: http.StatusPreconditionRequired, code: "precondition_required", message: field + " is required"}
+	}
+	return domain.OutcomeRevision(*raw), nil
 }
 
 func issueLocation(h *Handler, scope domain.Scope, id domain.ID) string {

@@ -114,6 +114,11 @@ func (s *Service) AcquireNextWorkContract(ctx context.Context, cc d.CommandConte
 			if err != nil {
 				return zero, 0, err
 			}
+			// A delivery ends executor authority. Its unresolved review is not
+			// expired execution and must never be offered as recovery work.
+			if w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil {
+				continue
+			}
 			if cmd.ObjectiveID != nil && (w.ObjectiveID == nil || *w.ObjectiveID != *cmd.ObjectiveID) {
 				continue
 			}
@@ -136,7 +141,7 @@ func (s *Service) AcquireNextWorkContract(ctx context.Context, cc d.CommandConte
 			if !ready.Ready {
 				continue
 			}
-			acquired, revision, err := s.acquireContract(ctx, uow, cc, AcquireWorkContractCommand{Scope: cmd.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, TTLSeconds: cmd.TTLSeconds})
+			acquired, revision, err := s.acquireContract(ctx, uow, cc, AcquireWorkContractCommand{Scope: cmd.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, TTLSeconds: cmd.TTLSeconds}, "AcquireNextWorkContract")
 			if err != nil {
 				return zero, 0, err
 			}
@@ -229,6 +234,9 @@ func (s *Service) ListAvailableWork(ctx context.Context, scope d.Scope, limit in
 		w, err := uow.WorkItems().Get(ctx, scope, candidate.ID)
 		if err != nil {
 			return page, err
+		}
+		if w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil {
+			continue
 		}
 		if signed, ok := uow.(ports.SignedContractUnitOfWork); ok {
 			pending, e := signed.SignedContracts().OpenCase(ctx, scope, w.ID)

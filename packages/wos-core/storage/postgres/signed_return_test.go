@@ -52,8 +52,8 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 					must(err)
 					adminCtx := a.WithIdentity(ctx, admin)
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionWorkContractReturn, ports.PermissionWorkCompleteDirect, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
-					must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+					must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite, ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn, ports.PermissionTaskAccept, ports.PermissionWorkCompleteDirect, ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite}}))
+					must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 					credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 					must(err)
 					identity, err := sec.Authenticate(ctx, token)
@@ -82,8 +82,8 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(err)
 					foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 					must(registry.SaveKey(ctx, d.SigningKey{ID: foreignKey, NamespaceID: ns, PrincipalID: "another-executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(foreignPub), Fingerprint: foreignFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-					must(registry.SaveCredentialPolicy(ctx, policy, 0))
+					policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionTaskAccept), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: floor, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+					must(registry.SaveCredentialPolicy(ctx, policy, 1))
 					outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 					must(err)
 					outcome.Lifecycle = d.OutcomeLifecycleActive
@@ -98,7 +98,7 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						if hasCriteria {
 							must(w.Criteria.Add(criterion))
 						}
-						must(uow.WorkItems().Insert(ctx, w))
+						must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 						works = append(works, w)
 					}
 					protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()
@@ -120,6 +120,9 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					cc := d.CommandContext{PrincipalID: identity.PrincipalID, Actor: identity.Actor, CommandID: cid, IdempotencyKey: "atomic-return-acquisition"}
 					acquired, e := service.AcquireSignedWorkContract(agentCtx, cc, a.AcquireSignedWorkContractCommand{Scope: scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version, SignerKeyID: agentKey, TTLSeconds: 300})
 					must(e)
+					if acquired.Value.Contract.SignedBinding == nil || acquired.Value.Contract.SignedBinding.AcceptanceFloor != floor {
+						t.Fatalf("compatibility_v1 acquisition changed the configured acceptance floor: got %v, want %v", acquired.Value.Contract.SignedBinding, floor)
+					}
 					c := acquired.Value.Contract
 					work := acquired.Value.WorkItem
 					rid, e := ids.NewID()
@@ -289,19 +292,19 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						u, err := store.Begin(ctx)
 						must(err)
 						changed := policy
-						changed.Version = 2
+						changed.Version = 3
 						if floor == d.AcceptanceDirect {
 							changed.AcceptanceFloor = d.AcceptanceIndependentReview
 						} else {
 							changed.AcceptanceFloor = d.AcceptanceDirect
 						}
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, changed, 1))
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, changed, 2))
 						must(u.Commit())
 						assertDirectDenied(t, agentCtx, changed, "changed-live-policy-denial")
 						u, err = store.Begin(ctx)
 						must(err)
-						policy.Version = 3
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 2))
+						policy.Version = 4
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 3))
 						must(u.Commit())
 					})
 					t.Run("alternate_credential_cannot_replace_frozen_owner", func(t *testing.T) {
@@ -310,10 +313,10 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 						alternateIdentity, err := sec.Authenticate(ctx, bearer)
 						must(err)
 						alternatePolicy := policy
-						alternatePolicy.CredentialID, alternatePolicy.Version, alternatePolicy.AcceptanceFloor = alternate.ID, 1, d.AcceptanceDirect
+						alternatePolicy.CredentialID, alternatePolicy.Version, alternatePolicy.AcceptanceFloor = alternate.ID, 2, d.AcceptanceDirect
 						u, err := store.Begin(ctx)
 						must(err)
-						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, alternatePolicy, 0))
+						must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, alternatePolicy, 1))
 						must(u.Commit())
 						assertDirectDenied(t, a.WithIdentity(ctx, alternateIdentity), alternatePolicy, "alternate-credential-denial")
 					})
@@ -421,6 +424,48 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					if len(receipt.LocalKeys) != 2 || !receipt.Accepted || !receipt.LocalObligationClosed || receipt.RequestDigest != signing.Digest(mustCanonical(t, request)) || receipt.ContractID != c.ID.String() {
 						t.Fatal("acceptance does not bind exact returned request")
 					}
+					if floor == d.AcceptanceDirect && hasCriteria {
+						// The original Auto return completed directly. Even if the live
+						// acceptance policy later tightens, replay must retain the authority
+						// requirements recorded by the durable acceptance receipt.
+						authorized, err := a.NewAuthorizedService(store, clock, ids, &sec)
+						must(err)
+						must(authorized.ConfigureSignedIssuer(ctx, acquisitionIssuer{server, private}, d.AcceptanceDirect))
+						replay, err := authorized.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+						must(err)
+						if !replay.IdempotentReplay || string(replay.Value.Receipt.Payload) != string(returned.Value.Receipt.Payload) {
+							t.Fatal("authorized Auto return did not replay its existing durable acceptance")
+						}
+						stateBeforeRevocation, err := authorized.GetOutcomeState(agentCtx, scope)
+						must(err)
+						eventsBeforeRevocation := signedReturnEventCount(t, store, scope)
+						receiptsBeforeRevocation := signedReturnIdempotencyCount(t, store)
+						tightened := policy
+						tightened.Version++
+						tightened.AcceptanceFloor = d.AcceptanceIndependentReview
+						tightened.PermittedOperations = []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite), string(ports.PermissionTaskDeliver), string(ports.PermissionWorkContractReturn), string(ports.PermissionWorkCompleteDirect), string(ports.PermissionCriterionAssess), string(ports.PermissionAssessmentWrite), string(ports.PermissionConclusionWrite), string(ports.PermissionRecordsWrite)}
+						policyUOW, err := store.Begin(ctx)
+						must(err)
+						must(policyUOW.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, tightened, policy.Version))
+						must(policyUOW.Commit())
+						must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{
+							ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite,
+							ports.PermissionTaskDeliver, ports.PermissionWorkContractReturn,
+							ports.PermissionCriterionAssess, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite, ports.PermissionRecordsWrite,
+						}}))
+						_, err = authorized.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope})
+						if err == nil {
+							t.Fatal("durable direct Auto return replay disclosed completion after the acceptance floor tightened and task.accept was revoked")
+						}
+						if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeForbidden {
+							t.Fatalf("revoked task.accept permission returned %v, want forbidden", err)
+						}
+						stateAfterRevocation, err := authorized.GetOutcomeState(agentCtx, scope)
+						must(err)
+						if stateAfterRevocation.OutcomeRevision != stateBeforeRevocation.OutcomeRevision || signedReturnEventCount(t, store, scope) != eventsBeforeRevocation || signedReturnIdempotencyCount(t, store) != receiptsBeforeRevocation {
+							t.Fatal("denied durable Auto replay changed Outcome revision, events, or idempotency receipts")
+						}
+					}
 					check, e = store.Begin(ctx)
 					must(e)
 					actual, e = check.(ports.SignedContractUnitOfWork).SignedWorkContracts().Get(ctx, scope, c.ID)
@@ -487,15 +532,15 @@ func TestSignedAtomicReturnAndDurableAcceptance(t *testing.T) {
 					must(e)
 					otherPolicy := policy
 					otherPolicy.CredentialID = otherCredential.ID
-					otherPolicy.Version = 1
-					must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+					otherPolicy.Version = 2
+					must(policyUnit.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 1))
 					must(policyUnit.Commit())
 					if _, e = historical.ReturnSignedWork(otherCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
 						t.Fatal("another CID sharing Principal/Actor/key permission replayed cacheless acceptance")
 					} else if code, _ := d.ErrorCodeOf(e); code != d.ErrorCodeForbidden {
 						t.Fatalf("wrong historical CID error: %v", e)
 					}
-					must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+					must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 					if _, e = service.ReturnSignedWork(agentCtx, returnCC, a.ReturnSignedWorkCommand{Envelope: envelope}); e == nil {
 						t.Fatal("revoked bearer disclosed receipt")
 					}
@@ -603,6 +648,46 @@ func signedSQLFaultSnapshot(t *testing.T, store *Store) string {
 		t.Fatal(err)
 	}
 	return string(raw)
+}
+
+func signedReturnIdempotencyCount(t *testing.T, store interface {
+	ports.SecurityStore
+	ports.TransactionManager
+}) int {
+	t.Helper()
+	switch value := store.(type) {
+	case *memory.Store:
+		return value.IdempotencyRecordCount()
+	case *Store:
+		var count int
+		if err := value.db.QueryRow(`SELECT COUNT(*) FROM idempotency_records`).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		return count
+	default:
+		t.Fatalf("unsupported test store %T", store)
+		return 0
+	}
+}
+
+func signedReturnEventCount(t *testing.T, store interface {
+	ports.SecurityStore
+	ports.TransactionManager
+}, scope d.Scope) int {
+	t.Helper()
+	switch value := store.(type) {
+	case *memory.Store:
+		return len(value.SnapshotDomainEvents(scope))
+	case *Store:
+		var count int
+		if err := value.db.QueryRow(`SELECT COUNT(*) FROM domain_events WHERE namespace_id=$1 AND outcome_id=$2`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		return count
+	default:
+		t.Fatalf("unsupported test store %T", store)
+		return 0
+	}
 }
 
 // The concrete SQL unit is embedded so every optional capability and database

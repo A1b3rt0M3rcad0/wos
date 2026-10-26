@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
@@ -21,6 +22,12 @@ import {
   createPublicKey,
   createHash,
 } from "node:crypto";
+
+async function fullSignedRecord(detail) {
+  await expandWorkspaceDetails(detail, {history:false});
+  await detail.getByRole("button",{name:"Execution details",exact:true}).click();
+  await expect(detail.locator(".signed-contract-section")).toBeVisible();
+}
 
 for (const decision of ["approved", "changes_requested"])
   test(`signed work shows accepted delivery, independent review and protected profile actions: ${decision}`, async ({
@@ -95,7 +102,10 @@ for (const decision of ["approved", "changes_requested"])
             "json",
           ],
           {
-            env: { ...process.env, ...environment },
+            // Runtime locks are intentionally kept under the OS cache. Give
+            // child CLIs a private writable cache instead of relying on the
+            // harness user's home directory being writable.
+            env: { ...process.env, ...environment, XDG_CACHE_HOME: join(workspace, ".cache") },
             encoding: "utf8",
             timeout: 20000,
           },
@@ -152,21 +162,28 @@ for (const decision of ["approved", "changes_requested"])
         scope,
         expected_version: outcome.version + 1,
       });
+      const objective = await command("create_objective", {
+        scope,
+        title: "Objetivo do fluxo assinado",
+        priority: "normal",
+      });
       let identity = await api("/security/signing-identity", token);
+      assert.ok(identity.credential_policy?.revision,
+        "new credentials expose their initial policy revision for compare-and-swap updates");
       const adminOperations = [
         "state:read",
+        "permissions:manage",
+        "credentials:issue",
+        "policy:manage",
         "namespace:admin",
-        "work:write",
-        "outcome:write",
-        "planning:write",
-        "assessment:write",
-        "identity.signing_key.enroll",
+        "task:create",
         "actor:delegate",
       ];
       await signing({
         namespace_id: namespace,
         expected_namespace_version: identity.namespace_version,
         operation: "set_credential_policy",
+        expected_version: identity.credential_policy.revision,
         credential_policy: {
           namespace_id: namespace,
           credential_id: identity.credential_id,
@@ -206,6 +223,7 @@ for (const decision of ["approved", "changes_requested"])
         });
       const work = await command("create_work_item", {
         scope,
+        objective_id: objective.id,
         title: "Tarefa com avaliação independente",
         priority: "normal",
         lifecycle: "todo",
@@ -235,10 +253,13 @@ for (const decision of ["approved", "changes_requested"])
         });
         const self = await api("/security/signing-identity", issued.token),
           admin = await api("/security/signing-identity", token);
+        assert.ok(self.credential_policy?.revision,
+          "newly issued credentials expose their initial policy revision");
         const configured = await signing({
           namespace_id: namespace,
           expected_namespace_version: admin.namespace_version,
           operation: "set_credential_policy",
+          expected_version: self.credential_policy.revision,
           credential_policy: {
             namespace_id: namespace,
             credential_id: self.credential_id,
@@ -249,6 +270,14 @@ for (const decision of ["approved", "changes_requested"])
             permitted_operations: permissions,
           },
         });
+        // The CLI must authenticate the target credential itself for identity
+        // discovery and proof submission. Verify the persisted policy on that
+        // same credential before treating profile setup as a CLI failure.
+        const effectiveIdentity = await api("/security/signing-identity", issued.token);
+        const effectiveOperations = new Set(effectiveIdentity.credential_policy?.permitted_operations || []);
+        for (const operation of ["state:read", "identity.signing_key.enroll"])
+          assert.ok(effectiveOperations.has(operation),
+            `${name} credential policy must retain ${operation} for profile enrollment`);
         const seed = randomBytes(32),
           privateKey = createPrivateKey({
             key: Buffer.concat([
@@ -352,17 +381,22 @@ for (const decision of ["approved", "changes_requested"])
       const executor = await provision("executor", [
         "state:read",
         "identity.signing_key.enroll",
+        // Signed acquisition/return use the granular command permissions in
+        // addition to their signed-contract protocol permissions.
+        "task:claim",
         "work.contract.acquire",
+        "task:deliver",
         "work.contract.return",
-        "work:write",
-        "assessment:write",
-        "conclusion:write",
       ]);
       const reviewer = await provision("reviewer", [
         "state:read",
         "identity.signing_key.enroll",
+        "task:review",
         "work.review.acquire",
         "work.review.decide",
+        "task:accept",
+        "task:request_changes",
+        "criterion:assess",
         "assessment:write",
         "conclusion:write",
       ]);
@@ -511,16 +545,12 @@ for (const decision of ["approved", "changes_requested"])
         await expect(activeDetail.locator("#detail-title")).toHaveText(
           work.title,
         );
-        const readiness = activeDetail.locator(".detail-section").filter({
-          has: activePage.getByRole("heading", {
-            name: "Operational readiness",
-            exact: true,
-          }),
-        });
+        const readiness = activeDetail.locator(".workspace-state");
         await expect(
           readiness.getByText("In progress", { exact: true }),
         ).toBeVisible();
         await expect(readiness).not.toContainText(/expired|needs attention/i);
+        await fullSignedRecord(activeDetail);
         await expect(
           activeDetail.locator(".signed-contract-section"),
         ).toContainText("Execution reserved");
@@ -538,6 +568,8 @@ for (const decision of ["approved", "changes_requested"])
           navigator.clipboard.readText(),
         );
         assert.ok(activeHandoff.includes("wos --profile executor work"));
+        assert.ok(activeHandoff.includes(`work checkout ${work.id} --version ${activeWork.version}`));
+        assert.ok(activeHandoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
         assert.ok(!activeHandoff.includes(token));
         const unchangedWork = (await api(activePath, token)).value;
         assert.equal(unchangedWork.version, activeWork.version);
@@ -626,6 +658,7 @@ for (const decision of ["approved", "changes_requested"])
       await expect(page.locator("#canvas-details #detail-title")).toHaveText(
         work.title,
       );
+      await fullSignedRecord(page.locator("#canvas-details"));
       await expect(page.locator("#canvas-details")).toContainText(
         "Awaiting independent review",
       );
@@ -649,7 +682,29 @@ for (const decision of ["approved", "changes_requested"])
       assert.ok(
         canvasHandoff.includes("wos --profile reviewer review checkout"),
       );
+      const deliveredWork = (await api(activePath, token)).value;
+      const pendingReview = (await api(
+        `/namespaces/${namespace}/outcomes/${outcome.id}/signed-state/case/${deliveredWork.pending_review_case_id}`,
+        token,
+      )).review_case;
+      assert.ok(canvasHandoff.includes(`review checkout ${pendingReview.id} --version ${pendingReview.version}`));
+      assert.ok(canvasHandoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
       assert.ok(!canvasHandoff.includes(token));
+      // A real signed submission (not a mock display_state) projects to review.
+      const beforeKanbanWrites = mutations.length;
+      const searchBoard = page.getByRole("combobox", {name:"Search Outcome Board",exact:true});
+      await searchBoard.fill(objective.title);
+      await page.getByRole("option").filter({hasText:objective.title}).first().click();
+      await page.locator("#canvas-details").getByRole("button",{name:"Open Tasks Kanban",exact:true}).click();
+      const kanban = page.locator("#workspace-kanban");
+      await expect(kanban.locator("[data-column=verification]")).toContainText(work.title);
+      await expect(kanban.locator("[data-column=accepted]")).not.toContainText(work.title);
+      await kanban.locator(".workspace-kanban-card").filter({hasText:work.title}).click();
+      await expect(kanban.locator(".workspace-kanban-columns")).toBeVisible();
+      await expect(page.locator("dialog[open]")).toHaveCount(1);
+      assert.equal(mutations.length,beforeKanbanWrites,"Inspection does not acquire review authority or sign a delivery");
+      await kanban.getByRole("button",{name:"Back to Canvas",exact:true}).click();
+      await expect(kanban).not.toBeVisible();
       await chooseArea(page, "work");
       await page.getByRole("button", { name: "Task Board", exact: true }).click();
       await page
@@ -657,6 +712,7 @@ for (const decision of ["approved", "changes_requested"])
         .filter({ hasText: work.title })
         .first()
         .click();
+      await fullSignedRecord(page.locator("#detail-dialog"));
       await expect(
         page.getByText("Awaiting independent review", { exact: true }),
       ).toBeVisible();
@@ -667,7 +723,7 @@ for (const decision of ["approved", "changes_requested"])
         .getByRole("button", { name: "Load accepted material", exact: true })
         .click();
       await expect(
-        page.getByText("Material exato entregue pelo executor", {
+        page.locator(".signed-contract-section").getByText("Material exato entregue pelo executor", {
           exact: true,
         }),
       ).toBeVisible();
@@ -680,6 +736,8 @@ for (const decision of ["approved", "changes_requested"])
         .click();
       const handoff = await page.evaluate(() => navigator.clipboard.readText());
       assert.ok(handoff.includes("wos --profile reviewer review checkout"));
+      assert.ok(handoff.includes(`review checkout ${pendingReview.id} --version ${pendingReview.version}`));
+      assert.ok(handoff.includes(`--namespace ${namespace} --outcome ${outcome.id}`));
       assert.ok(!handoff.includes(token));
       await expect(
         page.getByRole("button", {
@@ -770,6 +828,7 @@ for (const decision of ["approved", "changes_requested"])
         .filter({ hasText: work.title })
         .first()
         .click();
+      await fullSignedRecord(page.locator("#detail-dialog"));
       await expect(
         page.getByText(
           decision === "approved" ? "Review approved" : "Changes requested",

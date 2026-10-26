@@ -86,12 +86,13 @@ func TestAdministrativeOverrideHTTPRequiresExplicitLocalOptIn(t *testing.T) {
 		},
 		http.StatusOK,
 	)
+	objective := createHTTPTestObjective(t, deniedClient, outcomeURL, "admin-denied-objective-0001")
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
 		deniedClient,
 		http.MethodPost,
 		outcomeURL+"/work-items",
-		[]byte(`{"title":"Leased work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Leased work", "todo"),
 		map[string]string{"Idempotency-Key": "admin-denied-work-0001"},
 		http.StatusCreated,
 	)
@@ -167,12 +168,13 @@ func TestAdministrativeOverrideHTTPCompletesLeasedWorkWhenEnabled(t *testing.T) 
 		},
 		http.StatusOK,
 	)
+	objective := createHTTPTestObjective(t, client, outcomeURL, "admin-enabled-objective-0001")
 	workResponse := doJSON[application.MutationResult[domain.WorkItem]](
 		t,
 		client,
 		http.MethodPost,
 		outcomeURL+"/work-items",
-		[]byte(`{"title":"Externally completed work","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Externally completed work", "todo"),
 		map[string]string{"Idempotency-Key": "admin-enabled-work-0001"},
 		http.StatusCreated,
 	)

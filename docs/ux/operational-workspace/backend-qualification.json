@@ -1,0 +1,2258 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-19T18:45:15.628236+00:00",
+  "status": "passed_with_explicit_scope_and_skips",
+  "production_sla": false,
+  "scope": "Automated Go, actual PostgreSQL, race, reviewed public contracts and generator qualification. The latest complete Go suite and vet use one unchanged Go/SQL/module fingerprint; UI-only descendants and browser/gallery qualification are separate. Historical development runs are retained below.",
+  "broad_suite_started_from": "d5aecdafd191810d7d1af2eb06137743f1606a83",
+  "final_clock_fix_commit": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+  "source_binding": {
+    "initial_go_sql_sources_sha256": "7d6b27746c6d91eb108434f7e1a65a2d195e3f6a405f77ae27fc553537dc9934",
+    "final_go_sql_sources_sha256": "9115d8b60e0cf29ab76f56ae313054186e4c5fef442b495a2bef7507d3d61dc1",
+    "sources_unchanged_during_broad_and_followup_runner": false,
+    "explanation": "The broad suite began before the approved two-file readonly-frame clock fix. That fix preserves the authoritative mutation clock and changes only inspection evaluation. Full vet and application race ran after the corrected production files landed; final lease races also passed. The separate clock-boundary regression was qualified by its owner. No complete-suite rerun at the follow-up commit is claimed.",
+    "followup_production_files": [
+      "packages/wos-core/application/work_contract_guards.go",
+      "packages/wos-core/application/workspace_capabilities.go"
+    ],
+    "record_context": "Historical pre-impact development runner. The later uniform_final_go_sql_followup is the final complete backend qualification."
+  },
+  "environment": {
+    "go": "go1.27.2",
+    "gomaxprocs": 2,
+    "go_package_parallelism": 1,
+    "actual_postgresql": true,
+    "max_locks_per_transaction": 1024,
+    "connection_configuration": "Supplied explicitly through local CI environment; connection details omitted."
+  },
+  "checks": [
+    {
+      "command": [
+        "go",
+        "test",
+        "-json",
+        "-p",
+        "1",
+        "-count=1",
+        "-timeout",
+        "20m",
+        "./..."
+      ],
+      "started_at": "2026-10-19T17:45:10.944990+00:00",
+      "elapsed_seconds": 890.633,
+      "exit_code": 0,
+      "package_results": [
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+          "Elapsed": 0
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+          "Elapsed": 0.008
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+          "Elapsed": 0.015
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+          "Elapsed": 0.06
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+          "Elapsed": 1.5590000000000002
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+          "Elapsed": 31.183
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+          "Elapsed": 27.675
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+          "Elapsed": 0
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+          "Elapsed": 0.012
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+          "Elapsed": 0.011
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "Elapsed": 3.019
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+          "Elapsed": 0
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+          "Elapsed": 1.474
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+          "Elapsed": 0.013
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+          "Elapsed": 0.017
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+          "Elapsed": 0.046
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+          "Elapsed": 0.025
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "Elapsed": 399.899
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "Elapsed": 81.816
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+          "Elapsed": 0.575
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill",
+          "Elapsed": 0.114
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+          "Elapsed": 37.333
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+          "Elapsed": 222.305
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/verify-signed-fixture",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/workspace-notes-upgrade",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/operations/testsupport",
+          "Elapsed": 0
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas",
+          "Elapsed": 0
+        }
+      ],
+      "test_pass_count": 1661,
+      "test_failure_names": [],
+      "skipped_tests": [
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+          "Test": "TestDeliveryWorkerCrashChild",
+          "Elapsed": 0,
+          "reason": "process_death_test.go:24: owned child process only"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "Test": "TestReceiptCleanupRecoversRealFullDisk",
+          "Elapsed": 0,
+          "reason": "full_disk_linux_test.go:17: requires isolated capacity-limited filesystem"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "Test": "TestNativeOSKeyringProtectedProfileV2",
+          "Elapsed": 0,
+          "reason": "native_keyring_v2_test.go:53: requires actual OS credential service; platform CI sets WOS_TEST_NATIVE_KEYRING=1"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "Test": "TestNativeOSKeyringChildV2",
+          "Elapsed": 0,
+          "reason": "native_keyring_v2_test.go:91: native child fixture only"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+          "Test": "TestReturnResolutionCleanupRecoversRealFullDisk",
+          "Elapsed": 0,
+          "reason": "return_resolution_full_disk_test.go:13: requires an explicitly isolated capacity-limited filesystem"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "Test": "TestSignedWorkReviewLoadMatrix",
+          "Elapsed": 0,
+          "reason": "signed_load_test.go:37: opt-in signed workload; set WOS_SIGNED_LOAD=1"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "Test": "TestWorkContractLoadMatrix",
+          "Elapsed": 0,
+          "reason": "work_contract_load_test.go:48: opt-in measured fixture; set WOS_CONTRACT_LOAD=1"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "Test": "TestSignedWorkReviewLoadMatrix",
+          "Elapsed": 0,
+          "reason": "signed_load_test.go:35: opt-in signed workload; set WOS_SIGNED_LOAD=1"
+        },
+        {
+          "Action": "skip",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "Test": "TestWorkContractLoadMatrix",
+          "Elapsed": 0,
+          "reason": "work_contract_load_test.go:47: opt-in measured fixture; set WOS_CONTRACT_LOAD=1"
+        }
+      ],
+      "packages_without_tests": [
+        "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+        "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+        "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+        "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/verify-signed-fixture",
+        "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/workspace-notes-upgrade",
+        "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+        "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+        "github.com/A1b3rt0M3rcad0/wos/tools/operations/testsupport",
+        "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas"
+      ],
+      "source_context": "Broad suite began at the pre-clock source; see source_binding."
+    },
+    {
+      "command": [
+        "go",
+        "vet",
+        "./..."
+      ],
+      "started_at": "2026-10-19T18:00:01.586496+00:00",
+      "elapsed_seconds": 17.436,
+      "exit_code": 0,
+      "package_results": [],
+      "test_pass_count": 0,
+      "test_failure_names": [],
+      "skipped_tests": [],
+      "packages_without_tests": [],
+      "source_context": "Ran after the final readonly clock production files landed; covers the corrected source."
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-json",
+        "-race",
+        "-p",
+        "1",
+        "-count=1",
+        "-timeout",
+        "10m",
+        "./packages/wos-core/application"
+      ],
+      "started_at": "2026-10-19T18:00:19.024095+00:00",
+      "elapsed_seconds": 8.798,
+      "exit_code": 0,
+      "package_results": [
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+          "Elapsed": 6.98
+        }
+      ],
+      "test_pass_count": 108,
+      "test_failure_names": [],
+      "skipped_tests": [],
+      "packages_without_tests": [],
+      "source_context": "Ran after the final readonly clock production files landed; covers the corrected source."
+    },
+    {
+      "command": [
+        "go",
+        "test",
+        "-json",
+        "-race",
+        "-p",
+        "1",
+        "-count=1",
+        "-timeout",
+        "10m",
+        "./packages/wos-core/storage/sqlite",
+        "./packages/wos-core/storage/postgres",
+        "-run",
+        "^TestWorkspaceLegacyReleaseCapabilityMatchesOwnedLeaseAndActualCommand$"
+      ],
+      "started_at": "2026-10-19T18:00:27.824636+00:00",
+      "elapsed_seconds": 17.023,
+      "exit_code": 0,
+      "package_results": [
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+          "Elapsed": 3.815
+        },
+        {
+          "Action": "pass",
+          "Package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+          "Elapsed": 1.909
+        }
+      ],
+      "test_pass_count": 6,
+      "test_failure_names": [],
+      "skipped_tests": [],
+      "packages_without_tests": [],
+      "source_context": "Ran after the final readonly clock production files landed; covers the corrected source."
+    }
+  ],
+  "earlier_full_core_storage_race": {
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "-p",
+      "1",
+      "-count=1",
+      "-timeout",
+      "20m",
+      "./packages/wos-core/application",
+      "./packages/wos-core/storage/..."
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1184.227,
+    "source_context": "Earlier working tree, before the final readonly clock correction. This run overlapped development; later application/lease checks qualify changed behavior.",
+    "packages": {
+      "application_seconds": 5.587,
+      "memory_seconds": 1.957,
+      "postgres_seconds": 477.491,
+      "sqlite_seconds": 600.744
+    }
+  },
+  "initial_environment_incident": {
+    "result": "invalidated",
+    "cause": "Filesystem capacity exhaustion while creating PostgreSQL migration files (SQLSTATE 53100).",
+    "recovered": true,
+    "subsequent_full_actual_postgresql_suite": "passed",
+    "product_failure_claimed": false
+  },
+  "generator_checks": {
+    "exact_ci_sequence": [
+      {
+        "command": [
+          "python3",
+          "tools/signedgen/generate.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.05
+      },
+      {
+        "command": [
+          "gofmt",
+          "-w",
+          "packages/wos-core/storage/memory/signed_work_contracts.go",
+          "packages/wos-core/storage/sqlite/signed_work_contracts.go"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.037
+      },
+      {
+        "command": [
+          "python3",
+          "tools/postgresgen/generate.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.325
+      },
+      {
+        "command": [
+          "go",
+          "run",
+          "./tools/mcpgen"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.483
+      },
+      {
+        "command": [
+          "go",
+          "run",
+          "./tools/openapigen"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 4.925
+      },
+      {
+        "command": [
+          "gofmt",
+          "-w",
+          "packages/wos-core/storage/postgres",
+          "packages/wos-api/mcp",
+          "packages/wos-api/commands",
+          "packages/wos-sdk-go"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.336
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "--",
+          "packages/wos-core/storage/memory/signed_work_contracts.go",
+          "packages/wos-core/storage/sqlite/signed_work_contracts.go",
+          "packages/wos-core/storage/postgres",
+          "packages/wos-api/mcp",
+          "packages/wos-api/commands",
+          "packages/wos-sdk-go",
+          "packages/wos-api/commands.openapi.json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.088
+      },
+      {
+        "command": [
+          "python3",
+          "tools/eventcatalog/check.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.15
+      }
+    ],
+    "two_consecutive_mcp_catalog_sdk_openapi_runs_identical": true,
+    "generated_sha256": {
+      "packages/wos-api/mcp/commands_generated.go": "e55129df047d36e553546e9eff48bab0f5d950148e5b17ebe224c9b96ba46423",
+      "packages/wos-api/commands/catalog_generated.go": "4a1c1234b607eb194a8c51551fc29ad6b6355b70e72e3fb31d64315398442f24",
+      "packages/wos-sdk-go/commands_generated.go": "0f62eb76d05419b0c78e4c591ffbe92a1c08879b7fb9cdef2918ced825e72e4a",
+      "packages/wos-api/commands.openapi.json": "5e689a097a65afc028fafdf1013d584990b969293df05be36b058bd171bbaa86"
+    },
+    "record_context": "Historical generator qualification; final_ci_generator_followup records the complete latest source sequence."
+  },
+  "release_compatibility": {
+    "command": [
+      "node",
+      "--test",
+      "tools/releases/compatibility.test.mjs"
+    ],
+    "passed_tests": 4,
+    "released_v042_recursive_guard": "passed",
+    "current_openapi_fingerprint_refreshed_after_review": true,
+    "historical_reference_and_eight_cli_fingerprints_unchanged": true,
+    "broader_release_suite": {
+      "reported_passed_tests": 16,
+      "reported_by": "planning_compound and root",
+      "separate_from_this_agents_four_compatibility_tests": true
+    },
+    "normalized_current_openapi_sha256": "8346a01a168c2e2098f35221f0419cf9ce5903749ccff9dcb782d227244f4a34",
+    "final_direct_release_checks": {
+      "command": [
+        "node",
+        "--test",
+        "tools/releases/test.mjs",
+        "tools/releases/compatibility.test.mjs"
+      ],
+      "passed_tests": 16,
+      "failed_tests": 0,
+      "skipped_tests": 0,
+      "source_head": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+      "recorded_at": "2026-10-19T18:07:15.950273+00:00"
+    },
+    "record_context": "Historical pre-impact release checks. The newer impact_preview_contract_followup records the current reviewed digest and repeat 16-test pass."
+  },
+  "separate_followup_regression": {
+    "test": "TestWorkspaceCapabilitiesPinContractExpiryWhileActualMutationsRecheckTime",
+    "reported_by": "workspace_reads",
+    "adapters": [
+      "memory",
+      "sqlite",
+      "actual_postgresql"
+    ],
+    "race": true,
+    "reported_seconds": 8.95,
+    "status": "passed; separate owner qualification, not included in broad-suite count"
+  },
+  "limitations": [
+    "Nine gated or child-entry tests are listed explicitly in the broad check; ten packages have no test files.",
+    "Native credential-service and isolated full-disk qualification were not run by this task.",
+    "Opt-in signed/contract load matrices were not run; separate workspace performance qualification has its own environment limits.",
+    "Browser, accessibility, user study, deployment and upgrade evidence are recorded separately."
+  ],
+  "counting": "Passing test counts include named subtests; package-without-tests skips are recorded separately from skipped tests.",
+  "broad_suite_summary": {
+    "passed_tests_and_subtests": 1661,
+    "skipped_tests": 9,
+    "packages_without_tests": 10,
+    "exit_code": 0
+  },
+  "wire_review": {
+    "transport_commit": "5c68f7e",
+    "added_routes": 13,
+    "removed_existing_routes": 0,
+    "modified_existing_routes": 0,
+    "existing_schema_additions": [
+      "Optional initial_criteria on Outcome, Objective and Task creation",
+      "Optional target_expected_version and criterion_revision on Evidence linking",
+      "Optional WorkAttention criterion reason_code"
+    ],
+    "legacy_evidence_target_kind_wire_constraint_preserved": true,
+    "canonical_new_compound_eligibility_from_core": true,
+    "released_v042_reference_unchanged": true
+  },
+  "maintained_documentation_link_audit": {
+    "files": [
+      "README.md",
+      "docs/ux/operational-workspace/README.md",
+      "docs/operational-workspace-api.md",
+      "docs/ux/operational-workspace/migrations.md",
+      "docs/ux/operational-workspace/performance.md",
+      "docs/ux/operational-workspace/qualification.md"
+    ],
+    "valid_local_links": 86,
+    "broken_local_links": 0,
+    "excluded": "Verbatim owner-plan archive, external URLs and image targets pending gallery generation."
+  },
+  "impact_preview_contract_followup": {
+    "source_revision": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+    "status": "passed",
+    "command": "go test ./packages/wos-api/commands -count=1",
+    "schema_tests": [
+      "TestObservedImpactRevisionIsOptionalExactAndPreservesLegacyIntention",
+      "TestWorkspacePreviewQueryRequiresExplicitNullableParent"
+    ],
+    "assertions": [
+      "Existing Achieve and ReportIssueWithBlocker omission preserves old Core JSON intention bytes.",
+      "New optional observed Outcome revisions round-trip exactly above 2^53 and reject numeric input; old expected_version remains numeric.",
+      "Required nullable placement parent rejects absent/unknown keys and accepts explicit null; old reads load no implicit preview.",
+      "Only five schemas receive additive properties; no old route or property constraint changes."
+    ],
+    "two_api_generations_identical": true,
+    "registered_commands": 111,
+    "current_openapi_sha256": "4f644fb28f44574fbaca1ada43ca2f1651be20c96e499db304a21293343f4781",
+    "normalized_current_openapi_sha256": "a7a9bb2554dae2bbb3818f86772b3f9755248a3b9d0c82506798fd0f68b8d5cb",
+    "review": "docs/stable/operational-contract-review.md",
+    "release_compatibility": {
+      "command": [
+        "node",
+        "--test",
+        "tools/releases/test.mjs",
+        "tools/releases/compatibility.test.mjs"
+      ],
+      "passed_tests": 16,
+      "failed_tests": 0,
+      "skipped_tests": 0
+    }
+  },
+  "impact_preview_targeted_races": [
+    {
+      "source_scope": "Reported by owning agent on the precommit T049 follow-up sources; these are not a uniform-final-source whole-suite race claim. The later full Go run separately qualifies final sources.",
+      "command": "go test -p 1 -race ./packages/wos-core/storage/sqlite -run ^TestWorkspace(ConclusionImpactIsBoundedCurrentAndNeverConcludesChildren|BlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound)$ -count=1",
+      "gomaxprocs": 2,
+      "adapters": [
+        "memory",
+        "sqlite"
+      ],
+      "status": "passed",
+      "elapsed_seconds": 21.097,
+      "top_level_tests": 2,
+      "leaf_subtests": 6,
+      "count_basis": "Names and source loop structure; execution log reports a successful package run.",
+      "assertions": "Coherent bounded open-child counts and consequences; stale review rejects before writes; fresh conclusion leaves persisted child lifecycle/proof unchanged; blocking compound replay preserves original IDs and does not rewrite the Task."
+    },
+    {
+      "source_scope": "Same focused precommit T049 source qualification, reported by owning agent.",
+      "command": "go test -p 1 -race ./packages/wos-core/storage/postgres -run ^TestWorkspace(ConclusionImpactIsBoundedCurrentAndNeverConcludesChildren|BlockingImpactRequiresFreshReviewAndReplaysTheOriginalCompound)$ -count=1",
+      "gomaxprocs": 2,
+      "adapters": [
+        "memory",
+        "actual_postgresql"
+      ],
+      "status": "passed",
+      "elapsed_seconds": 7.164,
+      "top_level_tests": 2,
+      "leaf_subtests": 6,
+      "skipped": false
+    },
+    {
+      "source_scope": "Final follow-up production sources before their commit; reported by owning agent.",
+      "tests": [
+        "TestWorkspaceConclusionScopeCountsOpenDescendantsAcrossTerminalParentsWithoutCrossingScope",
+        "TestWorkspaceBlockerPreviewShowsCanonicalDirectAndSubtreeScopeWithoutWriting"
+      ],
+      "race": true,
+      "status": "passed",
+      "memory_sqlite_elapsed_seconds": 7.126,
+      "memory_actual_postgresql_elapsed_seconds": 3.147,
+      "assertions": "Counts preserve scope across terminal parents, real names, exact large counters and explicit zero; optional direct/subtree blocking preview is bounded and performs no mutation."
+    },
+    {
+      "source_scope": "Final structural-preview sources with invalid-destination honesty correction; reported by owning agent.",
+      "race": true,
+      "adapters": [
+        "memory",
+        "sqlite",
+        "actual_postgresql"
+      ],
+      "status": "passed",
+      "elapsed_seconds": 6.928,
+      "passed_test_records": 5,
+      "skipped_tests": 0,
+      "assertions": "Real direct/inherited Blocker changes, Task readiness, guarded cyclic/missing/executing destinations, exact full counts with bounded samples, explicit unloaded default and no persisted mutation.",
+      "tests": [
+        "TestPlacementPreviewRequiresExplicitNullableParent",
+        "TestWorkspacePlacementPreviewSharesGuardedBlockingAndReadinessFacts"
+      ]
+    }
+  ],
+  "uniform_final_go_sql_followup": {
+    "schema": 1,
+    "status": "passed",
+    "started_at": "2026-10-19T18:31:16.591318+00:00",
+    "source_start": {
+      "head": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+      "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+      "go_sql_files": 806,
+      "go_sql_worktree_clean": true,
+      "dirty_go_sql_paths": []
+    },
+    "environment": {
+      "go": "go version go1.27.2 linux/amd64",
+      "gomaxprocs": "2",
+      "actual_postgresql": true,
+      "connection_details": "Intentionally omitted"
+    },
+    "checks": [
+      {
+        "command": [
+          "go",
+          "test",
+          "-json",
+          "-p",
+          "1",
+          "-count=1",
+          "-timeout",
+          "20m",
+          "./..."
+        ],
+        "started_at": "2026-10-19T18:31:16.746097+00:00",
+        "source_start": {
+          "head": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+          "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+          "go_sql_files": 806,
+          "go_sql_worktree_clean": true,
+          "dirty_go_sql_paths": []
+        },
+        "exit_code": 0,
+        "elapsed_seconds": 696.309,
+        "finished_at": "2026-10-19T18:42:53.160704+00:00",
+        "source_end": {
+          "head": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+          "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+          "go_sql_files": 806,
+          "go_sql_worktree_clean": true,
+          "dirty_go_sql_paths": []
+        },
+        "test_pass_count": 1703,
+        "test_skip_count": 9,
+        "test_failure_count": 0,
+        "skipped_tests": [
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+            "test": "TestDeliveryWorkerCrashChild",
+            "reason": "process_death_test.go:24: owned child process only"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+            "test": "TestReceiptCleanupRecoversRealFullDisk",
+            "reason": "full_disk_linux_test.go:17: requires isolated capacity-limited filesystem"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+            "test": "TestNativeOSKeyringProtectedProfileV2",
+            "reason": "native_keyring_v2_test.go:53: requires actual OS credential service; platform CI sets WOS_TEST_NATIVE_KEYRING=1"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+            "test": "TestNativeOSKeyringChildV2",
+            "reason": "native_keyring_v2_test.go:91: native child fixture only"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+            "test": "TestReturnResolutionCleanupRecoversRealFullDisk",
+            "reason": "return_resolution_full_disk_test.go:13: requires an explicitly isolated capacity-limited filesystem"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+            "test": "TestSignedWorkReviewLoadMatrix",
+            "reason": "signed_load_test.go:37: opt-in signed workload; set WOS_SIGNED_LOAD=1"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+            "test": "TestWorkContractLoadMatrix",
+            "reason": "work_contract_load_test.go:48: opt-in measured fixture; set WOS_CONTRACT_LOAD=1"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+            "test": "TestSignedWorkReviewLoadMatrix",
+            "reason": "signed_load_test.go:35: opt-in signed workload; set WOS_SIGNED_LOAD=1"
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+            "test": "TestWorkContractLoadMatrix",
+            "reason": "work_contract_load_test.go:47: opt-in measured fixture; set WOS_CONTRACT_LOAD=1"
+          }
+        ],
+        "failed_tests": [],
+        "packages": [
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/authentication/local",
+            "status": "pass",
+            "elapsed_seconds": 0.005
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/cmd/wos",
+            "status": "pass",
+            "elapsed_seconds": 0.03
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/commands",
+            "status": "pass",
+            "elapsed_seconds": 0.113
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/http",
+            "status": "pass",
+            "elapsed_seconds": 1.362
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/integration",
+            "status": "pass",
+            "elapsed_seconds": 47.567
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/internal/server",
+            "status": "pass",
+            "elapsed_seconds": 33.687
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/observability",
+            "status": "pass",
+            "elapsed_seconds": 0.02
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/web",
+            "status": "pass",
+            "elapsed_seconds": 0.017
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli",
+            "status": "pass",
+            "elapsed_seconds": 3.186
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application",
+            "status": "pass",
+            "elapsed_seconds": 5.735
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain",
+            "status": "pass",
+            "elapsed_seconds": 0.011
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports",
+            "status": "pass",
+            "elapsed_seconds": 0.013
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/signing",
+            "status": "pass",
+            "elapsed_seconds": 0.032
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory",
+            "status": "pass",
+            "elapsed_seconds": 0.056
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres",
+            "status": "pass",
+            "elapsed_seconds": 375.374
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite",
+            "status": "pass",
+            "elapsed_seconds": 56.891
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-sdk-go",
+            "status": "pass",
+            "elapsed_seconds": 0.204
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/packages/wos-skill",
+            "status": "pass",
+            "elapsed_seconds": 0.051
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tests/acceptance",
+            "status": "pass",
+            "elapsed_seconds": 10.572
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tests/boundary",
+            "status": "pass",
+            "elapsed_seconds": 58.979
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/verify-signed-fixture",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/workspace-notes-upgrade",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/operations/testsupport",
+            "status": "skip",
+            "elapsed_seconds": 0
+          },
+          {
+            "package": "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas",
+            "status": "skip",
+            "elapsed_seconds": 0
+          }
+        ],
+        "packages_without_tests": [
+          "github.com/A1b3rt0M3rcad0/wos/examples/embedded",
+          "github.com/A1b3rt0M3rcad0/wos/examples/remote-client",
+          "github.com/A1b3rt0M3rcad0/wos/packages/wos-api/mcp",
+          "github.com/A1b3rt0M3rcad0/wos/packages/wos-cli/cmd/wosctl",
+          "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/verify-signed-fixture",
+          "github.com/A1b3rt0M3rcad0/wos/tools/acceptance/workspace-notes-upgrade",
+          "github.com/A1b3rt0M3rcad0/wos/tools/mcpgen",
+          "github.com/A1b3rt0M3rcad0/wos/tools/openapigen",
+          "github.com/A1b3rt0M3rcad0/wos/tools/operations/testsupport",
+          "github.com/A1b3rt0M3rcad0/wos/tools/wosclischemas"
+        ]
+      },
+      {
+        "command": [
+          "go",
+          "vet",
+          "./..."
+        ],
+        "started_at": "2026-10-19T18:42:53.368004+00:00",
+        "source_start": {
+          "head": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+          "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+          "go_sql_files": 806,
+          "go_sql_worktree_clean": true,
+          "dirty_go_sql_paths": []
+        },
+        "exit_code": 0,
+        "elapsed_seconds": 3.789,
+        "finished_at": "2026-10-19T18:42:57.224020+00:00",
+        "source_end": {
+          "head": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+          "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+          "go_sql_files": 806,
+          "go_sql_worktree_clean": true,
+          "dirty_go_sql_paths": []
+        }
+      }
+    ],
+    "source_end": {
+      "head": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+      "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+      "go_sql_files": 806,
+      "go_sql_worktree_clean": true,
+      "dirty_go_sql_paths": []
+    },
+    "source_unchanged": true,
+    "finished_at": "2026-10-19T18:42:57.343680+00:00",
+    "scope": "All 806 Go/SQL/module files were clean and identical throughout the full suite and vet: e36a8f4 to the UI-test-only descendant 6b2be17. Intermediate UI-only commits are separately qualified by their browser/gallery receipts; this fingerprint does not assert unchanged frontend assets."
+  },
+  "final_backend_go_sql_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+  "final_suite_summary": {
+    "source_start": "e36a8f498c567f9cc944ec2ab1da7a4bb79a0bc4",
+    "source_end": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+    "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+    "go_sql_files": 806,
+    "sources_unchanged": true,
+    "passed_tests_and_subtests": 1703,
+    "skipped_tests": 9,
+    "packages_without_tests": 10,
+    "passed_test_packages": 20,
+    "failed_tests": 0,
+    "full_go_elapsed_seconds": 696.309,
+    "full_vet_elapsed_seconds": 3.789,
+    "full_go_exit_code": 0,
+    "full_vet_exit_code": 0
+  },
+  "final_ci_generator_followup": {
+    "source_revision": "6b2be17ee189e79c6af4cdd665e85fc6110d384d",
+    "steps": [
+      {
+        "command": [
+          "python3",
+          "tools/signedgen/generate.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.194,
+        "output": ""
+      },
+      {
+        "command": [
+          "gofmt",
+          "-w",
+          "packages/wos-core/storage/memory/signed_work_contracts.go",
+          "packages/wos-core/storage/sqlite/signed_work_contracts.go"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.071,
+        "output": ""
+      },
+      {
+        "command": [
+          "python3",
+          "tools/postgresgen/generate.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.985,
+        "output": ""
+      },
+      {
+        "command": [
+          "go",
+          "run",
+          "./tools/mcpgen"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.61,
+        "output": "registered 111 commands\n"
+      },
+      {
+        "command": [
+          "go",
+          "run",
+          "./tools/openapigen"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.331,
+        "output": ""
+      },
+      {
+        "command": [
+          "gofmt",
+          "-w",
+          "packages/wos-core/storage/postgres",
+          "packages/wos-api/mcp",
+          "packages/wos-api/commands",
+          "packages/wos-sdk-go"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.432,
+        "output": ""
+      },
+      {
+        "command": [
+          "git",
+          "diff",
+          "--exit-code",
+          "--",
+          "packages/wos-core/storage/memory/signed_work_contracts.go",
+          "packages/wos-core/storage/sqlite/signed_work_contracts.go",
+          "packages/wos-core/storage/postgres",
+          "packages/wos-api/mcp",
+          "packages/wos-api/commands",
+          "packages/wos-sdk-go",
+          "packages/wos-api/commands.openapi.json"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.177,
+        "output": ""
+      },
+      {
+        "command": [
+          "python3",
+          "tools/eventcatalog/check.py"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 0.07,
+        "output": "integration catalogue v1: 108 public event types, mapping checked\n"
+      }
+    ],
+    "generated_sha256": {
+      "packages/wos-api/commands.openapi.json": "4f644fb28f44574fbaca1ada43ca2f1651be20c96e499db304a21293343f4781",
+      "packages/wos-api/mcp/commands_generated.go": "e55129df047d36e553546e9eff48bab0f5d950148e5b17ebe224c9b96ba46423",
+      "packages/wos-api/commands/catalog_generated.go": "4a1c1234b607eb194a8c51551fc29ad6b6355b70e72e3fb31d64315398442f24",
+      "packages/wos-sdk-go/commands_generated.go": "0f62eb76d05419b0c78e4c591ffbe92a1c08879b7fb9cdef2918ced825e72e4a"
+    },
+    "status": "passed"
+  },
+  "separate_latest_local_performance": {
+    "status": "passed_local_reference_environment_pending",
+    "checkout_source_revision": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "core_implementation_revision": "505f2e637ec37a189c82365fcc7102cdaf038490",
+    "cases_per_adapter": 7,
+    "concurrent_task_read_p95_ms": {
+      "sqlite": 216.09,
+      "postgres": 183.16
+    },
+    "comparison_ms": 400,
+    "all_sampled_local_p95_below_comparison": true,
+    "prescribed_reference_environment_reproduced": false,
+    "postgres_retry_scope": "Untimed schema-scoped ANALYZE setup-only overlay; timed loops and production queries unchanged. First setup timeout does not produce a latency measurement.",
+    "previous_postgresql_p95_ms": 834.39,
+    "previous_miss_retained": true,
+    "document": "docs/ux/operational-workspace/performance.md",
+    "results": "docs/ux/operational-workspace/performance/quiet-results.json",
+    "limitations": "No controlled 2-vCPU/4-GiB/SSD/50-ms-RTT, end-to-end authenticated HTTP/browser, first-map or local-feedback acceptance."
+  },
+  "post_qualification_source_continuity": {
+    "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+    "go_sql_files": 806,
+    "go_sql_sha256": "cc404105f995d8c6bdd3d8ccb38d8da744b5b4ec3c1a18f94ffd147838b48c58",
+    "go_sql_worktree_clean": true,
+    "go_sql_identical_to_complete_suite": true,
+    "changes_since_full_suite_source_end": [
+      "packages/wos-api/web/assets/canvas.css",
+      "packages/wos-api/web/assets/workspace-board.css",
+      "packages/wos-api/web/assets/workspace-view.css",
+      "tests/web/nested-task-density.spec.mjs",
+      "tests/web/operational-gallery.spec.mjs"
+    ],
+    "scope": "The corrective narrow-inspector candidate changes only CSS and JavaScript test/capture sources. Complete backend Go/SQL/module qualification remains the recorded e36-to-6b run; replacement full browser/gallery qualification is separate and pending."
+  },
+  "separate_final_functional_browser_qualification": {
+    "source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+    "passed_browser_tests": 164,
+    "passed_javascript_unit_tests": 74,
+    "browser_failures": 0,
+    "browser_skips": 0,
+    "browser_flaky": 0,
+    "production_assets_verified": 40,
+    "test_helper_sources_verified": 58,
+    "binary_sha256": "d5f33092ae723a79f7084e1d87e8a5bfd2112f863175445db1def618e4150111",
+    "document": "docs/ux/operational-workspace/browser-qualification.json",
+    "scope": "Strict replacement Chromium/SQLite functional qualification includes the corrective narrow-inspector layout. Complete backend Go/SQL qualification remains separately fingerprinted; gallery and manual/reference acceptance remain separate."
+  },
+  "final_capture_harness_continuity": {
+    "status": "passed",
+    "functional_source_revision": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+    "capture_harness_revision": "d458d4782d1813b75df4264605606837c9aff73d",
+    "production_asset_count": 40,
+    "all_production_assets_match_functional_receipt": true,
+    "changed_paths_since_functional_source": [
+      "tests/web/operational-gallery.spec.mjs"
+    ],
+    "scope": "Only the opt-in capture helper focuses Close before testing visibility after More-actions returns to its footer trigger. Complete functional 164-case qualification remains at the unchanged production source; all 75 capture outputs still require their own successful run and visual review."
+  },
+  "final_documentation_link_audit": {
+    "schema": 1,
+    "files": [
+      "docs/design/editorial/operational-workspace/login-viewport/README.md",
+      "README.md",
+      "docs/README.md",
+      "docs/operational-workspace-api.md",
+      "docs/workspace-ux.md",
+      "docs/workspace-relationships.md",
+      "docs/work-activity.md",
+      "docs/design/editorial/README.md",
+      "docs/design/editorial/operational-workspace/README.md",
+      "docs/ux/operational-workspace/README.md",
+      "docs/ux/operational-workspace/migrations.md",
+      "docs/ux/operational-workspace/performance.md",
+      "docs/ux/operational-workspace/human-study.md",
+      "docs/ux/operational-workspace/qualification.md"
+    ],
+    "valid": [
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "4d86fa1c170b/login-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "manifest.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "../../../../ux/operational-workspace/login-viewport-qualification.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/login-viewport/README.md",
+        "target": "../README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/workspace-relationships.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/workspace-tour.gif"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/workspace-tour.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/integration-events.md"
+      },
+      {
+        "source": "README.md",
+        "target": "#license-and-brand"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/workspace-ux.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/agents.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/http.md"
+      },
+      {
+        "source": "README.md",
+        "target": "examples/remote-client"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/contracts.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/architecture.md#packages-and-interfaces"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md"
+      },
+      {
+        "source": "README.md",
+        "target": "#project-status"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md#shared-service"
+      },
+      {
+        "source": "README.md",
+        "target": ".go-version"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md#sign-in-and-persisted-data"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md"
+      },
+      {
+        "source": "README.md",
+        "target": "examples/quickstart/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/getting-started.md#published-container"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-workspace-profiles.md#provision-an-approved-identity"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/agents.md"
+      },
+      {
+        "source": "README.md",
+        "target": "packages/wos-cli/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-workspace-profiles.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/signed-cli-returns.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md"
+      },
+      {
+        "source": "README.md",
+        "target": "LICENSE"
+      },
+      {
+        "source": "README.md",
+        "target": "TRADEMARKS.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/licensing.md"
+      },
+      {
+        "source": "README.md",
+        "target": "NOTICE.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/releases/1.1.0.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/stable/compatibility.md"
+      },
+      {
+        "source": "README.md",
+        "target": "ROADMAP.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/ux/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/operational-canvas/README.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/operations.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/architecture.md"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/stable/operational-acceptance.md"
+      },
+      {
+        "source": "README.md",
+        "target": "CONTRIBUTING.md"
+      },
+      {
+        "source": "README.md",
+        "target": "SECURITY.md#report-a-vulnerability"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/releases.md"
+      },
+      {
+        "source": "README.md",
+        "target": "LICENSE"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/logo.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/badges/go.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/badges/license.svg"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/design/editorial/operational-workspace/screenshots/d458d4782d18/board-1280x720.png"
+      },
+      {
+        "source": "README.md",
+        "target": "docs/images/robots-queuing-for-paperwork.png"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "getting-started.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../examples/quickstart/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-ux.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-ux.md#find-another-outcome"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md#how-it-works"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "images/workspace-tour.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../README.md#for-developers-and-oaas"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "images/assets.json"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "agents.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "work-activity.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "central-agent-workflow/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../packages/wos-cli/README.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-cli-returns.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "signed-protocol-cutover.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "workspace-migration-v2.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "http.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "contracts.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../packages/wos-api/openapi.yaml"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "client-qualification.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "integration-events.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "operational-workspace-api.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "operations.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "issuer-recovery.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "releases.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "stable/operations-reference.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "benchmarks.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../CONTRIBUTING.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../SECURITY.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../AGENTS.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "../ROADMAP.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "architecture.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "adr/"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "dependencies.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "licensing.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "ux/operational-workspace/qualification.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/validation.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "WOS_Design_Arquitetura_Planejamento_Atualizado.md"
+      },
+      {
+        "source": "docs/README.md",
+        "target": "design/editorial/README.md#main-pages"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "../packages/wos-api/openapi.yaml"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "../packages/wos-api/commands.openapi.json"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "ux/command-exposure-inventory.md"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/operational-workspace-api.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "workspace-relationships.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "operations.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "signed-workspace-profiles.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/README.md#acceptance-boundary"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md#verification-and-capture-provenance"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/final-acceptance.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "ux/experience-contract.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "adr/0027-human-workspace-client.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/editorial/README.md#main-pages"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/editorial/density/README.md"
+      },
+      {
+        "source": "docs/workspace-ux.md",
+        "target": "design/operational-canvas/canvas-first/README.md#screenshots"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "workspace-ux.md"
+      },
+      {
+        "source": "docs/workspace-relationships.md",
+        "target": "WOS_Design_Arquitetura_Planejamento_Atualizado.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "ux/operational-workspace/README.md#record-updates-problems-and-deliverables-in-context"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "operational-workspace-api.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "../packages/wos-api/commands.openapi.json"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "http.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "contracts.md"
+      },
+      {
+        "source": "docs/work-activity.md",
+        "target": "signed-contracts-design.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "operational-density.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../adr/0038-operational-workspace.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../operational-workspace-api.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "modal-surfaces.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "woobe-palette-source.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/hand-drawn-chain.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/hand-drawn-chain-assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "brand-kit/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "component-review.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "interactions.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "responsive-scale.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../../../.agents/skills/wos-art-style/SKILL.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "assets.json"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../operational-canvas/workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "density/README.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "../operational-canvas/validation.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/01-login.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/02-overview.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/03-plan.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/04-work.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/05-work-board.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/06-issues.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/07-evidence.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/08-activity.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/09-task-detail.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/10-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/11-settings.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/15-expanded-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/16-action-menu.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "modal-surfaces.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/35-technical-command.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/12-mobile-overview.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/13-mobile-work.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/17-mobile-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/18-mobile-settings.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/33-mobile-action-menu.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/34-mobile-task-detail.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/36-mobile-technical-command.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/14-outcome-loading.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/19-fixed-paper-top.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/20-fixed-paper-scrolled.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/21-mobile-outcome-navigation.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/22-area-tab-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/23-view-switch-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/24-board-card-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/25-form-controls-hover.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/26-mobile-tabs-focus.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "responsive-scale.md"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/27-scale-reference.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/28-scale-full-hd.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/29-scale-2k.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/30-scale-4k.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/31-scale-2k-task-form.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "screenshots/32-scale-2k-work-board.png"
+      },
+      {
+        "source": "docs/design/editorial/README.md",
+        "target": "validation.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../ux/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../ux/operational-workspace/qualification.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/README.md"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-1366x768.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/4d86fa1c170b/login-1280x720.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "login-viewport/4d86fa1c170b/login-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-default-list-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/board-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-actions-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/task-actions-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/quick-task-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/batch-plan-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/conclusion-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/move-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/blocking-impact-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/criterion-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/evidence-record-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/issue-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/blocker-390x844.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/overview-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/plan-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/work-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/evidence-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/issues-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "screenshots/d458d4782d18/activity-2560x1440.png"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "manifest.json"
+      },
+      {
+        "source": "docs/design/editorial/operational-workspace/README.md",
+        "target": "../../../../CONTRIBUTING.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "../../operational-workspace-api.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "../../operational-workspace-api.md#use-the-cli-and-recover-safely"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "migrations.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/README.md",
+        "target": "human-study.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "migration-upgrade.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "migration-upgrade-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "../../operations.md#upgrade-cutover-for-the-operational-candidate"
+      },
+      {
+        "source": "docs/ux/operational-workspace/migrations.md",
+        "target": "../../../tools/operations/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "owner-plan-2026-10-19.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/source-and-runner.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/database-versions.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "../../../packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-scoped-setup-harness.go.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-scoped-setup.patch"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-setup-timeout-076550b.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-attempt-076550b-setup-timeout.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-quiet.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-quiet.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-results-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-quiet-a8571c5.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-quiet-a8571c5.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/quiet-run-environment-a8571c5.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-in-progress-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-in-progress-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/sqlite-candidate-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/performance.md",
+        "target": "performance/postgres-candidate-shared.txt"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "owner-plan-2026-10-19.md#6-teste-de-compreens\u00e3o-humana"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "human-study-results.template.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/human-study.md",
+        "target": "qualification.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "owner-plan-2026-10-19.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../adr/0038-operational-workspace.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "acceptance.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/login-viewport/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "login-viewport-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "visual-regression-076550b2fbf8/task-320x740.png"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "visual-regression-076550b2fbf8/task-390x844.png"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "migrations.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "backend-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "browser-qualification.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/README.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "../../design/editorial/operational-workspace/manifest.json"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "performance.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "owner-plan-2026-10-19.md#6-teste-de-compreens\u00e3o-humana"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "human-study.md"
+      },
+      {
+        "source": "docs/ux/operational-workspace/qualification.md",
+        "target": "human-study-results.template.json"
+      }
+    ],
+    "broken": [],
+    "external_links_skipped": 12,
+    "scope": "Maintained Markdown local inline/reference links, HTML image paths and local Markdown anchors; verbatim owner-plan archive and external network resources excluded."
+  },
+  "previous_bundle_documentation_link_audit": {
+    "status": "passed",
+    "scope": "Maintained Markdown local inline/reference links, HTML image paths and local Markdown anchors; verbatim owner-plan archive and external network resources excluded.",
+    "checked_local_targets": 260,
+    "broken_local_targets": 0,
+    "external_links_skipped": 12,
+    "documentation_content_sha256": {
+      "README.md": "2bc0b38ddff763cc41d84d5aaaa4976042298add3da5b71504d9894953235eab",
+      "docs/README.md": "27e83130fc7ea46284dfc1b4c73da945d3fda90ff9b2520608ff2f5e208f70b8",
+      "docs/operational-workspace-api.md": "8c9ed1c966331656cd3ed1b41feb61bd2094985c03b5473d4eda6ba432e3f0ff",
+      "docs/workspace-ux.md": "fc392b41c63922bbf85aa3f4f999dbb30bd0cf12b19c4e9a5db4299c5385d271",
+      "docs/workspace-relationships.md": "5ec70d4cc919cbbe7f0f5ff18a9f174b17d311fb65edd03cd7c9971be438e3f6",
+      "docs/work-activity.md": "030b6d1d69dc53cd4dcd398df92b2c5e8a3a64fb8a72ff88163e7af4b61a6b73",
+      "docs/design/editorial/README.md": "2010b3306d7944798ff133f0ad7228be64ba3428c646c7eae020411e89cb4e34",
+      "docs/design/editorial/operational-workspace/README.md": "fefa3dc1a5eb05da608e551fcda721ee48fa143bed6ec8c22d657c4a18c3b192",
+      "docs/ux/operational-workspace/README.md": "575a656b1c06902d72c1dd02bbc59cfd7cf4af681f26151fcbec0989ed1fbcd2",
+      "docs/ux/operational-workspace/migrations.md": "210ced546f2793382877f2f99aa97a2dce9cd9c56e8e17746a9233c4b767ea53",
+      "docs/ux/operational-workspace/performance.md": "77921a9fb00ca22095a69af38c29fa2a73679c73d414ce122d69e338f432d61c",
+      "docs/ux/operational-workspace/human-study.md": "236812ef8ae0a2b7f9159b8c909ac88d0ba7daeea9e7432f6226de671973887e",
+      "docs/ux/operational-workspace/qualification.md": "f6b98de7df7796960b702d737301da0d84c76eaae56941f60a5905f7ad575b92"
+    },
+    "binding": "SHA256-bound final documentation bundle audited before its evidence commit; these hashes identify actual maintained content, independently of production qualification snapshots."
+  }
+}

@@ -1,0 +1,365 @@
+{
+  "sequence": "PostgreSQL followed by SQLite, no overlapping benchmark jobs",
+  "reference_environment_reproduced": false,
+  "other_delegated_heavy_jobs": "API full Go/real-PG/vet/race jobs, notes qualification, and browser jobs stop before the measured window",
+  "GOMAXPROCS": 2,
+  "implementation_sha": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+  "preflight": {
+    "captured_at": "2026-10-19T17:49:57Z",
+    "monotonic_seconds": 217837.799931414,
+    "core_source_sha256": "366c7bd39d50cb77fc63b614f800f63fa6300d36bfabb3f84ca37b699814d714",
+    "core_source_fingerprint_files": 332,
+    "head_sha": "0a08d14f21a169e386f86a998019cf1973575a00",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "8.01 5.15 4.74 8/1169 511115",
+    "cpu_cgroup": {
+      "usage_usec": 49348144433,
+      "user_usec": 38957275676,
+      "system_usec": 10390868757,
+      "nice_usec": 0,
+      "nr_periods": 567195,
+      "nr_throttled": 47020,
+      "throttled_usec": 3586148531,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 26682290176,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 1.8
+      },
+      {
+        "command": "go",
+        "state": "Sl",
+        "average_cpu_percent": 1.2
+      },
+      {
+        "command": "npm test --work",
+        "state": "Sl",
+        "average_cpu_percent": 1.1
+      },
+      {
+        "command": "postgres.test",
+        "state": "Sl",
+        "average_cpu_percent": 13.1
+      },
+      {
+        "command": "MainThread",
+        "state": "Sl",
+        "average_cpu_percent": 4.6
+      },
+      {
+        "command": "MainThread",
+        "state": "Sl",
+        "average_cpu_percent": 21.8
+      },
+      {
+        "command": "chromium",
+        "state": "Ssl",
+        "average_cpu_percent": 33.5
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 12.6
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 4.3
+      },
+      {
+        "command": "MainThread",
+        "state": "Sl",
+        "average_cpu_percent": 15.6
+      },
+      {
+        "command": "chromium",
+        "state": "Ssl",
+        "average_cpu_percent": 20.1
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 11.5
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 3.2
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 8.4
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 26.2
+      },
+      {
+        "command": "wos",
+        "state": "Sl",
+        "average_cpu_percent": 6.7
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 23.2
+      },
+      {
+        "command": "chromium",
+        "state": "Sl",
+        "average_cpu_percent": 1.8
+      },
+      {
+        "command": "chromium",
+        "state": "Rl",
+        "average_cpu_percent": 65.2
+      },
+      {
+        "command": "wos",
+        "state": "Sl",
+        "average_cpu_percent": 13.4
+      },
+      {
+        "command": "postgres",
+        "state": "Rs",
+        "average_cpu_percent": 54.6
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 6.0
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 10.7
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 42.8
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "postgres_start": {
+    "captured_at": "2026-10-19T18:02:17Z",
+    "monotonic_seconds": 218577.822925767,
+    "core_source_sha256": "e3dbf8259f7a63d4740d392bf2e4fd4e74b1c41ea6e3e9c5b947b8f8c106ce04",
+    "core_source_fingerprint_files": 332,
+    "head_sha": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.66 6.38 6.24 1/912 523065",
+    "cpu_cgroup": {
+      "usage_usec": 51618796970,
+      "user_usec": 40649178763,
+      "system_usec": 10969618206,
+      "nice_usec": 0,
+      "nr_periods": 574455,
+      "nr_throttled": 50190,
+      "throttled_usec": 3780426127,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 25987403776,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.1
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 8.3
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 10.0
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 100.0
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "postgres_end": {
+    "captured_at": "2026-10-19T18:04:47Z",
+    "monotonic_seconds": 218727.730838913,
+    "core_source_sha256": "e3dbf8259f7a63d4740d392bf2e4fd4e74b1c41ea6e3e9c5b947b8f8c106ce04",
+    "core_source_fingerprint_files": 332,
+    "head_sha": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.30 4.49 5.55 1/904 523554",
+    "cpu_cgroup": {
+      "usage_usec": 51769850408,
+      "user_usec": 40747951918,
+      "system_usec": 11021898489,
+      "nice_usec": 0,
+      "nr_periods": 575860,
+      "nr_throttled": 50213,
+      "throttled_usec": 3782335822,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 26202234880,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.3
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 11.5
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 4.5
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 75.0
+      },
+      {
+        "command": "ps",
+        "state": "R",
+        "average_cpu_percent": 250.0
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "sqlite_start": {
+    "captured_at": "2026-10-19T18:04:47Z",
+    "monotonic_seconds": 218727.861122603,
+    "core_source_sha256": "e3dbf8259f7a63d4740d392bf2e4fd4e74b1c41ea6e3e9c5b947b8f8c106ce04",
+    "core_source_fingerprint_files": 332,
+    "head_sha": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.30 4.49 5.55 2/905 523558",
+    "cpu_cgroup": {
+      "usage_usec": 51770011282,
+      "user_usec": 40748046931,
+      "system_usec": 11021964351,
+      "nice_usec": 0,
+      "nr_periods": 575862,
+      "nr_throttled": 50213,
+      "throttled_usec": 3782335822,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 26202157056,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.3
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 7.3
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 2.7
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 88.8
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "sqlite_end": {
+    "captured_at": "2026-10-19T18:05:22Z",
+    "monotonic_seconds": 218762.811899984,
+    "core_source_sha256": "e3dbf8259f7a63d4740d392bf2e4fd4e74b1c41ea6e3e9c5b947b8f8c106ce04",
+    "core_source_fingerprint_files": 332,
+    "head_sha": "a8571c551c2be1de195ecd3c40672d4f13f16445",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.00 4.07 5.37 1/905 523646",
+    "cpu_cgroup": {
+      "usage_usec": 51795304793,
+      "user_usec": 40767802123,
+      "system_usec": 11027502669,
+      "nice_usec": 0,
+      "nr_periods": 576146,
+      "nr_throttled": 50213,
+      "throttled_usec": 3782335822,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 26202603520,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.3
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 6.6
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 81.8
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "qualification_summary": {
+    "benchmark_status": "passed_no_read_errors",
+    "source_stable": true,
+    "core_source_sha256": "e3dbf8259f7a63d4740d392bf2e4fd4e74b1c41ea6e3e9c5b947b8f8c106ce04",
+    "local_400ms_p95": "not_met_for_postgres_10_concurrent_task_reads",
+    "reference_environment": "not_qualified",
+    "reference_cpu": "2vCPU",
+    "reference_memory": "4GiB",
+    "reference_RTT_ms": 50,
+    "postgres_interval": {
+      "elapsed_s": 149.908,
+      "cpu_equivalents_average": 1.008
+    },
+    "sqlite_interval": {
+      "elapsed_s": 34.951,
+      "cpu_equivalents_average": 0.724
+    }
+  }
+}

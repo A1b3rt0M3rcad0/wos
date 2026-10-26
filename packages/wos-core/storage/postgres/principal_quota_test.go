@@ -52,7 +52,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 			reg := u.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			cp := *first.Policy
 			cp.CredentialID = cred.ID
-			must(reg.SaveCredentialPolicy(ctx, cp, 0))
+			must(reg.SaveCredentialPolicy(ctx, cp, 1))
 			out, e := d.NewOutcome(portID(90000), ns, "Other quota Outcome", "", "same Principal is same quota", d.PriorityNormal, clock.Now())
 			must(e)
 			criterion, e := d.NewSuccessCriterion(portID(90001), out.Ref(), "Configured outcome proof", "", true, d.VerificationModeAttestation)
@@ -69,7 +69,7 @@ func TestPrincipalQuotasAdminCASAndConcurrentCredentials(t *testing.T) {
 				w, e := d.NewWorkItem(portID(5000+i), target, "Concurrent quota target", "", d.PriorityNormal, d.WorkItemLifecycleTodo, clock.Now())
 				must(e)
 				w.ContractsEnabled = true
-				must(u.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 				works = append(works, w)
 			}
 			must(u.Commit())
@@ -208,7 +208,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			must(e)
 			cp := *identity.Policy
 			cp.MaxActiveWorkContracts = 1
-			mutate(nil, &cp, 1)
+			mutate(nil, &cp, 2)
 			five := 5
 			policy := d.WorkAcceptancePolicy{NamespaceID: ns, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 3, MaxActiveWorkPerPrincipal: &five}
 			mutate(&policy, nil, 0)
@@ -228,13 +228,13 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 				template.PrincipalID = principal
 				template.AllowedSigningKeyIDs = []d.ID{key}
 				template.MaxActiveWorkContracts = 4
-				mutate(nil, &template, 0)
+				mutate(nil, &template, 1)
 				return id, a.WithIdentity(ctx, id)
 			}
 			second, secondCtx := participant(f.cc.PrincipalID, d.ID(f.request.SignerKeyID), cp)
 			_, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 1)
 			must(e)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "another-executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
 			foreignKey := testID("0199a555-0000-7000-8000-000000000099")
 			foreign, foreignCtx := participant("another-executor", foreignKey, cp)
 			_, e = acquire(foreignCtx, foreign.PrincipalID, foreign.Actor, foreignKey, 2)
@@ -242,7 +242,7 @@ func TestPrincipalQuotasKeepCredentialNamespaceAndRevocationIndependent(t *testi
 			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); e == nil || !strings.Contains(e.Error(), "Namespace") {
 				t.Fatal("two Principals bypassed Namespace ceiling", e)
 			}
-			must(sec.RevokeCredential(adminCtx, ns, second.CredentialID))
+			must(sec.Store.RevokeCredential(adminCtx, second.CredentialID))
 			if _, e = acquire(secondCtx, second.PrincipalID, second.Actor, d.ID(f.request.SignerKeyID), 3); securityErrorCode(e) != d.ErrorCodeForbidden {
 				t.Fatal("stale authenticated context bypassed CID revocation", e)
 			}

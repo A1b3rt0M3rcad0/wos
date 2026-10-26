@@ -1,0 +1,208 @@
+package sqlite
+
+import (
+	"context"
+	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"path/filepath"
+	"testing"
+	"time"
+)
+
+func TestStrictCompletionRequiresRealResolvedWorkAndPinnedCancellationAcknowledgement(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		for _, kind := range []d.EntityKind{d.EntityKindOutcome, d.EntityKindObjective} {
+			t.Run(backend+"/"+kind.String(), func(t *testing.T) {
+				ctx := context.Background()
+				must := func(e error) {
+					t.Helper()
+					if e != nil {
+						t.Fatal(e)
+					}
+				}
+				var store ports.TransactionManager = memory.New()
+				if backend == "sql" {
+					store = openTestStore(t, filepath.Join(t.TempDir(), "strict.db"))
+				}
+				service, e := a.NewService(store, portClock{time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}, &portIDs{})
+				must(e)
+				serial := 100
+				command := func() d.CommandContext { serial++; return sqliteCommandContext(portID(serial).String(), "") }
+				initial := []a.InitialCriterion{{Title: "Actual accepted condition", Required: true, VerificationMode: d.VerificationModeAttestation}}
+				out, e := service.CreateOutcome(ctx, command(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Explicit completion", DesiredState: "No silently unfinished required work", Priority: d.PriorityNormal, InitialCriteria: initial, CompletionPolicy: d.CompletionPolicyStrictWork})
+				must(e)
+				scope := out.Value.Scope()
+				assess := func(ref d.EntityRef, version d.Version, c d.SuccessCriterion) {
+					_, e := service.RecordCriterionAssessment(ctx, command(), a.RecordCriterionAssessmentCommand{Owner: ref, ExpectedVersion: version, CriterionID: c.ID, CriterionRevision: c.Revision, Result: d.AssessmentResultMet, Rationale: "Checked the actual declared condition"})
+					must(e)
+				}
+				assess(out.Value.Ref(), out.Value.Version, out.Value.Criteria.Items[0])
+				current, e := service.GetOutcome(ctx, scope)
+				must(e)
+				_, e = service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: scope, ExpectedVersion: current.Value.Version})
+				must(e)
+				owner := out.Value.Ref()
+				var parent *d.ID
+				if kind == d.EntityKindObjective {
+					obj, e := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Required part", Priority: d.PriorityNormal, InitialCriteria: initial})
+					must(e)
+					assess(obj.Value.Ref(), obj.Value.Version, obj.Value.Criteria.Items[0])
+					owner = obj.Value.Ref()
+					parent = &obj.Value.ID
+				} else {
+					obj, e := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Work ownership", Priority: d.PriorityNormal})
+					must(e)
+					parent = &obj.Value.ID
+				}
+				work, e := service.CreateWorkItem(ctx, command(), a.CreateWorkItemCommand{Scope: scope, Title: "Actual remaining work", Priority: d.PriorityNormal, Lifecycle: d.WorkItemLifecycleBacklog, ObjectiveID: parent})
+				must(e)
+				view := func() a.EntityWorkspaceView {
+					v, e := service.GetEntityWorkspaceView(ctx, scope, a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: owner}})
+					must(e)
+					return v
+				}
+				achieve := func(v a.EntityWorkspaceView, ack []d.EntityRef, pin bool) error {
+					var observed *d.OutcomeRevision
+					if pin {
+						observed = &v.OutcomeRevision
+					}
+					if kind == d.EntityKindOutcome {
+						_, e := service.AchieveOutcome(ctx, command(), a.AchieveOutcomeCommand{Scope: scope, ExpectedVersion: v.EntityVersion, Reason: "Reviewed scope and final proof", ObservedOutcomeRevision: observed, AcknowledgedCancelledWork: ack})
+						return e
+					}
+					_, e := service.AchieveObjective(ctx, command(), a.AchieveObjectiveCommand{Scope: scope, ObjectiveID: owner.ID, ExpectedVersion: v.EntityVersion, Reason: "Reviewed scope and final proof", ObservedOutcomeRevision: observed, AcknowledgedCancelledWork: ack})
+					return e
+				}
+				before := view()
+				if before.ConclusionImpact.CompletionPolicy != d.CompletionPolicyStrictWork {
+					t.Fatalf("missing authoritative strict impact: %+v", before.ConclusionImpact)
+				}
+				if kind == d.EntityKindOutcome {
+					if before.ConclusionImpact.OpenObjectives != 1 || before.ConclusionImpact.OpenTasks != 1 || len(before.ConclusionImpact.OpenItems) != 2 {
+						t.Fatalf("strict Outcome impact omitted the Objective-owned Task: %+v", before.ConclusionImpact)
+					}
+					if e = achieve(before, nil, true); e != nil {
+						t.Fatalf("optional Objective-owned work should not become an Outcome obligation: %v", e)
+					}
+					return
+				} else if len(before.ConclusionImpact.RequiredOpenWork) != 1 {
+					t.Fatalf("strict Objective impact omitted its Task: %+v", before.ConclusionImpact)
+				}
+				if e = achieve(before, nil, true); e == nil {
+					t.Fatal("strict completion ignored open work")
+				}
+				if after := view(); after.OutcomeRevision != before.OutcomeRevision {
+					t.Fatal("failed completion changed revision")
+				}
+				_, e = service.CancelWorkItem(ctx, command(), a.CancelWorkItemCommand{Scope: scope, WorkItemID: work.Value.ID, ExpectedVersion: work.Value.Version, Reason: "Scope explicitly removed after owner review"})
+				must(e)
+				fresh := view()
+				found := false
+				for _, cap := range fresh.Capabilities {
+					if cap.ActionID == "AchieveOutcome" || cap.ActionID == "AchieveObjective" {
+						if cap.Availability == "available" && cap.ConfirmationKind == "cancelled_scope_exclusion" {
+							found = true
+						}
+					}
+				}
+				if !found {
+					t.Fatal("explicit cancellation confirmation was not reachable")
+				}
+				if len(fresh.ConclusionImpact.CancelledItems) != 1 {
+					t.Fatal("cancelled work hidden from preview")
+				}
+				if e = achieve(fresh, nil, true); e == nil {
+					t.Fatal("cancelled work silently treated as accepted")
+				}
+				ack := []d.EntityRef{work.Value.Ref()}
+				if e = achieve(fresh, ack, false); e == nil {
+					t.Fatal("acknowledgement accepted without pinned revision")
+				}
+				bad := append(append([]d.EntityRef{}, ack...), ack...)
+				if e = achieve(fresh, bad, true); e == nil {
+					t.Fatal("duplicate acknowledgement accepted")
+				}
+				_, e = service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{Scope: scope, Title: "Concurrent optional planning", Priority: d.PriorityNormal})
+				must(e)
+				if e = achieve(fresh, ack, true); e == nil {
+					t.Fatal("stale cancellation acknowledgement accepted after a concurrent change")
+				}
+				fresh = view()
+				must(achieve(fresh, ack, true))
+				stored := view()
+				var conclusion *d.Conclusion
+				if kind == d.EntityKindOutcome {
+					v, e := service.GetOutcome(ctx, scope)
+					must(e)
+					conclusion = v.Value.CurrentConclusion
+				} else {
+					v, e := service.GetObjective(ctx, scope, owner.ID)
+					must(e)
+					conclusion = v.Value.CurrentConclusion
+				}
+				if conclusion == nil || len(conclusion.Obligations.AcknowledgedCancelledWork) != 1 || conclusion.Obligations.AcknowledgedCancelledWork[0] != work.Value.Ref() {
+					t.Fatal("scope acknowledgement was not persisted")
+				}
+				if stored.Header.Lifecycle != "achieved" {
+					t.Fatal("explicit eligible completion failed")
+				}
+			})
+		}
+	}
+}
+
+func TestStrictCompletionDoesNotUseTheLoadedChildPageAsItsObligationSet(t *testing.T) {
+	ctx := context.Background()
+	store := openTestStore(t, filepath.Join(t.TempDir(), "strict-pages.db"))
+	must := func(err error) {
+		t.Helper()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	service, err := a.NewService(store, portClock{now}, &portIDs{})
+	must(err)
+	serial := 100
+	command := func() d.CommandContext { serial++; return sqliteCommandContext(portID(serial).String(), "") }
+	out, err := service.CreateOutcome(ctx, command(), a.CreateOutcomeCommand{NamespaceID: portID(1), Title: "Whole work set", DesiredState: "No omitted direct work", Priority: d.PriorityNormal, CompletionPolicy: d.CompletionPolicyStrictWork, InitialCriteria: []a.InitialCriterion{{Title: "Final result checked", Required: true, VerificationMode: d.VerificationModeAttestation}}})
+	must(err)
+	c := out.Value.Criteria.Items[0]
+	_, err = service.RecordCriterionAssessment(ctx, command(), a.RecordCriterionAssessmentCommand{Owner: out.Value.Ref(), ExpectedVersion: out.Value.Version, CriterionID: c.ID, CriterionRevision: c.Revision, Result: d.AssessmentResultMet, Rationale: "Independently checked the final criterion"})
+	must(err)
+	current, err := service.GetOutcome(ctx, out.Value.Scope())
+	must(err)
+	_, err = service.ActivateOutcome(ctx, command(), a.ActivateOutcomeCommand{Scope: out.Value.Scope(), ExpectedVersion: current.Value.Version})
+	must(err)
+	owner, err := service.CreateObjective(ctx, command(), a.CreateObjectiveCommand{
+		Scope: out.Value.Scope(), Title: "Required work set", Priority: d.PriorityNormal, RequiredForOutcome: true,
+	})
+	must(err)
+	u, err := store.Begin(ctx)
+	must(err)
+	var last d.WorkItem
+	for i := 0; i < 105; i++ {
+		last, err = d.NewWorkItem(portID(2000+i), out.Value.Scope(), "Unfinished direct work", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+		must(err)
+		last.ObjectiveID = &owner.Value.ID
+		must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &last))
+	}
+	must(u.Commit())
+	ownerRef := owner.Value.Ref()
+	page, err := service.GetWorkspaceCards(ctx, out.Value.Scope(), a.WorkspaceCardsQuery{ParentRef: &ownerRef, Limit: 1})
+	must(err)
+	if len(page.Items) != 1 || page.Coverage.Status != "partial" {
+		t.Fatal("fixture does not exercise a partial child page")
+	}
+	view, err := service.GetEntityWorkspaceView(ctx, out.Value.Scope(), a.WorkspaceViewQuery{Subject: a.WorkspaceSubject{Kind: "entity", Ref: ownerRef}})
+	must(err)
+	if len(view.ConclusionImpact.RequiredOpenWork) != 105 {
+		t.Fatal("strict obligations were truncated to a loaded page")
+	}
+	_, err = service.AchieveObjective(ctx, command(), a.AchieveObjectiveCommand{Scope: out.Value.Scope(), ObjectiveID: owner.Value.ID, ExpectedVersion: view.EntityVersion, Reason: "Must fail for work beyond the loaded page"})
+	if err == nil {
+		t.Fatal("unfinished work beyond the page was ignored")
+	}
+}

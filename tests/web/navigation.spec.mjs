@@ -7,7 +7,7 @@ test("Outcome Board and six specialist areas retain the persisted Draft checklis
   await wos.login(page);
   await openOutcome(page);
   await expect(page.locator("#area-tabs button")).toHaveCount(7);
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
   await openViews(page);
   for (const name of ["Outcome Board", "Overview", "Plan", "Work", "Issues", "Evidence", "Activity"])
     await expect(page.locator("#area-tabs").getByRole("button", { name, exact: true })).toBeVisible();
@@ -18,8 +18,8 @@ test("Outcome Board and six specialist areas retain the persisted Draft checklis
     page.getByRole("button", { name: "Activate outcome", exact: true }),
   ).toBeVisible();
   await chooseArea(page, "Work");
-  await expect(page.locator("#outcome-views")).not.toHaveAttribute("open", "");
-  await expect(page.locator("#outcome-views > summary")).toBeFocused();
+  await expect(page.locator('#area-tabs [data-area="overview"]')).toBeVisible();
+  await expect(page.locator('#area-tabs [aria-current="page"]')).toBeFocused();
   await expect(page.getByLabel("Work status", { exact: true })).toBeVisible();
   await expect(page.locator("#view-tabs button")).toHaveCount(2);
   expect(
@@ -62,11 +62,13 @@ test("all Task search and priority filter find an off-page item in 1,001 records
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Searchable Task collection", priority: "normal" });
   for (let i = 0; i < 1001; i++)
     await wos.command("create_work_item", {
       scope,
       title: i === 1000 ? "Unique remote high-priority Task" : "Other Task",
       priority: i === 1000 ? "high" : "normal",
+      objective_id: objective.id,
     });
   await wos.login(page);
   await openOutcome(page);
@@ -86,11 +88,13 @@ test("queued search cannot discard a page after explicit status navigation", asy
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Paginated Task collection", priority: "normal" });
   for (let i = 0; i < 32; i++)
     await wos.command("create_work_item", {
       scope,
       title: `Pagination task ${String(i).padStart(2, "0")}`,
       priority: "normal",
+      objective_id: objective.id,
     });
   await wos.login(page);
   await openOutcome(page);
@@ -122,4 +126,26 @@ test("queued search cannot discard a page after explicit status navigation", asy
   });
   expect(restarted).toBe(0);
   await expect(page.locator(".list-row")).toHaveCount(32);
+});
+
+test('a new Outcome exposes coherent navigation after pending permissions and accepts one Overview click',async({page,wos})=>{
+ const first=await wos.outcome('First navigation context'),second=await wos.outcome('Second navigation context');
+ await wos.login(page);await openOutcome(page,first.value.title);
+ let release,arrive;
+ const gate=new Promise(resolve=>{release=resolve;}),seen=new Promise(resolve=>{arrive=resolve;});
+ await page.route(`**/effective-permissions?outcome_id=${second.value.id}`,async route=>{
+  const response=await route.fetch();expect(response.ok()).toBe(true);arrive();await gate;await route.fulfill({response});
+ });
+ try {
+  await page.locator(`#outcomes [data-outcome-id="${second.value.id}"]`).click();await seen;
+  await expect(page.locator('#workspace-loading')).toBeVisible();
+  await expect(page.locator('#outcome')).not.toBeVisible();
+  const navigation=page.locator('#area-tabs [data-area=overview]').click();
+  release();await navigation;
+  await expect(page.locator('#workspace-loading')).not.toBeVisible();
+  await expect(page.locator('#title')).toHaveText(second.value.title);
+  await expect(page.locator('#area-tabs [data-area=overview]')).toHaveAttribute('aria-current','page');
+  await expect(page.locator('.sidebar')).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`outcome=${second.value.id}.*area=overview`));
+ } finally {release();}
 });

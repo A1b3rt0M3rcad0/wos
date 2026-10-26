@@ -80,7 +80,12 @@ func TestRealWebhookRetryKeepsEventIdentityAndSignature(t *testing.T) {
 	if _, err = service.ConfigureTrigger(ctx, cc, application.ConfigureTriggerCommand{Scope: outcome.Value.Scope(), Name: "Notify", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []domain.ID{endpointID}, SignalType: "product.work_available"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "External actor decides", Lifecycle: domain.WorkItemLifecycleTodo, Priority: domain.PriorityNormal}); err != nil {
+	objective, err := service.CreateObjective(ctx, cc, application.CreateObjectiveCommand{Scope: outcome.Value.Scope(), Title: "Webhook work owner", Priority: domain.PriorityNormal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	cc.CommandID, _ = ids.NewID()
+	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), ObjectiveID: &objective.Value.ID, Title: "External actor decides", Lifecycle: domain.WorkItemLifecycleTodo, Priority: domain.PriorityNormal}); err != nil {
 		t.Fatal(err)
 	}
 	u, _ := url.Parse(target.URL)
@@ -115,7 +120,8 @@ func TestRealWebhookRetryKeepsEventIdentityAndSignature(t *testing.T) {
 	}
 	hold = true
 	mu.Unlock()
-	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), Title: "Shutdown preserves delivery", Lifecycle: domain.WorkItemLifecycleTodo, Priority: domain.PriorityNormal}); err != nil {
+	cc.CommandID, _ = ids.NewID()
+	if _, err = service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{Scope: outcome.Value.Scope(), ObjectiveID: &objective.Value.ID, Title: "Shutdown preserves delivery", Lifecycle: domain.WorkItemLifecycleTodo, Priority: domain.PriorityNormal}); err != nil {
 		t.Fatal(err)
 	}
 	interrupted, cancel := context.WithCancel(ctx)

@@ -44,14 +44,16 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 			must(err)
 			adminCtx := application.WithIdentity(ctx, admin)
 			permissions := []ports.Permission{ports.PermissionStateRead, ports.PermissionSigningKeyEnroll, ports.PermissionSigningKeyRotate, ports.PermissionWorkContractAcquire}
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: permissions}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: permissions}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, clock.Now().Add(time.Hour))
+			must(err)
+			namespaceVersion, err := store.(ports.SecurityAdminVersionReader).ReadSecurityAdminVersion(ctx, ns)
 			must(err)
 			agent, err := sec.Authenticate(ctx, token)
 			must(err)
 			agentCtx := application.WithIdentity(ctx, agent)
 			// A bearer token cannot create its own administrator-authorized enrollment.
-			_, err = sec.SigningMutation(agentCtx, "unauthorized-enrollment-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedNamespaceVersion: 1})
+			_, err = sec.SigningMutation(agentCtx, "unauthorized-enrollment-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "create_enrollment", CredentialID: credential.ID, PrincipalID: agent.PrincipalID, ExpectedNamespaceVersion: namespaceVersion})
 			if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeForbidden {
 				t.Fatalf("token authorized its own enrollment: %v", err)
 			}
@@ -59,7 +61,7 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 			for _, p := range permissions {
 				policy.PermittedOperations = append(policy.PermittedOperations, string(p))
 			}
-			configured, err := sec.SigningMutation(adminCtx, "configure-signing-policy-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: 1, CredentialPolicy: &policy})
+			configured, err := sec.SigningMutation(adminCtx, "configure-signing-policy-1", application.SigningSecurityIntent{NamespaceID: ns, Operation: "set_credential_policy", ExpectedNamespaceVersion: namespaceVersion, ExpectedVersion: 1, CredentialPolicy: &policy})
 			must(err)
 			pub, private, err := ed25519.GenerateKey(rand.Reader)
 			must(err)
@@ -269,7 +271,7 @@ func TestSigningIdentityEnrollmentRotationPolicyAndRevocation(t *testing.T) {
 				t.Fatal("concurrent registration duplicated key or weakened floor")
 			}
 			// A previously authenticated context is revalidated against live credential revocation.
-			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 			if _, err = sec.SigningOperation(agentCtx, "register-key-rotation-1"); err == nil {
 				t.Fatal("revoked bearer read durable receipt")
 			}

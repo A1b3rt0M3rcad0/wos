@@ -1,3 +1,4 @@
+import { createContextualKanban } from './workspace-kanban.js';
 import { message } from "./en-US.js";
 import { renderEditorial, sectionIllustration } from "./editorial.js";
 import { contractViews } from "./contracts-view.js";
@@ -5,7 +6,9 @@ import { request as networkRequest } from "./api-client.js";
 import { createCanvasData, canvasRevision } from "./canvas-data.js";
 import { mountWorkspaceCanvas } from "./workspace-canvas.js";
 import { createWorkspaceInspector } from "./workspace-inspector.js";
-import { renderCanvasContext } from "./canvas-context.js";
+import { renderActionMenu } from "./workspace-action-menu.js";
+import { renderWorkspaceView, renderWorkspaceActions, renderCriterionHistory, workspaceHeaderTitle } from "./workspace-view.js";
+import { workspaceActionName, workspaceActions, commandForSchema } from "./workspace-actions.js";
 import {
   areas,
   areaFor,
@@ -13,7 +16,7 @@ import {
   routeQuery,
   workSections,
 } from "./navigation.js";
-import { humanActions, availableActions, permissionLabels } from "./actions.js";
+import { humanActions, availableActions, permissionLabels, permissionDescriptions } from "./actions.js";
 import { humanForm } from "./human-forms.js";
 import { createIntent, sameScope, reconcileDraft } from "./intents.js";
 import { button as actionButton, conflictComparison } from "./ui.js";
@@ -68,6 +71,7 @@ const state = {
   canvasView: null,
   canvasModel: null,
   canvasSelected: null,
+  entityContextRefresh: null,
   canvasPlan: null,
   formTarget: null,
   formOriginCanvas: false,
@@ -86,6 +90,10 @@ const canvasInspector = createWorkspaceInspector({
     action: $("action-dialog"),
   },
   onClose: (surface, { nextSurface, reason }) => {
+    if (surface === "form" && state.formDrafts?.length && !state.pending && reason !== "reset") {
+      queueMicrotask(() => restorePreparationDraft().catch(report));
+      return;
+    }
     if (
       surface === "form" &&
       (state.pending || state.submitting) &&
@@ -106,12 +114,15 @@ const canvasInspector = createWorkspaceInspector({
         state.canvasSelected &&
         reason !== "reset"
       )
-        showEntity(state.canvasSelected, { preserveCamera: true }).catch(
+        showEntity(state.canvasSelected, { preserveCamera: true, subject: state.workspaceView?.subject }).catch(
           report,
         );
     }
     if (!nextSurface && surface !== "form") {
       state.detailGeneration++;
+      // Closing an embedded read returns to the Kanban item. It must not
+      // dismiss/reveal the spatial selection or pan the background Board.
+      if (contextualKanban.operating) return;
       const selected = state.canvasSelected;
       state.canvasSelected = null;
       if (state.canvasModel)
@@ -120,8 +131,67 @@ const canvasInspector = createWorkspaceInspector({
         const key = `${selected.kind}:${selected.id}`;
         state.canvasView?.focus(key);
       }
-      writeRoute(null);
+      // Explicit dismissal must survive optional reads still restoring a link.
+      // Background resets keep the normal restoration guard.
+      writeRoute(null, false, { allowDuringRestore: reason !== "reset" });
     }
+  },
+});
+const workspaceDisclosures = new Map();
+const contextualKanban = createContextualKanban({
+  workspaceHost: document.querySelector('.canvas-workspace-shell'),
+  operationHost: $('canvas-details'),
+  operationState: () => state.submitting ? 'submitting' : state.pending ? 'uncertain'
+    : $('conflict-review').children.length ? 'conflict' : 'editing',
+  onOperationEnd: () => { if (canvasInspector.isVisible('actions')) closeActions(); },
+  canLeaveOperation: () => {
+    if (state.submitting || state.pending) {
+      notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
+      return false;
+    }
+    if (canvasInspector.isVisible('form')) { $('close-command').click(); return false; }
+    return true;
+  },
+  scopeKey: () => `${state.generation}/${state.namespace}/${state.outcome?.id}/${state.principal}`,
+  requestCards: (body) => request(`${outcomeBase()}/workspace-cards`, { method: 'POST', body: JSON.stringify(body) }),
+  requestTimeline: (subject, cursor) => {
+    const q = new URLSearchParams({kind:subject.ref.kind,entity_id:subject.ref.id,limit:'5',cursor});
+    if (subject.criterion_id) q.set('criterion_id',subject.criterion_id);
+    return request(`${outcomeBase()}/workspace-timeline?${q}`);
+  },
+  readWork: ref => request(`${outcomeBase()}/work-items/${ref.id}`),
+  query: (subject, options) => workspaceQuery(subject,options),
+  onError: report,
+  onReturn: async (view, trigger) => {
+    const label = trigger?.getAttribute('aria-label') || trigger?.textContent.trim();
+    await showEntity(view.subject.ref, {preserveCamera:true,subject:view.subject,expandMap:false});
+    const host = $('canvas-details');
+    const replacement = [...host.querySelectorAll('button')].find(button =>
+      (trigger?.id && button.id === trigger.id) || (label && (button.getAttribute('aria-label') || button.textContent.trim()) === label));
+    if (replacement) {
+      for (let parent = replacement.parentElement; parent && parent !== host; parent = parent.parentElement)
+        if (parent.tagName === 'DETAILS') parent.open = true;
+      return replacement;
+    }
+    return host.querySelector('.workspace-kanban-open') || host.querySelector('.canvas-inspector-detail');
+  },
+  onAction: async (action, capability, view) => {
+    await showEntity(view.subject.ref, { preserveCamera: true, subject: view.subject });
+    if (action === 'read_entity_note') await openWorkspaceNote(capability.entry,state.detailGeneration,capability.options);
+    else if (action === 'more_actions') openCommands();
+    else if (action === 'inspect_execution_handoff') await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration, {executionOnly:true});
+    else if (action) {
+      const fresh = state.workspaceView?.capabilities?.find(item => workspaceActionName(item.action_id) === workspaceActionName(action));
+      if (!fresh) throw Error(copy.text.thisActionIsUnavailableInTheCurrentStatePermission);
+      workspaceAction(action, fresh);
+    }
+    else await loadWorkspaceFullRecord($('detail-content'), view.subject.ref, state.detailGeneration);
+    const actions = $('detail-actions');
+    let back = actions.querySelector('[data-return-kanban]');
+    if (contextualKanban.operating) return;
+    if (!back) { back = actionButton('Return to Kanban', () => {
+      if (allowCanvasNavigation()) contextualKanban.resume().catch(report);
+    }, 'quiet'); back.dataset.returnKanban = ''; actions.prepend(back); }
   },
 });
 function canvasActive() {
@@ -208,6 +278,7 @@ $("outcome-tools").addEventListener("click", (event) => {
 function closeForm() {
   if (canvasInspector.enabled) canvasInspector.close("form");
   if ($("command-dialog").open) $("command-dialog").close();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
 }
 function closeDetail({ clearSelection = true } = {}) {
   state.detailGeneration++;
@@ -227,6 +298,7 @@ function resetCanvas() {
   state.canvasView = null;
   state.canvasModel = null;
   state.canvasSelected = null;
+  state.entityContextRefresh = null;
   state.canvasPlan = null;
   state.canvasPlanLabel = "";
   canvasInspector.closeAll();
@@ -456,7 +528,9 @@ async function request(path, options = {}) {
     } else if ([401, 403].includes(error.status) && state.namespace) {
       invalidateOutcomeSearch();
       $("outcomes").replaceChildren();
-      state.generation++;
+      contextualKanban.reset();
+  workspaceDisclosures.clear();
+  state.generation++;
       state.detailGeneration++;
       state.refreshGeneration++;
       state.permissions = [];
@@ -491,21 +565,42 @@ async function refreshPermissions() {
   );
   if (generation !== state.generation || namespace !== state.namespace) return;
   state.permissions = value.permissions;
-  $("actions").disabled = false;
-  $("developer-tools").hidden = !state.permissions.includes("namespace:admin");
-  $("administration").hidden = !state.permissions.includes("namespace:admin");
-  for (const id of ["create-outcome", "empty-create"]) {
-    $(id).disabled = !state.permissions.includes("outcome:write");
-  }
+  applyPermissionControls();
+}
+function applyPermissionControls() {
+  const identified = Boolean(state.principal);
+  $("actions").disabled = !identified;
+  const hasDeveloperOperation = Object.values(inventory).some(
+    (item) => item.surface === "developer" && state.permissions.includes(item.permission),
+  );
+  const canReadAdministration =
+    state.permissions.includes("credentials:read") &&
+    state.permissions.includes("audit:read");
+  $("developer-tools").hidden = !identified || !hasDeveloperOperation;
+  $("administration").hidden = !identified || !canReadAdministration;
+  for (const id of ["create-outcome", "empty-create"])
+    $(id).disabled = !identified || !state.permissions.includes("outcome:write");
+}
+function placeNotice(onBoard = canvasActive() && !$("outcome").hidden && !$("canvas-view").hidden) {
+  const parent = onBoard ? $("canvas-feedback") : $("main-content");
+  if (onBoard && !$("notice").classList.contains("error") &&
+    [copy.text.partialViewMoreItemsAreAvailableUseLoadMore, copy.text.sharedStateRefreshed]
+      .includes($("notice").textContent))
+    $("notice").textContent = "";
+  if ($("notice").parentElement !== parent)
+    parent.insertBefore($("notice"), parent.firstChild);
 }
 function notice(message, error = false) {
+  // A failed Outcome/workspace transition can leave the previous Board hidden.
+  // Announce its error in the visible main workspace rather than that subtree.
+  placeNotice();
   $("notice").textContent = message;
   $("notice").classList.toggle("error", error);
 }
 function report(error) {
   if (error.discarded || error.name === "AbortError") return;
   notice(
-    error.code === "version_conflict" || error.code === "precondition_failed"
+    error.code === "version_conflict"
       ? copy.text.stateChangedRefreshAndReviewYourIntentBeforeTryingAgain
       : error.message,
     true,
@@ -675,12 +770,38 @@ function acceptCanvas(model) {
   )
     return;
   state.canvasModel = model;
+  state.entityContextRefresh?.();
   const selectedKey = state.canvasSelected
     ? `${state.canvasSelected.kind}:${state.canvasSelected.id}`
     : null;
   if (state.canvasView)
     state.canvasView.update(canvasPresentation(), { selectedKey });
   renderCanvasPlanning();
+  loadCanvasCardSummaries().catch(report);
+}
+async function loadCanvasCardSummaries() {
+  const data = state.canvasData, model = state.canvasModel;
+  if (!data || !model || !canvasActive()) return;
+  const requests = state.cardSummaryRequests ||= new Set();
+  const missing = model.nodes.filter((node) => node.ref && !node.cardSummary &&
+    ["outcome", "objective", "work_item"].includes(node.kind));
+  for (let offset = 0; offset < missing.length; offset += 100) {
+    const refs = missing.slice(offset, offset + 100).map((node) => node.ref);
+    const key = `${model.scopeKey}/${model.revision}/${refs.map((ref) => `${ref.kind}:${ref.id}`).join(",")}`;
+    if (requests.has(key)) continue;
+    requests.add(key);
+    try {
+      const page = await request(`${outcomeBase()}/workspace-cards`, {
+        method: "POST", body: JSON.stringify({ refs }),
+      });
+      if (state.canvasData !== data || !canvasActive()) return;
+      const enriched = data.summaries(page);
+      if (enriched) acceptCanvas(enriched);
+    } catch (error) {
+      requests.delete(key);
+      if (state.canvasData === data) throw error;
+    }
+  }
 }
 async function canvasCreate(kind, parentRef) {
   if (!allowCanvasNavigation()) return;
@@ -818,69 +939,19 @@ async function loadCanvas({ force = false } = {}) {
         : null,
     });
   renderCanvasPlanning();
-}
-async function loadCanvasHistory(host, ref, detailGeneration) {
-  const section = el("section", undefined, "detail-section");
-  section.append(el("h3", "Recorded task activity"));
-  const list = el("ol"),
-    status = el("p", undefined, "field-help");
-  let cursor = "",
-    busy = false,
-    through;
-  const more = actionButton("Load more activity", load, "quiet");
-  section.append(status, list, more);
-  host.querySelector(".canvas-task-history")?.remove();
-  section.classList.add("canvas-task-history");
-  host.append(section);
-  async function load() {
-    if (busy) return;
-    busy = true;
-    more.disabled = true;
-    try {
-      const query = new URLSearchParams({
-        work_item_id: ref.id,
-        limit: "25",
-        descending: "true",
-      });
-      if (cursor) query.set("cursor", cursor);
-      const page = await request(`${outcomeBase()}/work-activity?${query}`);
-      if (detailGeneration !== state.detailGeneration || !section.isConnected)
-        return;
-      const revision = canvasRevision(page.history_through_revision);
-      if (through && through !== revision)
-        throw Error(
-          "Activity changed its historical boundary. Reload this Task.",
-        );
-      through = revision;
-      for (const item of page.items || []) {
-        const row = el("li");
-        row.append(
-          el("strong", display(item.type)),
-          el("p", item.description),
-          el(
-            "small",
-            `${date(item.recorded_at)} · ${item.principal_id || item.actor_ref?.id || "Recorded participant"}`,
-          ),
-        );
-        list.append(row);
-      }
-      cursor = page.next_cursor || "";
-      more.hidden = !cursor;
-      status.textContent = `Recorded activity through revision ${through}. ${cursor ? "More records are available." : list.children.length ? "All records in this traversal are shown." : "No recorded activity in this traversal."} Activity is documentary and does not approve a result.`;
-    } catch (error) {
-      if (detailGeneration !== state.detailGeneration || !section.isConnected)
-        return;
-      report(error);
-      status.textContent = error.message;
-    } finally {
-      busy = false;
-      more.disabled = false;
-    }
-  }
-  await load();
+  loadCanvasCardSummaries().catch(report);
 }
 async function viewCanvasPlan(value) {
   if (!allowCanvasNavigation()) return;
+  const scope = currentScope(), generation = state.generation;
+  if (value.draft === true) {
+    const result = await request(`${outcomeBase()}/roadmaps/${value.roadmap_id}`);
+    if (generation !== state.generation || !sameScope(scope, currentScope())) return;
+    value = { ...value, draft: result.value?.draft, outcome_revision: result.outcome_revision };
+    if (value.draft?.lifecycle !== "open") { notice(copy.text.workspaceNewData, true); return; }
+  }
+  if (!canvasActive()) await navigateArea("canvas");
+  if (generation !== state.generation || !sameScope(scope, currentScope())) return;
   const selection = value.draft
     ? { roadmap_id: value.roadmap_id, draft: true }
     : { roadmap_id: value.roadmap_id, revision_number: value.revision_number };
@@ -944,9 +1015,15 @@ function el(tag, text, className) {
   return node;
 }
 async function connect(namespace) {
+  for (const draft of state.formDrafts || []) draft.humanForm?.dispose();
+  state.formDrafts = [];
+  state.workspaceView = null;
+  state.cardSummaryRequests = new Set();
   invalidateOutcomeSearch();
   $("outcomes").replaceChildren();
   resetCanvas();
+  contextualKanban.reset();
+  workspaceDisclosures.clear();
   state.generation++;
   state.detailGeneration++;
   state.namespace = namespace;
@@ -954,22 +1031,51 @@ async function connect(namespace) {
   state.principal = "";
   state.actorKey = "";
   state.protocol = null;
+  applyPermissionControls();
   $("signed-protocol-info").hidden = true;
   $("connect").hidden = true;
   $("workspace").hidden = false;
-  state.catalog = (await request(`${api}/commands`)).commands;
-  await refreshNamespaceProtocol();
-  await refreshPermissions();
-  const identity = await request(`${api}/identity`).catch(() => ({}));
-  state.principal = identity.principal_id || "";
-  state.actorKey = JSON.stringify([
-    identity.actor_ref?.kind,
-    identity.actor_ref?.provider,
-    identity.actor_ref?.id,
-  ]);
-  await discover();
-  $("context-name").textContent =
-    $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
+  const generation = state.generation;
+  const current = () => generation === state.generation && namespace === state.namespace;
+  $("workspace").inert = true;
+  $("workspace").setAttribute("aria-busy", "true");
+  $("empty").hidden = true;
+  $("workspace-loading").hidden = false;
+  try {
+    const catalog = await request(`${api}/commands`);
+    if (!current()) return;
+    state.catalog = catalog.commands;
+    await refreshNamespaceProtocol();
+    if (!current()) return;
+    const capabilities = await request(`${api}/capabilities`);
+    if (!current()) return;
+    state.workspaceRules = capabilities.workspace_rules;
+    await refreshPermissions();
+    if (!current()) return;
+    const identity = await request(`${api}/identity`);
+    if (!current()) return;
+    state.principal = identity.principal_id || "";
+    state.actorKey = JSON.stringify([
+      identity.actor_ref?.kind,
+      identity.actor_ref?.provider,
+      identity.actor_ref?.id,
+    ]);
+    applyPermissionControls();
+    await discover();
+    if (!current()) return;
+    $("context-name").textContent =
+      $("namespace").selectedOptions[0]?.textContent || copy.text.workspace;
+  } catch (error) {
+    if (current()) report(error);
+    throw error;
+  } finally {
+    if (current()) {
+      $("workspace").inert = false;
+      $("workspace").setAttribute("aria-busy", "false");
+      $("workspace-loading").hidden = true;
+      $("empty").hidden = Boolean(state.outcome);
+    }
+  }
 }
 async function namespaces() {
   const result = await request(`${api}/namespaces`);
@@ -1155,6 +1261,8 @@ async function openOutcome(outcome) {
   const sidebar = document.querySelector(".sidebar");
   const openedFromSidebar = sidebar.contains(document.activeElement);
   resetCanvas();
+  contextualKanban.reset();
+  workspaceDisclosures.clear();
   state.generation++;
   document.querySelector(".sidebar").classList.add("navigation-collapsed");
   $("navigation-toggle").setAttribute("aria-expanded", "false");
@@ -1231,7 +1339,7 @@ async function refresh() {
       const changed = new Error(
         copy.text.stateChangedWhileLoadingRefreshForAConsistentView,
       );
-      changed.code = "precondition_failed";
+      changed.code = "read_snapshot_changed";
       throw changed;
     }
     state.protocol = protocol;
@@ -1247,7 +1355,6 @@ async function refresh() {
         if (e?.ref) state.entities.set(`${e.ref.kind}/${e.ref.id}`, e);
       }
     $("empty").hidden = true;
-    $("outcome").hidden = false;
     $("title").textContent = snapshot.outcome.title;
     $("title").title = snapshot.outcome.title;
     $("state").textContent = display(snapshot.outcome.lifecycle);
@@ -1268,12 +1375,15 @@ async function refresh() {
     renderMetrics();
     renderTabs();
     renderSummary();
+    // Opening an Outcome keeps stale navigation hidden until its permissions
+    // and controls agree; a single Overview click must not be lost in a rebuild.
+    $("outcome").hidden = false;
     applyView();
     await renderSection();
     if (canvasActive()) {
       await loadCanvas({ force: true });
       if (state.canvasSelected && !canvasNavigationLocked())
-        await showEntity(state.canvasSelected, { preserveCamera: true });
+        await showEntity(state.canvasSelected, { preserveCamera: true, subject: state.workspaceView?.subject });
     }
     if (
       generation !== state.generation ||
@@ -1281,9 +1391,13 @@ async function refresh() {
     )
       return;
     notice(
-      snapshot.truncated
-        ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
-        : copy.text.sharedStateRefreshed,
+      // The Board footer announces loaded counts, revision and partial-map
+      // coverage. Avoid repeating routine refresh feedback in another row.
+      canvasActive()
+        ? ""
+        : snapshot.truncated
+          ? copy.text.partialViewMoreItemsAreAvailableUseLoadMore
+          : copy.text.sharedStateRefreshed,
     );
   } catch (error) {
     if (
@@ -1369,42 +1483,20 @@ function renderTabs() {
   const navigation = $("area-tabs");
   const hadNavigationFocus = navigation.contains(document.activeElement);
   navigation.replaceChildren();
-  const views = el("details", undefined, "outcome-views");
+  const views = el("nav", undefined, "outcome-view-options");
   views.id = "outcome-views";
-  views.name = "outcome-header";
-  const viewLabel = el("summary", copy.text.workspaceViews);
-  if (state.area !== "canvas") {
-    viewLabel.append(
-      el("span", ` · ${areas[state.area].label}`, "outcome-current-view"),
-    );
-  }
-  const viewOptions = el("div", undefined, "outcome-view-options");
-  views.append(viewLabel, viewOptions);
+  views.setAttribute('aria-label', 'Specialist views');
+  views.hidden = state.area === 'canvas';
   for (const [area, definition] of Object.entries(areas)) {
-    const b = actionButton(
-      definition.label,
-      () => {
-        navigateArea(area);
-        if (area !== "canvas") {
-          const currentViews = $("outcome-views");
-          currentViews.open = false;
-          currentViews.querySelector("summary").focus({ preventScroll: true });
-        }
-      },
-      "quiet",
-    );
+    const b = actionButton(definition.label, () => navigateArea(area), "quiet");
     b.dataset.area = area;
     b.setAttribute("aria-pressed", String(state.area === area));
     b.classList.toggle("selected", state.area === area);
     if (state.area === area) b.setAttribute("aria-current", "page");
-    (area === "canvas" ? navigation : viewOptions).append(b);
+    (['canvas','overview'].includes(area) ? navigation : views).append(b);
   }
   navigation.append(views);
-  if (hadNavigationFocus)
-    (state.area === "canvas"
-      ? navigation.querySelector('[data-area="canvas"]')
-      : viewLabel
-    ).focus({ preventScroll: true });
+  if (hadNavigationFocus) navigation.querySelector(`[data-area="${state.area}"]`)?.focus({preventScroll:true});
   $("tabs").replaceChildren();
   for (const section of areas[state.area].sections) {
     const b = actionButton(
@@ -1418,9 +1510,9 @@ function renderTabs() {
     $("tabs").append(b);
   }
 }
-function writeRoute(item = undefined, replace = false) {
+function writeRoute(item = undefined, replace = false, { allowDuringRestore = false } = {}) {
   if (item === undefined) item = canvasActive() ? state.canvasSelected : null;
-  if (state.restoringRoute || !state.outcome) return;
+  if ((state.restoringRoute && !allowDuringRestore) || !state.outcome) return;
   const query = routeQuery({
     namespace: state.namespace,
     outcome: state.outcome.id,
@@ -1428,6 +1520,7 @@ function writeRoute(item = undefined, replace = false) {
     section: state.section,
     view: state.view,
     item,
+    subject: state.workspaceView?.subject,
   });
   const target = location.pathname + query;
   if (target === location.pathname + location.search) return;
@@ -1463,7 +1556,7 @@ async function restoreRoute(route) {
     applyView();
     await renderSection();
     if (canvasActive() && !state.canvasModel) await loadCanvas();
-    if (route.item) await showEntity(route.item);
+    if (route.item) await showEntity(route.item, { subject: route.subject });
     else closeDetail();
   } finally {
     state.restoringRoute = false;
@@ -1492,10 +1585,13 @@ function navigateArea(area) {
   renderTabs();
   applyView();
   writeRoute();
-  (canvasActive() ? loadCanvas() : renderSection()).catch(report);
+  return (canvasActive() ? loadCanvas() : renderSection()).catch(report);
 }
 function applyView() {
   const isCanvas = canvasActive();
+  // Keep the original live region and its announcements. On the Board it is
+  // ordinary workspace feedback, outside the map and inspector, never a toast.
+  placeNotice(isCanvas);
   const refresh = $("refresh");
   const activeHeaderControl = document.activeElement;
   const leavingOutcomeTools =
@@ -1572,7 +1668,7 @@ function applyView() {
       .querySelector('[data-area="canvas"]')
       ?.focus({ preventScroll: true });
   else if (leavingOutcomeTools)
-    $("outcome-views").querySelector("summary").focus({ preventScroll: true });
+    $("area-tabs").querySelector('[data-area="overview"]')?.focus({ preventScroll: true });
 }
 function navigateSection(section) {
   if (!allowCanvasNavigation()) return;
@@ -1762,19 +1858,19 @@ function renderSummary() {
           state.selected = { ...state.outcome, _kind: "outcome" };
           openCommands("add_criterion");
         },
-        "planning:write",
+        "criterion:define",
       ],
       [
         copy.text.addAnObjective,
         c.objectives > 0,
         () => createItem("create_objective"),
-        "planning:write",
+        "objective:create",
       ],
       [
         copy.text.addATaskOptional,
         c.work_items > 0,
         () => createItem("create_work_item"),
-        "work:write",
+        "task:create",
       ],
       [
         copy.text.createARoadmapOptional,
@@ -2269,9 +2365,17 @@ function timelineView(item) {
       "p",
       `${item.actor_ref?.id || item.principal_id} · ${kindName(item.actor_ref?.kind || "human")} · Revision ${item.outcome_revision}`,
     ),
-    referenceButton(item.entity_ref),
+    referenceButton(item.subject_ref || item.entity_ref),
     recorded,
   );
+  if (item.origin) body.append(el("small", item.origin === "entity_note" ? copy.text.workspaceDocumentaryUpdate
+    : item.origin === "work_activity" ? copy.text.workspaceContractActivity : copy.text.workspaceDomainEvent));
+  if (item.description) body.append(el("p", item.description));
+  if (item.occurred_at) body.append(el("small", `${copy.text.workspaceOccurredAt}: ${date(item.occurred_at)}`));
+  if (item.origin === "entity_note") body.append(actionButton(copy.text.workspaceReadFullUpdate, () => {
+    showEntity(item.subject_ref, { subject: item.criterion_id ? { kind: "criterion", ref: item.subject_ref,
+      criterion_id: item.criterion_id } : undefined }).then(() => openWorkspaceNote(item, state.detailGeneration)).catch(report);
+  }, "quiet"));
   row.append(marker, body);
   return row;
 }
@@ -2418,13 +2522,16 @@ async function sectionData(section, cursor = "", append = false) {
   };
   let items, next;
   if (section === "timeline") {
-    const page = consistent(
-      await request(
-        `${outcomeBase()}/timeline?limit=25${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
-      ),
+    const page = await request(
+      `${outcomeBase()}/workspace-timeline?limit=20${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
     );
+    const through = cached?.historyThroughRevision || revision;
+    if (canvasRevision(page.history_through_revision) !== canvasRevision(through))
+      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
     items = page.items;
     next = page.next_cursor;
+    return { items: append ? [...(cached?.items || []), ...items] : items, next,
+      historyThroughRevision: page.history_through_revision, hasNewerEntries: page.has_newer_entries };
   } else if (section === "graph") {
     const page = consistent(
       await request(
@@ -2482,7 +2589,7 @@ async function searchedTasks(cursor = "", append = false) {
     const e = Error(
       copy.text.stateChangedWhileLoadingSearchResultsRefreshTheSearch,
     );
-    e.code = "precondition_failed";
+    e.code = "read_snapshot_changed";
     throw e;
   }
   const items = results.map((r, i) => ({ ...r.value, ref: page.items[i].ref }));
@@ -2583,6 +2690,8 @@ async function renderSection(cursor = "", append = false) {
   );
   content.append(heading);
   content.append(el("p", sectionGuidance(), "collection-guidance"));
+  if (section === "timeline" && data.hasNewerEntries)
+    content.append(el("p", copy.text.workspaceNewActivity, "section-note"));
   if (state.workFilterReset)
     content.append(
       el("p", copy.text.workspaceContractFilterReset, "section-note"),
@@ -2657,7 +2766,8 @@ async function renderSection(cursor = "", append = false) {
       list.append(row);
       rows++;
     } else if (section === "timeline" && item.event_type) {
-      const day = String(item.recorded_at || "").slice(0, 10);
+      const day = item.recorded_at ? new Intl.DateTimeFormat("en-US", { timeZone: "UTC", dateStyle: "long" })
+        .format(new Date(item.recorded_at)) : "";
       if (!activityGroup || activityDate !== day) {
         activityDate = day;
         activityGroup = el("section", undefined, "activity-day");
@@ -3000,76 +3110,11 @@ function readable(value, key = "", depth = 0, authored = false) {
   }
   return list;
 }
-function conclusionView(conclusion) {
-  const card = el("div", undefined, "conclusion-card");
-  const status = conclusion.lifecycle_result || "achieved";
-  card.append(
-    badge(status),
-    el("p", conclusion.reason),
-    el(
-      "small",
-      `${conclusion.actor_ref?.id || conclusion.principal_id} · ${date(conclusion.concluded_at)}`,
-    ),
-  );
-  if (conclusion.assessments?.length)
-    card.append(
-      el(
-        "p",
-        message(
-          "assessmentsUsedInTheConclusion",
-          conclusion.assessments.length,
-        ),
-      ),
-    );
-  if (conclusion.obligations?.required_objective_ids?.length)
-    card.append(
-      el(
-        "p",
-        message(
-          "requiredObjectivesVerified",
-          conclusion.obligations.required_objective_ids.length,
-        ),
-      ),
-    );
-  return card;
-}
-function planNodes(nodes) {
-  const box = el("div");
-  for (const [i, n] of [...(nodes || [])]
-    .sort((a, b) => a.position - b.position)
-    .entries()) {
-    const row = el(
-      "div",
-      undefined,
-      `plan-node${n.parent_node_key ? copy.text.planNodeChild : ""}`,
-    );
-    const body = el("div");
-    body.append(
-      el("strong", n.title),
-      el(
-        "small",
-        `${display(n.node_type)}${n.parent_node_key ? ` · ${(nodes || []).find((parent) => parent.node_key === n.parent_node_key)?.title || n.parent_node_key}` : ""}`,
-      ),
-    );
-    if (n.target_ref) body.append(referenceButton(n.target_ref));
-    if (n.planned_start || n.planned_end)
-      body.append(
-        el("small", `${date(n.planned_start)} → ${date(n.planned_end)}`),
-      );
-    row.append(
-      el("span", String(i + 1).padStart(2, "0"), "plan-node-number"),
-      body,
-    );
-    box.append(row);
-  }
-  if (!nodes?.length) box.append(el("p", copy.text.thisRoadmapHasNoItemsYet));
-  return box;
-}
 function effectiveActions(
   context = state.criterion ? "criterion" : state.selected?._kind || "outcome",
   entity = state.selected || state.outcome || {},
 ) {
-  return availableActions({
+  const actions = availableActions({
     context,
     entity,
     criterion: state.criterion,
@@ -3077,7 +3122,13 @@ function effectiveActions(
     permissions: state.permissions,
     principal: state.principal,
     inventory,
+    outcome: state.outcome,
   });
+  const subject = state.workspaceView?.subject;
+  return subject && subject.ref.id === entity.id && subject.ref.kind === (entity._kind || context)
+    && (subject.kind === "criterion" ? context === "criterion" : context !== "criterion")
+    ? workspaceActions(state.workspaceView, actions)
+    : actions;
 }
 function quickActions(kind, entity) {
   const container = el("div", undefined, "quick-actions");
@@ -3100,395 +3151,425 @@ function quickActions(kind, entity) {
   if (advanced.children.length > 1) container.append(advanced);
   return container;
 }
-async function showEntity(
-  ref,
-  { internal = false, preserveCamera = false } = {},
-) {
+async function workspaceQuery(subject, options = {}) {
+  return request(`${outcomeBase()}/workspace-view`, {
+    method: "POST", body: JSON.stringify({ subject, include_activity:false, ...options }),
+  });
+}
+async function showEntity(ref, { internal = false, preserveCamera = contextualKanban.isOpen, subject, expandMap = !contextualKanban.isOpen } = {}) {
   if (!internal && !allowCanvasNavigation()) return;
   const detailGeneration = ++state.detailGeneration;
-  const generation = state.generation;
-  const isCanvas = canvasActive();
+  const generation = state.generation, isCanvas = canvasActive();
+  state.entityContextRefresh = null;
+  const selection = subject || { kind: "entity", ref };
+  const current = () => generation === state.generation && detailGeneration === state.detailGeneration;
   try {
-    if (
-      ref.namespace_id !== state.namespace ||
-      ref.outcome_id !== state.outcome.id
-    ) {
-      notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true);
-      return;
+    if (ref.namespace_id !== state.namespace || ref.outcome_id !== state.outcome.id) {
+      notice(copy.text.openTheCorrespondingOutcomeToViewThisItem, true); return;
     }
-    const path =
-      ref.kind === "outcome"
-        ? outcomeBase()
-        : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
-    const result = await request(path);
-    if (
-      generation !== state.generation ||
-      detailGeneration !== state.detailGeneration
-    )
-      return;
-    let operationalState, context, attention;
-    if (ref.kind === "work_item") {
-      const needsAttention = isCanvas || usesWorkContracts();
-      const projection = needsAttention
-        ? await request(`${path}/attention`)
-        : await request(`${path}/operational-state`);
-      if (needsAttention) attention = projection;
-      if (isCanvas) {
-        context = await request(`${path}/context`);
-        if (
-          generation !== state.generation ||
-          detailGeneration !== state.detailGeneration
-        )
-          return;
-        if (
-          canvasRevision(context.outcome_revision) !==
-          canvasRevision(result.outcome_revision)
-        )
-          throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
-      }
-      if (
-        generation !== state.generation ||
-        detailGeneration !== state.detailGeneration
-      )
-        return;
-      if (
-        canvasRevision(result.outcome_revision) !==
-        canvasRevision(projection.outcome_revision)
-      )
-        throw Error(copy.text.thisTaskChangedWhileLoadingRefreshToReviewA);
-      operationalState = needsAttention
-        ? attention.operational_state
-        : projection.state;
-    }
-    if (generation !== state.generation) return;
-    if (detailGeneration !== state.detailGeneration) return;
-    if (
-      isCanvas &&
-      state.canvasModel &&
-      canvasRevision(result.outcome_revision) !== state.canvasModel.revision
-    )
-      throw Error(copy.text.stateChangedWhileLoadingRefreshForAConsistentView);
-    state.detailRevision = result.outcome_revision;
-    const entity = {
-      ...(result.value || result),
-      ...(operationalState ? { _operational_state: operationalState } : {}),
-    };
-    const focusWasInDetails =
-      isCanvas &&
-      canvasInspector.isVisible("detail") &&
-      $("canvas-details").contains(document.activeElement);
+    const view = await workspaceQuery(selection);
+    if (!current()) return;
+    if (JSON.stringify(state.workspaceView?.subject) !== JSON.stringify(view.subject)) workspaceDisclosures.clear();
+    state.workspaceView = view;
+    state.detailRevision = view.outcome_revision;
     state.contractView = null;
     state.submission = null;
-    state.selected = { ...entity, _kind: ref.kind };
+    state.criterion = selection.kind === "criterion" ? view.entity : null;
+    const owner = selection.kind === "entity" ? view.entity : { id: ref.id, version: view.entity_version };
+    state.selected = { ...owner, version: view.entity_version, _kind: ref.kind,
+      ...(view.attention?.operational_state ? { _operational_state: view.attention.operational_state } : {}) };
     if (isCanvas) state.canvasSelected = ref;
-    state.criterion = null;
-    state.entities.set(`${ref.kind}/${ref.id}`, {
-      ref,
-      title: entity.title || entity.name || entity.description,
-      lifecycle: entity.lifecycle,
-    });
-    $("detail-kind").textContent = `${kindName(ref.kind)} / ${shortId(ref.id)}`;
-    $("detail-title").textContent =
-      entity.title || entity.name || entity.description || human(ref.kind);
+    state.entities.set(`${ref.kind}/${ref.id}`, { ref, title: view.header.title, lifecycle: view.header.lifecycle });
+    $("detail-kind").textContent = `${kindName(view.header.kind)} / ${shortId(selection.criterion_id || ref.id)}`;
+    $("detail-title").textContent = workspaceHeaderTitle(view);
     const detail = $("detail-content");
-    detail.replaceChildren();
-    const status = el("div", undefined, "detail-status");
-    if (entity.lifecycle) status.append(badge(entity.lifecycle));
-    if (entity.priority)
-      status.append(
-        el("span", message("prioritye9f4", display(entity.priority)), "badge"),
-      );
-    if (entity.archived_at)
-      status.append(el("span", copy.text.archived, "badge"));
-    detail.append(status);
-    if (entity._operational_state) {
-      const readiness = el("section", undefined, "detail-section");
-      readiness.append(
-        el("h3", copy.text.operationalReadiness),
-        badge(entity._operational_state.display_state),
-        el(
-          "p",
-          usesWorkContracts()
-            ? copy.text.workspaceContractAuthority
-            : message(
-                "reservationAuthorityEvaluated",
-                display(entity._operational_state.lease_status),
-                date(entity._operational_state.evaluated_at),
-              ),
-        ),
-      );
-      if (entity._operational_state.readiness_reasons?.length)
-        readiness.append(
-          el(
-            "p",
-            entity._operational_state.readiness_reasons
-              .map(display)
-              .join(copy.text.message),
-          ),
-        );
-      detail.append(readiness);
-    }
-    const description =
-      entity.desired_state ||
-      entity.description ||
-      entity.proposal ||
-      entity.result_summary ||
-      entity.reason ||
-      entity.rationale;
-    if (description) detail.append(el("p", description, "detail-description"));
-    const props = el("dl", undefined, "detail-properties");
-    for (const key of [
-      "created_at",
-      "updated_at",
-      "captured_at",
-      "required_for_outcome",
-      "not_before",
-      "severity",
-      "blocked_ref",
-      "cause_ref",
-      "resolution_summary",
-      "parent_objective_id",
-      "verification_mode",
-      "uri",
-      "source_ref",
-      "objective_id",
-      "producer_ref",
-      "assignee_refs",
-      "target_ref",
-      "relation_type",
-      "strength",
-      "evidence_id",
-      "stance",
-      "criterion_id",
-    ]) {
-      if (
-        entity[key] === undefined ||
-        entity[key] === null ||
-        entity[key] === ""
-      )
-        continue;
-      const dd = el("dd");
-      if (["objective_id", "parent_objective_id"].includes(key))
-        dd.append(
-          referenceButton({ ...ref, kind: "objective", id: entity[key] }),
-        );
-      else if (key === "uri") {
-        try {
-          const u = new URL(entity[key]);
-          if (["https:", "http:"].includes(u.protocol)) {
-            const a = el("a", entity[key]);
-            a.href = u.href;
-            a.target = "_blank";
-            a.rel = copy.text.noopenerNoreferrer;
-            dd.append(a);
-          } else dd.append(el("span", entity[key]));
-        } catch {
-          dd.append(el("span", entity[key]));
-        }
-      } else dd.append(readable(entity[key], key));
-      props.append(el("dt", human(key)), dd);
-    }
-    detail.append(props);
-    if (entity.current_lease) {
-      const lease = el("section", undefined, "detail-section");
-      lease.append(
-        el("h3", copy.text.executionReservation),
-        el(
-          "p",
-          message(
-            "expires",
-            entity.current_lease.actor_ref?.id ||
-              entity.current_lease.principal_id,
-            date(entity.current_lease.expires_at),
-          ),
-        ),
-      );
-      detail.append(lease);
-    }
-    if (isCanvas && ref.kind === "work_item") {
-      const contextHost = el("div");
-      detail.append(contextHost);
-      renderCanvasContext(contextHost, {
-        entity,
-        context,
-        attention,
+    let activityLoading = false;
+    const render = () => {
+      const hadInspectorFocus = isCanvas && $("canvas-details").contains(document.activeElement);
+      renderWorkspaceView(detail, {
+        view: state.workspaceView,
+        principalId: state.principal,
+        disclosures: workspaceDisclosures,
+        onActivity: async () => {
+          if (activityLoading) return; activityLoading = true;
+          try {
+            const next = await workspaceQuery(selection, {include_activity:true});
+            if (!current()) return;
+            if (next.outcome_revision !== state.workspaceView.outcome_revision) { notice(copy.text.workspaceNewData, true); return; }
+            state.workspaceView.activity = next.activity;
+            state.workspaceView.coverage.activity = next.coverage.activity; render();
+          } catch(error) { if(current()) report(error); }
+          finally { activityLoading = false; }
+        },
+        onKanban: isCanvas ? (view) => contextualKanban.open(view).catch(report) : undefined,
+        onVerify: isCanvas ? (view) => contextualKanban.open(view, {mode:'criteria'}).catch(report) : undefined,
+        onMaterial: isCanvas ? (view) => contextualKanban.open(view, {mode:'materials'}).catch(report) : undefined,
         onReference: (target) => showEntity(target).catch(report),
-        onHistory: (target) =>
-          loadCanvasHistory(contextHost, target, detailGeneration),
-      });
-      const model = state.canvasData?.context(context, { attention });
-      if (model) acceptCanvas(model);
-    }
-    if (ref.kind === "work_item" && entity.contracts_enabled) {
-      await contractSection(detail, entity, detailGeneration);
-      if (detailGeneration !== state.detailGeneration) return;
-    }
-    const criteria = entity.criteria?.items || [];
-    if (criteria.length) {
-      const group = el("section", undefined, "detail-section");
-      group.append(el("h3", copy.text.successCriteria));
-      for (const criterion of criteria) {
-        const button = el("button", undefined, copy.text.itemCriterionItem);
-        button.append(
-          el("strong", criterion.title),
-          el(
-            "small",
-            message(
-              "revision51f7",
-              criterion.required ? copy.text.required : copy.text.optional,
-              display(criterion.verification_mode),
-              criterion.criterion_revision,
-            ),
-          ),
-        );
-        const assessment = entity.criteria.current_assessments?.[criterion.id];
-        if (assessment) button.append(badge(assessment.result));
-        button.append(el("small", copy.text.reviewAssessment));
-        button.onclick = () => {
+        onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report),
+        onPlan: (plan) => viewCanvasPlan(plan),
+        onAction: (action, capability) => workspaceAction(action, capability),
+        canManageIssueTaskRelations: isCanvas
+          && state.outcome?.lifecycle === "active"
+          && state.permissions.includes(inventory.relate_issue_to_work_item.permission),
+        onIssueTaskRelation: () => {
           if (!allowCanvasNavigation()) return;
-          state.criterion = criterion;
-          openCommands("record_criterion_assessment");
-        };
-        group.append(button);
-      }
-      detail.append(group);
-    }
-    if (entity.conclusion) {
-      const group = el("section", undefined, "detail-section");
-      group.append(
-        el("h3", copy.text.currentConclusion),
-        conclusionView(entity.conclusion),
-      );
-      detail.append(group);
-    }
-    if (entity.conclusion_history?.length) {
-      const history = el("details");
-      history.append(el("summary", copy.text.previousConclusions));
-      for (const c of entity.conclusion_history)
-        history.append(conclusionView(c));
-      detail.append(history);
-    }
-    if (ref.kind === "roadmap") {
-      if (entity.draft) {
-        const draft = el("details");
-        draft.open = true;
-        draft.append(
-          el(
-            "summary",
-            message("draftVersion3d05", entity.draft.draft_version),
-          ),
-          planNodes(entity.draft.nodes),
-        );
-        if (isCanvas && entity.draft.lifecycle === "open")
-          draft.append(
-            actionButton(
-              "View draft on Outcome Board",
-              () =>
-                viewCanvasPlan({
-                  roadmap_id: entity.id,
-                  draft: entity.draft,
-                  outcome_revision: result.outcome_revision,
-                }),
-              "quiet",
-            ),
-          );
-        detail.append(draft);
-      }
-      for (const revision of entity.revisions || []) {
-        const history = el("details");
-        history.open = revision === entity.revisions.at(-1);
-        history.append(
-          el(
-            "summary",
-            message(
-              "revision0c81",
-              revision.revision_number,
-              revision.reason || copy.text.publishedRoadmap,
-            ),
-          ),
-          planNodes(revision.nodes),
-        );
-        if (isCanvas)
-          history.append(
-            actionButton(
-              `View revision ${revision.revision_number} on Outcome Board`,
-              () =>
-                viewCanvasPlan({
-                  roadmap_id: entity.id,
-                  revision_number: revision.revision_number,
-                }),
-              "quiet",
-            ),
-          );
-        detail.append(history);
-      }
-    }
-    const tech = el("details", undefined, "technical");
-    tech.append(
-      el("summary", copy.text.technicalDetailsAndAudit),
-      el("pre", JSON.stringify(entity, null, 2)),
-    );
-    detail.append(tech);
-    $("detail-actions").querySelector(".quick-actions")?.remove();
-    $("detail-actions").prepend(quickActions(ref.kind, entity));
-    if (isCanvas) {
-      if (
-        !preserveCamera ||
-        !canvasInspector.isVisible("detail") ||
-        (focusWasInDetails && document.activeElement === document.body)
-      )
-        canvasInspector.showDetails();
-      if (
-        [
-          "outcome",
-          "objective",
-          "work_item",
-          "issue",
-          "blocker",
-          "evidence",
-          "artifact",
-          "decision",
-        ].includes(ref.kind)
-      ) {
-        const model = await state.canvasData?.expand(ref);
-        if (
-          detailGeneration !== state.detailGeneration ||
-          generation !== state.generation
-        )
-          return;
-        if (model) acceptCanvas(model);
-      }
-      state.canvasView?.update(canvasPresentation(), {
-        selectedKey: `${ref.kind}:${ref.id}`,
+          if (state.outcome?.lifecycle !== "active"
+            || !state.permissions.includes(inventory.relate_issue_to_work_item.permission)) {
+            notice(copy.text.issueTaskLinkUnavailable, true);
+            return;
+          }
+          openCommands("relate_issue_to_work_item");
+        },
+        onRemoveIssueTaskRelation: async (edge) => {
+          if (!allowCanvasNavigation()) return;
+          if (state.outcome?.lifecycle !== "active"
+            || !state.permissions.includes(inventory.remove_issue_work_item_relation.permission)) {
+            notice(copy.text.issueTaskLinkUnavailable, true);
+            return;
+          }
+          const response = await request(`${outcomeBase()}/relations/${edge.id}`);
+          const relation = response.value || response;
+          const endpoints = [relation.source_ref, relation.target_ref];
+          const focal = state.workspaceView?.subject?.ref;
+          if (relation.id !== edge.id || relation.relation_type !== "relates_to"
+            || relation.lifecycle !== "active" || !relation.version
+            || !((endpoints[0]?.kind === "issue" && endpoints[1]?.kind === "work_item")
+              || (endpoints[0]?.kind === "work_item" && endpoints[1]?.kind === "issue"))
+            || !endpoints.some((ref) => ref?.kind === focal?.kind && ref?.id === focal?.id
+              && ref?.namespace_id === focal?.namespace_id && ref?.outcome_id === focal?.outcome_id)) {
+            notice(copy.text.issueTaskLinkChangedRefresh, true);
+            await showEntity(focal, { preserveCamera: true }).catch(report);
+            return;
+          }
+          state.selected = { ...relation, _kind: "relation" };
+          openCommands("remove_issue_work_item_relation");
+        },
+        onCriterion: (definition, ownerRef = ref) => showEntity(ownerRef, {
+          subject: { kind: "criterion", ref: ownerRef, criterion_id: definition.id },
+          preserveCamera: true,
+        }).catch(report),
+        onTimelineMore: (page) => loadWorkspaceTimeline(page, selection, detailGeneration, render),
+        onNote: (entry, options) => openWorkspaceNote(entry, detailGeneration, options),
+        onFullRecord: () => loadWorkspaceFullRecord(detail, ref, detailGeneration),
+        onMoreActions: () => openCommands(),
+        onFacetMore: async (facet, cursor) => {
+          try {
+            const next = await workspaceQuery(selection, { [`${({ criteria: "criteria", roadmap: "roadmap", relationships: "relation", required_objectives: "required_objectives" })[facet] || "relation"}_cursor`]: cursor });
+            if (!current()) return;
+            if (canvasRevision(next.outcome_revision) !== canvasRevision(view.outcome_revision)) {
+              notice(copy.text.workspaceNewData, true); return;
+            }
+            if (facet === "criteria") state.workspaceView.criteria.push(...next.criteria);
+            else if (facet === "required_objectives") state.workspaceView.required_objectives.push(...next.required_objectives);
+            else if (facet === "roadmap") state.workspaceView.roadmap.revisions.push(...next.roadmap.revisions);
+            else {
+              state.workspaceView.relationships.items.push(...next.relationships.items);
+              state.workspaceView.relationships.nodes.push(...next.relationships.nodes);
+            }
+            state.workspaceView.coverage[facet] = next.coverage[facet]; render();
+          } catch (error) { if (current()) report(error); }
+        },
       });
-      if (!preserveCamera) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
-      if (!preserveCamera || !canvasInspector.isVisible("detail"))
-        canvasInspector.showDetails();
-      if (!preserveCamera) revealCanvasInspector();
-    } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
+      $("detail-actions").querySelector(".quick-actions")?.remove();
+      let actions = $("detail-actions").querySelector(".workspace-actions");
+      if (!actions) { actions = el("div", undefined, "workspace-actions"); $("detail-actions").prepend(actions); }
+      renderWorkspaceActions(actions, {
+        view: state.workspaceView,
+        primaryAlreadyPresent: state.workspaceView.subject.kind === "entity" && ((isCanvas && ["outcome", "objective"].includes(state.workspaceView.subject.ref.kind)) || ["done", "cancelled", "achieved", "failed", "abandoned"].includes(state.workspaceView.header.lifecycle)),
+        onAction: (action, capability) => workspaceAction(action, capability),
+      });
+      $("entity-actions").textContent = copy.text.workspaceMore;
+      $("entity-actions").dataset.actionId = "more_actions";
+      if (!contextualKanban.suspended) $("detail-actions").querySelector('[data-return-kanban]')?.remove();
+      // Replacing the previous detail removes its focused action. Keep keyboard
+      // navigation in the restored inspector so Escape still closes it.
+      if (hadInspectorFocus && !$("canvas-details").contains(document.activeElement))
+        $("canvas-details").querySelector('.canvas-inspector-detail')?.focus({preventScroll:true});
+    };
+    render();
+    // The authorized inspector already selected this record. Optional map
+    // enrichment may need a newer Board revision; it must not leave its URL
+    // pointing to the previously inspected record when that read fails.
     writeRoute(ref);
+    if (isCanvas) {
+      if (!preserveCamera || !canvasInspector.isVisible("detail")) canvasInspector.showDetails();
+      // Expand only on explicit selection. This enriches the Board without
+      // replacing the coherent inspector projection or moving its focus.
+      const expansionFocus = document.activeElement;
+      const graphRoot = ["outcome", "objective", "work_item", "issue", "blocker", "evidence", "artifact", "decision"].includes(ref.kind);
+      // Kanban operations hydrate their authorized record independently. A
+      // stale optional spatial graph must not block a legitimate form/retry.
+      const model = graphRoot && expandMap ? await state.canvasData?.expand(ref) : null;
+      if (!current()) return;
+      if (model) acceptCanvas(model);
+      state.canvasView?.update(canvasPresentation(), { selectedKey: `${ref.kind}:${ref.id}` });
+      const focusMoved = document.activeElement !== expansionFocus && document.activeElement !== document.body;
+      if (!preserveCamera && !focusMoved) state.canvasView?.focus(`${ref.kind}:${ref.id}`);
+      if (!preserveCamera && !focusMoved) revealCanvasInspector();
+    } else if (!$("detail-dialog").open) $("detail-dialog").showModal();
     return state.selected;
   } catch (error) {
-    if (
-      generation !== state.generation ||
-      detailGeneration !== state.detailGeneration
-    ) {
-      error.discarded = true;
-      error.name = "AbortError";
-    }
+    if (!current()) { error.discarded = true; error.name = "AbortError"; }
     throw error;
   }
 }
-$("close-detail").onclick = () => closeDetail();
+async function loadWorkspaceTimeline(page, subject, detailGeneration, render) {
+  if (!page?.next_cursor) return;
+  const q = new URLSearchParams({ kind: subject.ref.kind, entity_id: subject.ref.id, limit: "5", cursor: page.next_cursor });
+  if (subject.criterion_id) q.set("criterion_id", subject.criterion_id);
+  try {
+    const next = await request(`${outcomeBase()}/workspace-timeline?${q}`);
+    if (detailGeneration !== state.detailGeneration) return;
+    state.workspaceView.activity = { ...next, items: [...(state.workspaceView.activity?.items || []), ...next.items] };
+    state.workspaceView.coverage.activity = { status: next.next_cursor ? "partial" : "complete",
+      returned_count: state.workspaceView.activity.items.length, next_cursor: next.next_cursor };
+    render();
+  } catch (error) { if (detailGeneration === state.detailGeneration) report(error); }
+}
+async function openWorkspaceNote(entry, detailGeneration, { mode } = {}) {
+  try {
+    const id = entry.source?.id || entry.id;
+    const note = await request(`${outcomeBase()}/entity-notes/${id}`);
+    if (detailGeneration !== state.detailGeneration) return;
+    if (mode === "correct" && note.principal_id === state.principal) {
+      await correctWorkspaceNote(note); return;
+    }
+    const host = el("section", undefined, "workspace-full-note");
+    host.append(el("h3", display(note.type)), el("p", note.body, "authored-text"),
+      el("small", `${note.actor_ref?.id || note.principal_id} · ${date(note.recorded_at)}`));
+    if (note.principal_id === state.principal) host.append(actionButton(copy.text.workspaceCorrectUpdate, () => {
+      correctWorkspaceNote(note).catch(report);
+    }, "quiet"));
+    $("detail-content").append(host); host.tabIndex = -1; host.focus();
+  } catch (error) { if (detailGeneration === state.detailGeneration) report(error); }
+}
+async function correctWorkspaceNote(note) {
+  const subject = note.criterion_id ? { kind: "criterion", ref: note.subject_ref, criterion_id: note.criterion_id }
+    : { kind: "entity", ref: note.subject_ref };
+  if (JSON.stringify(state.workspaceView?.subject) !== JSON.stringify(subject))
+    await showEntity(note.subject_ref, { internal: true, preserveCamera: true, subject });
+  state.correctionNote = note;
+  openCommands("append_entity_note");
+}
+async function loadWorkspaceFullRecord(host, ref, detailGeneration, {executionOnly = false} = {}) {
+  try {
+    const path = ref.kind === "outcome" ? outcomeBase() : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
+    const result = await request(path);
+    if (detailGeneration !== state.detailGeneration) return;
+    if (canvasRevision(result.outcome_revision) !== canvasRevision(state.workspaceView.outcome_revision)) {
+      notice(copy.text.workspaceNewData, true); return;
+    }
+    const entity = result.value || result;
+    if (executionOnly) {
+      if (ref.kind === 'work_item' && entity.contracts_enabled) {
+        const section = el('section', undefined, 'workspace-execution-continuation');
+        host.append(section);
+        await contractSection(section, entity, detailGeneration);
+        if (detailGeneration === state.detailGeneration) { section.tabIndex = -1; section.focus(); }
+      }
+      return;
+    }
+    if (state.workspaceView.subject.kind === "criterion") {
+      const history = el("section", undefined, "workspace-criterion-history");
+      renderCriterionHistory(history, { owner: entity, criterionId: state.workspaceView.subject.criterion_id,
+        onReference: (ref) => showEntity(ref).catch(report) });
+      host.append(history);
+    }
+    const section = el("details", undefined, "technical workspace-full-record"); section.open = true;
+    section.append(el("summary", copy.text.workspaceFullRecord), readable(entity)); host.append(section);
+    if (ref.kind === "work_item" && entity.contracts_enabled) await contractSection(section, entity, detailGeneration);
+  } catch (error) { if (detailGeneration === state.detailGeneration) report(error); }
+}
+const preparationActions = new Set(["add_criterion", "record_criterion_assessment", "append_entity_note"]);
+function showPreparation(error, pending) {
+  const inForm = canvasInspector.isVisible("form") || $("command-dialog").open;
+  const host = inForm ? $("conflict-review") : $("detail-content");
+  const section = el("section", undefined, "workspace-preparation");
+  section.append(el("h3", copy.text.workspacePreparationTitle), el("p", error.message));
+  const details = error.details || {};
+  if (details.reason_code) section.append(el("p", display(details.reason_code), "field-help"));
+  for (const ref of details.related_refs || []) {
+    const control = referenceButton(ref);
+    if (inForm) control.onclick = () => inspectPreparationReference(section, { kind: "entity", ref }).catch(report);
+    section.append(control);
+  }
+  const remedies = details.remedies?.length ? details.remedies :
+    details.reason_code === "missing_required_criterion" ? [{ action_id: "add_criterion", subject_ref: state.workspaceView?.subject.ref }] : [];
+  if (inForm && details.reason_code === "conclusion_impact_changed")
+    section.append(actionButton(copy.text.formConclusionReviewCurrent,
+      () => reviewCurrentConclusionImpact().catch(report), "quiet"));
+  for (const remedy of remedies) {
+    const name = workspaceActionName(remedy.action_id);
+    if (!preparationActions.has(name) || !humanActions[name] ||
+      !state.permissions.includes(inventory[name]?.permission)) continue;
+    section.append(actionButton(humanActions[name].label, () => {
+      if (pending) openPreparationRemedy(name, remedy).catch(report);
+      else {
+        if (remedy.criterion_id) showEntity(remedy.subject_ref, { subject: {
+          kind: "criterion", ref: remedy.subject_ref, criterion_id: remedy.criterion_id,
+        }}).then(() => openCommands(name)).catch(report);
+        else openCommands(name);
+      }
+    }, "quiet"));
+  }
+  if (inForm) host.replaceChildren(section); else host.append(section);
+  section.tabIndex = -1; section.focus({ preventScroll: true });
+}
+async function reviewCurrentConclusionImpact() {
+  if (state.pending || state.submitting || !["achieve_outcome", "achieve_objective"].includes($("command-select").value)) return;
+  const generation = state.generation, epoch = state.formEpoch, form = state.humanForm;
+  const subject = state.formSubject, scope = currentScope();
+  if (!subject || !form) return;
+  const current = () => generation === state.generation && epoch === state.formEpoch
+    && form === state.humanForm && sameScope(scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
+  form.updateConclusionImpact(view);
+  state.workspaceView = view;
+  state.selected = { ...state.selected, version: view.entity_version };
+  state.formTarget = { ...state.formTarget, version: view.entity_version };
+  $("conflict-review").replaceChildren();
+  $("command-error").textContent = "";
+  $("command-help").textContent = copy.text.workspaceReviewAgain;
+  $("fields").querySelector(".workspace-conclusion-impact input")?.focus({ preventScroll: true });
+}
+async function inspectPreparationReference(host, subject) {
+  const generation = state.generation, epoch = state.formEpoch;
+  const current = () => generation === state.generation && epoch === state.formEpoch && host.isConnected;
+  let view;
+  try { view = await workspaceQuery(subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
+  let preview = host.querySelector(".workspace-preparation-preview");
+  if (!preview) { preview = el("details", undefined, "workspace-preparation-preview"); host.append(preview); }
+  preview.open = true;
+  const title = el("summary", view.header.title);
+  const body = el("div");
+  preview.replaceChildren(title, body);
+  // Read the related record without changing the form's owner, version, values
+  // or frozen intent. Preparation never grants authority or retries a write.
+  renderWorkspaceView(body, { view: { ...view, capabilities: [] }, principalId: state.principal,
+    onReference: (ref) => inspectPreparationReference(host, { kind: "entity", ref }).catch(report),
+    onCriterion: (criterion, ref) => inspectPreparationReference(host,
+      { kind: "criterion", ref, criterion_id: criterion.id }).catch(report),
+  });
+  title.focus({ preventScroll: true });
+}
+async function openPreparationRemedy(name, remedy) {
+  if (state.pending || state.submitting) return;
+  const ref = remedy.subject_ref || state.workspaceView?.subject.ref;
+  if (!ref) return;
+  const generation = state.generation, epoch = state.formEpoch, get = formGetter;
+  const scope = currentScope();
+  const current = () => generation === state.generation && epoch === state.formEpoch && get === formGetter
+    && sameScope(scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(remedy.criterion_id
+    ? { kind: "criterion", ref, criterion_id: remedy.criterion_id }
+    : { kind: "entity", ref }); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
+  const fragment = document.createDocumentFragment();
+  fragment.append(...$("fields").childNodes);
+  const original = {
+    name: $("command-select").value, humanForm: state.humanForm, get: formGetter,
+    fields: fragment, target: state.formTarget, selected: state.selected,
+    criterion: state.criterion, view: state.workspaceView, origin: state.formOriginCanvas,
+    scope: state.formScope, subject: state.formSubject, title: $("command-title").textContent,
+    help: $("command-help").textContent, submit: $("submit-command").textContent,
+  };
+  (state.formDrafts ||= []).push(original);
+  state.humanForm = null;
+  state.workspaceView = view;
+  state.selected = { ...view.entity, id: ref.id, version: view.entity_version, _kind: ref.kind };
+  state.criterion = remedy.criterion_id
+    ? view.criteria?.find((item) => item.definition.id === remedy.criterion_id)?.definition : null;
+  state.preparingRemedy = true;
+  openCommands(name);
+  state.preparingRemedy = false;
+}
+async function restorePreparationDraft() {
+  const original = state.formDrafts?.at(-1);
+  if (!original || state.pending || state.submitting) return;
+  const generation = state.generation, epoch = state.formEpoch;
+  const current = () => generation === state.generation && epoch === state.formEpoch && state.formDrafts?.at(-1) === original
+    && sameScope(original.scope, currentScope()) && !state.pending && !state.submitting;
+  let view;
+  try { view = await workspaceQuery(original.view.subject); }
+  catch (error) { if (current()) throw error; return; }
+  if (!current()) return;
+  state.formDrafts.pop();
+  state.humanForm?.dispose();
+  state.humanForm = original.humanForm;
+  state.humanForm?.updateConclusionImpact(view);
+  state.workspaceView = view;
+  state.selected = { ...original.selected, version: view.entity_version };
+  state.criterion = original.criterion;
+  state.formTarget = { ...original.target, version: view.entity_version };
+  state.formScope = original.scope;
+  state.formSubject = original.subject;
+  state.formGeneration = state.generation;
+  state.formOriginCanvas = original.origin;
+  formGetter = async () => {
+    const command = await original.get();
+    // Conclusion/activation has no editable definition to rebase. The person
+    // explicitly returns, reviews the fresh conditions and confirms a new intent.
+    if (["activate_outcome", "start_objective", "achieve_outcome", "achieve_objective"].includes(original.name))
+      command.expected_version = view.entity_version;
+    return command;
+  };
+  $("command-select").replaceChildren(Object.assign(el("option", original.title), { value: original.name }));
+  $("command-title").textContent = original.title;
+  $("command-help").textContent = copy.text.workspaceReviewAgain;
+  $("submit-command").textContent = original.submit;
+  $("fields").replaceChildren(original.fields);
+  $("fields").inert = false;
+  $("conflict-review").replaceChildren();
+  $("command-error").textContent = "";
+  $("retry-command").hidden = true;
+  $("submit-command").disabled = false;
+  presentForm();
+}
+function workspaceAction(action, capability) {
+  const name = workspaceActionName(action);
+  if (capability?.transport === "signed_host") {
+    const section = el("section", undefined, "workspace-handoff");
+    section.append(el("h3", copy.text.workspaceSignedHandoff), el("p", copy.text.workspaceNoBrowserSigning));
+    $("detail-content").append(section);
+    loadWorkspaceFullRecord(section, state.workspaceView.subject.ref, state.detailGeneration, {executionOnly:true});
+    section.tabIndex = -1; section.focus(); return;
+  }
+  const targetDefinitionPending = name === "create_work_item"
+    && capability?.target_lifecycle === "todo"
+    && capability?.availability === "unknown"
+    && capability.reason_codes?.includes("target_definition_required");
+  if (capability?.availability && capability.availability !== "available" && !targetDefinitionPending) {
+    showPreparation({ message: copy.text.workspaceActionUnavailable, details: {
+      reason_code: capability.reason_codes?.[0], related_refs: capability.related_refs,
+      remedies: capability.remedies,
+    } });
+    return;
+  }
+  openCommands(name, undefined, capability?.target_lifecycle);
+}
+$("close-detail").onclick = () => {
+  closeDetail();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
+};
+$("detail-dialog").addEventListener("cancel", (event) => {
+  // Native Escape closes immediately; a pending typed-context read must not
+  // reopen that dialog or restore its route after the person dismissed it.
+  if (!event.defaultPrevented) state.detailGeneration++;
+});
 $("detail-dialog").addEventListener("close", () => {
   if (!canvasActive()) writeRoute(null);
 });
 $("entity-actions").onclick = () => openCommands();
 $("actions").onclick = () => {
   if (!allowCanvasNavigation()) return;
-  state.selected = { ...state.outcome, _kind: "outcome" };
-  state.criterion = null;
-  openCommands();
+  openCommands(undefined, { kind: "outcome", entity: state.outcome });
 };
 $("create-outcome").onclick = () => {
   if (!allowCanvasNavigation()) return;
@@ -3557,18 +3638,55 @@ function defaults() {
     result: "met",
   };
 }
+function hydrateSelectedForForm(resume) {
+  if (!state.workspaceView || !state.selected || state.selected._workspaceFull) return false;
+  const selected = state.selected, generation = state.generation, view = state.workspaceView;
+  const detailGeneration = state.detailGeneration, preparingRemedy = state.preparingRemedy;
+  const ref = view.subject.ref;
+  if (ref.id !== selected.id || ref.kind !== selected._kind) return false;
+  const path = ref.kind === "outcome" ? outcomeBase() : `${outcomeBase()}/${plurals[ref.kind]}/${ref.id}`;
+  request(path).then((result) => {
+    if (generation !== state.generation || selected !== state.selected || detailGeneration !== state.detailGeneration) return;
+    if (canvasRevision(result.outcome_revision) !== canvasRevision(view.outcome_revision)) {
+      notice(copy.text.workspaceNewData, true); return;
+    }
+    const entity = result.value || result;
+    if (ref.kind === "roadmap" && entity.draft && view.roadmap?.draft)
+      entity.draft.draft_version = view.roadmap.draft.draft_version;
+    if (ref.kind === "work_item" && view.entity.current_lease)
+      entity.current_lease = view.entity.current_lease;
+    if (state.criterion) {
+      const full = entity.criteria?.items?.find((item) => item.id === state.criterion.id);
+      const observed = view.criteria?.find((item) => item.definition.id === state.criterion.id)?.definition;
+      if (!full) { notice(copy.text.workspaceNewData, true); return; }
+      state.criterion = { ...full, criterion_revision: observed?.criterion_revision ?? state.criterion.criterion_revision };
+    }
+    state.selected = { ...entity, version: view.entity_version,
+      _kind: ref.kind, _workspaceFull: true, _operational_state: selected._operational_state };
+    const previous = state.preparingRemedy;
+    state.preparingRemedy = preparingRemedy;
+    try { resume(); } finally { state.preparingRemedy = previous; }
+  }).catch(report);
+  return true;
+}
 function openTechnicalCommands(name) {
   if (state.pending) {
     openCommands();
     return;
   }
-  if (!state.permissions.includes("namespace:admin")) {
+  const allowedDeveloperOperation = name
+    ? state.permissions.includes(inventory[name]?.permission)
+    : Object.values(inventory).some(
+        (item) => item.surface === "developer" && state.permissions.includes(item.permission),
+      );
+  if (!allowedDeveloperOperation) {
     notice(
       copy.text.developerToolsRequireWorkspaceAdministrationPermission,
       true,
     );
     return;
   }
+  if (hydrateSelectedForForm(() => openTechnicalCommands(name))) return;
   if (!allowCanvasNavigation()) return;
   if (canvasActive()) navigateArea("overview");
   state.humanForm?.dispose();
@@ -3681,10 +3799,13 @@ function field(name, schema, value, required = false) {
         input = el("input");
       input.type = "checkbox";
       input.checked = (value || []).includes(permission);
-      label.append(
-        input,
-        document.createTextNode(permissionLabels[permission]),
+      const description = document.createElement("span");
+      description.className = "permission-copy";
+      description.append(
+        el("span", permissionLabels[permission]),
+        el("small", permissionDescriptions[permission] || ""),
       );
+      label.append(input, description);
       node.append(label);
       return { permission, input };
     });
@@ -4014,6 +4135,9 @@ function buildForm() {
 
 $("command-select").onchange = buildForm;
 $("close-command").onclick = () => {
+  if (state.formDrafts?.length && !state.pending && !state.submitting) {
+    restorePreparationDraft().catch(report); return;
+  }
   if (state.submitting || (state.pending && state.formOriginCanvas)) {
     notice(copy.text.resolveThePreviousUncertainResponseWithRetryTheSame, true);
     return;
@@ -4025,18 +4149,21 @@ $("command-dialog").addEventListener("close", () => {
   state.humanForm?.dispose();
 });
 $("command-dialog").addEventListener("cancel", (event) => {
+  if (state.formDrafts?.length && !state.pending && !state.submitting) {
+    event.preventDefault(); restorePreparationDraft().catch(report); return;
+  }
   if (state.submitting || (state.pending && state.formOriginCanvas))
     event.preventDefault();
 });
 function projectCommand(name, value) {
   // The technical catalog validates transport compatibility; it does not generate human fields.
-  const allowed =
-    state.catalog.find((x) => x.name === name)?.schema.properties || {};
-  return Object.fromEntries(
+  const schema = state.catalog.find((x) => x.name === name)?.schema;
+  const allowed = schema?.properties || {};
+  return commandForSchema(Object.fromEntries(
     Object.entries(value).filter(([key]) => key in allowed),
-  );
+  ), schema);
 }
-function openCommands(name) {
+function openCommands(name, menuTarget, targetLifecycle) {
   if (state.submitting) {
     notice(copy.text.waitForTheCurrentChangeToFinishBeforeStarting, true);
     return;
@@ -4050,35 +4177,74 @@ function openCommands(name) {
     presentForm();
     return;
   }
-  if (canvasInspector.isVisible("form")) {
+  if (canvasInspector.isVisible("form") && !state.preparingRemedy) {
     allowCanvasNavigation();
     return;
   }
   if (!name) {
-    const menu = $("action-options");
-    menu.replaceChildren();
-    const advanced = el("details");
-    advanced.append(el("summary", copy.text.advanced));
-    for (const action of effectiveActions())
-      (action.advanced ? advanced : menu).append(
-        actionButton(
-          action.label,
-          () => {
-            closeActions();
-            openCommands(action.name);
-          },
-          "quiet",
-        ),
-      );
-    if (advanced.children.length > 1) menu.append(advanced);
-    if (!menu.children.length)
-      menu.append(
-        el("p", copy.text.noChangesAreAvailableForYourCurrentPermissionsAnd),
-      );
+    const kind = menuTarget?.kind || (state.criterion ? "criterion" : state.selected?._kind || "outcome");
+    const entity = menuTarget?.entity || state.selected || state.outcome;
+    renderActionMenu($("action-options"), {
+      actions: effectiveActions(kind, entity),
+      kind,
+      entity: menuTarget?.entity || state.criterion || entity,
+      onAction: (action) => {
+        closeActions();
+        if (menuTarget) {
+          state.selected = { ...entity, _kind: kind };
+          state.criterion = null;
+        }
+        workspaceAction(action.name, action);
+      },
+    });
     if (canvasInspector.enabled) canvasInspector.showActions();
     else $("action-dialog").showModal();
     return;
   }
+  if (name === "revoke_work_contract" && state.selected?.current_contract_id && !state.contractView) {
+    const selected = state.selected, view = state.workspaceView, generation = state.generation;
+    const detailGeneration = state.detailGeneration;
+    workspaceQuery({ kind: "execution_record", ref: view.subject.ref,
+      record_kind: "contract", record_id: selected.current_contract_id }).then((result) => {
+      if (generation !== state.generation || selected !== state.selected || detailGeneration !== state.detailGeneration) return;
+      if (canvasRevision(result.outcome_revision) !== canvasRevision(view.outcome_revision)) {
+        notice(copy.text.workspaceNewData, true); return;
+      }
+      state.contractView = { contract: result.entity };
+      openCommands(name, menuTarget, targetLifecycle);
+    }).catch((error) => {
+      if (generation === state.generation && detailGeneration === state.detailGeneration
+        && selected === state.selected) report(error);
+    });
+    return;
+  }
+  if (["achieve_outcome", "achieve_objective"].includes(name)) {
+    const selected = state.selected || state.outcome;
+    const ref = { ...currentScope(), kind: selected?._kind || "outcome", id: selected?.id };
+    if (!state.workspaceView?.conclusion_impact || state.workspaceView.subject.kind !== "entity"
+      || state.workspaceView.subject.ref.id !== ref.id || state.workspaceView.subject.ref.kind !== ref.kind) {
+      const generation = state.generation, detailGeneration = state.detailGeneration;
+      workspaceQuery({ kind: "entity", ref }).then((view) => {
+        if (generation !== state.generation || detailGeneration !== state.detailGeneration
+          || selected !== (state.selected || state.outcome)) return;
+        if (!view.conclusion_impact) throw Error(copy.text.formConclusionImpactUnavailable);
+        state.workspaceView = view;
+        state.selected = { ...view.entity, id: ref.id, version: view.entity_version, _kind: ref.kind };
+        openCommands(name, menuTarget, targetLifecycle);
+      }).catch((error) => {
+        if (generation === state.generation && detailGeneration === state.detailGeneration
+          && selected === (state.selected || state.outcome)) report(error);
+      });
+      return;
+    }
+  }
+  const fullRecordForms = new Set(["update_outcome", "update_objective", "update_work_item",
+    "update_issue", "update_blocker_description", "revise_criterion", "complete_work_item", "release_work_item", "renew_work_item_lease", "reclaim_work_item",
+    "set_work_item_execution_spec", "set_outcome_owners", "set_objective_owners", "set_work_item_assignees",
+    "record_criterion_assessment", "replace_external_context", "replace_roadmap_draft",
+    "open_roadmap_draft", "publish_roadmap_draft", "discard_roadmap_draft",
+    "activate_roadmap_revision", "deactivate_roadmap_revision", "archive_roadmap", "reopen_roadmap"]);
+  if (fullRecordForms.has(name) && hydrateSelectedForForm(() => openCommands(name, menuTarget, targetLifecycle))) return;
   const context =
     name === "create_outcome"
       ? "workspace"
@@ -4094,6 +4260,14 @@ function openCommands(name) {
   state.formEpoch++;
   state.formTarget = structuredClone(state.selected);
   state.formOriginCanvas = canvasActive();
+  const focusedSubject = state.workspaceView?.subject;
+  const selectedRelationTouchesFocus = name === "remove_issue_work_item_relation"
+    && focusedSubject?.ref && [state.selected?.source_ref, state.selected?.target_ref].some((endpoint) =>
+      endpoint?.kind === focusedSubject.ref.kind && endpoint?.id === focusedSubject.ref.id
+      && endpoint?.namespace_id === focusedSubject.ref.namespace_id
+      && endpoint?.outcome_id === focusedSubject.ref.outcome_id);
+  state.formSubject = focusedSubject && (state.selected?.id === focusedSubject.ref.id
+    || selectedRelationTouchesFocus) ? structuredClone(focusedSubject) : null;
   state.humanForm?.dispose();
   state.technical = false;
   $("command-form").dataset.mode = "human";
@@ -4123,7 +4297,15 @@ function openCommands(name) {
     protocol: state.protocol,
     submission: state.submission,
     contractView: state.contractView,
+    mode: state.formOriginCanvas && ["create_objective", "create_work_item"].includes(name) ? "quick" : "full",
+    contextTitle: state.formTarget?.title || state.workspaceView?.header.title,
+    outcomeTitle: state.outcome?.title,
+    eligibility: state.workspaceRules,
+    workspaceView: state.workspaceView,
+    note: state.correctionNote,
+    targetLifecycle,
   });
+  state.correctionNote = null;
   formGetter = state.humanForm.get;
   $("fields").replaceChildren(
     ...(state.selected?.title
@@ -4137,6 +4319,8 @@ function openCommands(name) {
       : []),
     state.humanForm.node,
   );
+  if (state.preparingRemedy && state.formDrafts?.length)
+    $("fields").prepend(actionButton(copy.text.workspaceBackToDraft, () => restorePreparationDraft().catch(report), "quiet"));
   $("command-error").textContent = "";
   $("conflict-review").replaceChildren();
   $("retry-command").hidden = true;
@@ -4144,7 +4328,10 @@ function openCommands(name) {
   if (!canvasInspector.enabled) $("detail-dialog").close();
   presentForm();
 }
-$("close-actions").onclick = closeActions;
+$("close-actions").onclick = () => {
+  closeActions();
+  if (contextualKanban.operating) contextualKanban.finishOperation().catch(report);
+};
 $("developer-tools").onclick = () => {
   if (state.pending) {
     openCommands();
@@ -4152,7 +4339,7 @@ $("developer-tools").onclick = () => {
   }
   openTechnicalCommands();
 };
-async function submit(retry = false, reconciled) {
+async function submit(retry = false, reconciled, { repeatCreation = false } = {}) {
   if (state.submitting) return;
   state.submitting = true;
   $("submit-command").disabled = true;
@@ -4169,9 +4356,13 @@ async function submit(retry = false, reconciled) {
         throw Error(
           copy.text.workspaceContextChangedReopenTheFormInTheIntended,
         );
+      const commandName = !state.technical && state.humanForm?.commandName
+        ? state.humanForm.commandName() : $("command-select").value;
+      if (!commandAvailableInUI(commandName) || !state.permissions.includes(inventory[commandName]?.permission))
+        throw Error(copy.text.thisActionIsUnavailableInTheCurrentStatePermission);
       state.pending = createIntent(
-        $("command-select").value,
-        projectCommand($("command-select").value, command),
+        commandName,
+        projectCommand(commandName, command),
         scope,
         undefined,
         { principal_id: state.principal, actor_key: state.actorKey },
@@ -4217,6 +4408,12 @@ async function submit(retry = false, reconciled) {
       state.formGeneration !== state.generation
     )
       return;
+    if (state.formDrafts?.length) {
+      state.submitting = false;
+      await restorePreparationDraft();
+      notice(copy.text.changeSaved);
+      return;
+    }
     const canvasOrigin = state.formOriginCanvas;
     if (canvasOrigin) {
       canvasInspector.closeAll();
@@ -4227,7 +4424,9 @@ async function submit(retry = false, reconciled) {
       state.outcome = result.value;
       state.selected = { ...result.value, _kind: "outcome" };
       if (pending.name === "create_outcome") {
-        state.generation++;
+        contextualKanban.reset();
+  workspaceDisclosures.clear();
+  state.generation++;
         resetCanvas();
         state.view = "canvas";
         state.area = "canvas";
@@ -4249,6 +4448,17 @@ async function submit(retry = false, reconciled) {
     await discover();
     if (state.outcome) await refresh();
     writeRoute();
+    if (repeatCreation && canvasOrigin && ["create_objective", "create_work_item"].includes(pending.name) && state.formTarget?.id) {
+      const parent = { ...pending.scope, kind: state.formTarget._kind || "outcome", id: state.formTarget.id };
+      await showEntity(parent, { internal: true, preserveCamera: true });
+      // The previous intent is committed and its parent is freshly read. The
+      // next empty draft is a new explicit operation, not a retry of that intent.
+      state.submitting = false;
+      openCommands(pending.name);
+      $("fields").querySelector('input[type="text"]')?.focus({ preventScroll: true });
+      notice(copy.text.changeSaved);
+      return;
+    }
     const createdKind = {
       create_objective: "objective",
       create_work_item: "work_item",
@@ -4260,10 +4470,22 @@ async function submit(retry = false, reconciled) {
     }[pending.name];
     const selectedKind = createdKind || state.formTarget?._kind;
     const selectedID = createdKind ? result.value?.id : state.formTarget?.id;
-    if (canvasOrigin && selectedKind && selectedID) {
+    const returnedContext = pending.name === "remove_issue_work_item_relation"
+      ? state.formSubject : null;
+    if (canvasOrigin && returnedContext?.ref) {
+      // Removing a relationship is an operation on the link, but the user's
+      // workspace is still the Issue or Task they were inspecting. Reopen that
+      // focal record after the write so its contextual actions use the right
+      // entity kind and its refreshed version.
+      await showEntity(returnedContext.ref, {
+        internal: true,
+        preserveCamera: true,
+        subject: returnedContext,
+      });
+    } else if (canvasOrigin && selectedKind && selectedID) {
       await showEntity(
         { ...currentScope(), kind: selectedKind, id: selectedID },
-        { internal: true },
+        { internal: true, ...(!createdKind && state.formSubject ? { subject: state.formSubject, preserveCamera: true } : {}) },
       );
     } else if (!state.technical && pending.name === "create_work_item")
       await showEntity(
@@ -4274,6 +4496,12 @@ async function submit(retry = false, reconciled) {
         },
         { internal: true },
       );
+    if (contextualKanban.operating) {
+      // The write is already confirmed and its intent cleared. A sequential
+      // intention may now prepare a second form, never submit its command.
+      state.submitting = false;
+      await contextualKanban.finishOperation({committed:true});
+    }
     notice(
       pending.name === "create_outcome"
         ? copy.text.draftSavedContinueSetupWithCriteriaObjectivesAndTasks
@@ -4282,10 +4510,12 @@ async function submit(retry = false, reconciled) {
           : copy.text.changeSaved,
     );
   } catch (e) {
+    const staleObservedVersion = e.code === "version_conflict"
+      || (e.code === "precondition_failed" && /version conflict/i.test(e.message));
     $("command-error").className = "danger";
     $("command-error").textContent = committed
       ? copy.text.savedButTheRefreshedViewCouldNotBeLoaded
-      : e.code === "version_conflict"
+      : staleObservedVersion
         ? copy.text.aNewerVersionExistsReviewChangesBeforeSaving
         : e.message;
     if (canvasInspector.isVisible("form")) {
@@ -4293,7 +4523,8 @@ async function submit(retry = false, reconciled) {
       $("command-error").focus({ preventScroll: true });
     }
     if (committed) {
-      report(e);
+      if (contextualKanban.operating) { state.submitting = false; await contextualKanban.finishOperation({committed:true}); }
+      notice(copy.text.workspaceSavedRefreshPending, true);
       return;
     }
     if (
@@ -4308,11 +4539,8 @@ async function submit(retry = false, reconciled) {
       const pending = state.pending;
       state.pending = null;
       $("fields").inert = false;
-      if (
-        pending &&
-        (e.code === "version_conflict" || e.code === "precondition_failed")
-      )
-        offerConflict(pending);
+      if (pending && staleObservedVersion) offerConflict(pending);
+      else if (pending && e.details) showPreparation(e, pending);
     }
   } finally {
     state.submitting = false;
@@ -4407,6 +4635,14 @@ $("command-form").onsubmit = (event) => {
   event.preventDefault();
   submit().catch(report);
 };
+$("fields").addEventListener("keydown", (event) => {
+  const name = $("command-select").value;
+  if (event.key !== "Enter" || event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey ||
+      !state.formOriginCanvas || !["create_objective", "create_work_item"].includes(name) ||
+      event.target !== $("fields").querySelector('input[type="text"]')) return;
+  event.preventDefault();
+  if ($("command-form").reportValidity()) submit(false, undefined, { repeatCreation: true }).catch(report);
+});
 $("retry-command").onclick = () => submit(true).catch(report);
 namespaces().catch(() => {});
 

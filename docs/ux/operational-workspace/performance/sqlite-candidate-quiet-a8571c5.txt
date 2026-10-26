@@ -1,0 +1,22 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkWorkspaceF08
+    workspace_f08_benchmark_test.go:98: fixture=F08 objectives=100 tasks=1000 evidence=5000 notes=10000 note_events=10000 runner_cpus=5 GOMAXPROCS=2 adapter=SQLite protocol=legacy same-process-no-network cache=preloaded-and-ANALYZE filesystem=temp-local
+BenchmarkWorkspaceF08/cards_100
+BenchmarkWorkspaceF08/cards_100-2         	      20	  37529176 ns/op	  21356988 p50_ns	  81760529 p95_ns	 215995899 p99_ns	     66648 response_bytes	         8.000 sql_statements/op
+BenchmarkWorkspaceF08/structural_page_50
+BenchmarkWorkspaceF08/structural_page_50-2         	      20	   8896702 ns/op	   7155698 p50_ns	  17273559 p95_ns	  24518499 p99_ns	     32628 response_bytes	        10.00 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector
+BenchmarkWorkspaceF08/task_inspector-2             	      20	  32492887 ns/op	  21830313 p50_ns	  60642185 p95_ns	 214231261 p99_ns	     18322 response_bytes	        42.00 sql_statements/op
+BenchmarkWorkspaceF08/objective_inspector
+BenchmarkWorkspaceF08/objective_inspector-2        	      20	  64569619 ns/op	  39643861 p50_ns	 194387688 p95_ns	 224630514 p99_ns	     16424 response_bytes	        41.00 sql_statements/op
+BenchmarkWorkspaceF08/outcome_inspector
+BenchmarkWorkspaceF08/outcome_inspector-2          	      20	  23244124 ns/op	  19965444 p50_ns	  38019582 p95_ns	  47312476 p99_ns	     25571 response_bytes	        29.00 sql_statements/op
+BenchmarkWorkspaceF08/timeline_5
+BenchmarkWorkspaceF08/timeline_5-2                 	      20	   1976458 ns/op	   1857858 p50_ns	   2897900 p95_ns	   3097077 p99_ns	      6985 response_bytes	         4.000 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector_10_sessions
+BenchmarkWorkspaceF08/task_inspector_10_sessions-2 	      20	 219962741 ns/op	 111611121 p50_request_ns	 277273086 p95_request_ns	 427179259 p99_request_ns	        10.00 requests/batch	     18322 response_bytes	        42.00 sql_statements/request
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/sqlite	17.842s

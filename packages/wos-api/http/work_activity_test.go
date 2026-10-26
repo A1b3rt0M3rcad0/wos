@@ -18,6 +18,7 @@ func TestWorkActivityReadHTTPBoundaries(t *testing.T) {
 		[]byte(`{"title":"Activity read boundary","desired_state":"Scoped observations","priority":"normal"}`),
 		map[string]string{"Idempotency-Key": "activity-http-outcome"}, http.StatusCreated).Value.Value
 	path := base + "/" + outcome.ID.String() + "/work-activity"
+	objective := createHTTPTestObjective(t, client, base+"/"+outcome.ID.String(), "activity-http-owner")
 	page := doJSON[application.WorkActivityPage](t, client, http.MethodGet, path, nil, nil, http.StatusOK)
 	if len(page.Value.Items) != 0 || page.Header.Get("Cache-Control") != "no-store" {
 		t.Fatalf("empty activity read contract: %+v", page)
@@ -37,7 +38,7 @@ func TestWorkActivityReadHTTPBoundaries(t *testing.T) {
 		}
 	}
 	work := doJSON[application.MutationResult[domain.WorkItem]](t, client, http.MethodPost, base+"/"+outcome.ID.String()+"/work-items",
-		[]byte(`{"title":"Inspect attention","priority":"normal","lifecycle":"todo"}`),
+		testWorkItemBody(objective.ID, "Inspect attention", "todo"),
 		map[string]string{"Idempotency-Key": "activity-http-task"}, http.StatusCreated).Value.Value
 	attentionPath := base + "/" + outcome.ID.String() + "/work-items/" + work.ID.String() + "/attention"
 	attention := doJSON[application.WorkAttention](t, client, http.MethodGet, attentionPath, nil, nil, http.StatusOK)

@@ -1,5 +1,20 @@
-/* Entry and navigation only. The shared paper grid, responsive unit and
+/* Entry and navigation only. The shared paper grid, sizing unit and
  * original brand/illustrations remain owned by the editorial foundation. */
+body:has(#connect:not([hidden])) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+body:has(#connect:not([hidden])) > main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+#connect {
+  flex: 1;
+  width: 100%;
+  align-content: safe center;
+}
 #connect .login-panel {
   overflow: visible;
   padding: 0;
@@ -18,6 +33,7 @@
 }
 #connect .entry-panel-heading h2 {
   margin-block: calc(14 * var(--wos-unit, 1px)) calc(10 * var(--wos-unit, 1px));
+  font-size: 2rem;
 }
 #connect .entry-panel-heading > p:last-child {
   margin: 0;
@@ -109,8 +125,8 @@
 #connect .login-cards small {
   color: var(--wos-muted);
 }
-/* Short desktop windows keep the complete entry in view. The aspect-ratio
- * condition also follows proportionally scaled desktop viewports. */
+/* Short desktop windows keep the complete entry in view without enlarging
+ * the operational controls as the viewport grows. */
 @media (min-width: 761px) and (min-aspect-ratio: 16/10),
   (min-width: 761px) and (max-width: 1200px) and (max-height: 850px) {
   #connect {
@@ -122,7 +138,7 @@
   }
   #connect .login-story h1 {
     margin-block: calc(14 * var(--wos-unit, 1px));
-    font-size: clamp(3.42857rem, 9.5vh, 6.28571rem);
+    font-size: clamp(2.85714rem, 7vh, 4.57143rem);
   }
   #connect .login-vignette {
     margin-top: calc(4 * var(--wos-unit, 1px));
@@ -149,7 +165,7 @@
   }
   #connect .entry-panel-heading h2 {
     margin-block: calc(10 * var(--wos-unit, 1px)) calc(6 * var(--wos-unit, 1px));
-    font-size: 2.57143rem;
+    font-size: 2rem;
   }
   #connect #login {
     padding: calc(16 * var(--wos-unit, 1px)) calc(24 * var(--wos-unit, 1px));
@@ -205,7 +221,7 @@
 }
 #workspace .sidebar .sidebar-search-label input {
   margin-top: calc(7 * var(--wos-unit, 1px));
-  font: 0.85714rem/1.5 var(--utility);
+  font: 1rem/1.5 var(--utility);
   letter-spacing: 0;
 }
 #workspace .sidebar :is(input:not([type="checkbox"]), select) {
@@ -242,7 +258,7 @@
   --button-hover-ink: var(--wos-foreground);
   --button-active-bg: var(--wos-selected);
   --button-active-ink: var(--wos-foreground);
-  padding: calc(16 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
+  padding: calc(10 * var(--wos-unit, 1px)) calc(12 * var(--wos-unit, 1px));
   gap: calc(10 * var(--wos-unit, 1px));
 }
 #workspace .sidebar .outcome-navigation .item.selected {
@@ -347,6 +363,7 @@
 }
 @media (max-width: 760px) {
   #connect {
+    justify-content: safe center;
     gap: calc(14 * var(--wos-unit, 1px));
     padding: calc(16 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
   }
@@ -393,7 +410,7 @@
   }
   #connect .entry-panel-heading h2 {
     margin-block: calc(6 * var(--wos-unit, 1px));
-    font-size: 2.28571rem;
+    font-size: 2rem;
   }
   #connect #login {
     padding: calc(14 * var(--wos-unit, 1px)) calc(20 * var(--wos-unit, 1px));
@@ -431,7 +448,7 @@
     margin-bottom: calc(8 * var(--wos-unit, 1px));
   }
   #workspace .sidebar .workspace-switch select {
-    font-size: 1.71429rem;
+    font-size: 1.28571rem;
   }
   #workspace .sidebar .sidebar-heading {
     margin-bottom: 0;
@@ -446,7 +463,37 @@
     padding: calc(12 * var(--wos-unit, 1px));
   }
   #workspace .sidebar.navigation-collapsed .workspace-switch {
-    margin-bottom: calc(8 * var(--wos-unit, 1px));
+    padding: 0;
+    margin: 0;
+    border: 0;
+  }
+  /* Keep the existing switcher, Outcome navigation and settings in a compact
+     rail. Expanding navigation retains the full search/list in normal flow. */
+  #workspace > aside.sidebar.navigation-collapsed {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: calc(6 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+    padding-block: calc(8 * var(--wos-unit, 1px));
+  }
+  #workspace .sidebar.navigation-collapsed .workspace-switch::after {
+    display: none;
+  }
+  #workspace .sidebar.navigation-collapsed .sidebar-heading {
+    align-self: end;
+    gap: calc(4 * var(--wos-unit, 1px));
+    margin: 0;
+  }
+  #workspace .sidebar.navigation-collapsed .sidebar-bottom {
+    grid-column: 1 / -1;
+    gap: calc(4 * var(--wos-unit, 1px));
+    margin: 0;
+  }
+  #workspace .sidebar.navigation-collapsed .sidebar-bottom button {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    padding-inline: calc(8 * var(--wos-unit, 1px));
+    font-size: 0.85714rem;
   }
   #empty {
     padding: calc(28 * var(--wos-unit, 1px)) 0;

@@ -14,13 +14,15 @@ func TestContractResultsRequireCurrentReviewedMaterial(t *testing.T) {
 	s, _, _, w := contractServiceFixture(t)
 	ctx := context.Background()
 	cc := commandContext()
+	w = deferPlanningWork(t, s, w)
 	cc.IdempotencyKey = "contract-criterion-1"
 	_, err := s.AddCriterion(ctx, cc, a.AddCriterionCommand{Owner: w.Ref(), ExpectedVersion: w.Version, Title: "Review exact delivery", Required: true, VerificationMode: d.VerificationModeAttestation})
 	if err != nil {
 		t.Fatal(err)
 	}
+	w = activatePlanningWork(t, s, w)
 	cc.IdempotencyKey = "contract-acquire-results"
-	got, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version + 1})
+	got, err := s.AcquireWorkContract(ctx, cc, a.AcquireWorkContractCommand{Scope: w.Scope, WorkItemID: w.ID, ExpectedWorkItemVersion: w.Version})
 	if err != nil {
 		t.Fatal(err)
 	}

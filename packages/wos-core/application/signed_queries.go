@@ -201,7 +201,7 @@ func (s *Service) ReadSignedState(ctx context.Context, q SignedStateQuery) (Sign
 	}
 	result.OutcomeRevision = signing.Decimal(coordination.Revision)
 	if q.Resource == "protocol_preflight" {
-		if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: q.Scope.NamespaceID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionNamespaceAdmin}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
+		if err = snapshot.AuthorizeAccessSnapshot(ctx, ports.AccessSnapshotRequest{Authorization: ports.AuthorizationRequest{NamespaceID: q.Scope.NamespaceID, PrincipalID: identity.PrincipalID, Permission: ports.PermissionAuditRead}, CredentialDigest: identity.CredentialDigest, Actor: identity.Actor, Now: now}); err != nil {
 			return zero, err
 		}
 		readiness, e := s.signedProtocolReadiness(ctx, u, q.Scope.NamespaceID, now)

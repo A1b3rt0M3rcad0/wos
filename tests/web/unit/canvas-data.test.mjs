@@ -74,6 +74,27 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
+test("bounded card batches enrich only matching loaded revisions and keep authority unknown", async () => {
+  let requests = 0;
+  const loader = createCanvasData({ scope, request: async () => { requests++; return structure(); } });
+  const model = await loader.load(snapshot());
+  const page = {
+    outcome_revision: "42", items: [{ ref: work.ref, version: "1", title: "Scoped work", lifecycle: "todo", display_state: "todo", participants: [], authority_state: "unknown", criteria: { active: 2, met: 0, waived: 1, pending: 1 } }],
+  };
+  const next = loader.summaries(page);
+  assert.equal(requests, 1);
+  assert.equal(next.nodes.find((entry) => entry.key === canvasKey(work.ref)).cardSummary.authority_state, "unknown");
+  assert.equal(next.nodes.find((entry) => entry.key === canvasKey(work.ref)).authorityUnknown, true);
+  assert.equal(model.nodes.find((entry) => entry.key === canvasKey(work.ref)).cardSummary, undefined);
+  assert.deepEqual(loader.summaries(page), next);
+  assert.throws(() => loader.summaries({ ...page, outcome_revision: "43" }), /changed/);
+  assert.throws(() => loader.summaries({ ...page, items: [{ ...page.items[0], version: "2" }] }), /version/);
+  assert.throws(() => loader.summaries({ ...page, items: [{ ...page.items[0], ref: { ...work.ref, outcome_id: id(99) } }] }), /outside/);
+  assert.throws(() => loader.summaries({ ...page, items: [{ ...page.items[0], ref: ref("work_item", 99) }] }), /already loaded/);
+  assert.throws(() => loader.summaries({ ...page, items: [page.items[0], page.items[0]] }), /duplicate/);
+  assert.equal(requests, 1);
+});
+
 test("the adapter preserves actual hierarchy and dependency strengths without inventing ownership", async () => {
   const other = summary("work_item", 5),
     data = snapshot();
@@ -123,6 +144,44 @@ test("the adapter preserves actual hierarchy and dependency strengths without in
   );
   source.nodes[0].title = "changed after response";
   assert.notEqual(model.nodes[0].title, source.nodes[0].title);
+});
+
+test("legacy direct Task references stay unplaced instead of becoming Outcome children", async () => {
+  const orphan = summary("work_item", 6);
+  const source = structure();
+  source.nodes.push(orphan);
+  source.edges.push({
+    id: `work:${orphan.ref.id}`,
+    source_ref: root.ref,
+    target_ref: orphan.ref,
+    kind: "ownership",
+    source_of_truth: "work_item",
+  });
+  const loader = createCanvasData({ scope, request: async () => source });
+  const initial = await loader.load(snapshot());
+  const orphanNode = initial.nodes.find((entry) => entry.key === canvasKey(orphan.ref));
+  assert.ok(orphanNode, "legacy Task data remains inspectable");
+  assert.equal(orphanNode.parentKey, undefined);
+  assert.equal(initial.edges.some((edge) =>
+    edge.kind === "ownership" && edge.sourceKey === canvasKey(root.ref) && edge.targetKey === canvasKey(orphan.ref)), false);
+
+  const updated = loader.context({
+    outcome_revision: "42",
+    outcome: root,
+    work_item: {
+      id: orphan.ref.id,
+      scope,
+      title: orphan.title,
+      version: 2,
+      lifecycle: "todo",
+    },
+    dependencies: [],
+    evidence_links: [],
+  });
+  const selectedOrphan = updated.nodes.find((entry) => entry.key === canvasKey(orphan.ref));
+  assert.equal(selectedOrphan.parentKey, undefined);
+  assert.equal(updated.edges.some((edge) =>
+    edge.kind === "ownership" && edge.targetKey === canvasKey(orphan.ref)), false);
 });
 
 test("unknown dependency strength and evidence stance remain explicit, separate from assessment", async () => {

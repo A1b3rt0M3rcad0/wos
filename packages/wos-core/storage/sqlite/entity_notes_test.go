@@ -1,0 +1,235 @@
+package sqlite
+
+import (
+	"context"
+	"fmt"
+	application "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
+	d "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
+	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
+	"math"
+	"path/filepath"
+	"reflect"
+	"testing"
+	"time"
+)
+
+func noteTestID(n int) d.ID { return d.MustParseID(fmt.Sprintf("019a3101-0000-7000-8000-%012x", n)) }
+func TestEntityNoteStorageImmutabilityOrderingScopedReferencesRollbackAndRestart(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			ctx := context.Background()
+			now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+			path := filepath.Join(t.TempDir(), "notes.db")
+			var store ports.TransactionManager
+			var sqlStore *Store
+			if backend == "memory" {
+				store = memory.New()
+			} else {
+				sqlStore = openTestStore(t, path)
+				store = sqlStore
+			}
+			must := func(err error) {
+				t.Helper()
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			begin := func() ports.UnitOfWork { t.Helper(); u, err := store.Begin(ctx); must(err); return u }
+			scope := d.Scope{NamespaceID: noteTestID(1), OutcomeID: noteTestID(2)}
+			other := d.Scope{NamespaceID: scope.NamespaceID, OutcomeID: noteTestID(3)}
+			u := begin()
+			for _, sc := range []d.Scope{scope, other} {
+				o, err := d.NewOutcome(sc.OutcomeID, sc.NamespaceID, "Notes", "", "Declared observations", d.PriorityNormal, now)
+				must(err)
+				must(u.Outcomes().Insert(ctx, o))
+			}
+			artifact, err := d.NewArtifact(noteTestID(4), scope, "document", "Report", "file:report", "text/plain", "", "", d.ActorRef{Kind: d.ActorKindHuman, Provider: "test", ID: "author"}, nil, now)
+			must(err)
+			must(u.(ports.DocumentaryUnitOfWork).Artifacts().Insert(ctx, artifact))
+			must(u.Commit())
+			note := func(id int, revision uint64) d.EntityNote {
+				return d.EntityNote{ID: noteTestID(id), Scope: scope, SubjectRef: d.EntityRef{Scope: scope, Kind: d.EntityKindOutcome, ID: scope.OutcomeID}, Type: d.EntityNoteUpdate, Body: "Declared update", PrincipalID: "author", Actor: artifact.ProducerRef, RecordedAt: now.Add(-time.Duration(id) * time.Minute), OutcomeRevision: d.OutcomeRevision(revision)}
+			}
+			first := note(10, 2)
+			first.ArtifactRefs = []d.ID{artifact.ID}
+			expected := first
+			expected.ArtifactRefs = append([]d.ID(nil), first.ArtifactRefs...)
+			u = begin()
+			repo := u.(ports.EntityNoteUnitOfWork).EntityNotes()
+			must(repo.Insert(ctx, first))
+			first.ArtifactRefs[0] = noteTestID(99)
+			must(repo.Insert(ctx, note(11, 2)))
+			must(repo.Insert(ctx, note(12, math.MaxUint64)))
+			must(u.Commit())
+			u = begin()
+			repo = u.(ports.EntityNoteUnitOfWork).EntityNotes()
+			got, err := repo.Get(ctx, scope, expected.ID)
+			must(err)
+			if !reflect.DeepEqual(got, expected) {
+				t.Fatalf("note changed: %#v", got)
+			}
+			got.ArtifactRefs[0] = noteTestID(98)
+			again, err := repo.Get(ctx, scope, expected.ID)
+			must(err)
+			if !reflect.DeepEqual(again, expected) {
+				t.Fatal("read leaked mutable storage")
+			}
+			if _, err = repo.Get(ctx, other, expected.ID); err == nil {
+				t.Fatal("note crossed Outcome")
+			}
+			if err = repo.Insert(ctx, expected); err == nil {
+				t.Fatal("immutable note overwritten")
+			}
+			must(u.Rollback())
+			correction := note(13, 3)
+			correction.SupersedesNoteID = &expected.ID
+			correction.Body = "Correction retains original declaration"
+			u = begin()
+			repo = u.(ports.EntityNoteUnitOfWork).EntityNotes()
+			must(repo.Insert(ctx, correction))
+			must(u.Commit())
+			for _, bad := range []d.EntityNote{func() d.EntityNote {
+				n := note(14, 4)
+				n.SupersedesNoteID = &expected.ID
+				n.PrincipalID = "other"
+				return n
+			}(), func() d.EntityNote { n := note(15, 4); n.ArtifactRefs = []d.ID{noteTestID(404)}; return n }(), func() d.EntityNote {
+				n := note(16, 4)
+				n.SubjectRef.Kind = d.EntityKindObjective
+				n.SubjectRef.ID = noteTestID(405)
+				return n
+			}()} {
+				u = begin()
+				err = u.(ports.EntityNoteUnitOfWork).EntityNotes().Insert(ctx, bad)
+				if err == nil {
+					t.Fatal("invalid note reference accepted")
+				}
+				must(u.Rollback())
+			}
+			u = begin()
+			repo = u.(ports.EntityNoteUnitOfWork).EntityNotes()
+			page, err := repo.List(ctx, scope, ports.EntityNoteFilter{ThroughRevision: d.OutcomeRevision(math.MaxUint64), Limit: 2})
+			must(err)
+			if len(page) != 2 || page[0].ID != noteTestID(12) || page[1].ID != correction.ID {
+				t.Fatalf("ordering: %#v", page)
+			}
+			second, err := repo.List(ctx, scope, ports.EntityNoteFilter{ThroughRevision: d.OutcomeRevision(math.MaxUint64), BeforeRevision: page[1].OutcomeRevision, BeforeID: page[1].ID, Limit: 2})
+			must(err)
+			if len(second) != 2 || second[0].ID != noteTestID(11) || second[1].ID != expected.ID {
+				t.Fatalf("same revision keyset: %#v", second)
+			}
+			must(repo.Insert(ctx, note(17, 5)))
+			must(u.Rollback())
+			u = begin()
+			if _, err = u.(ports.EntityNoteUnitOfWork).EntityNotes().Get(ctx, scope, noteTestID(17)); err == nil {
+				t.Fatal("rolled back note persisted")
+			}
+			must(u.Rollback())
+			if sqlStore != nil {
+				must(sqlStore.Close())
+				sqlStore = openTestStore(t, path)
+				u, err = sqlStore.Begin(ctx)
+				must(err)
+				restored, err := u.(ports.EntityNoteUnitOfWork).EntityNotes().Get(ctx, scope, expected.ID)
+				must(err)
+				if !reflect.DeepEqual(restored, expected) {
+					t.Fatal("restart changed declaration")
+				}
+				must(u.Rollback())
+			}
+		})
+	}
+}
+
+// Both historical encodings of the empty assessment set already exist in
+// immutable storage hashes. Loading, archiving and reopening must retain the
+// original row, rather than rehashing an equivalent empty set into a new ID.
+func TestWorkspaceEmptyConclusionIdentitySurvivesArchiveReopenAndRejectsRewrite(t *testing.T) {
+	for _, backend := range []string{"memory", "sql"} {
+		for _, emptySlice := range []bool{false, true} {
+			name := fmt.Sprintf("%s/explicit_empty_%t", backend, emptySlice)
+			t.Run(name, func(t *testing.T) {
+				ctx := context.Background()
+				now := time.Date(2026, 10, 19, 18, 0, 0, 0, time.UTC)
+				path := filepath.Join(t.TempDir(), "empty-conclusions.db")
+				var store ports.TransactionManager
+				var sqlStore *Store
+				if backend == "memory" {
+					store = memory.New()
+				} else {
+					sqlStore = openTestStore(t, path)
+					store = sqlStore
+				}
+				must := func(err error) {
+					t.Helper()
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+				service, err := application.NewService(store, sqliteFixedClock{now: now}, &sqliteSequenceIDs{prefix: "019a3104", next: 1})
+				must(err)
+				cc := sqliteCommandContext(noteTestID(2000).String(), "")
+				created, err := service.CreateOutcome(ctx, cc, application.CreateOutcomeCommand{NamespaceID: noteTestID(2001), Title: "Historical empty proof set", DesiredState: "Keep immutable documentary closure", Priority: d.PriorityNormal})
+				must(err)
+				closed := created.Value
+				conclusion := d.Conclusion{ID: noteTestID(2002), PrincipalID: cc.PrincipalID, Actor: cc.Actor, Reason: "Explicitly abandoned before any proof", ConcludedAt: now}
+				must(closed.Abandon(conclusion, now))
+				if emptySlice {
+					closed.CurrentConclusion.Assessments = []d.CriterionAssessmentRef{}
+				}
+				u, err := store.Begin(ctx)
+				must(err)
+				must(u.Outcomes().Save(ctx, closed, created.Value.Version))
+				_, err = u.Coordination().AdvanceOutcome(ctx, closed.Scope())
+				must(err)
+				must(u.Commit())
+				storedID := ""
+				if sqlStore != nil {
+					must(sqlStore.db.QueryRowContext(ctx, `SELECT id FROM conclusions WHERE namespace_id=? AND outcome_id=? AND owner_id=?`, closed.NamespaceID.String(), closed.ID.String(), closed.ID.String()).Scan(&storedID))
+				}
+				archived, err := service.ArchiveOutcome(ctx, cc, application.ArchiveOutcomeCommand{Scope: closed.Scope(), ExpectedVersion: closed.Version})
+				must(err)
+				unarchived, err := service.UnarchiveOutcome(ctx, cc, application.UnarchiveOutcomeCommand{Scope: closed.Scope(), ExpectedVersion: archived.Value.Version, Reason: "Resume inspection of the historical closure"})
+				must(err)
+				reopened, err := service.ReopenOutcome(ctx, cc, application.ReopenOutcomeCommand{Scope: closed.Scope(), ExpectedVersion: unarchived.Value.Version, Reason: "A new explicit work period"})
+				must(err)
+				if reopened.Value.CurrentConclusion != nil || len(reopened.Value.ConclusionHistory) != 1 || reopened.Value.ConclusionHistory[0].ID != conclusion.ID {
+					t.Fatal("archive/reopen changed conclusion identity")
+				}
+				if sqlStore != nil {
+					var afterID string
+					must(sqlStore.db.QueryRowContext(ctx, `SELECT id FROM conclusions WHERE namespace_id=? AND outcome_id=? AND owner_id=?`, closed.NamespaceID.String(), closed.ID.String(), closed.ID.String()).Scan(&afterID))
+					if afterID != storedID {
+						t.Fatal("immutable conclusion storage identity was rewritten")
+					}
+				}
+				// The nil/empty compatibility path does not grant permission to alter the
+				// rationale or any other historical fact at the same ordinal.
+				u, err = store.Begin(ctx)
+				must(err)
+				tampered, err := u.Outcomes().Get(ctx, closed.NamespaceID, closed.ID)
+				must(err)
+				expected := tampered.Version
+				tampered.ConclusionHistory[0].Reason = "Attempted retrospective rewrite"
+				tampered.Version++
+				err = u.Outcomes().Save(ctx, tampered, expected)
+				if backend == "sql" && err == nil {
+					t.Fatal("compatibility path accepted historical rewrite")
+				}
+				must(u.Rollback())
+				if sqlStore != nil {
+					must(sqlStore.Close())
+					sqlStore = openTestStore(t, path)
+					service, err = application.NewService(sqlStore, sqliteFixedClock{now: now}, &sqliteSequenceIDs{prefix: "019a3104", next: 100})
+					must(err)
+				}
+				restored, err := service.GetOutcome(ctx, closed.Scope())
+				must(err)
+				if len(restored.Value.ConclusionHistory) != 1 || restored.Value.ConclusionHistory[0].ID != conclusion.ID || restored.Value.ConclusionHistory[0].Reason != conclusion.Reason {
+					t.Fatal("restart changed immutable empty-proof history")
+				}
+			})
+		}
+	}
+}

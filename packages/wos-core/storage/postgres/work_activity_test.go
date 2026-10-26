@@ -69,7 +69,7 @@ func TestWorkActivityStorageChronologyImmutabilityScopeAndRestore(t *testing.T) 
 				work, err := d.NewWorkItem(activityStorageID(10+i), boundary, "External implementation", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 				must(err)
 				work.ContractsEnabled = true
-				must(tx.WorkItems().Insert(ctx, work))
+				must(insertWorkItemFixture(ctx, tx.Objectives(), tx.WorkItems(), &work))
 				contract, err := d.NewWorkContract(activityStorageID(20+i), activityStorageID(30+i), work, "activity-executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, d.DefaultContractLeasePolicy(), 30, d.WorkContractSpec{Title: work.Title}, 0, now)
 				must(err)
 				keyID := activityStorageID(40)

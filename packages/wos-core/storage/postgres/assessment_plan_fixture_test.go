@@ -37,7 +37,7 @@ func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		work, err := d.NewWorkItem(id, out.Value.Scope(), fmt.Sprint("History owner ", i), "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+		work, err := d.NewWorkItem(id, out.Value.Scope(), fmt.Sprint("History owner ", i), "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +62,10 @@ func TestDenseAssessmentOwnerHistoryIndexPlan(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if err = u.WorkItems().Insert(ctx, work); err != nil {
+		if err = work.Activate(now); err != nil {
+			t.Fatal(err)
+		}
+		if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
 			t.Fatal(err)
 		}
 		if i == 0 {

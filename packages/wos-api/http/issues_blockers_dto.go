@@ -3,6 +3,7 @@ package httptransport
 import "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 
 type createIssueRequest struct {
+	ObjectiveID  string                    `json:"objective_id"`
 	Title        string                    `json:"title"`
 	Description  string                    `json:"description,omitempty"`
 	Severity     domain.IssueSeverity      `json:"severity"`
@@ -42,6 +43,7 @@ type duplicateIssueRequest struct {
 
 type reportIssueWithBlockerRequest struct {
 	Issue struct {
+		ObjectiveID  string                    `json:"objective_id"`
 		Title        string                    `json:"title"`
 		Description  string                    `json:"description,omitempty"`
 		Severity     domain.IssueSeverity      `json:"severity"`
@@ -52,6 +54,25 @@ type reportIssueWithBlockerRequest struct {
 		Description string                    `json:"description,omitempty"`
 		Propagation domain.BlockerPropagation `json:"propagation,omitempty"`
 	} `json:"blocker"`
+}
+
+// reportIssueWithBlockersRequest is the reviewed multi-impact variant. The
+// observed Outcome revision is required so the application can validate the
+// complete impact set while holding the Outcome coordination lock.
+type reportIssueWithBlockersRequest struct {
+	ObservedOutcomeRevision *uint64 `json:"observed_outcome_revision"`
+	Issue                   struct {
+		ObjectiveID  string                    `json:"objective_id"`
+		Title        string                    `json:"title"`
+		Description  string                    `json:"description,omitempty"`
+		Severity     domain.IssueSeverity      `json:"severity"`
+		AffectedRefs []relationEndpointRequest `json:"affected_refs,omitempty"`
+	} `json:"issue"`
+	Blockers []struct {
+		BlockedRef  relationEndpointRequest   `json:"blocked_ref"`
+		Description string                    `json:"description,omitempty"`
+		Propagation domain.BlockerPropagation `json:"propagation,omitempty"`
+	} `json:"blockers"`
 }
 
 type resolveIssueAndBlockersRequest struct {

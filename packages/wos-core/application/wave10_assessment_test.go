@@ -154,7 +154,8 @@ func TestRecordCriterionAssessmentWaiverRequiresPermission(t *testing.T) {
 		fixedClock{now: time.Date(2026, 10, 2, 20, 0, 0, 0, time.UTC)},
 		&wave09IDs{next: 500},
 		permissionAuthorizer{allowed: map[ports.Permission]bool{
-			ports.PermissionAssessmentWaive: true,
+			ports.PermissionCriterionAssess: true,
+			ports.PermissionCriterionWaive:  true,
 		}},
 	)
 	if err != nil {

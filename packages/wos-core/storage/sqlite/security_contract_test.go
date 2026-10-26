@@ -63,7 +63,7 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 	if _, _, err = security.IssueCredential(aliceCtx, nsA, "bob", bob.Actor, clock.Now().Add(time.Hour)); err == nil {
 		t.Fatal("privilege escalation accepted")
 	}
-	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.Store.PutGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "agent", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	agentCredential, agentToken, err := security.IssueCredential(aliceCtx, nsA, "agent", domain.ActorRef{Kind: domain.ActorKindAgent, Provider: "test", ID: "agent-1"}, clock.Now().Add(time.Hour))
@@ -81,7 +81,7 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 	if _, err = service.CreateOutcome(agentCtx, domain.CommandContext{PrincipalID: agent.PrincipalID, Actor: agent.Actor, CommandID: cc.CommandID}, cmd); err == nil {
 		t.Fatal("viewer mutation accepted")
 	}
-	if err = security.RevokeCredential(aliceCtx, nsA, agentCredential.ID); err != nil {
+	if err = security.Store.RevokeCredential(aliceCtx, agentCredential.ID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = service.GetOutcome(agentCtx, created.Value.Scope()); err == nil {
@@ -91,7 +91,7 @@ func TestScopedCredentialsRevocationAndIdempotentReplay(t *testing.T) {
 		t.Fatal("revoked token authenticated")
 	}
 	// Permission revocation must precede stored idempotent response disclosure.
-	if err = security.SetGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "alice", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
+	if err = security.Store.PutGrant(aliceCtx, ports.NamespaceGrant{NamespaceID: nsA, PrincipalID: "alice", Permissions: []ports.Permission{ports.PermissionStateRead}}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = service.CreateOutcome(aliceCtx, cc, cmd); err == nil {

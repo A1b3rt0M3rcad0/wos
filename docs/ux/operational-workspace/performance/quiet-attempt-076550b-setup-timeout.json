@@ -1,0 +1,232 @@
+{
+  "sequence": "SQLite followed by PostgreSQL, no overlapping benchmark jobs",
+  "reference_environment_reproduced": false,
+  "other_delegated_heavy_jobs": "Other API/Go/race, upgrade, browser and build jobs stopped before the measured window; explicit parent handoff recorded",
+  "GOMAXPROCS": 2,
+  "implementation_sha": "505f2e637ec37a189c82365fcc7102cdaf038490",
+  "preflight": {
+    "captured_at": "2026-10-19T18:55:10Z",
+    "monotonic_seconds": 221750.672900936,
+    "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+    "core_source_fingerprint_files": 339,
+    "head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.52 4.45 4.44 1/959 569684",
+    "cpu_cgroup": {
+      "usage_usec": 57909499959,
+      "user_usec": 45280410980,
+      "system_usec": 12629088979,
+      "nice_usec": 0,
+      "nr_periods": 603233,
+      "nr_throttled": 55265,
+      "throttled_usec": 4134696353,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 27817611264,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.0
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 6.2
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 7.6
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 75.0
+      },
+      {
+        "command": "ps",
+        "state": "R",
+        "average_cpu_percent": 500.0
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "sqlite_start": {
+    "captured_at": "2026-10-19T18:55:10Z",
+    "monotonic_seconds": 221750.771766627,
+    "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+    "core_source_fingerprint_files": 339,
+    "head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.52 4.45 4.44 1/959 569687",
+    "cpu_cgroup": {
+      "usage_usec": 57909640436,
+      "user_usec": 45280487728,
+      "system_usec": 12629152707,
+      "nice_usec": 0,
+      "nr_periods": 603235,
+      "nr_throttled": 55265,
+      "throttled_usec": 4134696353,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 27817504768,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.0
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 3.5
+      },
+      {
+        "command": "codex",
+        "state": "Ss",
+        "average_cpu_percent": 3.8
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 83.3
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "sqlite_end": {
+    "captured_at": "2026-10-19T18:55:30Z",
+    "monotonic_seconds": 221770.95101187,
+    "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+    "core_source_fingerprint_files": 339,
+    "head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.50 4.26 4.38 2/958 569725",
+    "cpu_cgroup": {
+      "usage_usec": 57932949123,
+      "user_usec": 45299015938,
+      "system_usec": 12633933185,
+      "nice_usec": 0,
+      "nr_periods": 603436,
+      "nr_throttled": 55265,
+      "throttled_usec": 4134696353,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 27817848832,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.0
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 90.9
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "postgres_start": {
+    "captured_at": "2026-10-19T18:55:35Z",
+    "monotonic_seconds": 221776.335018947,
+    "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+    "core_source_fingerprint_files": 339,
+    "head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.38 4.18 4.36 1/958 569735",
+    "cpu_cgroup": {
+      "usage_usec": 57933538806,
+      "user_usec": 45299406717,
+      "system_usec": 12634132088,
+      "nice_usec": 0,
+      "nr_periods": 603458,
+      "nr_throttled": 55265,
+      "throttled_usec": 4134696353,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 27818041344,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.0
+      },
+      {
+        "command": "codex-linux-san",
+        "state": "Ss",
+        "average_cpu_percent": 21.4
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 77.7
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  },
+  "postgres_end": {
+    "captured_at": "2026-10-19T18:57:27Z",
+    "monotonic_seconds": 221887.777879726,
+    "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+    "core_source_fingerprint_files": 339,
+    "head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+    "cpu_max": "400000 100000",
+    "memory_max_bytes": 34359738368,
+    "loadavg": "1.31 3.28 4.01 1/957 569833",
+    "cpu_cgroup": {
+      "usage_usec": 58050023470,
+      "user_usec": 45368424353,
+      "system_usec": 12681599116,
+      "nice_usec": 0,
+      "nr_periods": 604572,
+      "nr_throttled": 55265,
+      "throttled_usec": 4134696353,
+      "nr_bursts": 0,
+      "burst_usec": 0
+    },
+    "memory_current_bytes": 27898769408,
+    "processes_above_1_percent_lifetime_average_cpu": [
+      {
+        "command": "docker-proxy",
+        "state": "Sl",
+        "average_cpu_percent": 2.2
+      },
+      {
+        "command": "python3",
+        "state": "S",
+        "average_cpu_percent": 86.9
+      },
+      {
+        "command": "ps",
+        "state": "R",
+        "average_cpu_percent": 400.0
+      }
+    ],
+    "harness_sha256": {
+      "packages/wos-core/storage/sqlite/workspace_f08_benchmark_test.go": "cc9c87dad4061189240d7352737ae720fce7848eb9248cb358c9960988900b45",
+      "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30"
+    }
+  }
+}

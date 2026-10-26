@@ -1,5 +1,7 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { test, expect, openOutcome, pick, chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { seedCanvas, provisionCanvasViewer } from "./canvas-fixture.mjs";
+import { revealMenuAction } from "./workspace-action-fixture.mjs";
 
 const canvas = (page) => page.locator("#operational-canvas");
 const panel = (page) => page.locator("#canvas-details");
@@ -15,15 +17,26 @@ async function select(page, value, { wait = true } = {}) {
   await canvas(page).getByRole("option").filter({ hasText: value.title }).first().click();
   if (wait) await expect(panel(page).locator("#detail-title")).toHaveText(value.title);
 }
+async function openAction(page, action) {
+  const primary = panel(page).locator(`.workspace-actions [data-action-id="${action}"]`);
+  if (await primary.isVisible()) return primary.click();
+  await panel(page).locator('#entity-actions').click();
+  const target = panel(page).locator(`#action-options [data-action-id="${action}"]`);
+  await revealMenuAction(target);
+  await target.click();
+}
+
 // Capture a genuine server result and gate its delivery. The optional failure
 // simulates transport loss; lifecycle, permissions and conflicts stay real.
-async function holdOnce(page, pattern, { failureMessage } = {}) {
+async function holdOnce(page, pattern, { failureMessage, subjectId } = {}) {
   let release, seen, failed, finished;
   let started = false;
   const gate = new Promise((resolve) => { release = resolve; });
   const arrived = new Promise((resolve, reject) => { seen = resolve; failed = reject; });
   const done = new Promise((resolve) => { finished = resolve; });
   await page.route(pattern, async (route) => {
+    if (started || subjectId && route.request().postDataJSON()?.subject?.ref?.id !== subjectId)
+      return route.continue();
     started = true;
     try {
       const response = await route.fetch();
@@ -38,7 +51,7 @@ async function holdOnce(page, pattern, { failureMessage } = {}) {
     } finally {
       finished();
     }
-  }, { times: 1 });
+  });
   return { arrived, release, done, get started() { return started; } };
 }
 async function settle(page, held) {
@@ -48,7 +61,7 @@ async function settle(page, held) {
 }
 
 test("a late form restoration preserves edge keyboard focus and exact authorized removal", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   const relation = await wos.command("add_dependency", {
     scope: data.scope, source_ref: data.ref("work_item", data.tasks.unscoped),
     target_ref: data.ref("work_item", data.tasks.ready), strength: "advisory",
@@ -56,14 +69,17 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
   });
   await openCanvas(page, wos, data);
   await select(page, data.tasks.ready);
-  await panel(page).getByRole("button", { name: "Add dependency", exact: true }).click();
+  await openAction(page, "add_dependency");
   await pick(page, "Depends on", data.tasks.unscoped.title);
   await page.getByLabel("Why is this prerequisite required?", { exact: true }).fill("The server must still reject the reverse cycle");
   await panel(page).locator("#submit-command").click();
   await expect(panel(page).locator("#command-error")).toContainText(/cycl/i);
   await expect(panel(page).locator("#submit-command")).toBeEnabled();
-  const held = await holdOnce(page, `**/work-items/${data.tasks.ready.id}/context`);
+  const held = await holdOnce(page, "**/workspace-view", { subjectId: data.tasks.ready.id });
   try {
+    // The keyboard action starts in the form, after the error's focus update.
+    await panel(page).locator("#command-error").focus();
+    await expect(panel(page).locator("#command-error")).toBeFocused();
     await page.keyboard.press("Escape");
     expect(await held.arrived).toBe(200);
     await canvas(page).getByLabel("Connections", { exact: true }).selectOption("all");
@@ -78,7 +94,7 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
     await expect(page).toHaveURL(new RegExp(`item=relation(?:%2F|/)${relation.id}`));
     await expect(panel(page).locator("#detail-kind")).toContainText(/relation/i);
     await expect(panel(page)).toContainText(/advisory/i);
-    await panel(page).getByRole("button", { name: "Remove dependency", exact: true }).click();
+    await openAction(page, "remove_dependency");
     await page.getByLabel("Reason", { exact: true }).fill("The selected advisory context is no longer required");
     await panel(page).locator("#submit-command").click();
     await expect(panel(page).locator("#command-form")).toBeHidden();
@@ -87,7 +103,7 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
     expect(persisted.lifecycle).toBe("removed");
     expect(persisted.version).toBe(relation.version + 1);
     for (const task of [data.tasks.ready, data.tasks.unscoped])
-      expect((await wos.api(`${base(data.scope)}/work-items/${task.id}`)).value.lifecycle).toBe("todo");
+      expect((await wos.api(`${base(data.scope)}/work-items/${task.id}`)).value.lifecycle).toBe(task.lifecycle);
   } finally {
     held.release();
     if (held.started) await held.done;
@@ -95,11 +111,11 @@ test("a late form restoration preserves edge keyboard focus and exact authorized
 });
 
 test("a late Task focal read cannot reopen a closed inspector or report an obsolete revision error", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   await openCanvas(page, wos, data);
   await select(page, data.tasks.ready);
   const delayedTask = data.tasks.unscoped;
-  const held = await holdOnce(page, `**/work-items/${delayedTask.id}/attention`);
+  const held = await holdOnce(page, "**/workspace-view", { subjectId: delayedTask.id });
   try {
     await select(page, delayedTask, { wait: false });
     expect(await held.arrived).toBe(200);
@@ -107,8 +123,8 @@ test("a late Task focal read cannot reopen a closed inspector or report an obsol
     await chooseArea(page, "work");
     await expect(page.locator("#content")).toContainText(delayedTask.title);
     await expect(page.locator("#notice")).not.toHaveClass(/error/);
-    // A subsequent context read would now observe a newer revision. Closing
-    // the previous selection must invalidate that entire obsolete read chain.
+    // A fresh canonical view would now observe a newer revision. Closing the
+    // previous selection must invalidate that entire obsolete read chain.
     await wos.command("update_work_item", {
       scope: data.scope, work_item_id: delayedTask.id,
       expected_version: delayedTask.version, title: "Changed after the old selection was closed",
@@ -126,11 +142,11 @@ test("a late Task focal read cannot reopen a closed inspector or report an obsol
 });
 
 test("a late comparison for Task A cannot replace Task B's draft or introduce an old-target save", async ({ page, wos }) => {
-  const data = await seedCanvas(wos);
+  const data = await seedCanvas(wos, {planningTasks:true});
   await openCanvas(page, wos, data);
   const first = data.tasks.ready, second = data.tasks.unscoped;
   await select(page, first);
-  await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+  await openAction(page, "update_work_item");
   await page.getByLabel("Task title", { exact: true }).fill("Task A local draft");
   const remote = await wos.command("update_work_item", {
     scope: data.scope, work_item_id: first.id,
@@ -149,7 +165,7 @@ test("a late comparison for Task A cannot replace Task B's draft or introduce an
     await panel(page).locator("#close-command").click();
     await expect(panel(page).locator("#detail-title")).toHaveText(remote.title);
     await select(page, second);
-    await panel(page).getByRole("button", { name: "Edit task", exact: true }).click();
+    await openAction(page, "update_work_item");
     await page.getByLabel("Task title", { exact: true }).fill("Task B independently edited");
     await settle(page, held);
     await expect(page.getByLabel("Task title", { exact: true })).toHaveValue("Task B independently edited");
@@ -179,7 +195,10 @@ test("an earlier successful refresh cannot restore private Canvas content after 
       namespace_id: wos.namespace, expected_namespace_version: administration.namespace_version,
       operation: "set_grant", principal_id: "canvas-viewer", permissions: [],
     });
-    const denied = page.waitForResponse((response) => response.url().endsWith(`/work-items/${data.tasks.unscoped.id}`) && response.status() === 403);
+    const denied = page.waitForResponse((response) => response.url().endsWith("/workspace-view")
+      && response.request().method() === "POST"
+      && response.request().postDataJSON()?.subject?.ref?.id === data.tasks.unscoped.id
+      && response.status() === 403);
     // The previous canvas adapter is intentionally invalidated while refresh
     // is in flight. A keyboard selection still performs a fresh entity read.
     await canvas(page).locator(`[data-canvas-node="work_item:${data.tasks.unscoped.id}"] .canvas-node-main`).focus();
@@ -200,15 +219,23 @@ test("an earlier successful refresh cannot restore private Canvas content after 
 
 test("an obsolete Task history transport failure cannot replace the current Task or its notice", async ({ page, wos }) => {
   const data = await seedCanvas(wos);
+  // Expand the new lazy history, then exercise its separately paginated read.
+  // Seed enough real notes to require another page.
+  for (let index = 0; index < 7; index++)
+    await wos.command("append_entity_note", {
+      scope: data.scope, subject_ref: data.ref("work_item", data.tasks.ready),
+      type: "update", body: `History page belonging to the previous Task ${index}`,
+    });
   await openCanvas(page, wos, data);
   await select(page, data.tasks.ready);
+  await expandWorkspaceDetails(panel(page));
   const failureMessage = "Obsolete Task history transport failure";
   const held = await holdOnce(page,
-    (url) => url.pathname.endsWith("/work-activity") && url.searchParams.get("work_item_id") === data.tasks.ready.id,
+    (url) => url.pathname.endsWith("/workspace-timeline") && url.searchParams.get("entity_id") === data.tasks.ready.id,
     { failureMessage },
   );
   try {
-    await panel(page).getByRole("button", { name: "Load task history", exact: true }).click();
+    await panel(page).locator('[data-action-id="load_more_activity"]').click();
     expect(await held.arrived).toBe(200);
     await panel(page).locator("#close-detail").click();
     await select(page, data.tasks.unscoped);
@@ -216,11 +243,39 @@ test("an obsolete Task history transport failure cannot replace the current Task
     const currentClass = await page.locator("#notice").getAttribute("class");
     await settle(page, held);
     await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.unscoped.title);
-    await expect(panel(page).locator(".canvas-task-history")).toHaveCount(0);
+    await expect(panel(page)).not.toContainText("History page belonging to the previous Task");
     await expect(panel(page)).not.toContainText(failureMessage);
     await expect(page.locator("#notice")).toHaveText(currentNotice);
     expect(await page.locator("#notice").getAttribute("class")).toBe(currentClass);
     await expect(page).toHaveURL(new RegExp(data.tasks.unscoped.id));
+  } finally {
+    held.release();
+    if (held.started) await held.done;
+  }
+});
+
+test("Escape during deep-link graph restoration persists dismissal and Back reopens the record", async ({ page, wos }) => {
+  const data = await seedCanvas(wos);
+  await openCanvas(page, wos, data);
+  await select(page, data.tasks.ready);
+  await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
+  await page.waitForLoadState("networkidle");
+  const held = await holdOnce(page, new RegExp(`/graph\\?.*root_id=${data.tasks.ready.id}(?:&|$)`));
+  try {
+    await page.reload();
+    expect(await held.arrived).toBe(200);
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toBeHidden();
+    await expect(page).not.toHaveURL(/item=/);
+    await settle(page, held);
+    await expect(panel(page)).toBeHidden();
+    await expect(page).not.toHaveURL(/item=/);
+    await page.goBack();
+    await expect(panel(page).locator("#detail-title")).toHaveText(data.tasks.ready.title);
+    await expect(panel(page)).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`item=work_item(?:%2F|/)${data.tasks.ready.id}`));
   } finally {
     held.release();
     if (held.started) await held.done;

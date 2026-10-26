@@ -67,6 +67,15 @@ func (r workProtocolRepository) EnableContracts(ctx context.Context, ns d.ID, no
 	for key, w := range r.tx.workItems {
 		if w.Scope.NamespaceID == ns {
 			w.ContractsEnabled = true
+			if w.CurrentLease != nil {
+				nextVersion, err := w.Version.Next()
+				if err != nil {
+					return err
+				}
+				w.Lifecycle = d.WorkItemLifecycleTodo
+				w.Version = nextVersion
+				w.UpdatedAt = now.UTC()
+			}
 			w.CurrentLease = nil
 			r.tx.workItems[key] = w
 		}

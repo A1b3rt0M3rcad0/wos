@@ -1,3 +1,4 @@
+import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea, clickWorkspaceTool, reviewOutcome } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
 import assert from "node:assert/strict";
@@ -178,9 +179,11 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Publicar ambiente de homologação",
       priority: "critical",
       lifecycle: "todo",
+      objective_id: objective.id,
     });
     const issue = await command("create_issue", {
       scope,
+      objective_id: objective.id,
       title: "Acesso à homologação pendente",
       description: "Aguardar credencial do ambiente antes de publicar.",
       severity: "major",
@@ -197,6 +200,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Validar contrato HTTP e MCP",
       priority: "normal",
       lifecycle: "todo",
+      objective_id: objective.id,
     });
     const claim = await command("claim_work_item", {
       scope,
@@ -218,6 +222,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       title: "Planejar acompanhamento pós-lançamento",
       priority: "low",
       lifecycle: "backlog",
+      objective_id: objective.id,
     });
     await command("register_evidence", {
       scope,
@@ -388,12 +393,7 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#content")
       .getByRole("button", { name: /Portal de colaboração/ })
       .click();
-    await expect(page.locator("#detail-content")).toContainText(
-      "Descobrir e planejar",
-    );
-    await expect(page.locator("#detail-content")).toContainText(
-      "Validar com clientes",
-    );
+    await expect(page.locator('#detail-content [data-workspace-facet="roadmap"]')).toContainText("Active revision 1");
     await expect(page.locator("#detail-content pre")).not.toBeVisible();
     await expect(
       page.locator("#detail-actions").getByRole("button", {
@@ -401,6 +401,12 @@ test("workspace summary, scoped list, operational board, pagination and real hum
         exact: true,
       }),
     ).toHaveCount(0);
+    // The canonical inspector loads plan content only after an explicit View
+    // plan action. Verify the actual published nodes on the Board it opens.
+    await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
+    await page.locator('#detail-content [data-action-id="view_roadmap_revision"]').click();
+    await expect(page.locator('#operational-canvas [data-kind="phase"]').filter({ hasText: "Descobrir e planejar" })).toHaveCount(1);
+    await expect(page.locator('#operational-canvas')).toContainText("Validar com clientes");
     await shot("06-plano");
     await page.keyboard.press("Escape");
     await chooseArea(page, "Plan");
@@ -412,10 +418,13 @@ test("workspace summary, scoped list, operational board, pagination and real hum
       .locator("#content")
       .getByRole("button", { name: /Uma experiência pronta/ })
       .click();
+    await expandWorkspaceDetails(page.locator("#detail-content"), {history:false});
     await page
       .getByRole("button", { name: /Fluxo principal validado/ })
       .click();
+    await expect(page.locator("#detail-title")).toHaveText("Fluxo principal validado no navegador");
     await page.keyboard.press("Escape");
+    await expect(page.locator("#detail-dialog")).not.toBeVisible();
     await page.locator("#developer-tools").click();
     await page
       .locator("#command-select")

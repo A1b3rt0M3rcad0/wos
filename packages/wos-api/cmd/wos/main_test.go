@@ -90,6 +90,23 @@ func TestUnifiedWOSHelpIncludesBundledSkillsAndServiceWithoutConfiguration(t *te
 	}
 }
 
+func TestUnifiedWOSRoutesWorkspaceConsumersToCLIWithoutStartingService(t *testing.T) {
+	root := t.TempDir() + "/absent-installation"
+	t.Setenv("WOS_DATA_DIR", root)
+	t.Setenv("WOS_WORKSPACE", "")
+	t.Setenv("WOS_PROFILE", "")
+	t.Setenv("WOS_AUTH_MODE", "invalid-unused-service-configuration")
+	for _, args := range [][]string{{"planning", "recover", "--output", "json"}, {"inspect", "get", "--output", "json"}} {
+		code, output := captureCommand(t, args...)
+		if code != 2 || !strings.Contains(string(output), "installation is not initialized") {
+			t.Fatal("workspace consumer was routed to service bootstrap", args, code, string(output))
+		}
+	}
+	if _, err := os.Stat(root); !os.IsNotExist(err) {
+		t.Fatal("consumer discovery created installation or service state", err)
+	}
+}
+
 func TestUnifiedSharedConfigValidationDoesNotInitializeStorage(t *testing.T) {
 	root := t.TempDir() + "/absent"
 	t.Setenv("WOS_SQLITE_PATH", root+"/wos.db")

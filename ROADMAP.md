@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-18
-**Current target:** Stable 1.0 hardening; public npm package wosctl
-**Current wave:** Compact login, stable Board inspection and visible camera controls; release 1.1.0 and human acceptance remain separately tracked
+**Last reviewed:** 2026-10-21
+**Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
+**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01–E25 are verified by stage, E26 is in qualification, E27 is underway, and later stages remain planned
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -13,6 +13,190 @@
 This file records the real implementation state of WOS. It must be kept synchronized with the repository by every agent that changes planned work.
 
 The architecture document describes what should exist. This ROADMAP records what actually exists.
+
+## Operational consolidation — 2026-10-21
+
+The owner authorized implementation of the [complete operational plan](docs/implementation/operational-consolidation/implementation-plan.md) in the existing Draft PR #116 and allowed subagent use. Its 84-stage manifest, pending acceptance matrix, baseline, evidence and source-bound captures are under [`docs/implementation/operational-consolidation/`](docs/implementation/operational-consolidation/). The source plan's historical “document delivery only” sentence is superseded by the owner's current implementation request; its architecture and rollout constraints remain active.
+
+E01–E16 are committed in the branch history. E17 adds an exact-command, versioned legacy-permission migration with Memory, SQLite and generated PostgreSQL adapters, CAS, audit and replay. E18 adds six frozen permission templates and bounded previews. Both stages are verified in commits `9099f9b` and `c7b3b73`. E19 (`f83cd3f`) atomically issues constrained credentials with policy, metadata, audit and replay-safe receipts; E20 (`2d5adb6`) adds paginated safe credential management, revision-checked updates, rotation and coalesced last-used telemetry. E21 (`d65ce7c`) hardens revocation and administrative audit; E22 (`390a369`) binds leases to canonical credential identity in the domain; E23 (`bb7ef9b`) persists that binding without guessing historical ownership; E24 (`d525856`) applies canonical credential ownership to lease commands while preserving the presented session's effective authorization. These stages are verified against Memory, SQLite and live PostgreSQL, as well as HTTP and MCP packages. Migration `0043` completes E25 (`bec3f4f`): protected idempotency receipts now bind to the canonical credential, and recovery/revocation race tests pass in Application, SQLite and live PostgreSQL. E26 adds credential-root binding to unsigned `contracts_v1` while preserving signed-v2 and is under final qualification; migration `0044` is its SQLite/PostgreSQL pair. E27 is modeling durable unsigned Task deliveries and review decisions. Later migrations remain monotonic; the earlier hierarchy migrations `0035` and `0036` are already implemented and must not be recreated. See [E19–E25 evidence](docs/implementation/operational-consolidation/evidence/).
+
+Current local qualification includes a complete Go run with live PostgreSQL, 83 JavaScript unit tests and 238 passing browser scenarios. CI follow-up identified unpublished local corrections, stale policy-revision fixtures, generated-source drift, a missing integration-event catalogue entry and module classification drift. The generator fixes retain the PostgreSQL test cleanup API and keep unsigned credential-binding columns out of signed-v2 storage. `go vet`, the 33 packaging/release contract tests, repeated generator stability, and the central CLI workflow on SQLite and live PostgreSQL pass. The signed transport acceptance case also passes with `-race` on Memory/SQLite; hosted native Linux/Windows and the complete CI workflow remain separate gates until the updated branch has run. Further CI reproduction corrected a concurrent test ID counter, a detached-inspector browser wait, live policy revisions in signed load, and historical/operational fixtures that now establish explicit ownership before execution. The application race suite, repeated browser relation scenarios, real v0.2/v0.4.2 upgrades on both databases and eighteen-step HTTP journey pass; the complete hosted rerun remains required. See [CI qualification](docs/implementation/operational-consolidation/ci-qualification.md). No stage is advanced solely because these checks pass.
+
+PR #116 remains open and Draft. No merge, release, tag, publication or version advancement is authorized.
+
+## Drag-only card movement follow-up — 2026-10-20
+
+The owner requests removal of card stage menus/selects. Cards now prepare lane
+operations through drag and drop only; contextual inspector actions and backend
+capability/confirmation gates remain. Targeted qualification covers 47 distinct
+browser cases: 36 unaffected cases passed in the initial run and all 11 workspace
+cases passed after correcting native-drag test scrolling. The initial run had
+46 passes/one failure; it is not presented as a fully green single run. All 78 JS
+units pass. Two native acceptance fixtures now define criteria in Backlog before
+activation, fixing the previous-head hosted failures; central independent-review
+and installed-binary signed smoke both pass locally. See the [follow-up receipt](docs/ux/operational-kanban/drag-only-validation.md).
+The earlier 229-case receipt below qualifies its recorded source, not this follow-up.
+No merge or release.
+
+## Focused modal Kanban follow-up — 2026-10-20
+
+**Implemented and locally qualified; new-head hosted CI is separate.** The owner's seven simplification requests
+supersede the previous nonmodal presentation. [ADR-041](docs/adr/0041-focused-kanban-modal-and-backlog-planning.md)
+records native modal return, contextual controls, direct Overview navigation,
+criterion-scoped proof checklist and backend-enforced Backlog-only definition
+editing. Existing execution, evidence/assessment separation and acceptance gates
+remain intact. Earlier CI/captures below qualify their recorded historical sources,
+not this follow-up. The [current qualification](docs/ux/operational-kanban/simplification-validation.md) records 229 passing browser cases, 78 JavaScript units, the complete default Go suite, vet and Domain/Application race checks; local PostgreSQL skips remain explicit. [Seven current captures](docs/ux/operational-kanban/screenshots/focused-modal/README.md) bind the tested runtime and served assets. Native dialog return, frozen planning, criterion-scoped proof, mobile pointer layers and delayed permission navigation have regressions. No merge, release or version advancement is authorized.
+
+## Contextual workspace Kanban follow-up — 2026-10-20
+
+**Implemented and locally qualified; final-head CI tracked separately.** The owner approved the
+[workspace-mode plan](docs/ux/operational-kanban/owner-plan-workspace-mode.md) in the
+same draft PR #116. [ADR-040](docs/adr/0040-kanban-workspace-mode-and-prepared-operations.md)
+supersedes the previous modal/in-place-page presentation, preserving all domain
+and strict-completion invariants. Objectives use three typed lanes; Tasks separate
+Backlog and To do, with actual review facts only in Verification. The public stage
+contract remains unchanged. A nonmodal inspector preserves lanes; a single native
+operation dialog reuses existing forms and intent recovery. Accessible card menus
+replace permanent move selects. Final-source local qualification covers 222 browser cases through a 220-pass
+full run and two passing corrective cases; its original failures remain recorded.
+There are 78 passing JavaScript units, passing Application/web checks, 16 current
+captures and the A01–A30 contract matrix. See [qualification](docs/ux/operational-kanban/validation.md)
+for source binding, local PostgreSQL skips and manual screen-reader/device limits.
+Final-head hosted checks remain a separate gate; no merge, release or publication
+is authorized.
+
+## Hierarchy, Issue ownership, and dependency implementation — 2026-10-20
+
+**In progress in Draft PR #116; implementation is deliberately staged.** The
+approved [44-stage plan](docs/ux/operational-kanban/issue-and-dependency-plan.md)
+and [ADR-042](docs/adr/0042-objective-owned-issues-and-mandatory-work-placement.md)
+define required Objective placement for Tasks, explicit Objective ownership for
+Issues, an Objective achievement gate, and strict separation of Issues,
+Blockers, and `depends_on`. Stage 01 recorded an unchanged baseline with 12
+browser tests passing. Stage 02 records the accepted domain decisions. Stage 03 has inventoried the actual
+migrations, generators, repositories, query surfaces, and transport callers in
+[`hierarchy-schema-inventory.md`](docs/ux/operational-kanban/hierarchy-schema-inventory.md).
+It confirms that 0034 is only the next provisional ordinal, SQLite's Issue
+references need a careful FK-preserving migration, and no Issue CLI exists
+today. Stage 04 now includes `tools/acceptance/issue_ownership_backfill.py`, a
+deterministic per-Outcome audit that reports unowned Tasks/Issues, available
+Objective choices, evidence-based Issue candidates, and dependency edges
+affected by each unowned Task. SQLite is opened with `mode=ro` and query-only;
+PostgreSQL uses the existing read-only repeatable-read snapshot helper. The
+tool is covered by read-only determinism and schema-gate fixture tests. Stage
+05 adds `NewWorkItemForObjective` and `ValidateForCreation`; the legacy
+constructor and state reader remain available while existing creation paths
+are switched in Stage 06. The database schema is unchanged. No legacy data
+mapping may be guessed; the contract migration remains gated on a zero-orphan
+audit and reviewed mappings.
+
+The existing contract still permits direct-Outcome Tasks and Issues without an
+Objective owner until the relevant implementation and migration stages pass.
+Stages 18–21 add the Issue achievement gate, bounded Issue coverage, independent
+Issue/Blocker closure and atomic Issue-plus-many-Blocker creation. Stage 22 adds
+a bounded, revision-pinned dependency impact query over the existing graph read
+port. It returns deterministic paths, current lifecycle summaries, direct
+Blockers, unsatisfied hard prerequisites, advisory context and explicit partial
+coverage without persisting projections or propagating Blockers over dependency
+edges. The graph read adapters now expose hard/advisory strength metadata;
+Memory, SQLite and PostgreSQL contract tests pass. Focused Application tests
+cover A→B→C, both directions, Objective dependencies, satisfied prerequisites,
+independent Blockers, depth bounds, pagination and stale-revision rejection.
+The approved plan records the test commands and the remaining transport work.
+Stage 23 adds a read-only dependency batch preview and atomic `ApplyDependencyChanges`
+with Outcome-revision and per-Source optimistic guards, versioned removals,
+final-graph DAG validation, and per-Relation events at one revision. Its tests
+cover read-only preview, valid edge replacement against the final graph,
+all-or-nothing cycle rejection, stale source/relation versions, frozen sources,
+invalid endpoints, stale Outcome snapshots, and idempotent replay. Stage 24
+uses the existing `relates_to` relation for corrective Issue↔Task links; a typed,
+version-checked Application operation writes and removes the association and
+exposes it through both entity workspace views without affecting readiness or
+creating a parallel relation field. Tests cover stale Issue/Task versions,
+invalid removal, bidirectional reads, atomic relation events/revisions and
+unchanged readiness. Stage 25 now requires an Objective for every persisted
+Task. PostgreSQL enforces NOT NULL against its existing composite FK; SQLite
+rebuilds `work_items`, copies every field, restores explicit indexes and
+triggers, and validates forward and reverse FKs. Both migration runners perform
+a transactional zero-orphan preflight and stop without changing schema version
+or ownership when a legacy Task lacks a reviewed mapping. The actual v0.1
+fixture verifies that such an upgrade remains blocked; SQLite full storage
+tests and focused PostgreSQL migration/hierarchy tests passed in their stage
+receipts. Stage 26 is complete in commit `2aab252`; its SQLite preflight/rebuild
+and PostgreSQL constraint are not to be repeated. The consolidated operational
+plan maps the unfinished Stage 27–44 work. The Draft PR remains unmerged, with
+no release or tag as part of this work.
+
+## Operational Kanban UX audit — 2026-10-20
+
+Historical presentation: the workspace-mode follow-up above supersedes the
+modal/full-page interaction below; its domain additions remain included.
+
+**Implemented and locally qualified; draft PR #116 remains unmerged.** The owner requests a hybrid
+UX/domain audit and operational Kanbans using the locally installed
+`laws-of-ux-auditor` and `product-design-and-ux` skills. The
+[audit, baseline evidence and acceptance gates](docs/ux/operational-kanban/audit.md)
+record the findings before product changes.
+
+- In-place item work page replaces the second Kanban sidebar; preserve hierarchy,
+  filters, scroll, focus and coherent revisions. Board's compact inspector remains.
+- Drag and single-pointer/keyboard move controls prepare existing domain commands;
+  no status setter, optimistic stage change, fabricated review or automatic acceptance.
+- Canonical forms/actions live inside the same native modal, preserving versions,
+  current authority, explicit confirmation and exact-intent recovery.
+- Expose existing Objective start and legacy renewal/reacquisition capabilities;
+  legacy-only human exposure is explicit. Signed acquisition/delivery/review stays
+  in the authorized external host. No runtime or signing authority is added.
+- Separate work, responsibility, authority, impediments, proof, acceptance and history.
+  Optional map enrichment cannot block a legitimate Kanban form or recovery.
+- A delayed origin refresh now restores the rebuilt opening control and its disclosure,
+  preserving keyboard focus after closing a contextual Kanban.
+- Local verification: 210-case complete final-source browser run, plus three repetitions
+  of 11 overlapping context/focus scenarios (33 executions); 76 JS units,
+  affected Go packages, workspace race checks and 16 final-source captures. See
+  [qualification and live CI](docs/ux/operational-kanban/validation.md). Earlier
+  receipts retain their recorded sources; independent/manual acceptance remains separate.
+
+## Contextual Kanbans and compact inspector — 2026-10-19
+
+**Implementation delivered; qualification is tracked separately.** The
+[approved owner plan](docs/ux/contextual-kanban/owner-plan-2026-10-19.md) is
+preserved byte-for-byte. The locally installed product-design-and-ux skill guides
+compact inspection, one navigable Objectives/Tasks modal, guided Criteria/material
+entry and controlled return to the spatial Board. Original paper assets, map
+engine, authority and signed execution remain intact.
+
+- [x] Compact summary and exactly two primary disclosures; activity loads on demand.
+- [x] Contextual Kanbans separate Objectives, direct Tasks and subobjectives; server-derived stages, cancellation history, partial counts, pinned paging and focus/scroll return.
+- [x] Criteria/material actions reuse the canonical authorized forms; waiver remains distinct from verification.
+- [x] Opt-in strict-work completion and migration 0033 across SQLite/PostgreSQL; complete obligation scans and durable, revision-pinned cancelled-scope acknowledgement. Historical/API omission stays compatible.
+- [x] Real browser roundtrips for strict cancellation exclusion and revocation while the Kanban is open.
+- [x] Updated docs, compatibility review and 29 source-bound captures; see [technical qualification](docs/ux/contextual-kanban/qualification.md).
+- [ ] Independent participant study, manual assistive/device checks and reference-environment performance qualification. The [62-scenario matrix](docs/ux/contextual-kanban/acceptance.json) identifies 56 verified for automated scope and six partially verified.
+- [ ] Dedicated aggregate Kanban read/authoritative server-filter counts are deferred using the owner's bounded V1. Loaded scope remains labelled; no new runtime or Cloud subsystem is introduced.
+
+The CI follow-up fixes a real Board interaction defect: a fresh card press after
+panning/dragging must not inherit the preceding gesture's 250 ms click suppression.
+All three movement journeys passed five repetitions; a bounded-clock regression
+reproduces the earlier defect without weakening the existing movement assertions.
+A second controlled regression fixes URL dismissal while a deep-linked inspector
+is still awaiting optional graph enrichment; Escape and browser Back passed five
+repetitions each. The Kanban camera check measures the actual opening gesture.
+See the [CI interaction follow-up](docs/ux/contextual-kanban/ci-gesture-fix.md).
+
+The PR remains draft. No merge, version advancement or publication is performed.
+
+## Login viewport follow-up — 2026-10-19
+
+The login composition now fills and centers within the height below the real
+header, without increasing fonts or controls. Safe alignment preserves scrolling
+on short screens and expanded local access. Twelve desktop/mobile screenshots
+and geometry regressions are recorded in the [login guide](docs/design/editorial/operational-workspace/login-viewport/README.md).
+The historical 35-case check passed 33 cases and exposed two mobile Board Escape-close
+failures. Subsequent focus/disclosure corrections and the complete 193-case browser
+run close those regressions; see the [current qualification](docs/ux/contextual-kanban/qualification.md).
+No merge or release is performed.
 
 ## Status legend
 
@@ -49,6 +233,99 @@ The architecture document describes what should exist. This ROADMAP records what
 ---
 
 # Implementation waves
+
+## Operational workspace — 2026-10-19
+
+**Status: Implemented and locally qualified in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116); independent and reference-environment acceptance remain pending.**
+The owner expands this PR to progressive creation, persistent documentary notes,
+guarded definition/placement edits, atomic contextual records, coherent inspector
+and card reads, and an event-backed timeline. This scope supersedes the earlier
+statement that the whole PR contains presentation changes only. Existing authority,
+verification and exact-intent recovery rules remain in force.
+
+The [unaltered owner plan](docs/ux/operational-workspace/owner-plan-2026-10-19.md),
+[ADR-038](docs/adr/0038-operational-workspace.md) and
+[24-unit / 108-scenario tracker](docs/ux/operational-workspace/acceptance.json)
+separate implementation from actual qualification. Automated and human acceptance
+are tracked independently. Continue this branch; do not merge or publish.
+
+- [x] Add shared typed preconditions and capabilities, guarded Task definition/date/placement edits and planned Objective reparenting.
+- [x] Persist immutable authenticated documentary notes with scoped corrections and verified internal observation references.
+- [x] Add explicit initial Criteria, bounded atomic plan creation and contextual Evidence, Artifact and Decision registration.
+- [x] Read inspectors, global required Objectives and batched cards from coherent authorized frames; page one event-backed timeline with frozen frontiers.
+- [x] Integrate progressive quick/full/batch forms, a shared pertinent inspector, structural Board layers and contextual actions; preserve signed-host handoff and exact-intent recovery.
+- [x] Expose the new operations through HTTP, MCP, CLI and Go SDK; retain historical wire shapes and review generated compatibility.
+- [x] Complete source-bound local browser, PostgreSQL, migration, performance and visual qualification; publish the evidence with its actual limits in this draft PR.
+- [ ] Conduct the independent five-participant comprehension study and the prescribed 2-vCPU/4-GiB/50-ms-RTT performance qualification. Automated tests do not stand in for either.
+
+Core implementation is recorded in `342dd6e`, transport exposure in `5c68f7e`
+and the initial shared workspace in `d5aecda`. Guarded impact reviews follow in
+`9b03c14` / `505f2e6`, with reviewed transports in `e36a8f4`; final workspace
+behavior is qualified at `36d7d2e` (164 browser journeys and 74 JavaScript units).
+The capture-only follow-up `d458d478` produces 75 images with identical production
+assets. The full backend has 1,703 passing tests/subtests, nine explicit skips
+and ten packages without tests; the Go/SQL fingerprint remains unchanged.
+The final local concurrent-read p95 is 216.09 ms on SQLite and 183.16 ms on
+PostgreSQL; the reference profile remains unqualified and the earlier PostgreSQL
+834.39 ms result is retained. The published/source metadata stays
+at 1.1.0; the coordinated release queue plans 1.2.0 without preparing or publishing
+it. See the [operator guide](docs/ux/operational-workspace/README.md),
+[API guide](docs/operational-workspace-api.md), [migration evidence](docs/ux/operational-workspace/migrations.md)
+and [performance scope](docs/ux/operational-workspace/performance.md).
+
+## Board communication and navigation — 2026-10-18
+
+**Status: Implemented and locally qualified in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116); review and hosted qualification remain separate.**
+The owner reports an obstructive persistent Partial view notice, artificial
+limits on card movement, stretched action rows, and unclear relationships among
+Outcomes, Objectives, Tasks, Evidence and Issues. Continue the same draft PR.
+
+- [x] Place persistent data-completeness information in the Board status flow,
+  preserving visible errors and accessible feedback without covering controls.
+- [x] Allow panning and local card placement around every side of the Board;
+  preserve correct fitting, connections, selection and camera behavior.
+- [x] Make action menus compact, grouped by purpose and contextual to the
+  selected record, with readable explanations and reachable native forms.
+- [x] Map and clarify actual entity relationships, ownership, dependencies,
+  documentary support and blocking, without inferring acceptance or authority.
+- [x] Verify desktop/mobile workflows and refresh source-bound captures and docs.
+
+Implementation source `c394f13801a7ca56900da334a862f917fed43aa8` passes all
+57 unit checks and 122 browser journeys in one clean full run (5.7m), with no
+failures, skips, retries or flaky results. Native web tests/vet and 16
+release/compatibility checks pass. The [33-image source-bound gallery](docs/design/editorial/board-communication/README.md)
+records desktop/mobile, DPR and native browser zoom. The
+[relationship guide](docs/workspace-relationships.md) maps actual ownership,
+dependencies, Evidence stances, Issue scope, blocking and explicit verification.
+The existing release queue plans a minor 1.2.0 preparation; this does not
+publish a version. No domain, API, storage or authority changes are included.
+No merge is performed.
+
+## Stable operational density — 2026-10-18
+
+**Status: Implemented and locally verified.** The owner rejects oversized typography, sidebars and
+controls on large and small screens. This explicitly supersedes the earlier
+viewport-proportional enlargement requirement. Use Woobe's actual operational
+measurements as a sizing reference while preserving WOS's editorial fonts,
+palette, paper grid, original art, domain behavior and Board camera.
+
+- [x] Replace automatic whole-interface growth with stable, bounded dimensions
+  for text, controls, navigation and contextual inspection.
+- [x] Review top-down composition and long authored descriptions, avoiding
+  oversized or repeated inspector text without losing record content.
+- [x] Verify desktop, QHD/4K, compact/mobile and enlarged text, preserve working
+  camera/forms/focus, and publish current-source screenshots and measurements.
+
+Implementation source `9d41b3aace7378ba7ed34948fb36db7f32464e47` passes 44 unit
+checks and all 106 browser journeys in one clean full run (5.1m), with no
+failures, retries or skips. Native web tests/vet and 16 release/compatibility
+checks pass. The [27 current captures](docs/design/editorial/density/README.md)
+record known CSS viewports, DPR, long Evidence, forms, mobile navigation, empty
+states and native 125%/150% browser zoom. Mobile navigation measures 123–131 px
+high; inspector headings/body remain 20/14 px, with desktop navigation capped
+at its original operational width. See [the sizing reference](docs/design/editorial/operational-density.md)
+and source/image/served-asset hashes in the gallery manifest. A normal patch
+release is queued; merge, hosted qualification and publication remain separate.
 
 ## Compact entry and Board inspection — 2026-10-18
 
@@ -1969,3 +2246,15 @@ Exact final PR-head CI must be green before delivery; [head checks](https://gith
 Controlled read targets pass on both SQL adapters: at 10,000 simple/full median-p95 ratio <=0.70 and allocation <=0.50; focal 1,000 ratio <=1.10. Full derived snapshots still allocate roughly 44–45 MB for global scoped classification/proof. The complete 50-consumer signed matrix measures SQLite p95 4.06–4.18 seconds and PostgreSQL 91.42–140.45 seconds with about 5,000 conflicts/exact retries. Those are explicit laboratory contention limits, not a production SLA, invariably faster PostgreSQL, a supported user/session count or thousands-of-writers certification. Backups/retention/alarms are opt-in external operations; restore cannot reverse receiver effects or security changes after a stale snapshot.
 
 The remaining human comprehension/usability and manual screen-reader/zoom validation is pending under the owner's prior explicit instruction. Product 1.0 is not certified/prepared/published. The public package remains wosctl, public operations remain wos <command>, skills remain embedded, and Apache-2.0 is unchanged. Merge remains prohibited for this delivery.
+
+## PR #116 — Issue ownership, hierarchy, dependencies and contextual Kanban
+
+Implementation follows the approved 44-stage plan in `docs/ux/operational-kanban/issue-and-dependency-plan.md`. The branch remains `fix/workspace-operational-density`; PR #116 stays Draft/open. No merge, release, or tag is authorized.
+
+- Stages 01–05 are committed: baseline and invariants, ADR-042, schema/generator inventory, read-only orphan audit, and a validated domain constructor for newly created Objective-owned Tasks. Legacy hydration remains available during the planned expand/backfill/contract sequence.
+- Stage 06 is implemented in the current work: individual `CreateWorkItem` requests without `objective_id` now fail before allocating or persisting a Task. Valid requests construct the Task with its Objective as part of the domain constructor; owner and same-Outcome/open-parent validation remain inside the transaction. A regression proves rejection leaves revision, Task count, and event count unchanged.
+- To preserve contract coverage, application/storage/API/SDK/MCP/server/integration/boundary/acceptance fixtures now create or reuse a real Objective instead of relying on orphan Tasks. Strict completion tests distinguish required Objective-owned work from an optional Objective; they do not treat the optional branch as an Outcome obligation.
+- Verification for Stage 06: `go test ./...` passed on 2026-10-20 using the local Go toolchain. PostgreSQL adapter tests compiled and ran; real PostgreSQL cases were not executed because `WOS_TEST_POSTGRES_DSN` was not configured. Browser journeys remain to be updated with the required Objective flow in Stage 07.
+- Stage 07 is committed as `b6255fa`: atomic batch creation rejects Tasks without a persisted or local Objective; the plan editor offers Outcome as a parent only for Objectives and retains invalidated selections and draft content until corrected. Focused browser coverage verifies missing-parent recovery without losing titles. Kanban cards remain drag-and-drop only for lane changes; existing coverage confirms there is no card status menu.
+- Stage 08 is implemented in the current work: domain and application setters reject clearing a Task's Objective; the placement preview reports `task_objective_required` and does not present a simulated impact for the invalid move. The Task form requires an Objective, while an Objective can still be moved to the Outcome. Application/domain/storage tests and focused browser tests are being qualified. Remaining stages are pending; this entry does not claim the full plan is complete.
+- Stages 25–26 are now implemented in their own commits: Tasks and Issues both require one Objective in the same Outcome. Issue ownership is protected by a composite foreign key, zero-orphan rollout gate, SQLite table rebuild that preserves reverse affected references/indexes/triggers, and PostgreSQL parity. Objective ownership does not replace `affected_refs`. Kanban status continues to change only through drag and drop; the visible selects are limited to collection context and filters.

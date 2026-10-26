@@ -67,7 +67,7 @@ func TestAdministrativeWorkOverridesRequireExplicitAuthorization(t *testing.T) {
 	outcome = activated.Value
 
 	createdWork, err := defaultService.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, defaultService, outcome.Scope()),
 		Title:     "leased work",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
@@ -193,7 +193,7 @@ func TestAdministrativeCompletionOverridesLeaseButNotCompletionGates(t *testing.
 	outcome = activated.Value
 
 	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
+		Scope: outcome.Scope(), ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()),
 		Title:     "externally finished leased work",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,

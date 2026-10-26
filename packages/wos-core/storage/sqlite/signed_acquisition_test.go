@@ -65,7 +65,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			admin, err := sec.Authenticate(ctx, "signed-acquisition-bootstrap-token-at-least-32")
 			must(err)
 			adminCtx := a.WithIdentity(ctx, admin)
-			must(sec.SetGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionWorkContractAcquire, ports.PermissionWorkWrite}}))
+			must(sec.Store.PutGrant(adminCtx, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "executor", Permissions: []ports.Permission{ports.PermissionStateRead, ports.PermissionTaskClaim, ports.PermissionWorkContractAcquire, ports.PermissionTaskRenew, ports.PermissionWorkWrite, ports.PermissionRecordsWrite}}))
 			credential, token, err := sec.IssueCredential(adminCtx, ns, "executor", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "executor"}, now.Add(time.Hour))
 			must(err)
 			identity, err := sec.Authenticate(ctx, token)
@@ -88,15 +88,15 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			must(err)
 			registry := uow.(ports.SigningIdentityUnitOfWork).SigningIdentity()
 			must(registry.SaveKey(ctx, d.SigningKey{ID: agentKey, NamespaceID: ns, PrincipalID: "executor", Purpose: "agent", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(agentPub), Fingerprint: agentFP, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}, 0))
-			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 1, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionWorkContractAcquire), string(ports.PermissionWorkWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
-			must(registry.SaveCredentialPolicy(ctx, policy, 0))
+			policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "executor", Version: 2, PermittedOperations: []string{string(ports.PermissionStateRead), string(ports.PermissionTaskClaim), string(ports.PermissionWorkContractAcquire), string(ports.PermissionTaskRenew), string(ports.PermissionWorkWrite), string(ports.PermissionRecordsWrite)}, AcceptanceFloor: d.AcceptanceIndependentReview, AllowedSigningKeyIDs: []d.ID{agentKey}, MaxActiveWorkContracts: 10, MaxActiveReviewContracts: 1, UpdatedAt: now}
+			must(registry.SaveCredentialPolicy(ctx, policy, 1))
 			outcome, err := d.NewOutcome(scope.OutcomeID, ns, "signed workload", "", "verified", d.PriorityNormal, now)
 			must(err)
 			outcome.Lifecycle = d.OutcomeLifecycleActive
 			must(uow.Outcomes().Insert(ctx, outcome))
 			works := []d.WorkItem{}
 			for i := 0; i < 4; i++ {
-				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				w, e := d.NewWorkItem(testID(fmt.Sprintf("0199a555-0000-7000-8000-%012x", 20+i)), scope, "precise signed task", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
 				w.ContractsEnabled = true
 				if i == 0 {
@@ -104,7 +104,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					must(e)
 					must(w.AddCriterion(criterion, now))
 				}
-				must(uow.WorkItems().Insert(ctx, w))
+				must(w.Activate(now))
+				must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &w))
 				works = append(works, w)
 			}
 			protocol := uow.(ports.WorkProtocolUnitOfWork).WorkProtocol()
@@ -223,7 +224,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 				must(e)
 				legacyPolicy := policy
 				legacyPolicy.CredentialID = legacyCredential.ID
-				must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, legacyPolicy, 0))
+				legacyPolicy.Version = 2
+				must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, legacyPolicy, 1))
 				must(uow.Commit())
 				if _, e = service.AcquireSignedWorkContract(a.WithIdentity(ctx, legacyIdentity), firstCC, firstCmd); e == nil {
 					t.Fatal("legacy cache allowed another CID to substitute identity")
@@ -285,7 +287,8 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 			must(err)
 			otherPolicy := policy
 			otherPolicy.CredentialID = otherCredential.ID
-			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 0))
+			otherPolicy.Version = 2
+			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, otherPolicy, 1))
 			must(uow.Commit())
 			otherCtx := a.WithIdentity(ctx, otherIdentity)
 			if _, err = withoutCache.AcquireSignedWorkContract(otherCtx, firstCC, firstCmd); err == nil {
@@ -316,7 +319,7 @@ func TestSignedAcquisitionAuthenticatesFreezesSignsAndEnforcesPrincipalQuota(t *
 					t.Fatal("clean restore lost durable original acquisition")
 				}
 			}
-			must(sec.RevokeCredential(adminCtx, ns, credential.ID))
+			must(sec.Store.RevokeCredential(adminCtx, credential.ID))
 			if _, err = service.AcquireSignedWorkContract(agentCtx, firstCC, firstCmd); err == nil {
 				t.Fatal("stale authenticated bearer disclosed signed replay")
 			}

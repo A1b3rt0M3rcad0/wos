@@ -9,6 +9,7 @@ import {
   outcomeActions,
 } from "./ux-fixture.mjs";
 import AxeBuilder from "@axe-core/playwright";
+import { clickRecordAction } from "./workspace-action-fixture.mjs";
 async function audit(page) {
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"])
@@ -23,7 +24,7 @@ test("axe checks login, six-area overview, common Task form and server combobox"
   wos,
 }) => {
   const { scope } = await wos.outcome();
-  await wos.command("create_objective", {
+  const objective = await wos.command("create_objective", {
     scope,
     title: "Accessible condition",
     priority: "normal",
@@ -36,9 +37,10 @@ test("axe checks login, six-area overview, common Task form and server combobox"
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Accessible Task");
   await audit(page);
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "Objective", exact: true })
-    .fill("Accessible");
+    .getByRole("combobox", { name: "New placement", exact: true })
+    .fill(objective.title);
   await expect(page.locator("[role=option]")).toHaveCount(1);
   await audit(page);
   await page.keyboard.press("ArrowDown");
@@ -64,7 +66,8 @@ test("390px mobile creates Outcome and Task with a usable searched reference", a
   await save(page);
   await intent(page, "New task");
   await page.getByLabel("Task title", { exact: true }).fill("Mobile Task");
-  await pick(page, "Objective", "Mobile condition");
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+  await pick(page, "New placement", "Mobile condition");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -81,11 +84,14 @@ for (const scale of [2, 4])
       width: Math.floor(1280 / scale),
       height: Math.floor(900 / scale),
     });
-    await wos.outcome();
+    const { scope } = await wos.outcome();
+    await wos.command("create_objective", { scope, title: "Reflow condition", priority: "normal" });
     await wos.login(page);
     await openOutcome(page);
     await intent(page, "New task");
     await page.getByLabel("Task title", { exact: true }).fill("Reflow Task");
+    await page.getByRole("button", { name: "Choose Objective", exact: true }).click();
+    await pick(page, "New placement", "Reflow condition");
     await page.keyboard.press("Tab");
     expect(
       await page.evaluate(() => document.activeElement === document.body),
@@ -118,11 +124,13 @@ test("keyboard opens, searches, selects, confirms and restores focus without a p
   await expect(page.locator("#action-dialog")).toBeVisible();
   await page
     .locator("#action-options")
-    .getByRole("button", { name: "New task", exact: true })
+    .getByRole("button", { name: "New task · Backlog", exact: true })
     .focus();
   await page.keyboard.press("Enter");
   await page.getByLabel("Task title", { exact: true }).fill("Keyboard Task");
-  const input = page.getByRole("combobox", { name: "Objective", exact: true });
+  await page.getByRole("button", { name: "Choose Objective", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  const input = page.getByRole("combobox", { name: "New placement", exact: true });
   await input.focus();
   await page.keyboard.type("Keyboard");
   await expect(page.locator("[role=option]")).toHaveCount(1);
@@ -137,13 +145,16 @@ test("compound Issue resolution explicitly releases selected impacts atomically"
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Issue impact Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope,
     title: "Affected Task",
     priority: "normal",
+    objective_id: objective.id,
   });
   await wos.command("report_issue_with_blocker", {
     scope,
+    objective_id: objective.id,
     title: "Compound problem",
     severity: "major",
     blocked_ref: { ...scope, kind: "work_item", id: task.id },
@@ -153,16 +164,14 @@ test("compound Issue resolution explicitly releases selected impacts atomically"
   await wos.login(page);
   await openOutcome(page);
   await detail(page, "Issues", "Compound problem");
-  await page
-    .getByRole("button", {
-      name: "Resolve issue and release selected blockers",
-      exact: true,
-    })
-    .click();
+  await page.locator("#entity-actions").click();
+  await page.locator('#action-options [data-action-id="resolve_issue_and_blockers"]').click();
   await page
     .getByLabel("Issue resolution summary", { exact: true })
     .fill("Verified together");
-  await pick(page, "Blockers to release", "Concrete impact");
+  const impact = page.getByLabel("Affected Task", { exact: true });
+  await expect(impact).not.toBeChecked();
+  await impact.check();
   await page
     .getByLabel("Confirm each selected impact is released", { exact: true })
     .check();
@@ -205,18 +214,17 @@ test("typed participants are documentary and never acquire execution authority",
   wos,
 }) => {
   const { scope } = await wos.outcome();
+  const objective = await wos.command("create_objective", { scope, title: "Participant Objective", priority: "normal" });
   const task = await wos.command("create_work_item", {
     scope,
     title: "Participant Task",
     priority: "normal",
+    objective_id: objective.id,
   });
   await wos.login(page);
   await openOutcome(page);
   await detail(page, "Tasks", "Participant Task");
-  await page.locator(".quick-actions details summary").click();
-  await page
-    .getByRole("button", { name: "Edit participants", exact: true })
-    .click();
+  await clickRecordAction(page, "Edit participants");
   await page
     .getByRole("button", { name: "Add participant", exact: true })
     .click();

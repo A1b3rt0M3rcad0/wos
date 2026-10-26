@@ -35,7 +35,7 @@ export async function verifyCentralAgentWorkflow(binary, {postgresDSN} = {}) {
   async function stop() {if(child?.exitCode===null){const ended=once(child,'exit');child.kill('SIGTERM');await ended;}}
   async function api(path, token=adminToken, body) {
     const response=await fetch(url+'/api/v1'+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json',...(body?{'Idempotency-Key':randomUUID()}: {})},...(body?{body:JSON.stringify(body)}:{})});
-    const data=await response.json();assert.ok(response.ok,`HTTP ${response.status} at ${path}`);return data;
+    const data=await response.json();assert.ok(response.ok,`HTTP ${response.status} at ${path}: ${JSON.stringify(data.error ?? data)}`);return data;
   }
   const command=async(name,payload)=>(await api('/commands/'+name,adminToken,{command:payload})).value;
   const signing=body=>api('/security/signing-commands',adminToken,body);
@@ -52,29 +52,34 @@ export async function verifyCentralAgentWorkflow(binary, {postgresDSN} = {}) {
     const scope={namespace_id:ns,outcome_id:outcome.id};
     await command('add_criterion',{owner:{...scope,kind:'outcome',id:outcome.id},expected_version:outcome.version,title:'The workflow is explicitly verifiable',required:true,verification_mode:'attestation'});
     await command('activate_outcome',{scope,expected_version:outcome.version+1});
+    const objective=await command('create_objective',{scope,title:'Central workflow delivery',priority:'normal',required_for_outcome:false});
+    await command('add_criterion',{owner:{...scope,kind:'objective',id:objective.id},expected_version:objective.version,title:'The delivery is independently reviewed',required:true,verification_mode:'attestation'});
+    const objectiveState=await api(`/namespaces/${ns}/outcomes/${outcome.id}/objectives/${objective.id}`);
+    await command('start_objective',{scope,objective_id:objective.id,expected_version:objectiveState.value.version});
     let identity=await api('/security/signing-identity');
-    const adminOperations=['state:read','namespace:admin','work:write','outcome:write','planning:write','assessment:write','identity.signing_key.enroll','actor:delegate'];
-    await signing({namespace_id:ns,expected_namespace_version:identity.namespace_version,operation:'set_credential_policy',credential_policy:{namespace_id:ns,credential_id:identity.credential_id,principal_id:identity.principal_id,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:adminOperations}});
+    const adminOperations=['state:read','namespace:admin','permissions:manage','credentials:issue','policy:manage','objective:create','objective:start','task:create','task:activate','criterion:define','work:write','outcome:write','planning:write','assessment:write','identity.signing_key.enroll','actor:delegate'];
+    await signing({namespace_id:ns,expected_namespace_version:identity.namespace_version,expected_version:String(identity.credential_policy?.revision??0),operation:'set_credential_policy',credential_policy:{namespace_id:ns,credential_id:identity.credential_id,principal_id:identity.principal_id,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:adminOperations}});
     identity=await api('/security/signing-identity');
     await signing({namespace_id:ns,expected_namespace_version:identity.namespace_version,operation:'set_acceptance_policy',acceptance_policy:{namespace_id:ns,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1}});
     for(const [i,phase] of ['draining','contracts_v1','draining_to_signed_v2','signed_contracts_v2'].entries())await command('set_namespace_work_protocol',{scope,expected_protocol_version:i+1,phase,writers_drained:['contracts_v1','signed_contracts_v2'].includes(phase),reason:'Explicit isolated native acceptance cutover'});
-    const task=await command('create_work_item',{scope,title:'Verify centralized continuation',priority:'normal',lifecycle:'todo',execution_spec:{instructions:['Use the CLI without operational file editing.']}});
+    const task=await command('create_work_item',{scope,title:'Verify centralized continuation',priority:'normal',lifecycle:'backlog',objective_id:objective.id,execution_spec:{instructions:['Use the CLI without operational file editing.']}});
     const criterion=await command('add_criterion',{owner:{...scope,kind:'work_item',id:task.id},expected_version:task.version,title:'The delivered material was independently checked',required:true,verification_mode:'attestation'});
+    await command('activate_work_item',{scope,work_item_id:task.id,expected_version:Number(task.version)+1});
     const trust=await api(`/namespaces/${ns}/signed-trust`);
     async function provision(name,permissions) {
       const admin=await api('/security/signing-identity');
       const granted=await api('/security/commands',adminToken,{namespace_id:ns,expected_namespace_version:admin.namespace_version,operation:'set_grant',principal_id:name,permissions});
       const issued=await api('/security/commands',adminToken,{namespace_id:ns,expected_namespace_version:granted.result.namespace_version,operation:'issue_credential',principal_id:name,actor_ref:{kind:'agent',provider:'central-acceptance',id:name},expires_at:new Date(Date.now()+3600000).toISOString()});
       const self=await api('/security/signing-identity',issued.token), current=await api('/security/signing-identity');
-      const policy=await signing({namespace_id:ns,expected_namespace_version:current.namespace_version,operation:'set_credential_policy',credential_policy:{namespace_id:ns,credential_id:self.credential_id,principal_id:name,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:permissions}});
+      const policy=await signing({namespace_id:ns,expected_namespace_version:current.namespace_version,expected_version:String(self.credential_policy?.revision??0),operation:'set_credential_policy',credential_policy:{namespace_id:ns,credential_id:self.credential_id,principal_id:name,acceptance_floor:'independent_review',max_active_work_contracts:3,max_active_review_contracts:1,permitted_operations:permissions}});
       const seed=randomBytes(32), privateKey=createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),seed]),format:'der',type:'pkcs8'}), publicKey=createPublicKey(privateKey).export({format:'der',type:'spki'}).subarray(-32), fingerprint='sha256:'+createHash('sha256').update(publicKey).digest('hex');
       const enrollment=await signing({namespace_id:ns,expected_namespace_version:policy.namespace_version,operation:'create_enrollment',credential_id:self.credential_id,principal_id:name,expected_fingerprint:fingerprint});
       const environment={WOS_CENTRAL_TOKEN:issued.token,WOS_CENTRAL_KEY:seed.toString('base64')};
       cli(environment,['profile','create',name,'--server',url,'--server-id',trust.server.server_id,'--issuer-fingerprint',trust.server.fingerprint,'--namespace',ns,'--outcome',outcome.id,'--credential-ref','env:WOS_CENTRAL_TOKEN','--private-key-ref','env:WOS_CENTRAL_KEY','--enrollment',enrollment.enrollment.id]);
       return environment;
     }
-    const executor=await provision('executor',['state:read','identity.signing_key.enroll','work.contract.acquire','work.contract.return','work:write','assessment:write','conclusion:write']);
-    const reviewer=await provision('reviewer',['state:read','identity.signing_key.enroll','work.review.acquire','work.review.decide','assessment:write','conclusion:write']);
+    const executor=await provision('executor',['state:read','identity.signing_key.enroll','task:claim','task:deliver','work.contract.acquire','work.contract.return','work:write','records:write','criterion:assess','assessment:write','conclusion:write']);
+    const reviewer=await provision('reviewer',['state:read','identity.signing_key.enroll','task:review','task:accept','task:request_changes','work.review.acquire','work.review.decide','records:write','criterion:assess','assessment:write','conclusion:write']);
     cli(executor,['profile','use','executor']);
     cwd=secondCwd;
     assert.equal(cli(executor,['profile','list']).data.active_profile,'executor');

@@ -139,7 +139,7 @@ async def journey(args):
             issued = []
             namespace_version = 1
             for principal in ("agent-a", "agent-b"):
-                grant = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "set_grant", "principal_id": principal, "permissions": ["state:read", "work:write", "records:write"]})
+                grant = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "set_grant", "principal_id": principal, "permissions": ["state:read", "task:claim", "task:accept", "records:write"]})
                 namespace_version = grant["result"]["namespace_version"]
                 credential = request("/security/commands", body={"namespace_id": ns, "expected_namespace_version": namespace_version, "operation": "issue_credential", "principal_id": principal, "actor_ref": {"kind": "agent", "provider": "acceptance", "id": principal}, "expires_at": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat().replace("+00:00", "Z")})
                 namespace_version = credential["result"]["namespace_version"]
@@ -235,7 +235,7 @@ async def journey(args):
             step(4, "agent queries ready candidates and explicitly claims work")
             decision = command("propose_decision", {"scope": scope, "title": "Use durable state", "proposal": "Use WOS, not chat history", "chosen_alternative": "WOS", "alternatives": ["WOS", "chat"], "rationale": "Independent continuation is required"})
             command("accept_decision", {"scope": scope, "decision_id": decision["id"], "expected_version": decision["version"]})
-            issue = command("create_issue", {"scope": scope, "title": "Review execution before proceeding", "severity": "minor", "affected_refs": [work_ref]})
+            issue = command("create_issue", {"scope": scope, "objective_id": objective["id"], "title": "Review execution before proceeding", "severity": "minor", "affected_refs": [work_ref]})
             blocker = command("create_blocker", {"scope": scope, "blocked_ref": work_ref, "cause_ref": ref("issue", issue["id"]), "description": "Require explicit release", "propagation": "direct"})
             context = await tool(issued[0], "get_work_context", {**scope, "entity_id": work["id"]})
             assert "Use durable state" in json.dumps(context) and "Require explicit release" in json.dumps(context)

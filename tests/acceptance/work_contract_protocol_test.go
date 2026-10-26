@@ -79,7 +79,12 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 		t.Fatal(err)
 	}
 	o.Lifecycle = d.OutcomeLifecycleActive
-	w, err := d.NewWorkItem(d.MustParseID("0199ff21-0000-7000-8000-000000000003"), scope, "Focused task", "Execute only required work", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+	objective, err := d.NewObjective(d.MustParseID("0199ff21-0000-7000-8000-000000000006"), scope, "Protocol objective", "", d.PriorityNormal, false, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	objective.Lifecycle = d.ObjectiveLifecycleInProgress
+	w, err := d.NewWorkItemForObjective(d.MustParseID("0199ff21-0000-7000-8000-000000000003"), scope, &objective.ID, "Focused task", "Execute only required work", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,6 +95,9 @@ func testHTTPAcquisitionMCPResumeAndSDKReceipts(t *testing.T, store ports.Transa
 		t.Fatal(err)
 	}
 	if err := tx.Outcomes().Insert(ctx, o); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Objectives().Insert(ctx, objective); err != nil {
 		t.Fatal(err)
 	}
 	if err := tx.WorkItems().Insert(ctx, w); err != nil {

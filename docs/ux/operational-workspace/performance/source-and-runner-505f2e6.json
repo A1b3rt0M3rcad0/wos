@@ -1,0 +1,34 @@
+{
+  "captured_at": "2026-10-19T18:55:10Z",
+  "branch": "fix/workspace-operational-density",
+  "base_sha": "4d33dced5cd8e17036f94f3b1401a86f2c433899",
+  "implementation_sha": "505f2e637ec37a189c82365fcc7102cdaf038490",
+  "core_source_sha256": "9d34e5ad354884c872bdf05507e517dd5a54f45ad12347ccd5512dc2c4bd103f",
+  "core_source_fingerprint_files": 339,
+  "core_source_fingerprint_definition": "sorted relative path + NUL + bytes + NUL; non-test .go and .sql under core application/domain/ports/storage, go.mod/go.sum, postgres generator",
+  "go_version": "go version go1.27.2 linux/amd64",
+  "cpu_max": "400000 100000",
+  "memory_max_bytes": 34359738368,
+  "cpu_affinity": "Cpus_allowed_list:\t0-4",
+  "loadavg": "1.52 4.45 4.44 1/959 569687",
+  "GOMAXPROCS": 2,
+  "reference_environment_reproduced": false,
+  "checkout_head_sha": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+  "phase": "final quiet candidate measurement start; full interval conditions recorded in quiet-run-environment.json",
+  "database_versions": {
+    "GOMAXPROCS": 2,
+    "postgres_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+    "runner_cpus": 5,
+    "sqlite_version": "3.53.4"
+  },
+  "postgres_setup_overlay": {
+    "base_source": "packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go",
+    "base_source_sha256": "ab89d60896cc86635171ee434740411eba374464c59df87ceb9569a3fb6e6e30",
+    "executed_source": "postgres-scoped-setup-harness.go.txt",
+    "executed_source_sha256": "15585ae582fb5926bd482ec03bdfe08fb4283e46648241ffc9a264bcd216ff0c",
+    "diff": "postgres-scoped-setup.patch",
+    "scope": "fixture setup only",
+    "source_commit": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf"
+  },
+  "postgreSQL_first_attempt_failed_before_timed_reads": true
+}

@@ -188,7 +188,7 @@ func protectWorkProtocol(p domain.NamespaceWorkProtocol, name string) error {
 	}
 	if p.Phase == domain.WorkProtocolSigned {
 		switch name {
-		case "ClaimWorkItem", "ReclaimWorkItem", "RenewWorkItemLease", "ReleaseWorkItem", "CompleteWorkItem", "AdministrativeCompleteWorkItem", "RenewWorkContract", "ResumeWorkContract", "RevokeWorkContract", "SyncWorkContract", "SubmitWorkResult", "FinalizeWorkContract", "ReconcileExpiredWorkContracts":
+		case "ClaimWorkItem", "ReclaimWorkItem", "RenewWorkItemLease", "ReleaseWorkItem", "CompleteWorkItem", "AdministrativeCompleteWorkItem", "RenewWorkContract", "ResumeWorkContract", "RevokeWorkContract", "SyncWorkContract", "SubmitWorkResult", "SubmitTaskForReview", "AcceptTaskDelivery", "RequestTaskDeliveryChanges", "FinalizeWorkContract", "ReconcileExpiredWorkContracts":
 			return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "signed Namespace requires signed contract operations")
 		}
 	}

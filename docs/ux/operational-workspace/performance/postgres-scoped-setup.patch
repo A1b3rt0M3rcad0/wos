@@ -1,0 +1,21 @@
+--- a/packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go
++++ b/packages/wos-core/storage/postgres/workspace_f08_benchmark_test.go
+@@ -10,0 +11 @@
++	"github.com/jackc/pgx/v5"
+@@ -101 +102 @@
+-	_, e = store.db.ExecContext(ctx, "ANALYZE")
++	analyzeRows, e := store.db.QueryContext(ctx, "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = $1 ORDER BY tablename", store.path)
+@@ -102,0 +104,13 @@
++	analyzeTables := []string{}
++	for analyzeRows.Next() {
++		var table string
++		must(analyzeRows.Scan(&table))
++		analyzeTables = append(analyzeTables, table)
++	}
++	must(analyzeRows.Err())
++	must(analyzeRows.Close())
++	for _, table := range analyzeTables {
++		_, e = store.db.ExecContext(ctx, "ANALYZE "+pgx.Identifier{store.path, table}.Sanitize())
++		must(e)
++	}
++	b.Logf("fixture_stats_scope=current-test-schema tables=%d global_analyze=false setup_overlay=true", len(analyzeTables))

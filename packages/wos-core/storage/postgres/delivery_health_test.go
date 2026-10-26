@@ -53,7 +53,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 		must(store.InstallEndpoints(ctx, []ports.WebhookEndpoint{endpoint}))
 		_, e = seed.ConfigureTrigger(ctx, cc, a.ConfigureTriggerCommand{Scope: scope, Name: "health signal", EventTypes: []string{"work_item.created"}, TargetEndpointIDs: []d.ID{endpoint.ID}, SignalType: "private.body"})
 		must(e)
-		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "private documentary body", Priority: d.PriorityNormal})
+		_, e = seed.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: postgresObjectiveForWorkFixture(t, seed, scope), Title: "private documentary body", Priority: d.PriorityNormal})
 		must(e)
 	}
 	q := a.DeliveryHealthQuery{NamespaceID: ns}
@@ -81,7 +81,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	}
 	q.NamespaceID = ns
 	// A read-only grant cannot see administrative operational counts.
-	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
+	must(sec.Store.PutGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionStateRead}}))
 	credential, token, e := sec.IssueCredential(admin, ns, "reader", d.ActorRef{Kind: d.ActorKindAgent, Provider: "test", ID: "reader"}, now.Add(time.Hour))
 	must(e)
 	reader, e := sec.Authenticate(ctx, token)
@@ -90,11 +90,11 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
 		t.Fatal("reader diagnostic", e)
 	}
-	must(sec.SetGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionNamespaceAdmin}}))
-	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 1, PermittedOperations: []string{string(ports.PermissionNamespaceAdmin)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
+	must(sec.Store.PutGrant(admin, ports.NamespaceGrant{NamespaceID: ns, PrincipalID: "reader", Permissions: []ports.Permission{ports.PermissionAuditRead}}))
+	policy := d.CredentialPolicy{NamespaceID: ns, CredentialID: credential.ID, PrincipalID: "reader", Version: 2, PermittedOperations: []string{string(ports.PermissionAuditRead)}, AllowedOutcomeIDs: []d.ID{scopes[0].OutcomeID}, AcceptanceFloor: d.AcceptanceDirect, MaxActiveWorkContracts: 3, MaxActiveReviewContracts: 1, UpdatedAt: now}
 	u, e := store.Begin(ctx)
 	must(e)
-	must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 0))
+	must(u.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveCredentialPolicy(ctx, policy, 1))
 	must(u.Commit())
 	_, e = service.GetDeliveryHealth(readerCtx, q)
 	must(e)
@@ -106,7 +106,7 @@ func TestDeliveryHealthAuthoritativeScopeAgesHistoryAndRevocation(t *testing.T) 
 	if _, e = service.GetDeliveryHealth(readerCtx, q); securityErrorCode(e) != d.ErrorCodeForbidden {
 		t.Fatal("restricted CID got other Outcome", e)
 	}
-	guarded := &beforeReadTransaction{base: store, before: func() error { return sec.RevokeCredential(admin, ns, credential.ID) }}
+	guarded := &beforeReadTransaction{base: store, before: func() error { return sec.Store.RevokeCredential(admin, credential.ID) }}
 	racing, e := a.NewAuthorizedService(guarded, sqliteFixedClock{now}, ids, sec)
 	must(e)
 	q.OutcomeID = &scopes[0].OutcomeID

@@ -1,0 +1,13 @@
+goos: linux
+goarch: amd64
+pkg: github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres
+cpu: INTEL(R) XEON(R) PLATINUM 8573C
+BenchmarkWorkspaceF08/cards_100-2         	      20	  96385352 ns/op	  88394165 p50_ns	 168426618 p95_ns	 179178499 p99_ns	     66648 response_bytes	        12.00 sql_statements/op
+BenchmarkWorkspaceF08/structural_page_50-2         	      20	  27712730 ns/op	  25254115 p50_ns	  44060759 p95_ns	  49851802 p99_ns	     32628 response_bytes	        14.00 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector-2             	      20	  68216594 ns/op	  63476186 p50_ns	 112227610 p95_ns	 149232745 p99_ns	     18272 response_bytes	        57.00 sql_statements/op
+BenchmarkWorkspaceF08/objective_inspector-2        	      20	  73413892 ns/op	  71662977 p50_ns	 112382972 p95_ns	 137707325 p99_ns	     16375 response_bytes	        42.00 sql_statements/op
+BenchmarkWorkspaceF08/outcome_inspector-2          	      20	  28340043 ns/op	  27830965 p50_ns	  37721351 p95_ns	  38546271 p99_ns	     24064 response_bytes	        28.00 sql_statements/op
+BenchmarkWorkspaceF08/timeline_5-2                 	      20	   6582703 ns/op	   6300479 p50_ns	  10322440 p95_ns	  11949731 p99_ns	      6985 response_bytes	         8.000 sql_statements/op
+BenchmarkWorkspaceF08/task_inspector_10_sessions-2 	      20	 798292881 ns/op	 413001106 p50_request_ns	 970648568 p95_request_ns	1153652150 p99_request_ns	        10.00 requests/batch	     18272 response_bytes	        57.00 sql_statements/request
+PASS
+ok  	github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/postgres	137.407s

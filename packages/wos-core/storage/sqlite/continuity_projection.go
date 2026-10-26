@@ -16,14 +16,14 @@ func (r continuityReadRepository) Projection(ctx context.Context, scope d.Scope,
 	if e := scope.Validate(); e != nil {
 		return data, e
 	}
-	var title, lifecycle, priority, external string
+	var title, lifecycle, priority, external, completionPolicy, operationalProfile string
 	var version d.Version
 	var archived sql.NullInt64
-	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,external_context_json FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority, &archived, &external)
+	e := r.row(ctx, `SELECT version,substr(title,1,512),lifecycle,priority,archived_at,external_context_json,completion_policy,operational_profile FROM outcomes WHERE namespace_id=? AND id=?`, scope.NamespaceID.String(), scope.OutcomeID.String()).Scan(&version, &title, &lifecycle, &priority, &archived, &external, &completionPolicy, &operationalProfile)
 	if e != nil {
 		return data, mapSQLError("read operational Outcome header", e)
 	}
-	data.Outcome = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(lifecycle), Priority: d.Priority(priority), Criteria: d.NewCriterionSet()}
+	data.Outcome = d.Outcome{ID: scope.OutcomeID, NamespaceID: scope.NamespaceID, Version: version, Title: title, Lifecycle: d.OutcomeLifecycle(lifecycle), Priority: d.Priority(priority), CompletionPolicy: d.CompletionPolicy(completionPolicy), OperationalProfile: d.OperationalProfile(operationalProfile), Criteria: d.NewCriterionSet()}
 	if e = unmarshalJSON(external, &data.Outcome.ExternalContext); e != nil {
 		return data, e
 	}
@@ -105,25 +105,29 @@ func (r continuityReadRepository) Projection(ctx context.Context, scope d.Scope,
 	return data, nil
 }
 func (r continuityReadRepository) projectionObjectiveHeaders(ctx context.Context, scope d.Scope) ([]d.Objective, error) {
-	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,parent_objective_id,required_for_outcome FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
+	rows, e := r.rows(ctx, `SELECT id,version,substr(title,1,512),lifecycle,priority,parent_objective_id,required_for_outcome,completion_mode,completion_cycle FROM objectives WHERE namespace_id=? AND outcome_id=? ORDER BY id`, scope.NamespaceID.String(), scope.OutcomeID.String())
 	if e != nil {
 		return nil, mapSQLError("read operational Objective headers", e)
 	}
 	defer rows.Close()
 	values := []d.Objective{}
 	for rows.Next() {
-		var id, title, life, priority string
+		var id, title, life, priority, mode, cycle string
 		var parent sql.NullString
 		var version d.Version
 		var required int
-		if e = rows.Scan(&id, &version, &title, &life, &priority, &parent, &required); e != nil {
+		if e = rows.Scan(&id, &version, &title, &life, &priority, &parent, &required, &mode, &cycle); e != nil {
 			return nil, e
 		}
 		parsed, e := d.ParseID(id)
 		if e != nil {
 			return nil, e
 		}
-		v := d.Objective{ID: parsed, Scope: scope, Version: version, Title: title, Lifecycle: d.ObjectiveLifecycle(life), Priority: d.Priority(priority), RequiredForOutcome: required == 1, Criteria: d.NewCriterionSet()}
+		completionCycle, e := parseObjectiveCompletionCycle(cycle)
+		if e != nil {
+			return nil, e
+		}
+		v := d.Objective{ID: parsed, Scope: scope, Version: version, Title: title, Lifecycle: d.ObjectiveLifecycle(life), Priority: d.Priority(priority), RequiredForOutcome: required == 1, CompletionMode: d.ObjectiveCompletionMode(mode), CompletionCycle: completionCycle, Criteria: d.NewCriterionSet()}
 		if parent.Valid {
 			value, e := d.ParseID(parent.String)
 			if e != nil {
@@ -133,7 +137,13 @@ func (r continuityReadRepository) projectionObjectiveHeaders(ctx context.Context
 		}
 		values = append(values, v)
 	}
-	return values, rows.Err()
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	if e = rows.Close(); e != nil {
+		return nil, e
+	}
+	return r.validateObjectiveCompletionList(ctx, values)
 }
 
 const projectionWorkColumns = `id,version,substr(title,1,512),lifecycle,priority,objective_id,not_before,lease_acquired_at,lease_expires_at`

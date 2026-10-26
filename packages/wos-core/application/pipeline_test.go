@@ -42,10 +42,11 @@ func TestCreateWorkItemReplayReturnsOriginalResultWithoutNewEvent(t *testing.T) 
 	outcome := createdOutcome.Value
 
 	cmd := application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
-		Title:     "Idempotent work",
-		Priority:  domain.PriorityNormal,
-		Lifecycle: domain.WorkItemLifecycleTodo,
+		Scope:       outcome.Scope(),
+		ObjectiveID: objectiveForWorkFixture(t, service, outcome.Scope()),
+		Title:       "Idempotent work",
+		Priority:    domain.PriorityNormal,
+		Lifecycle:   domain.WorkItemLifecycleTodo,
 	}
 	key := "create-work-replay-0001"
 	first, err := service.CreateWorkItem(ctx, wave3Context(
@@ -103,7 +104,8 @@ func TestSameIdempotencyKeyWithDifferentPayloadConflicts(t *testing.T) {
 	key := "create-work-conflict-01"
 
 	firstCmd := application.CreateWorkItemCommand{
-		Scope: scope, Title: "First", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo,
+		Scope: scope, ObjectiveID: objectiveForWorkFixture(t, service, scope),
+		Title: "First", Priority: domain.PriorityNormal, Lifecycle: domain.WorkItemLifecycleTodo,
 	}
 	if _, err := service.CreateWorkItem(ctx, wave3Context(
 		"0199e711-0000-7000-8000-000000000002",

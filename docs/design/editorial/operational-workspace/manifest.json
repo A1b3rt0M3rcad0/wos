@@ -1,0 +1,1507 @@
+{
+  "schema_version": 1,
+  "source_commit": "d458d4782d1813b75df4264605606837c9aff73d",
+  "functional_qualification_commit": "36d7d2ef7b3e663500a69008f8df335aa43981a8",
+  "production_equivalence": "All packages/deploy/tools files and all 40 served assets are identical to the complete functional qualification.",
+  "validated_at": "2026-10-19T19:34:18.213314+00:00",
+  "image_count": 75,
+  "receipt_count": 75,
+  "binary_sha256": "81ede45bc98ca52360fcc87a82e1eabacd184f60b8fc57c8eaf2b06d7410e0a8",
+  "served_asset_count": 40,
+  "served_assets_sha256": {
+    "actions.js": "c61398fe3200a4319f16ce4e758cfec426b2441a450d3298b41eb81583aaa1b7",
+    "advanced-editors.js": "73183d0be7faf302cdbef1c3d59b81702df74d92276723fb247bcc0ae5cf68d2",
+    "api-client.js": "8ab4698dabf682a1c254441e959017e28aa0cc208cad8a6b82111996466b8caf",
+    "app.js": "c6c65283c99e6f93d839c469cda25a3924643b2b5c243016d1f56b257b9fd272",
+    "canvas-context.js": "645d9f5bd8282c9cd43e29e06c894a586ae651c6266052d258e5322bbf54f2c9",
+    "canvas-data.js": "8c70af8b25ba1a5de01368847537d6ea65ea7997e9a467112d75e5aa857b8f38",
+    "canvas.css": "3b5bb9b0391772d0a8bc023180cc275824711470f2d5151f899e175e88e62187",
+    "colors.css": "d8e45256d282277d00c8d34ff14f9353173de1ebd823dc9bd8494df9b97e4ca6",
+    "contracts-view.js": "c0dae57cc5b566b1e68e6f9d294540ad44c4a752894e0b90c70ed691b7a6b839",
+    "editorial.css": "fe3e1facdf46fe70cd20b9857e36cf1bda71b1b019be2025a897a91260fae84f",
+    "editorial.js": "b2204227233266a8bb0ba5692c3e740399ec8c270370e97efe1d030f3978e804",
+    "en-US.js": "5df5ceceb73b464a04636717763da53dd18671ad1eaab27fd03c744b4b2ec8b6",
+    "human-forms.js": "e4f974d51e96271aefa224a4f6a009dd38b0d28456b5f8ffe03cc04a4f4d141f",
+    "index.html": "d57db3dda55ca591dd3eacd2f0c3a7cc6bafa2087e134bdd5503746ba29731e2",
+    "intents.js": "f9d4cae81294e91aa3951e3e213596c6a34964df204a6fcb2e4b1ff66042f9d4",
+    "navigation.js": "46b0ed04e300445801930046a9443dd723b6cf912b7b845c6752494305fb2a8a",
+    "presentation.js": "f78dc85aa634e7ea0af3a2350090cd46656ea79d7f974ae7bb72dc74029de85f",
+    "reference-picker.js": "dc9806c8ffeb5253ba7a1094a7ca87529c6a93e01cf6b3737bf671b3bdb56489",
+    "roadmap-editor.js": "09cac01c2f1781b9a59d23bf9b9e1cfdad18daf11938b96b08ff0a8135a1ca65",
+    "structural-form-preview.js": "291bfe28bd3b8f969551b242a4438501c882edae61eb7e2ec29e3ae2224ee50f",
+    "style.css": "cfebd642d810ef8178cc2ba542ff6d64ef564376de60cd5331abb3f93013856f",
+    "ui.js": "033a18ca6766b0831cfe7bbe8f3a513c45ba29a8c1d67bc8d6afb5c5bd7ae184",
+    "workspace-action-menu.js": "7567a791bc82a2b0ef455b77df2e30bf97413d7c16cea55274c3867a6324dd27",
+    "workspace-actions.js": "9ebfcb9ed80485a7223686023c892aa7ac02e3aae69996298738f6773483992b",
+    "workspace-blocking-form.js": "862512b9a83819a643e0bb95972879607449594677d08365ed32840c8f6f063e",
+    "workspace-board.css": "af969d574d3f7b9fd675e66b62e7818f1699d57159035811506531d309fbbf28",
+    "workspace-canvas.js": "f211323447fa2b37ea028689ba436026982d590819ba1ff51e2a9d0a18fb720b",
+    "workspace-card-summary.js": "e7cb8e8f8a50a1dc6aae00b286a3d0bd7c0a8f9fed9c46b6ed44b24f589321b9",
+    "workspace-conclusion-form.js": "9d568367f3a991f3ab25aa1b4d49fdcdb380baddfdf653076c52433674ec77fe",
+    "workspace-dialogs.css": "7cb1f41ac4370c574f8fcc9f3101b52d66c194a31d55f0c654732f73777633c8",
+    "workspace-entity-context.js": "54381fd34bb28411cb12d6efdd542586195c72a954b66ef4156b94a40d7aeb69",
+    "workspace-entry.css": "47c407ac06c8a60318dd9aa25ec6f52a0520bf14dab687f7787153fb0e6fb31f",
+    "workspace-evidence-form.js": "fb7ee146a9e446ff7030aea5749984a7dd9f251e81d796b717ce57c03e060032",
+    "workspace-form-fields.js": "277813ff165d90f53d52042213665bc41cd724864db2025eef19086a2e5f5c0b",
+    "workspace-inspector.js": "ac340916cc85f8560d79fc9b42087c3fc4e03fe72f522334130aac42c9b1116c",
+    "workspace-plan-editor.js": "175581e0c241686bfa45d3d0e1e084da09e40edaa0ae19ca119ad90da2a2efc5",
+    "workspace-surfaces.css": "185a30576fe5e9b7a50ce8febc3071d83349327d4f8dbd1cd3d85a61d73e8f5c",
+    "workspace-view.css": "92359e5ab54a027db66d2434d780d31194a0256a2cd015303c19f423e00410ae",
+    "workspace-view.js": "ba429f4e67f704e27779daa1df21bc571cec7c28df8fb61389cec716797586cb",
+    "workspace-workflows.css": "3a3e7f8d9ff9bf516c7e4d623d1cb7671df9aac334a8edc5212aadb5f31888ca"
+  },
+  "verification": "All image/receipt hashes, PNG dimensions, exact source and fixture hashes, actual served assets, production equivalence, and horizontal viewport bounds were checked. Visual review is described in the gallery guide.",
+  "limitations": [
+    "Automated Chromium fixtures do not replace independent comprehension tests, actual mobile keyboard testing, other engines, or reference-profile performance qualification."
+  ],
+  "captures": [
+    {
+      "image": "screenshots/d458d4782d18/activity-2560x1440.png",
+      "image_sha256": "b4e70373ad62dd8aa6b003af59774546635b8e5791fa668d3f1b5f6e139288b8",
+      "receipt": "screenshots/d458d4782d18/activity-2560x1440.json",
+      "receipt_sha256": "b2895a88910f887e759dd879d84765ec6fa6bbe8ec999093d03a30d061ae3cea",
+      "state": "Current activity specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:50.783Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/activity-390x844.png",
+      "image_sha256": "6ee00e7273f66df5b23f63b49a8a068f4eecf655f7f949ba34f34c4900e63814",
+      "receipt": "screenshots/d458d4782d18/activity-390x844.json",
+      "receipt_sha256": "7fa2d8cc0786cf90c7684b594fc0fd6a97605d091a89f58f71aaf32c5152e5df",
+      "state": "Current activity specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:55.429Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/batch-plan-2560x1440.png",
+      "image_sha256": "87b1532eeef3c9c9ad7ddeb5c7eca9cf3ada14ecba7493f56303752b1c629f86",
+      "receipt": "screenshots/d458d4782d18/batch-plan-2560x1440.json",
+      "receipt_sha256": "facbd350dd6676f2274dc1d31a8c1b3ca615e9abf4119308bbefdadf9a431acb",
+      "state": "Explicit unsaved plan preview; no existing work is moved",
+      "captured_at": "2026-10-19T19:31:43.316Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/batch-plan-390x844.png",
+      "image_sha256": "4a87c640dabfe5593df771348d5a3cb406f64640f08df7ee81da3e007acaa00a",
+      "receipt": "screenshots/d458d4782d18/batch-plan-390x844.json",
+      "receipt_sha256": "9927b4d4cb7bb4ff9d33b2c88f7bcf70b7151309dc1cd777849618d5af7b5f7b",
+      "state": "Explicit unsaved plan preview; no existing work is moved",
+      "captured_at": "2026-10-19T19:32:49.508Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/blocker-2560x1440.png",
+      "image_sha256": "be102120fbb5d647df66727d064f7b5d9484aac0fbf9f54f4b45dd91ca4fd1ab",
+      "receipt": "screenshots/d458d4782d18/blocker-2560x1440.json",
+      "receipt_sha256": "0ca93b2eca83191fe741950b892da97077cb0f84781cd340531091bf2243cf0d",
+      "state": "Blocker identifies its exact affected work and recorded cause",
+      "captured_at": "2026-10-19T19:31:41.688Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/blocker-390x844.png",
+      "image_sha256": "7714a422bca7fc7465d89540d107d9cf6c0c53c94b4ec104e6627935adc6592a",
+      "receipt": "screenshots/d458d4782d18/blocker-390x844.json",
+      "receipt_sha256": "0845267af797e1a6267373f80e0e510a8cfc10f4397a20df65e45c0c67c99b7c",
+      "state": "Blocker identifies its exact affected work and recorded cause",
+      "captured_at": "2026-10-19T19:32:47.801Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/blocking-impact-2560x1440.png",
+      "image_sha256": "4fb7b9c126663564185747dc90569ede235c1d0115912cf0e97962e7c6748a3b",
+      "receipt": "screenshots/d458d4782d18/blocking-impact-2560x1440.json",
+      "receipt_sha256": "55a35b199aee3148b2be1dcf66b80a50b242842eeaaafcfa99407f7a723dc784",
+      "state": "Unsaved contextual Issue deliberately scrolled to its subtree blocking review; earlier Issue fields remain above and no records are saved",
+      "captured_at": "2026-10-19T19:31:46.818Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/blocking-impact-390x844.png",
+      "image_sha256": "668a6c8eeea1aa50d5c6bf0fd281b10038e9ac37a7fd9a6eba3ba15a9769a6f1",
+      "receipt": "screenshots/d458d4782d18/blocking-impact-390x844.json",
+      "receipt_sha256": "9b442e45cedf340793009c4116d0c692892126d28900ef57675d088a18287e81",
+      "state": "Unsaved contextual Issue deliberately scrolled to its subtree blocking review; earlier Issue fields remain above and no records are saved",
+      "captured_at": "2026-10-19T19:32:53.021Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-1280x720.png",
+      "image_sha256": "80240a6227dd16b3da0756e6821475f878150edf9e2bbb0aba62fa75cdd750a4",
+      "receipt": "screenshots/d458d4782d18/board-1280x720.json",
+      "receipt_sha256": "4849af72b34ddc8ab33051fff70fc49bbfdd82ed5a042f1e0af878beab58f215",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:31:22.083Z",
+      "css_viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1280,
+        "height": 720
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-1366x768.png",
+      "image_sha256": "d727385a439bebc3af73f37bab42f6c4de9707a1cfe3116fe495b27d1d0fa6f4",
+      "receipt": "screenshots/d458d4782d18/board-1366x768.json",
+      "receipt_sha256": "748d45ef4cd349c40425396e403a11f318e1ed3c0f47bc82e0ce2f6ef15a204f",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:31:26.111Z",
+      "css_viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-1920x1080.png",
+      "image_sha256": "e68c1602af8ebe871e7b9826ed365ad2d08de10bfc2ce235519f61aaa78f4d17",
+      "receipt": "screenshots/d458d4782d18/board-1920x1080.json",
+      "receipt_sha256": "455c6e1393d526f3ed0931b4e3d1703b50df57da88ca906de25e9f48b966702c",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:31:30.328Z",
+      "css_viewport": {
+        "width": 1920,
+        "height": 1080,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1920,
+        "height": 1080
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-2560x1440.png",
+      "image_sha256": "a0b2413088f11e51a0c99881beaf3751c26c57cb4829de584fe28bb69545e0c0",
+      "receipt": "screenshots/d458d4782d18/board-2560x1440.json",
+      "receipt_sha256": "9d4b4d73e049474b537038c86ef1e7555686a0c4dac050b117420c8284762798",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:31:36.358Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-320x740.png",
+      "image_sha256": "7aae3cb3120162997b3ba63bc6a1c4740a99e40e8b500df0075a73b1942bb6fe",
+      "receipt": "screenshots/d458d4782d18/board-320x740.json",
+      "receipt_sha256": "837d304db157c2f338d5f74cd46032cd73f4a3135d5f111ce4e17c363e3b8278",
+      "state": "Structural work map selected through the real Map view control; compact entry defaults to List view",
+      "captured_at": "2026-10-19T19:32:37.026Z",
+      "css_viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 320,
+        "height": 740
+      },
+      "boardView": "map",
+      "defaultBoardView": false
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-3840x2160.png",
+      "image_sha256": "a5f3faf89e38839a2c4d865ac755cc87b070b5f9e0c45cac8b547782761bbd95",
+      "receipt": "screenshots/d458d4782d18/board-3840x2160.json",
+      "receipt_sha256": "60e8fc7cce53dd761caff18abe4e06aa85d3de6edd5a819a8b4457a52bf4f739",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:32:03.422Z",
+      "css_viewport": {
+        "width": 3840,
+        "height": 2160,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 3840,
+        "height": 2160
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-390x844.png",
+      "image_sha256": "3f2726816031aa86ae6f00525891571ec76175af315f7ebcc94c3cc5ba02e522",
+      "receipt": "screenshots/d458d4782d18/board-390x844.json",
+      "receipt_sha256": "8e38185fe9141151f77a4677d5339bd2c7bef46ff0e1ef6dbaf9c368ce8ace71",
+      "state": "Structural work map selected through the real Map view control; compact entry defaults to List view",
+      "captured_at": "2026-10-19T19:32:42.825Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      },
+      "boardView": "map",
+      "defaultBoardView": false
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-430x932.png",
+      "image_sha256": "51fdd58dfa51539357b7eb2feedee4e79df3531e77963e118b46c8336f504bc3",
+      "receipt": "screenshots/d458d4782d18/board-430x932.json",
+      "receipt_sha256": "bbf5b58ecd7d92c90418903e37eda53c18a566f30e8f257eae523b78c99a7f5f",
+      "state": "Structural work map selected through the real Map view control; compact entry defaults to List view",
+      "captured_at": "2026-10-19T19:32:59.509Z",
+      "css_viewport": {
+        "width": 430,
+        "height": 932,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 430,
+        "height": 932
+      },
+      "boardView": "map",
+      "defaultBoardView": false
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-default-list-320x740.png",
+      "image_sha256": "81ab53643e0f71ea86dc6d2d132671047748f021d386f2aeca3b0f25f7f22611",
+      "receipt": "screenshots/d458d4782d18/board-default-list-320x740.json",
+      "receipt_sha256": "26b37be24a5b3708dd75753b6915726e9425d372452f741b8b8016386e7f50af",
+      "state": "Default compact Outcome Board list before switching to the spatial map",
+      "captured_at": "2026-10-19T19:32:36.756Z",
+      "css_viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 320,
+        "height": 740
+      },
+      "boardView": "list",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-default-list-390x844.png",
+      "image_sha256": "fe11c0e54a317ab8adf3275293e9835c4cc88110b55962659d282937ab269508",
+      "receipt": "screenshots/d458d4782d18/board-default-list-390x844.json",
+      "receipt_sha256": "b9228ba4d062680625b5b17e40f5fa0ee01183035a0003ef949ae9cd4514852d",
+      "state": "Default compact Outcome Board list before switching to the spatial map",
+      "captured_at": "2026-10-19T19:32:42.482Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      },
+      "boardView": "list",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-default-list-430x932.png",
+      "image_sha256": "8099a12d942ed2fb32fe9a6ca74072e1482e17d9250fc762d24a8e74ffc432b9",
+      "receipt": "screenshots/d458d4782d18/board-default-list-430x932.json",
+      "receipt_sha256": "c981d078f0996ffde3bfc2e88ce2163b1b7739c0b334fb8c837ab0fc53f4a530",
+      "state": "Default compact Outcome Board list before switching to the spatial map",
+      "captured_at": "2026-10-19T19:32:59.293Z",
+      "css_viewport": {
+        "width": 430,
+        "height": 932,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 430,
+        "height": 932
+      },
+      "boardView": "list",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-default-list-native-200.png",
+      "image_sha256": "de461961d706b3bf2c60e0d8ddf9eb4861b0d532cdb8e0a433f366d8a781ea6b",
+      "receipt": "screenshots/d458d4782d18/board-default-list-native-200.json",
+      "receipt_sha256": "d42615aaa5de83730e8688cca7af092a5043295d9573a1478592584f22b908d6",
+      "state": "Default compact Outcome Board list before switching to the spatial map",
+      "captured_at": "2026-10-19T19:33:18.476Z",
+      "css_viewport": {
+        "width": 683,
+        "height": 384,
+        "devicePixelRatio": 2,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 2,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      },
+      "boardView": "list",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-native-125.png",
+      "image_sha256": "3a749df2bdd00997efa887215ba01b0da6534eab0848e6ddcb7e11e69617f341",
+      "receipt": "screenshots/d458d4782d18/board-native-125.json",
+      "receipt_sha256": "be9fe336619f8d371b5ccd16937fb5f60ac73f8a4b29d8b685882180e2c71da2",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:33:06.439Z",
+      "css_viewport": {
+        "width": 1093,
+        "height": 614,
+        "devicePixelRatio": 1.25,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.25,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-native-150.png",
+      "image_sha256": "2db2ad4baebf6e3e738f990be2a847e9ae93c74f152e4e5e94713b7c0bce21fb",
+      "receipt": "screenshots/d458d4782d18/board-native-150.json",
+      "receipt_sha256": "3fc34d65d400b5fe436e102df3e989a5696f110749d02fae6c9fd55e60c0c0db",
+      "state": "Default structural work map; documentary records remain contextual",
+      "captured_at": "2026-10-19T19:33:12.354Z",
+      "css_viewport": {
+        "width": 911,
+        "height": 512,
+        "devicePixelRatio": 1.5,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.5,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      },
+      "boardView": "map",
+      "defaultBoardView": true
+    },
+    {
+      "image": "screenshots/d458d4782d18/board-native-200.png",
+      "image_sha256": "80ad45f5c76ea9390e7c819e68a8b05bddf4c01f2229864fb12fec8b207ba1a6",
+      "receipt": "screenshots/d458d4782d18/board-native-200.json",
+      "receipt_sha256": "d3c8aa895602c39ecae6aa0f785173cb187be2090180ba02bb8d3cdfd5d8a02f",
+      "state": "Structural work map selected through the real Map view control; compact entry defaults to List view",
+      "captured_at": "2026-10-19T19:33:18.848Z",
+      "css_viewport": {
+        "width": 683,
+        "height": 384,
+        "devicePixelRatio": 2,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 2,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      },
+      "boardView": "map",
+      "defaultBoardView": false
+    },
+    {
+      "image": "screenshots/d458d4782d18/conclusion-impact-2560x1440.png",
+      "image_sha256": "f3b2278a3357e4d387b8bc6cbf82f207924a4d116ced85ecbea50d61d0c175db",
+      "receipt": "screenshots/d458d4782d18/conclusion-impact-2560x1440.json",
+      "receipt_sha256": "2c75b564ad7f87256f12585441a2b704b457022106f5ffdfae76d89e8ce5d988",
+      "state": "Unsaved parent conclusion deliberately scrolled to its open-work review; earlier Reason fields remain above, and no acceptance has been submitted",
+      "captured_at": "2026-10-19T19:31:44.315Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/conclusion-impact-390x844.png",
+      "image_sha256": "9e40709a79e6d0d9519a4a67b8c2e5112c6207e7b92a68b01c8e2376f3897caa",
+      "receipt": "screenshots/d458d4782d18/conclusion-impact-390x844.json",
+      "receipt_sha256": "eace6f1dee693e668b8f957501fb0a119c727d8298fcda0c323031f81c888738",
+      "state": "Unsaved parent conclusion deliberately scrolled to its open-work review; earlier Reason fields remain above, and no acceptance has been submitted",
+      "captured_at": "2026-10-19T19:32:50.519Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/criterion-2560x1440.png",
+      "image_sha256": "e3aabca5567a39f7c68e3eb6ee117104460d8dfc26ee1995c829851512dd52b6",
+      "receipt": "screenshots/d458d4782d18/criterion-2560x1440.json",
+      "receipt_sha256": "1e62608ca544f9182d0ab8383d47810fe8391a154fec83130504f04cb94d12fd",
+      "state": "Criterion within its owner; linked Evidence remains separate from assessment",
+      "captured_at": "2026-10-19T19:31:39.127Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/criterion-390x844.png",
+      "image_sha256": "ab1dc6432f385a5caa8aa1d791396372efb7080cede6f74d11d4dc2edaa812ae",
+      "receipt": "screenshots/d458d4782d18/criterion-390x844.json",
+      "receipt_sha256": "0819efd79ef3c79e589ac33a347b3fa011ad6cb296b6194c47c04521c598fc9b",
+      "state": "Criterion within its owner; linked Evidence remains separate from assessment",
+      "captured_at": "2026-10-19T19:32:45.040Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/evidence-2560x1440.png",
+      "image_sha256": "770be7acef992aade189c0e5c94e798c3f4fe1056d7fce1968fa51065deab923",
+      "receipt": "screenshots/d458d4782d18/evidence-2560x1440.json",
+      "receipt_sha256": "80df31c0f253053b4d5e3140eba64551f18420a82078a5e57219992d5d0c1778",
+      "state": "Current evidence specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:49.819Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/evidence-390x844.png",
+      "image_sha256": "805179eddecb7f69e9255e1fc09d14fc5ab08f132145f607972f766acc1dcb34",
+      "receipt": "screenshots/d458d4782d18/evidence-390x844.json",
+      "receipt_sha256": "d66f3033a7c91c4925272b3024376e7b2888420080cddce3af514827e848e607",
+      "state": "Current evidence specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:54.967Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/evidence-record-2560x1440.png",
+      "image_sha256": "726e126183edd08db10e7c8f826a4f2147f85bf973710bb595fe4141723fa600",
+      "receipt": "screenshots/d458d4782d18/evidence-record-2560x1440.json",
+      "receipt_sha256": "12547f3c6133a0c8109d797b9c766a880e2b2ae0dbf2524c9f4277dee1a8eb6f",
+      "state": "Evidence with a recorded participant observation source; no automatic acceptance",
+      "captured_at": "2026-10-19T19:31:40.015Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/evidence-record-390x844.png",
+      "image_sha256": "5f45780bc4cf31acb58e398b087a3b7124c0dcc564c8d3d4c718f47209fe83e7",
+      "receipt": "screenshots/d458d4782d18/evidence-record-390x844.json",
+      "receipt_sha256": "7921ae0b77cd91a421f6f6c1296ead2b045bb492e54f2312f5a69374b5b7db3d",
+      "state": "Evidence with a recorded participant observation source; no automatic acceptance",
+      "captured_at": "2026-10-19T19:32:45.829Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/issue-2560x1440.png",
+      "image_sha256": "9e19f010c859f4c6b6ce4fdd62a8b3dab819c09f337722c7435f676f266cb6ab",
+      "receipt": "screenshots/d458d4782d18/issue-2560x1440.json",
+      "receipt_sha256": "36173c889202677b168dc6bee60ac5ae85818275a29c39afc14aeed250fcd4d6",
+      "state": "Issue with named affected work and a distinct explicit blocking impact",
+      "captured_at": "2026-10-19T19:31:40.781Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/issue-390x844.png",
+      "image_sha256": "8fcca8af6cf8c90eeaadde59571d08eb84dae951297f3935ad54bd238818c56e",
+      "receipt": "screenshots/d458d4782d18/issue-390x844.json",
+      "receipt_sha256": "16c3d1a08b3b57b62d4f5112db1ff5dfdf372ee2c98175398ed433149d3920e5",
+      "state": "Issue with named affected work and a distinct explicit blocking impact",
+      "captured_at": "2026-10-19T19:32:46.615Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/issues-2560x1440.png",
+      "image_sha256": "486b27d64b06c60166f531c5f2c20e8dea2629c4f4d76610ca2f123e77a584a3",
+      "receipt": "screenshots/d458d4782d18/issues-2560x1440.json",
+      "receipt_sha256": "095cb59e16efd6fc2804d401d818e31f09079ae20963c8f3f1521af9a184ac18",
+      "state": "Current issues specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:50.259Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/issues-390x844.png",
+      "image_sha256": "77bb0713bb0232082076bcbc3d8a88ab263243f526487b204d421abbc2eaa0b9",
+      "receipt": "screenshots/d458d4782d18/issues-390x844.json",
+      "receipt_sha256": "7d2a843140b3c312c65a01ea7acf0aa08216addae951f55e6ac0c827da9c63f7",
+      "state": "Current issues specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:55.196Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-1280x720.png",
+      "image_sha256": "a23db4e7980d2ec74d959fe02a0bc3a1b25de5b783ec1a95565edebddbfd567b",
+      "receipt": "screenshots/d458d4782d18/login-1280x720.json",
+      "receipt_sha256": "430c9c3e7329a8e871ac38d670bdfd30a3093f116fb125eae356463de4df694f",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:31:20.744Z",
+      "css_viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-1366x768.png",
+      "image_sha256": "e6abdbec18ab1e373871a2cba674b2443af48c7b5a2500227121e9115bc381d1",
+      "receipt": "screenshots/d458d4782d18/login-1366x768.json",
+      "receipt_sha256": "d946364e8162b8ae870d3cff21bf975ba81a749f58cc030d16288d3f0d945a4b",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:31:25.312Z",
+      "css_viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-1920x1080.png",
+      "image_sha256": "da760e97747a76539945361c4c43fce2b8e9f3801b49bb145e8808d017108376",
+      "receipt": "screenshots/d458d4782d18/login-1920x1080.json",
+      "receipt_sha256": "a812c1b4d14f552e0e83627bae9f822f4a3a46c85a51ffbbc50320d8941ef131",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:31:28.737Z",
+      "css_viewport": {
+        "width": 1920,
+        "height": 1080,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-2560x1440.png",
+      "image_sha256": "841648d4e2da78b9a7e17bc144eb2d13809c14e33f3b5135ea083f20ef030e1a",
+      "receipt": "screenshots/d458d4782d18/login-2560x1440.json",
+      "receipt_sha256": "d9308230b48fb8edd8e865cc9ef25dac5706e264ac874e1ae9da8ba34454fe6a",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:31:34.242Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-320x740.png",
+      "image_sha256": "f61452eecbdac6495a8854a4b6b0a87660891962e56245caf1c1bc9a65c1f223",
+      "receipt": "screenshots/d458d4782d18/login-320x740.json",
+      "receipt_sha256": "1e418f9eb4ea5f2f0cd35f068efe20dde262cb0aa5d46d47e81650c39ed432c4",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:32:30.922Z",
+      "css_viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 320,
+        "height": 740
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-3840x2160.png",
+      "image_sha256": "05055b7d96a305aa52453d7d0cc6424324ec8f15617aae80add13090c880e73e",
+      "receipt": "screenshots/d458d4782d18/login-3840x2160.json",
+      "receipt_sha256": "04042d3a984cc5619df7c5a29d8396a0523a89932541e0af1e517386c16bc711",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:31:53.032Z",
+      "css_viewport": {
+        "width": 3840,
+        "height": 2160,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-390x844.png",
+      "image_sha256": "33085f1060ea5a5f540c3c874af091dd82efdf8905fa228e08077710325f0788",
+      "receipt": "screenshots/d458d4782d18/login-390x844.json",
+      "receipt_sha256": "e6f43b7f3673f59ca21075c987ff3e00c20907c440c406c90f14f12bf4051aeb",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:32:41.614Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-430x932.png",
+      "image_sha256": "0fa9ae874815f50462ea82e2444c3fecec0e9d1f46e8ac200147cbd270ba48b0",
+      "receipt": "screenshots/d458d4782d18/login-430x932.json",
+      "receipt_sha256": "bfce2180abb73ee55bba9c71018be77218933c64a8003ae2d18810c67bf9e16b",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:32:58.314Z",
+      "css_viewport": {
+        "width": 430,
+        "height": 932,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 430,
+        "height": 932
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-native-125.png",
+      "image_sha256": "8043117b8409b18bc405b928bad9d806a009aee0cbe732a724e87eebac1ea130",
+      "receipt": "screenshots/d458d4782d18/login-native-125.json",
+      "receipt_sha256": "909baa06a4eeb27ab50393878c9e9d2eeb7eea7c72ee4acfd9b1909e601718f2",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:33:05.326Z",
+      "css_viewport": {
+        "width": 1093,
+        "height": 614,
+        "devicePixelRatio": 1.25,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.25,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-native-150.png",
+      "image_sha256": "0cf399e99283a7bc2aabfc401fc727194a2f7075e04b1d637844d3341d674e15",
+      "receipt": "screenshots/d458d4782d18/login-native-150.json",
+      "receipt_sha256": "a42362b92954e9caa721c305b889d9e3827286ffed7278633b0e9a6cd701b93b",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:33:11.407Z",
+      "css_viewport": {
+        "width": 911,
+        "height": 512,
+        "devicePixelRatio": 1.5,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.5,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/login-native-200.png",
+      "image_sha256": "d8dd3c40fc5683e3f804069ddc86907c2b40eeb3ce4a79ad78564f4c71f71aa0",
+      "receipt": "screenshots/d458d4782d18/login-native-200.json",
+      "receipt_sha256": "a007e014d2237000c6d4d2e66ac436692a53e5825ca500ca65aa39ea90fad65e",
+      "state": "Credential login before any secret is entered",
+      "captured_at": "2026-10-19T19:33:17.313Z",
+      "css_viewport": {
+        "width": 683,
+        "height": 384,
+        "devicePixelRatio": 2,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 2,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/move-impact-2560x1440.png",
+      "image_sha256": "b75d8e59bf1fa6099668ab8574e048925e052612959c16e203e68cf391b127e9",
+      "receipt": "screenshots/d458d4782d18/move-impact-2560x1440.json",
+      "receipt_sha256": "07a6ef671291c68374ea76abfdc0348b814e4e43c28be4fd93c7439703278ce1",
+      "state": "Read-only move form deliberately scrolled to actual old/proposed placement, blocking and readiness; earlier destination controls remain above and no move is saved",
+      "captured_at": "2026-10-19T19:31:45.666Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/move-impact-390x844.png",
+      "image_sha256": "c7437e2ee8ad59bf815c7c6d450b0b49769dfa0802dd4730497172cc1e37410c",
+      "receipt": "screenshots/d458d4782d18/move-impact-390x844.json",
+      "receipt_sha256": "e31ec700b201116437e2e48fcd3ae972c31a7809e0c17903f2d3f67cf2d7f414",
+      "state": "Read-only move form deliberately scrolled to actual old/proposed placement, blocking and readiness; earlier destination controls remain above and no move is saved",
+      "captured_at": "2026-10-19T19:32:51.796Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/overview-2560x1440.png",
+      "image_sha256": "db7df9a0177a191cb732ab69d0f69612c839284ef69f2e576d66c16f75b17b71",
+      "receipt": "screenshots/d458d4782d18/overview-2560x1440.json",
+      "receipt_sha256": "e61c92f12a8fc53f1eeb87ef977c5a8da63b6c64b733fffe2bac99d716d6aacd",
+      "state": "Current overview specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:48.115Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/overview-390x844.png",
+      "image_sha256": "6d90894136706f9e29b00d2adcd46ba4e61b5acb0c675af4ea252b1d199d696b",
+      "receipt": "screenshots/d458d4782d18/overview-390x844.json",
+      "receipt_sha256": "d55f9473893bc38206ed313fd03125550b78a8a4af701d88d32921d4ab234a80",
+      "state": "Current overview specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:54.162Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/plan-2560x1440.png",
+      "image_sha256": "baea0fc94612c23257e79f96080766e93dd8817e068167cb72836c7f04c4fa8e",
+      "receipt": "screenshots/d458d4782d18/plan-2560x1440.json",
+      "receipt_sha256": "0725d034cdca1d928e7134ea99893aa34f0de78001cf882c8acc2e7b6c2cb2e8",
+      "state": "Current plan specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:49.184Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/plan-390x844.png",
+      "image_sha256": "3015cd4b70094e5cccd25bc38ca39b7f459149bc4eedffd8eb1603e983ecb9f2",
+      "receipt": "screenshots/d458d4782d18/plan-390x844.json",
+      "receipt_sha256": "23c8f7b45a956b35bf11325611d4470dd31bb87513c6f5900088e18e2d6f25d6",
+      "state": "Current plan specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:54.732Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/quick-task-2560x1440.png",
+      "image_sha256": "a1c308383576d95d4e22dc1c0d11cfe2170ffca872349a28d9a2389850d9baa0",
+      "receipt": "screenshots/d458d4782d18/quick-task-2560x1440.json",
+      "receipt_sha256": "45b4b3ad517ec08fd231f86b0e10039badba8e078f78fa8a14deb45fc999cd01",
+      "state": "Unsaved quick Task draft with fixed parent and visible backlog default",
+      "captured_at": "2026-10-19T19:31:42.760Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/quick-task-390x844.png",
+      "image_sha256": "cad3d2425e2da988096df63e112996ba48e58a2356c2101e64197d7195785773",
+      "receipt": "screenshots/d458d4782d18/quick-task-390x844.json",
+      "receipt_sha256": "83781b0119d2ff66a37adacae949b0eed1e5c1e7f6a74df4c64b23c1118a431a",
+      "state": "Unsaved quick Task draft with fixed parent and visible backlog default",
+      "captured_at": "2026-10-19T19:32:49.035Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/roadmap-2560x1440.png",
+      "image_sha256": "2d90b66bbb7f5d02ba43799966422736ec7896af43b33b5ca965359e77659a9f",
+      "receipt": "screenshots/d458d4782d18/roadmap-2560x1440.json",
+      "receipt_sha256": "1f21f3bde7df2f9fb036de5408505c485095b21cc2cc6afc1fa503be9941095f",
+      "state": "Roadmap publishes and activates a plan independently of operational acceptance",
+      "captured_at": "2026-10-19T19:31:47.668Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/roadmap-390x844.png",
+      "image_sha256": "4ec198413a3797297f2da943dcee17956bc2fb3d63c601367e1244d5c0ff2cba",
+      "receipt": "screenshots/d458d4782d18/roadmap-390x844.json",
+      "receipt_sha256": "e7a4d4e8d38cefb8d5c24ca2f54ae580054021858fe078aeda8588960a15af0b",
+      "state": "Roadmap publishes and activates a plan independently of operational acceptance",
+      "captured_at": "2026-10-19T19:32:53.849Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-1280x720.png",
+      "image_sha256": "a5a9205a741442a0ec110691cd4d04eca348842faad1c8e75391a06b985894d9",
+      "receipt": "screenshots/d458d4782d18/task-1280x720.json",
+      "receipt_sha256": "6fed9f6d0f711391ceef4b9f1017afcb5d61acb9523c3b7490412fcc4d114dce",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:31:23.223Z",
+      "css_viewport": {
+        "width": 1280,
+        "height": 720,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-1366x768.png",
+      "image_sha256": "2ad97452530be389bc2e15fa5f26d72b6e213f0423c392dfa7ddfeeb712f7cac",
+      "receipt": "screenshots/d458d4782d18/task-1366x768.json",
+      "receipt_sha256": "c5193919c03d71415bc02d1aa117bb1b6a035a698b0307b06ed64dca24343de8",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:31:26.867Z",
+      "css_viewport": {
+        "width": 1366,
+        "height": 768,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-1920x1080.png",
+      "image_sha256": "410559f323ff7b4cdfd4e6841ed624112a0ac8641b87cd70b281890f596dd71e",
+      "receipt": "screenshots/d458d4782d18/task-1920x1080.json",
+      "receipt_sha256": "370e8d371ccd8ae86dd270b5f253105194ae06d45af865ff961dd0069d4197f0",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:31:31.461Z",
+      "css_viewport": {
+        "width": 1920,
+        "height": 1080,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1920,
+        "height": 1080
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-2560x1440.png",
+      "image_sha256": "bfa9af9b772fd06e08f493359aebb3ab1bcd2e296e5b98e8ff6be7c69b5ca9dc",
+      "receipt": "screenshots/d458d4782d18/task-2560x1440.json",
+      "receipt_sha256": "6f3bd7d78486527c85b8fc2f92442c9135a184a033576ee40697c102221818b3",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:31:37.485Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-320x740.png",
+      "image_sha256": "42125af13a34a89b5f7d00ef23c32a788fc4ad7c28722065384776800a0c5e25",
+      "receipt": "screenshots/d458d4782d18/task-320x740.json",
+      "receipt_sha256": "03c2eb21fe02f5e165272c2b772b99d889958b7087ae64205592e9077674ca26",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:32:38.258Z",
+      "css_viewport": {
+        "width": 320,
+        "height": 740,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 320,
+        "height": 740
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-3840x2160.png",
+      "image_sha256": "c91656322f5b95dba42aa0d953cf8c3e6b570f089e9c282f55874eba4bb340e1",
+      "receipt": "screenshots/d458d4782d18/task-3840x2160.json",
+      "receipt_sha256": "d6f3c12c7eb6863720a19516038dc014c3c3fdc1e83a58110dbc84287f5dd06e",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:32:05.467Z",
+      "css_viewport": {
+        "width": 3840,
+        "height": 2160,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 3840,
+        "height": 2160
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-390x844.png",
+      "image_sha256": "a0c0c37d312fc97ef42d64525c1a8c42c2f978d3cdff55d08f879886d07aa26a",
+      "receipt": "screenshots/d458d4782d18/task-390x844.json",
+      "receipt_sha256": "4a16c71131e0d7bbc207bd07c99bfbebd7c048ae1e197e3d5808447e99cabf9a",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:32:43.700Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-430x932.png",
+      "image_sha256": "c9271d23da0e2f7c40df0dc1eea725df97df45b085b2e794c329a33d1f1ed2a4",
+      "receipt": "screenshots/d458d4782d18/task-430x932.json",
+      "receipt_sha256": "c87131a7bc3df0c91806d9fabba3a3874837c2e17833128a6fdd74f7f4b223c4",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:33:00.494Z",
+      "css_viewport": {
+        "width": 430,
+        "height": 932,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 430,
+        "height": 932
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-actions-2560x1440.png",
+      "image_sha256": "495d866dc9ad4651c2c4ec9fcd48cdc6ab2227ac7b01a3163aa0fbee4c192e30",
+      "receipt": "screenshots/d458d4782d18/task-actions-2560x1440.json",
+      "receipt_sha256": "d9a5c56c4b90cb0ccbb622b3c1f9e8b2bfb7149f30cd5014ea2d95905d5c269d",
+      "state": "Read-only Task action menu with contextual groups; opening the menu does not execute an action",
+      "captured_at": "2026-10-19T19:31:37.843Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-actions-390x844.png",
+      "image_sha256": "e87e726c6ea793940ac65eb31fcf757463f74054ec82260789d8900b4e0d44bd",
+      "receipt": "screenshots/d458d4782d18/task-actions-390x844.json",
+      "receipt_sha256": "d6a09809f69cba1a4aac6edc73cd0920b515886979f3ca13a2025f5dcd9f248b",
+      "state": "Read-only Task action menu with contextual groups; opening the menu does not execute an action",
+      "captured_at": "2026-10-19T19:32:43.860Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-activity-2560x1440.png",
+      "image_sha256": "312d3f38533d19a590ce32a1cd36ebee0ac33db66b998629d12dca81f842916d",
+      "receipt": "screenshots/d458d4782d18/task-activity-2560x1440.json",
+      "receipt_sha256": "48f3f421f8bdc2c448dd83196b341a6f06606d91da14803a7ccf6480c8d49f6d",
+      "state": "Task body scrolled naturally to documentary activity, with its source and authorship",
+      "captured_at": "2026-10-19T19:31:38.529Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-activity-390x844.png",
+      "image_sha256": "3f60c4701b480ad9dfc56ad8aad7dd11157b2e90523f3b1cef9fbde29a604fa3",
+      "receipt": "screenshots/d458d4782d18/task-activity-390x844.json",
+      "receipt_sha256": "1d122152569eeac737124b51672a57a881453e9dbe2216832775854a2dd3e74d",
+      "state": "Task body scrolled naturally to documentary activity, with its source and authorship",
+      "captured_at": "2026-10-19T19:32:44.515Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-native-125.png",
+      "image_sha256": "e7ead2cc899dfaee2d6d215c08ecf4ce2d5aff72c245a2975fb4bf63d8b2af10",
+      "receipt": "screenshots/d458d4782d18/task-native-125.json",
+      "receipt_sha256": "355a0222e2e78b257bb3b7d479ae84547b0903ef628755c6448d7b4b86de0dd5",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:33:07.288Z",
+      "css_viewport": {
+        "width": 1093,
+        "height": 614,
+        "devicePixelRatio": 1.25,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.25,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-native-150.png",
+      "image_sha256": "45fa746a6b6e0ec59d310480b4dc430c3e20b37e3e386242463ab9d4d2cccf4d",
+      "receipt": "screenshots/d458d4782d18/task-native-150.json",
+      "receipt_sha256": "d6aac8d63c0ed5727e3f46568f10ec5608b94dd83cfd9623dd0c4763723dc264",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:33:13.530Z",
+      "css_viewport": {
+        "width": 911,
+        "height": 512,
+        "devicePixelRatio": 1.5,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 1.5,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-native-200.png",
+      "image_sha256": "312525bd44ebca1f9bdefdfbef7863d6c277a9a37d715da9641c2d72482fdff9",
+      "receipt": "screenshots/d458d4782d18/task-native-200.json",
+      "receipt_sha256": "220e99ff485dc73b4d48090671d2b512fdf1e468696ec3fcbdb7daa3dc44e119",
+      "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
+      "captured_at": "2026-10-19T19:33:20.081Z",
+      "css_viewport": {
+        "width": 683,
+        "height": 384,
+        "devicePixelRatio": 2,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 1366,
+        "height": 768
+      },
+      "nativeBrowserZoom": 2,
+      "framebuffer": {
+        "width": 1366,
+        "height": 768
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-proof-2560x1440.png",
+      "image_sha256": "b2f45d7a92f6979d405d006e3fc26887826f0571204abf61dd774f7e4a775788",
+      "receipt": "screenshots/d458d4782d18/task-proof-2560x1440.json",
+      "receipt_sha256": "f45a240c2b5b655400791970444f41dee82a748a83ba8fc016ac9b6033c83aa0",
+      "state": "Task body scrolled naturally to current success conditions and pending assessment",
+      "captured_at": "2026-10-19T19:31:38.325Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/task-proof-390x844.png",
+      "image_sha256": "c43d9f3b0a542321757ac766abb54697a10f5aefde41e123f8942c4acda7b41d",
+      "receipt": "screenshots/d458d4782d18/task-proof-390x844.json",
+      "receipt_sha256": "6ae21fe75b21822b2e49d03cf528308f4959d0c788e5025d9ba145f0f7509401",
+      "state": "Task body scrolled naturally to current success conditions and pending assessment",
+      "captured_at": "2026-10-19T19:32:44.382Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/work-2560x1440.png",
+      "image_sha256": "eb3c07fd94ecff55f98ff288b46e77eb77c2a501dc35e544d2b02b2d351fec52",
+      "receipt": "screenshots/d458d4782d18/work-2560x1440.json",
+      "receipt_sha256": "71822f3a76b24e7b13ce7337b14a5214e1a6efdd567e7a72ddbd88f2ac3e207b",
+      "state": "Current work specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:31:48.584Z",
+      "css_viewport": {
+        "width": 2560,
+        "height": 1440,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 2560,
+        "height": 1440
+      }
+    },
+    {
+      "image": "screenshots/d458d4782d18/work-390x844.png",
+      "image_sha256": "6ce3c7d41ce35e00f456626d0b340e39fe3e43c83000cc9117636588764636d4",
+      "receipt": "screenshots/d458d4782d18/work-390x844.json",
+      "receipt_sha256": "f9d599eca53b25a62a8e8b44b75d71faaec76fdfecbd2750a244dfe3c8249097",
+      "state": "Current work specialist view using the retained editorial workspace",
+      "captured_at": "2026-10-19T19:32:54.445Z",
+      "css_viewport": {
+        "width": 390,
+        "height": 844,
+        "devicePixelRatio": 1,
+        "visualViewportScale": 1
+      },
+      "image_pixels": {
+        "width": 390,
+        "height": 844
+      }
+    }
+  ],
+  "historical_regression_evidence": [
+    {
+      "purpose": "Historical diagnosis of the initial nested-Task mobile reading gap; not final acceptance.",
+      "source_commit": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+      "image": "docs/ux/operational-workspace/visual-regression-076550b2fbf8/task-320x740.png",
+      "image_sha256": "91f3b6013ac3f06f765e6d59f0a247126d537f22df1f388d7ea6e7c4e762a148",
+      "receipt": "docs/ux/operational-workspace/visual-regression-076550b2fbf8/task-320x740.json",
+      "receipt_sha256": "4cd3c69ad7380a8d89093924c577b3f6d393d05f1f5b0723ccc38924faf8016a"
+    },
+    {
+      "purpose": "Historical diagnosis of the initial nested-Task mobile reading gap; not final acceptance.",
+      "source_commit": "076550b2fbf8e2f9ddede5b1efc440568c6e0edf",
+      "image": "docs/ux/operational-workspace/visual-regression-076550b2fbf8/task-390x844.png",
+      "image_sha256": "3a62e858667f2b0177ab5fc0a9e3966faf66199cc87cf47df1166efede7edf36",
+      "receipt": "docs/ux/operational-workspace/visual-regression-076550b2fbf8/task-390x844.json",
+      "receipt_sha256": "c052a8744d1dcad2976a7fd701c639c51605251c5c4e65939a62d30cecda2455"
+    }
+  ]
+}

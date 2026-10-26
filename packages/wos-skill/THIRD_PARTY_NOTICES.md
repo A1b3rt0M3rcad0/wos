@@ -18,6 +18,14 @@ Instrument Serif and DM Sans retain the SIL Open Font License 1.1 and notices un
 
 Build and browser-test dependencies retain the licenses in their own packages. A development lockfile's upstream license metadata describes that dependency, not WOS licensing. Production launchers do not acquire ownership of dependencies merely because they package or invoke them.
 
+## Local product-design skill
+
+`.agents/skills/product-design-and-ux/` preserves Magnus Hedemark's MIT-licensed
+skill package from `magnus919/agent-skills`, revision
+`496c76b8e9b7d9303b8f7ed941fccf256f2486ec`. Its upstream license and attribution
+are retained in that directory's `LICENSE.md` and `SOURCE.md`. It is development
+guidance, not a new WOS runtime dependency.
+
 ## Combined distributions
 
 Preserve this notice together with `LICENSE`, `TRADEMARKS.md`, `NOTICE.md`, `LICENSES/Apache-2.0.txt` and every applicable generated or upstream notice. An integrator adding components must also carry their required notices. This document neither claims an exhaustive legal audit nor grants rights in material the project is not authorized to license.

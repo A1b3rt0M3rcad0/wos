@@ -1,0 +1,16 @@
+{
+  "captured_at": "2026-10-19T17:25:58Z",
+  "branch": "fix/workspace-operational-density",
+  "base_sha": "4d33dced5cd8e17036f94f3b1401a86f2c433899",
+  "implementation_sha": "pending final implementation commit",
+  "core_source_sha256": "900a8b6ba685f4e232026080bf90bc1a825201f60a2e6502a22e411f20d53bc5",
+  "core_source_fingerprint_files": 332,
+  "core_source_fingerprint_definition": "sorted relative path + NUL + bytes + NUL; non-test .go and .sql under core application/domain/ports/storage, go.mod/go.sum, postgres generator",
+  "go_version": "go version go1.27.2 linux/amd64",
+  "cpu_max": "400000 100000",
+  "memory_max_bytes": 34359738368,
+  "cpu_affinity": "Cpus_allowed_list:\t0-4",
+  "loadavg": "2.29 2.41 3.53 9/1073 485962",
+  "GOMAXPROCS": 2,
+  "reference_environment_reproduced": false
+}

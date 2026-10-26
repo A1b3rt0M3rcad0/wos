@@ -168,22 +168,47 @@ func (r EvaluatorRef) Validate() error {
 }
 
 type CriterionAssessment struct {
-	SubmissionID           *ID               `json:"submission_id,omitempty"`
-	SubmissionDigest       string            `json:"submission_digest,omitempty"`
-	ID                     ID                `json:"id"`
-	CriterionID            ID                `json:"criterion_id"`
-	CriterionRevision      CriterionRevision `json:"criterion_revision"`
-	Result                 AssessmentResult  `json:"result"`
-	Rationale              string            `json:"rationale"`
-	EvidenceIDs            []ID              `json:"evidence_ids,omitempty"`
-	EvaluatorRef           *EvaluatorRef     `json:"evaluator_ref,omitempty"`
-	PrincipalID            string            `json:"principal_id"`
-	Actor                  ActorRef          `json:"actor_ref"`
-	AssessedAt             time.Time         `json:"assessed_at"`
-	SupersedesAssessmentID *ID               `json:"supersedes_assessment_id,omitempty"`
+	SubmissionID           *ID                        `json:"submission_id,omitempty"`
+	SubmissionDigest       string                     `json:"submission_digest,omitempty"`
+	TaskDeliveryRef        *TaskDeliveryAssessmentRef `json:"task_delivery_ref,omitempty"`
+	ID                     ID                         `json:"id"`
+	CriterionID            ID                         `json:"criterion_id"`
+	CriterionRevision      CriterionRevision          `json:"criterion_revision"`
+	Result                 AssessmentResult           `json:"result"`
+	Rationale              string                     `json:"rationale"`
+	EvidenceIDs            []ID                       `json:"evidence_ids,omitempty"`
+	EvaluatorRef           *EvaluatorRef              `json:"evaluator_ref,omitempty"`
+	PrincipalID            string                     `json:"principal_id"`
+	Actor                  ActorRef                   `json:"actor_ref"`
+	AssessedAt             time.Time                  `json:"assessed_at"`
+	SupersedesAssessmentID *ID                        `json:"supersedes_assessment_id,omitempty"`
+}
+
+// TaskDeliveryAssessmentRef binds a criterion assessment to the exact
+// immutable TaskDelivery review round whose proof it evaluates. A
+// contracts_v1 assessment also binds separately to its exact WorkSubmission.
+type TaskDeliveryAssessmentRef struct {
+	ID     ID     `json:"id"`
+	Digest string `json:"digest"`
+	Round  uint64 `json:"round,string"`
+}
+
+func (r TaskDeliveryAssessmentRef) Validate() error {
+	if err := r.ID.Validate(); err != nil {
+		return err
+	}
+	if r.Round == 0 || !ValidSignedDigest(r.Digest) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery assessment reference requires an exact digest and nonzero round")
+	}
+	return nil
 }
 
 func (a CriterionAssessment) Validate() error {
+	if a.TaskDeliveryRef != nil {
+		if err := a.TaskDeliveryRef.Validate(); err != nil {
+			return err
+		}
+	}
 	if a.SubmissionID != nil {
 		if err := a.SubmissionID.Validate(); err != nil {
 			return err
@@ -425,13 +450,13 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		}
 		a, ok := s.CurrentAssessments[c.ID]
 		if !ok {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s has no current assessment", c.ID))
+			return nil, criterionPreparationError(c, "criterion_assessment_missing", fmt.Sprintf("required criterion %s has no current assessment", c.ID))
 		}
 		if a.CriterionRevision != c.Revision {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s has stale assessment", c.ID))
+			return nil, criterionPreparationError(c, "criterion_assessment_stale", fmt.Sprintf("required criterion %s has stale assessment", c.ID))
 		}
 		if a.Result != AssessmentResultMet && a.Result != AssessmentResultWaived {
-			return nil, NewError(ErrorCodePreconditionFailed, fmt.Sprintf("required criterion %s is not satisfied", c.ID))
+			return nil, criterionPreparationError(c, "criterion_not_satisfied", fmt.Sprintf("required criterion %s is not satisfied", c.ID))
 		}
 		refs = append(refs, CriterionAssessmentRef{
 			AssessmentID:      a.ID,
@@ -441,7 +466,7 @@ func (s CriterionSet) RequiredSatisfied() ([]CriterionAssessmentRef, error) {
 		})
 	}
 	if len(refs) == 0 {
-		return nil, NewError(ErrorCodePreconditionFailed, "at least one required active criterion is required")
+		return nil, NewDetailedError(ErrorCodePreconditionFailed, "at least one required active criterion is required", ErrorDetails{ReasonCode: "missing_required_criterion", FieldPaths: []string{"criteria"}, Remedies: []ErrorRemedy{{ActionID: "add_criterion"}}})
 	}
 	return refs, nil
 }

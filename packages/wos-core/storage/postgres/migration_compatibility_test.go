@@ -38,7 +38,7 @@ func TestFutureDatabaseSchemaRefusesStartupAndMigrationWithoutRewritingHistory(t
 		t.Fatal("future history changed", e)
 	}
 	store.Close()
-	reopened, e := openTestPostgres(path, Options{MigrateOnOpen: true})
+	reopened, e := openTestPostgres(t, path, Options{MigrateOnOpen: true})
 	if e == nil {
 		reopened.Close()
 		t.Fatal("incompatible startup accepted")

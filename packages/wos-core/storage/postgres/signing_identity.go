@@ -186,6 +186,19 @@ func (r signingIdentityRepository) SaveCredentialPolicy(ctx context.Context, p d
 	if p.Version != expected+1 {
 		return d.NewError(d.ErrorCodeVersionConflict, "policy version changed")
 	}
+	if expected == 0 {
+		if p.PermissionCompatibilityVersion != 0 {
+			return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+		}
+	} else {
+		previous, err := r.CredentialPolicy(ctx, p.NamespaceID, p.CredentialID)
+		if err != nil {
+			return err
+		}
+		if p.PermissionCompatibilityVersion != previous.PermissionCompatibilityVersion {
+			return d.NewError(d.ErrorCodeInvalidArgument, "permission compatibility marker is migration-managed")
+		}
+	}
 	c, err := r.Credential(ctx, p.NamespaceID, p.CredentialID)
 	if err != nil {
 		return err

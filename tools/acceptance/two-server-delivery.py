@@ -130,6 +130,8 @@ def main():
         path=f'/api/v1/namespaces/{ns}/outcomes'
         status,result=request(ports[0],path,'POST',{'title':'Two server delivery pilot','desired_state':'authoritative queue and external dedupe','priority':'normal'},'qualification-outcome-create');assert status==201,(status,result)
         oid=result['value']['id'];scope={'namespace_id':ns,'outcome_id':oid}
+        status,result=request(ports[0],'/api/v1/commands/create_objective','POST',{'command':{'scope':scope,'title':'Deliver qualification signals','priority':'normal','required_for_outcome':False}},'qualification-objective-create');assert status==200,(status,result)
+        objective_id=result['value']['id']
         status,result=request(ports[0],'/api/v1/commands/configure_trigger','POST',{'command':{'scope':scope,'name':'Qualification signal','event_types':['work_item.created'],'target_endpoint_ids':[endpoint],'signal_type':'qualification.created'}},'qualification-trigger-configure');assert status==200,(status,result)
         health=f'/api/v1/namespaces/{ns}/operations/delivery-health?outcome_id={oid}'
         for port in ports:
@@ -145,7 +147,7 @@ def main():
             if not args.restore_dsn_env:gate.set()
         crasher=threading.Thread(target=crash_after_both_pools_claimed);crasher.start()
         def create(i):
-            payload={'title':f'Qualification signal {i}','priority':'normal'};key=f'qualification-create-work-{i}'
+            payload={'title':f'Qualification signal {i}','priority':'normal','objective_id':objective_id};key=f'qualification-create-work-{i}'
             for attempt in range(150):
                 port=ports[i%2] if first.poll() is None else ports[1]
                 try:

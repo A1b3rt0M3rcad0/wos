@@ -28,6 +28,15 @@ func runWorkspaceV2(ctx context.Context, w *Workspace, o options) (Output, error
 		return workCommandV2(ctx, w, profile, client, token, identity, o)
 	case "outcome":
 		return outcomeCommandV2(ctx, w, profile, client, o)
+	case "planning", "inspect":
+		scope, e := resolveOutcomeV2(ctx, w, profile, client, o)
+		if e != nil {
+			return result, e
+		}
+		if o.args[0] == "inspect" {
+			return workspaceInspectCommand(ctx, client, scope, o)
+		}
+		return workspacePlanningCommand(ctx, w, client, workspaceProfileConfig(profile, scope), scope, profile.Binding.CredentialID, o)
 	case "auth":
 		if len(o.args) != 2 || o.args[1] != "status" {
 			return result, usage("auth status")

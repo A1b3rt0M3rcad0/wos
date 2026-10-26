@@ -39,14 +39,23 @@ Use the browser to plan and review, the CLI to coordinate external agents, or HT
 Suppose your team needs to **ship partial refunds**. Define a success criterion: customers can receive part of a payment back, but never more than the amount still refundable. A coding agent implements the change and records the exact commit and test report. A person or an authorized reviewing agent checks that delivery against the criterion before the Outcome is explicitly accepted. If a session ends midway, the next participant can read the recorded progress and remaining work.
 
 <p align="center">
-  <a href="docs/design/operational-canvas/canvas-first/screenshots/canvas-1920x1080.png"><img src="docs/design/operational-canvas/canvas-first/screenshots/canvas-1920x1080.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
+  <a href="docs/ux/operational-kanban/screenshots/focused-modal/board-1366.png"><img src="docs/ux/operational-kanban/screenshots/focused-modal/board-1366.png" width="960" alt="Outcome Board with Objectives, Tasks and operational connections" /></a>
 </p>
 
-The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
+The **Outcome Board** shows the requested result, Objectives, Tasks and their recorded connections in the real application. Select a card to inspect its context and permitted actions. Outcomes open an Objectives Kanban, and Objectives open a Tasks Kanban, as a contextual modal over the Board. Details and activity stay expandable. [Contextual planning and review](docs/ux/operational-kanban/README.md). Evidence supports review; criterion assessments and acceptance remain explicit, separate decisions.
+
+Start with a name and add detail when it is useful. New Tasks in the quick editor stay in **backlog** until you explicitly make them available; creating one does not reserve execution. Prepare instructions, criteria and dependencies before activation: the Task definition is locked outside Backlog. Objectives are visibly required for the Outcome by default in this editor, including nested Objectives.
+
+The same inspector explains an item's place in the plan, instructions, people, success conditions, Evidence and recent activity across the Board and specialist views. Contextual updates preserve their authenticated author and history; they do not complete a Task or approve a criterion. [Plan, inspect and review work](docs/ux/operational-workspace/README.md).
 
 Use the map's **+**, **−**, **Center view** and **Fit view** controls to explore the work. Inspection stays below the Board toolbar, keeping navigation available while you review a card.
 
-Its sidebar-free view gives the map the available width; **Views → Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Current workspace guide and captures](docs/design/operational-canvas/canvas-first/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
+Drag cards in any direction to arrange the Board locally; scroll or drag its background to pan. **Ctrl/Command + scroll** zooms around the pointer. Placement does not create a relationship. The inspector explains each record's role, its actual connections and the limits of the loaded view. [Understand how Outcomes, Objectives, Tasks, Evidence and Issues fit together](docs/workspace-relationships.md).
+
+Fonts, controls and panels keep stable operational sizes on larger monitors;
+the extra space belongs to the work. [Desktop and mobile screenshots](docs/design/editorial/operational-workspace/README.md).
+
+Its sidebar-free view gives the map the available width; **Overview** restores the sidebar to find Outcomes, switch Workspaces and access settings. **Outcome tools** and **Choose an action** belong to Outcome Board; specialist views retain their contextual actions and **Refresh view**. Work also offers a **Task Board** for task-specific organization. [Workspace interaction guide](docs/ux/operational-workspace/README.md) · [Earlier-interface navigation tour](docs/images/workspace-tour.gif) ([recording details](docs/images/workspace-tour.md)).
 
 | Step | What you do | What stays recorded |
 | --- | --- | --- |
@@ -137,7 +146,7 @@ Official agent Skills operate through the CLI. MCP and HTTP are additional integ
 
 ### Run the current workspace
 
-You need Git, Docker and Docker Compose v2. The server path below builds the current `master` source, including the interface shown in the tour.
+You need Git, Docker and Docker Compose v2. The commands below build the current `master` source. Use the branch named in the note below to try the unreleased workspace shown in this guide.
 
 ```sh
 git clone --branch master https://github.com/A1b3rt0M3rcad0/wos.git
@@ -146,12 +155,15 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
+> [!NOTE]
+> The screenshots and operational-workspace guide include the unreleased changes in draft [PR #116](https://github.com/A1b3rt0M3rcad0/wos/pull/116). To review that version, use `--branch fix/workspace-operational-density` in the clone command above. The normal `master` installation and published npm package can expose an earlier interface.
+
 **You should see:** the login page at **http://127.0.0.1:8080/app/**. Copy `WOS_BOOTSTRAP_TOKEN` from `.env` into **Access credential**, then choose **Sign in**. The unchanged example opens the **Main** Workspace.
 
 > [!WARNING]
 > The example contains a public development credential. Keep it on localhost. Before sharing a deployment, configure private credentials, permissions and HTTPS using the [shared-service guide](docs/operations.md#shared-service). Do not print credentials in logs.
 
-Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Views → Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
+Create an Outcome with **+** beside **Outcomes**. Add a required success criterion and a Task, then explicitly activate the Outcome when preparation is ready. Inspect the work in **Outcome Board**, **Work** and **Evidence**. Choose **Overview** to restore the sidebar; type in **Search outcomes** to find another result, or open **Filters** for lifecycle and archive options. On Outcome Board, **Choose an action** exposes permitted Outcome-wide operations; specialist views keep their own contextual controls. A new installation starts with your own records, not the tour's sample data.
 
 <a id="requirements-and-platforms"></a>
 <details>
@@ -238,10 +250,12 @@ Previously granted Apache-2.0 rights and third-party licenses remain effective f
 | Stable 1.0 acceptance | Tracked separately in [ROADMAP.md](ROADMAP.md) |
 <!-- wos-release:end -->
 
+The operational workspace changes on this branch are queued for the next minor release, **1.2.0**. They are not included in `wosctl@1.1.0`; release preparation and publication remain separate from this draft PR.
+
 ## Documentation and support
 
 - [Documentation index](docs/README.md): setup, workspace use, agents and integration references.
-- [Outcome Board workspace](docs/design/operational-canvas/canvas-first/README.md): viewport-based operation, compact navigation, responsive inspection and current captures. [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
+- [Outcome Board workspace](docs/ux/operational-workspace/README.md): progressive planning, shared contextual inspection, current proof and durable participant updates. [Current Kanban screenshots](docs/ux/operational-kanban/screenshots/focused-modal/README.md) · [Board reference gallery](docs/ux/contextual-kanban/screenshots/README.md). [Earlier full-page gallery](docs/design/editorial/operational-workspace/README.md). [Earlier workspace gallery](docs/design/operational-canvas/workspace/README.md) and [Board interaction guide](docs/design/operational-canvas/README.md) cover the other pages and interaction details.
 - [Server operations](docs/operations.md), [architecture](docs/architecture.md) and [operational acceptance](docs/stable/operational-acceptance.md).
 - [Report bugs or ask questions](https://github.com/A1b3rt0M3rcad0/wos/issues): include versions and a minimal reproduction, without secrets.
 - [Contribute](CONTRIBUTING.md) or [report a security concern](SECURITY.md#report-a-vulnerability).

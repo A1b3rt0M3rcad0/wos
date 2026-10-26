@@ -7,19 +7,32 @@ import (
 )
 
 type MutationResult[T any] struct {
-	Value            T                      `json:"value"`
-	OutcomeRevision  domain.OutcomeRevision `json:"outcome_revision"`
-	CommandID        domain.ID              `json:"command_id"`
-	IdempotentReplay bool                   `json:"idempotent_replay"`
+	Value                        T                             `json:"value"`
+	OutcomeRevision              domain.OutcomeRevision        `json:"outcome_revision"`
+	CommandID                    domain.ID                     `json:"command_id"`
+	IdempotentReplay             bool                          `json:"idempotent_replay"`
+	DerivedObjectiveAchievements []DerivedObjectiveAchievement `json:"derived_objective_achievements,omitempty"`
+}
+
+// DerivedObjectiveAchievement identifies an Objective concluded by the
+// deterministic completion policy as part of this mutation.
+type DerivedObjectiveAchievement struct {
+	Objective       domain.EntityRef `json:"objective"`
+	Version         domain.Version   `json:"version,string"`
+	AuthorityID     domain.ID        `json:"authority_id"`
+	PolicyVersion   uint64           `json:"policy_version,string"`
+	CompletionCycle uint64           `json:"completion_cycle,string"`
 }
 
 type CreateOutcomeCommand struct {
-	ExternalContext domain.ExternalContext `json:"external_context,omitempty"`
-	NamespaceID     domain.ID
-	Title           string
-	Description     string
-	DesiredState    string
-	Priority        domain.Priority
+	CompletionPolicy domain.CompletionPolicy `wos:"optional" json:"completion_policy,omitempty"`
+	InitialCriteria  []InitialCriterion      `wos:"optional" json:"initial_criteria,omitempty"`
+	ExternalContext  domain.ExternalContext  `json:"external_context,omitempty"`
+	NamespaceID      domain.ID
+	Title            string
+	Description      string
+	DesiredState     string
+	Priority         domain.Priority
 }
 
 type AddCriterionCommand struct {
@@ -42,7 +55,8 @@ type ReviseCriterionCommand struct {
 }
 
 type RecordCriterionAssessmentCommand struct {
-	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
+	SubmissionID      *domain.ID                        `wos:"optional" json:",omitempty"`
+	TaskDeliveryRef   *domain.TaskDeliveryAssessmentRef `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -54,7 +68,8 @@ type RecordCriterionAssessmentCommand struct {
 }
 
 type AttestCriterionCommand struct {
-	SubmissionID      *domain.ID `wos:"optional" json:",omitempty"`
+	SubmissionID      *domain.ID                        `wos:"optional" json:",omitempty"`
+	TaskDeliveryRef   *domain.TaskDeliveryAssessmentRef `wos:"optional" json:",omitempty"`
 	Owner             domain.EntityRef
 	CriterionID       domain.ID
 	CriterionRevision domain.CriterionRevision
@@ -69,12 +84,15 @@ type ActivateOutcomeCommand struct {
 }
 
 type AchieveOutcomeCommand struct {
-	Scope           domain.Scope
-	ExpectedVersion domain.Version
-	Reason          string
+	AcknowledgedCancelledWork []domain.EntityRef `wos:"optional" json:"acknowledged_cancelled_work,omitempty"`
+	Scope                     domain.Scope
+	ExpectedVersion           domain.Version
+	Reason                    string
+	ObservedOutcomeRevision   *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateObjectiveCommand struct {
+	InitialCriteria    []InitialCriterion `wos:"optional" json:"initial_criteria,omitempty"`
 	Scope              domain.Scope
 	Title              string
 	Description        string
@@ -90,21 +108,24 @@ type StartObjectiveCommand struct {
 }
 
 type AchieveObjectiveCommand struct {
-	Scope           domain.Scope
-	ObjectiveID     domain.ID
-	ExpectedVersion domain.Version
-	Reason          string
+	AcknowledgedCancelledWork []domain.EntityRef `wos:"optional" json:"acknowledged_cancelled_work,omitempty"`
+	Scope                     domain.Scope
+	ObjectiveID               domain.ID
+	ExpectedVersion           domain.Version
+	Reason                    string
+	ObservedOutcomeRevision   *domain.OutcomeRevision `wos:"optional" json:"observed_outcome_revision,omitempty,string"`
 }
 
 type CreateWorkItemCommand struct {
-	ExecutionSpec *domain.ExecutionSpec `wos:"optional" json:",omitempty"`
-	Scope         domain.Scope
-	Title         string
-	Description   string
-	Priority      domain.Priority
-	Lifecycle     domain.WorkItemLifecycle
-	ObjectiveID   *domain.ID
-	NotBefore     *time.Time
+	InitialCriteria []InitialCriterion    `wos:"optional" json:"initial_criteria,omitempty"`
+	ExecutionSpec   *domain.ExecutionSpec `wos:"optional" json:",omitempty"`
+	Scope           domain.Scope
+	Title           string
+	Description     string
+	Priority        domain.Priority
+	Lifecycle       domain.WorkItemLifecycle
+	ObjectiveID     *domain.ID
+	NotBefore       *time.Time
 }
 
 type ActivateWorkItemCommand struct {

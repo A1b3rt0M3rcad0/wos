@@ -136,7 +136,12 @@ func (h *Handler) routes() {
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", h.listNamespaces)
 		h.mux.HandleFunc("PUT "+h.prefix+"/namespaces/{namespace_id}/grants/{principal_id}", h.setGrant)
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/administration", h.securityAdministration)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/credentials", h.listCredentials)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials", h.issueCredential)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}", h.getCredential)
+		h.mux.HandleFunc("PATCH "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}", h.updateCredential)
+		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/rotate", h.rotateCredential)
+		h.mux.HandleFunc("GET "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke-preview", h.previewCredentialRevocation)
 		h.mux.HandleFunc("POST "+h.prefix+"/namespaces/{namespace_id}/credentials/{credential_id}/actions/revoke", h.revokeCredential)
 	} else {
 		h.mux.HandleFunc("GET "+h.prefix+"/namespaces", func(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +159,10 @@ func (h *Handler) routes() {
 		writeJSON(w, http.StatusOK, map[string]any{"principal_id": identity.PrincipalID, "actor_ref": identity.Actor})
 	})
 	outcome := base + "/{outcome_id}"
+	h.mux.HandleFunc("POST "+outcome+"/workspace-view", h.getEntityWorkspaceView)
+	h.mux.HandleFunc("POST "+outcome+"/workspace-cards", h.getWorkspaceCards)
+	h.mux.HandleFunc("GET "+outcome+"/workspace-timeline", h.getWorkspaceTimeline)
+	h.mux.HandleFunc("GET "+outcome+"/entity-notes/{note_id}", h.getEntityNote)
 	h.mux.HandleFunc("GET "+outcome+"/available-work", h.listAvailableWork)
 	h.mux.HandleFunc("GET "+outcome+"/work-activity", h.listWorkActivity)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/attention", h.getWorkAttention)
@@ -167,6 +176,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+outcome+"/work-submissions/{submission_id}", h.getWorkSubmission)
 	h.mux.HandleFunc("GET "+outcome+"/triggers", h.listTriggers)
 	h.mux.HandleFunc("GET "+outcome+"/deliveries", h.listDeliveries)
+	h.mux.HandleFunc("GET "+outcome+"/task-deliveries/{delivery_id}", h.getTaskDelivery)
 	h.mux.HandleFunc("GET "+outcome+"/trigger-firings", h.listFirings)
 	h.mux.HandleFunc("GET "+outcome, h.getOutcome)
 	h.mux.HandleFunc("PATCH "+outcome, h.updateOutcome)
@@ -205,6 +215,9 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/achieve", h.achieveObjective)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/cancel", h.cancelObjective)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/reopen", h.reopenObjective)
+	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/actions/completion-mode", h.setObjectiveCompletionMode)
+	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}/completion-authorities", h.listObjectiveCompletionAuthorities)
+	h.mux.HandleFunc("GET "+outcome+"/objectives/{objective_id}/completion", h.getObjectiveCompletion)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/criteria", h.addObjectiveCriterion)
 	h.mux.HandleFunc("PATCH "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}", h.reviseObjectiveCriterion)
 	h.mux.HandleFunc("POST "+outcome+"/objectives/{objective_id}/criteria/{criterion_id}/actions/retire", h.retireObjectiveCriterion)
@@ -218,6 +231,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}", h.getWorkItem)
 	h.mux.HandleFunc("PATCH "+outcome+"/work-items/{work_item_id}", h.updateWorkItem)
 	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/operational-state", h.getWorkItemOperationalState)
+	h.mux.HandleFunc("GET "+outcome+"/work-items/{work_item_id}/verification", h.getTaskVerification)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/activate", h.activateWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/defer", h.deferWorkItem)
 	h.mux.HandleFunc("POST "+outcome+"/work-items/{work_item_id}/actions/claim", h.claimWorkItem)
@@ -240,6 +254,7 @@ func (h *Handler) routes() {
 	h.mux.HandleFunc("POST "+outcome+"/issues", h.createIssue)
 	h.mux.HandleFunc("GET "+outcome+"/issues", h.listIssues)
 	h.mux.HandleFunc("POST "+outcome+"/issues/actions/report-with-blocker", h.reportIssueWithBlocker)
+	h.mux.HandleFunc("POST "+outcome+"/issues/actions/report-with-blockers", h.reportIssueWithBlockers)
 	h.mux.HandleFunc("GET "+outcome+"/issues/{issue_id}", h.getIssue)
 	h.mux.HandleFunc("PATCH "+outcome+"/issues/{issue_id}", h.updateIssue)
 	h.mux.HandleFunc("POST "+outcome+"/issues/{issue_id}/actions/investigate", h.investigateIssue)
@@ -457,6 +472,10 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	} else if domainCode, ok := domain.ErrorCodeOf(err); ok {
 		code = string(domainCode)
 		message = err.Error()
+		var domainErr *domain.Error
+		if errors.As(err, &domainErr) && domainErr != nil && domainErr.Details != nil {
+			details = domainErr.Details
+		}
 		switch domainCode {
 		case domain.ErrorCodeInvalidID,
 			domain.ErrorCodeInvalidScope,

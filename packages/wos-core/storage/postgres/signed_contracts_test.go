@@ -69,7 +69,7 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			must(err)
 			signed := uow.(ports.SignedContractUnitOfWork)
 			must(uow.Outcomes().Insert(ctx, outcome))
-			must(uow.WorkItems().Insert(ctx, work))
+			must(insertWorkItemFixture(ctx, uow.Objectives(), uow.WorkItems(), &work))
 			must(signed.SignedWorkContracts().Insert(ctx, contract))
 			issuerKey := d.SigningKey{ID: keyID, NamespaceID: ns, PrincipalID: "issuer", Purpose: "issuer", Algorithm: "Ed25519", PublicKey: base64.StdEncoding.EncodeToString(pub), Fingerprint: fp, Version: 1, Status: "active", CreatedAt: now, UpdatedAt: now}
 			must(uow.(ports.SigningIdentityUnitOfWork).SigningIdentity().SaveKey(ctx, issuerKey, 0))
@@ -121,7 +121,7 @@ func TestSignedReviewStorageDeliveryPrecisionImmutableFactsAndRestore(t *testing
 			cc := d.CommandContext{PrincipalID: "executor", Actor: contract.Actor, CommandID: testID("0199a333-0000-7000-8000-000000000015"), IdempotencyKey: "signed-obligation-mutation-1"}
 			changedTitle := "rewrite frozen task"
 			_, err = service.UpdateWorkItem(ctx, cc, a.UpdateWorkItemCommand{Scope: scope, WorkItemID: work.ID, ExpectedVersion: work.Version, Title: &changedTitle})
-			if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodeSignedProtocolRequired {
+			if code, _ := d.ErrorCodeOf(err); code != d.ErrorCodePreconditionFailed {
 				t.Fatalf("embedded unsigned task edit bypass: %v", err)
 			}
 			cc.CommandID = testID("0199a333-0000-7000-8000-000000000016")

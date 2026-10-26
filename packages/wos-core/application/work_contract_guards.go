@@ -5,11 +5,30 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/domain"
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/ports"
 	"reflect"
+	"time"
 )
 
 // Guards run after receipt replay and before mutations, under the coordination
 // lock. Observations remain writable; signed review obligations reject unsigned assessments.
 func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any) error {
+	return validateContractMutation(ctx, s, u, name, command, nil)
+}
+
+// inspectContractMutation uses the same predicates in an already pinned query
+// snapshot. It never substitutes for the mutation pipeline's coordination guard.
+func inspectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any, at time.Time) error {
+	return validateContractMutation(ctx, s, u, name, command, &at)
+}
+func validateContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork, name string, command any, inspectionAt *time.Time) error {
+	// Only the inspection entrypoint supplies a time. Commands always acquire
+	// their guard and then read the current authoritative clock, as before.
+	acquireGuard := inspectionAt == nil
+	evaluationTime := func() (time.Time, error) {
+		if inspectionAt != nil {
+			return inspectionAt.UTC(), nil
+		}
+		return s.transactionTime(ctx, u)
+	}
 	var scope domain.Scope
 	var workID, objectiveID domain.ID
 	var wholeOutcome bool
@@ -40,6 +59,30 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 		}
 	case UpdateWorkItemCommand:
 		scope, workID = cmd.Scope, cmd.WorkItemID
+	case SetWorkItemExecutionSpecCommand:
+		scope, workID = cmd.Scope, cmd.WorkItemID
+	case SetWorkItemNotBeforeCommand:
+		scope, workID = cmd.Scope, cmd.WorkItemID
+	case SetWorkItemObjectiveCommand:
+		scope, workID = cmd.Scope, cmd.WorkItemID
+	case SetObjectiveParentCommand:
+		if acquireGuard {
+			if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+				return err
+			}
+		}
+		objective, err := u.Objectives().Get(ctx, cmd.Scope, cmd.ObjectiveID)
+		if err != nil {
+			return err
+		}
+		if err := validateStructurePreview(ctx, u, cmd.Scope, objective.Ref(), cmd.ExpectedOutcomeRevision); err != nil {
+			return err
+		}
+		now, err := evaluationTime()
+		if err != nil {
+			return err
+		}
+		return validateObjectiveParentChange(ctx, s, u, objective, cmd.ParentObjectiveID, now)
 	case UpdateOutcomeCommand:
 		scope, wholeOutcome = cmd.Scope, true
 		signedOnly = true
@@ -90,9 +133,13 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 		case domain.EntityKindOutcome:
 			wholeOutcome = true
 		}
+	case ApplyDependencyChangesCommand:
+		return validateDependencyChangesContract(ctx, s, u, cmd, inspectionAt, nil)
 	case RemoveDependencyCommand:
-		if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
-			return err
+		if acquireGuard {
+			if _, err := u.Coordination().LockOutcome(ctx, cmd.Scope); err != nil {
+				return err
+			}
 		}
 		rel, err := u.Relations().Get(ctx, cmd.Scope, cmd.RelationID)
 		if err != nil {
@@ -136,66 +183,52 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 	if scope.OutcomeID.IsZero() {
 		return nil
 	}
-	if _, err := u.Coordination().LockOutcome(ctx, scope); err != nil {
-		return err
+	if acquireGuard {
+		if _, err := u.Coordination().LockOutcome(ctx, scope); err != nil {
+			return err
+		}
 	}
-	now, err := s.transactionTime(ctx, u)
+	now, err := evaluationTime()
 	if err != nil {
 		return err
 	}
-	repo, err := contractRepository(u)
-	if err != nil { // Legacy adapters retain their existing behavior.
-		if _, ok := u.(ports.WorkContractUnitOfWork); !ok {
-			return nil
-		}
-		return err
-	}
 	check := func(w domain.WorkItem) error {
-		if signed, ok := u.(ports.SignedContractUnitOfWork); ok {
-			pending, err := signed.SignedContracts().OpenCase(ctx, scope, w.ID)
-			if err != nil {
-				return err
-			}
-			if pending != nil {
-				return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "open review freezes obligations and requires signed independent decision")
-			}
-			if w.CurrentContractID != nil {
-				c, err := signed.SignedWorkContracts().Get(ctx, scope, *w.CurrentContractID)
-				if err == nil {
-					if c.ValidAt(now) || immutableAssessment && c.LatestSubmissionID != nil {
-						return domain.NewError(domain.ErrorCodeSignedProtocolRequired, "active signed authority requires a signed operation")
-					}
-					return nil
-				}
-				if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeNotFound {
-					return err
-				}
-			}
-		}
-		if signedOnly {
-			return nil
-		}
-		if w.CurrentContractID == nil {
-			return nil
-		}
-		c, err := repo.Get(ctx, scope, *w.CurrentContractID)
-		if err != nil {
-			return err
-		}
-		if c.ValidAt(now) {
-			return domain.NewError(domain.ErrorCodeWorkAlreadyClaimed, "explicitly revoke the valid contract before changing its obligations or lifecycle")
-		}
-		return nil
+		return protectWorkContractMutation(ctx, u, w, now, signedOnly, immutableAssessment)
 	}
 	if !workID.IsZero() {
 		w, err := u.WorkItems().Get(ctx, scope, workID)
 		if err != nil {
 			return err
 		}
+		if cmd, ok := command.(SetWorkItemObjectiveCommand); ok {
+			if err := validateStructurePreview(ctx, u, cmd.Scope, w.Ref(), cmd.ExpectedOutcomeRevision); err != nil {
+				return err
+			}
+		}
+		switch name {
+		case "UpdateWorkItem", "SetWorkItemExecutionSpec", "SetWorkItemNotBefore", "SetWorkItemObjective", "AddCriterion", "ReviseCriterion", "RetireCriterion", "AddDependency", "RemoveDependency":
+			if err := w.CheckPlanningEdit(); err != nil {
+				return err
+			}
+		}
 		return check(w)
 	}
 	if wholeOutcome || !objectiveID.IsZero() {
-		items, err := u.WorkItems().ListByOutcome(ctx, scope)
+		var items []domain.WorkItem
+		var err error
+		if reads, ok := u.(ports.ContinuityReadUnitOfWork); ok {
+			if repo, ok := reads.ContinuityReads().(ports.WorkspaceReadRepository); ok {
+				var objective *domain.ID
+				if !wholeOutcome {
+					objective = &objectiveID
+				}
+				items, err = repo.WorkspaceGuardWork(ctx, scope, objective)
+			} else {
+				items, err = u.WorkItems().ListByOutcome(ctx, scope)
+			}
+		} else {
+			items, err = u.WorkItems().ListByOutcome(ctx, scope)
+		}
 		if err != nil {
 			return err
 		}
@@ -206,6 +239,53 @@ func protectContractMutation(ctx context.Context, s *Service, u ports.UnitOfWork
 				}
 			}
 		}
+	}
+	return nil
+}
+
+// Share the actual authority check with capability/read projections. It does
+// not revoke, reconcile, mutate, or infer authority from declared assignees.
+func protectWorkContractMutation(ctx context.Context, u ports.UnitOfWork, w domain.WorkItem, now time.Time, signedOnly, immutableAssessment bool) error {
+	if w.PendingReviewCaseID != nil {
+		return definitionPrecondition(domain.ErrorCodeSignedProtocolRequired, "open_review", "open review freezes obligations and requires signed independent decision", w.Ref(), nil)
+	}
+	if signed, ok := u.(ports.SignedContractUnitOfWork); ok {
+		pending, err := signed.SignedContracts().OpenCase(ctx, w.Scope, w.ID)
+		if err != nil {
+			return err
+		}
+		if pending != nil {
+			return definitionPrecondition(domain.ErrorCodeSignedProtocolRequired, "open_review", "open review freezes obligations and requires signed independent decision", w.Ref(), nil)
+		}
+		if w.CurrentContractID != nil {
+			c, err := signed.SignedWorkContracts().Get(ctx, w.Scope, *w.CurrentContractID)
+			if err == nil {
+				if c.ValidAt(now) || immutableAssessment && c.LatestSubmissionID != nil {
+					return definitionPrecondition(domain.ErrorCodeSignedProtocolRequired, "definition_frozen", "active signed authority requires a signed operation", w.Ref(), nil)
+				}
+				return nil
+			}
+			if code, _ := domain.ErrorCodeOf(err); code != domain.ErrorCodeNotFound {
+				return err
+			}
+		}
+	}
+	if signedOnly || w.CurrentContractID == nil {
+		return nil
+	}
+	repo, err := contractRepository(u)
+	if err != nil {
+		if _, ok := u.(ports.WorkContractUnitOfWork); !ok {
+			return nil
+		}
+		return err
+	}
+	c, err := repo.Get(ctx, w.Scope, *w.CurrentContractID)
+	if err != nil {
+		return err
+	}
+	if c.ValidAt(now) {
+		return definitionPrecondition(domain.ErrorCodeWorkAlreadyClaimed, "definition_frozen", "explicitly revoke the valid contract before changing its obligations or lifecycle", w.Ref(), nil)
 	}
 	return nil
 }

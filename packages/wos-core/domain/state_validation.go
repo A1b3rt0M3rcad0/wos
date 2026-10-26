@@ -48,6 +48,30 @@ func (l WorkLease) Validate() error {
 	if !l.ExpiresAt.After(l.AcquiredAt) {
 		return NewError(ErrorCodeLease, "lease expiration must be after acquisition")
 	}
+	if err := l.validateCredentialBinding(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (l WorkLease) validateCredentialBinding() error {
+	switch l.CredentialBindingVersion {
+	case 0:
+		if !l.HolderCredentialID.IsZero() || l.SessionCredentialID != nil {
+			return NewError(ErrorCodeLease, "unversioned lease cannot contain credential binding")
+		}
+	case WorkLeaseCredentialBindingV1:
+		if err := l.HolderCredentialID.Validate(); err != nil {
+			return WrapError(ErrorCodeLease, "lease holder credential id is invalid", err)
+		}
+		if l.SessionCredentialID != nil {
+			if err := l.SessionCredentialID.Validate(); err != nil {
+				return WrapError(ErrorCodeLease, "lease session credential id is invalid", err)
+			}
+		}
+	default:
+		return NewError(ErrorCodeLease, "lease credential binding version is unsupported")
+	}
 	return nil
 }
 

@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	DefaultLeaseTTL = 5 * time.Minute
-	MinLeaseTTL     = 30 * time.Second
-	MaxLeaseTTL     = 60 * time.Minute
+	DefaultLeaseTTL                    = 5 * time.Minute
+	MinLeaseTTL                        = 30 * time.Second
+	MaxLeaseTTL                        = 60 * time.Minute
+	WorkLeaseCredentialBindingV1 uint8 = 1
 )
 
 type WorkItemLifecycle string
@@ -23,12 +24,15 @@ const (
 )
 
 type WorkLease struct {
-	ClaimID      ID        `json:"claim_id"`
-	PrincipalID  string    `json:"principal_id"`
-	Actor        ActorRef  `json:"actor_ref"`
-	FencingToken uint64    `json:"fencing_token"`
-	AcquiredAt   time.Time `json:"acquired_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ClaimID                  ID        `json:"claim_id"`
+	PrincipalID              string    `json:"principal_id"`
+	Actor                    ActorRef  `json:"actor_ref"`
+	FencingToken             uint64    `json:"fencing_token"`
+	AcquiredAt               time.Time `json:"acquired_at"`
+	ExpiresAt                time.Time `json:"expires_at"`
+	CredentialBindingVersion uint8     `json:"credential_binding_version,omitempty"`
+	HolderCredentialID       ID        `json:"holder_credential_id,omitempty"`
+	SessionCredentialID      *ID       `json:"session_credential_id,omitempty"`
 }
 
 func (l WorkLease) ValidAt(now time.Time) bool {
@@ -36,32 +40,44 @@ func (l WorkLease) ValidAt(now time.Time) bool {
 }
 
 type WorkItem struct {
-	PendingReviewCaseID    *ID               `json:"pending_review_case_id,omitempty"`
-	LatestReviewCaseID     *ID               `json:"latest_review_case_id,omitempty"`
-	CorrectionReviewCaseID *ID               `json:"correction_review_case_id,omitempty"`
-	ContractsEnabled       bool              `json:"contracts_enabled,omitempty"`
-	CurrentContractID      *ID               `json:"current_contract_id,omitempty"`
-	ExecutionSpec          *ExecutionSpec    `json:"execution_spec,omitempty"`
-	ID                     ID                `json:"id"`
-	Scope                  Scope             `json:"scope"`
-	Version                Version           `json:"version"`
-	Title                  string            `json:"title"`
-	Description            string            `json:"description,omitempty"`
-	ObjectiveID            *ID               `json:"objective_id,omitempty"`
-	Lifecycle              WorkItemLifecycle `json:"lifecycle"`
-	Priority               Priority          `json:"priority"`
-	NotBefore              *time.Time        `json:"not_before,omitempty"`
-	AssigneeRefs           []ActorRef        `json:"assignee_refs,omitempty"`
-	ResultSummary          string            `json:"result_summary,omitempty"`
-	CurrentLease           *WorkLease        `json:"current_lease,omitempty"`
-	LastFencingToken       uint64            `json:"last_fencing_token"`
-	Criteria               CriterionSet      `json:"criteria"`
-	CurrentConclusion      *Conclusion       `json:"conclusion,omitempty"`
-	ConclusionHistory      []Conclusion      `json:"conclusion_history,omitempty"`
-	CreatedAt              time.Time         `json:"created_at"`
-	UpdatedAt              time.Time         `json:"updated_at"`
+	PendingDeliveryID            *ID               `json:"pending_delivery_id,omitempty"`
+	LatestDeliveryID             *ID               `json:"latest_delivery_id,omitempty"`
+	LatestDeliveryDecisionID     *ID               `json:"latest_delivery_decision_id,omitempty"`
+	LatestDeliveryWithdrawalID   *ID               `json:"latest_delivery_withdrawal_id,omitempty"`
+	TaskDeliveryReplanAuthorized bool              `json:"task_delivery_replan_authorized,omitempty"`
+	DeliveryRound                uint64            `json:"delivery_round,string,omitempty"`
+	PendingReviewCaseID          *ID               `json:"pending_review_case_id,omitempty"`
+	LatestReviewCaseID           *ID               `json:"latest_review_case_id,omitempty"`
+	CorrectionReviewCaseID       *ID               `json:"correction_review_case_id,omitempty"`
+	ContractsEnabled             bool              `json:"contracts_enabled,omitempty"`
+	CurrentContractID            *ID               `json:"current_contract_id,omitempty"`
+	ExecutionSpec                *ExecutionSpec    `json:"execution_spec,omitempty"`
+	ID                           ID                `json:"id"`
+	Scope                        Scope             `json:"scope"`
+	Version                      Version           `json:"version"`
+	Title                        string            `json:"title"`
+	Description                  string            `json:"description,omitempty"`
+	ObjectiveID                  *ID               `json:"objective_id,omitempty"`
+	Lifecycle                    WorkItemLifecycle `json:"lifecycle"`
+	Priority                     Priority          `json:"priority"`
+	NotBefore                    *time.Time        `json:"not_before,omitempty"`
+	AssigneeRefs                 []ActorRef        `json:"assignee_refs,omitempty"`
+	ResultSummary                string            `json:"result_summary,omitempty"`
+	CurrentLease                 *WorkLease        `json:"current_lease,omitempty"`
+	LastFencingToken             uint64            `json:"last_fencing_token"`
+	Criteria                     CriterionSet      `json:"criteria"`
+	CurrentConclusion            *Conclusion       `json:"conclusion,omitempty"`
+	ConclusionHistory            []Conclusion      `json:"conclusion_history,omitempty"`
+	CreatedAt                    time.Time         `json:"created_at"`
+	UpdatedAt                    time.Time         `json:"updated_at"`
 }
 
+// NewWorkItem is retained while storage and callers are migrated away from
+// Outcome-level Tasks. New application creation paths must use
+// NewWorkItemForObjective. This constructor intentionally remains able to
+// represent legacy rows without an Objective during the expand phase.
+//
+// Deprecated: use NewWorkItemForObjective for all new Tasks.
 func NewWorkItem(id ID, scope Scope, title, description string, priority Priority, lifecycle WorkItemLifecycle, createdAt time.Time) (WorkItem, error) {
 	if lifecycle == "" {
 		lifecycle = WorkItemLifecycleBacklog
@@ -87,11 +103,72 @@ func NewWorkItem(id ID, scope Scope, title, description string, priority Priorit
 	return w, nil
 }
 
+// NewWorkItemForObjective creates a Task with its one required structural
+// Objective owner. Same-Outcome ownership is checked by the application layer,
+// which has access to persisted Objective state.
+func NewWorkItemForObjective(id ID, scope Scope, objectiveID *ID, title, description string, priority Priority, lifecycle WorkItemLifecycle, createdAt time.Time) (WorkItem, error) {
+	if objectiveID == nil {
+		return WorkItem{}, NewError(ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
+	if err := objectiveID.Validate(); err != nil {
+		return WorkItem{}, WrapError(ErrorCodeInvalidArgument, "new work item Objective ID is invalid", err)
+	}
+	work, err := NewWorkItem(id, scope, title, description, priority, lifecycle, createdAt)
+	if err != nil {
+		return WorkItem{}, err
+	}
+	work.ObjectiveID = cloneID(objectiveID)
+	if err := work.ValidateForCreation(); err != nil {
+		return WorkItem{}, err
+	}
+	return work, nil
+}
+
 func (w WorkItem) Ref() EntityRef {
 	return EntityRef{Scope: w.Scope, Kind: EntityKindWorkItem, ID: w.ID}
 }
 
 func (w WorkItem) Validate() error {
+	for _, id := range []*ID{w.PendingDeliveryID, w.LatestDeliveryID, w.LatestDeliveryDecisionID, w.LatestDeliveryWithdrawalID} {
+		if id != nil && id.Validate() != nil {
+			return NewError(ErrorCodeInvalidArgument, "invalid TaskDelivery navigation")
+		}
+	}
+	resolutionCount := 0
+	if w.PendingDeliveryID != nil {
+		resolutionCount++
+	}
+	if w.LatestDeliveryDecisionID != nil {
+		resolutionCount++
+	}
+	if w.LatestDeliveryWithdrawalID != nil {
+		resolutionCount++
+	}
+	if (w.DeliveryRound == 0) != (w.LatestDeliveryID == nil) ||
+		(w.LatestDeliveryID == nil && resolutionCount != 0) ||
+		(w.LatestDeliveryID != nil && resolutionCount != 1) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery round and history references are inconsistent")
+	}
+	if w.PendingDeliveryID != nil && (w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingReviewCaseID != nil || w.LatestDeliveryID == nil || *w.PendingDeliveryID != *w.LatestDeliveryID) {
+		return NewError(ErrorCodeInvalidTransition, "pending TaskDelivery requires in-progress work without execution or signed-review authority")
+	}
+	if w.TaskDeliveryReplanAuthorized && (w.LatestDeliveryWithdrawalID == nil || w.LatestDeliveryID == nil || w.PendingDeliveryID != nil || w.LatestDeliveryDecisionID != nil) {
+		return NewError(ErrorCodeInvalidArgument, "TaskDelivery replan authorization requires an unresolved withdrawn delivery history")
+	}
+	if w.LatestDeliveryWithdrawalID != nil {
+		if w.Lifecycle != WorkItemLifecycleBacklog && w.Lifecycle != WorkItemLifecycleTodo && w.Lifecycle != WorkItemLifecycleInProgress {
+			return NewError(ErrorCodeInvalidTransition, "withdrawn TaskDelivery cannot be terminal")
+		}
+		if !w.TaskDeliveryReplanAuthorized {
+			if w.Lifecycle == WorkItemLifecycleInProgress || w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingDeliveryID != nil {
+				return NewError(ErrorCodeInvalidTransition, "withdrawn TaskDelivery requires an explicit Backlog replan before execution authority")
+			}
+		} else if w.Lifecycle != WorkItemLifecycleInProgress && (w.CurrentLease != nil || w.CurrentContractID != nil || w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil) {
+			return NewError(ErrorCodeInvalidTransition, "replanned withdrawn Task can hold execution authority only while in progress")
+		} else if w.Lifecycle == WorkItemLifecycleInProgress && (w.PendingDeliveryID != nil || w.PendingReviewCaseID != nil) {
+			return NewError(ErrorCodeInvalidTransition, "replanned withdrawn Task cannot have a pending review while executing")
+		}
+	}
 	for _, id := range []*ID{w.PendingReviewCaseID, w.LatestReviewCaseID, w.CorrectionReviewCaseID} {
 		if id != nil && (id.Validate() != nil || !w.ContractsEnabled) {
 			return NewError(ErrorCodeInvalidArgument, "invalid signed review navigation")
@@ -148,8 +225,8 @@ func (w WorkItem) Validate() error {
 		return err
 	}
 	if w.Lifecycle == WorkItemLifecycleInProgress {
-		if w.CurrentLease == nil && !w.ContractsEnabled {
-			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires a lease")
+		if w.CurrentLease == nil && w.CurrentContractID == nil && w.PendingReviewCaseID == nil && w.PendingDeliveryID == nil {
+			return NewError(ErrorCodeInvalidArgument, "in-progress work item requires active execution authority, an identifiable pending review, or a pending delivery")
 		}
 		if w.CurrentLease != nil {
 			if err := w.CurrentLease.Validate(); err != nil {
@@ -171,12 +248,24 @@ func (w WorkItem) Validate() error {
 	return nil
 }
 
-func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+// ValidateForCreation adds the structural ownership invariant to the general
+// state validator, which must continue to read legacy records during rollout.
+func (w WorkItem) ValidateForCreation() error {
+	if err := w.Validate(); err != nil {
 		return err
 	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot alter criteria on terminal work item")
+	if w.ObjectiveID == nil {
+		return NewError(ErrorCodeInvalidArgument, "new work item requires an Objective")
+	}
+	if err := w.ObjectiveID.Validate(); err != nil {
+		return WrapError(ErrorCodeInvalidArgument, "new work item Objective ID is invalid", err)
+	}
+	return nil
+}
+
+func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
+		return err
 	}
 	if c.OwnerRef != w.Ref() {
 		return NewError(ErrorCodeCriterion, "criterion owner does not match work item")
@@ -188,11 +277,8 @@ func (w *WorkItem) AddCriterion(c SuccessCriterion, now time.Time) error {
 }
 
 func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bool, mode VerificationMode, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
 		return err
-	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot revise criteria on terminal work item")
 	}
 	if err := w.Criteria.Revise(id, title, description, required, mode); err != nil {
 		return err
@@ -201,11 +287,8 @@ func (w *WorkItem) ReviseCriterion(id ID, title, description string, required bo
 }
 
 func (w *WorkItem) RetireCriterion(id ID, now time.Time) error {
-	if err := w.requireUncontracted(); err != nil {
+	if err := w.CheckCriterionDefinitionEdit(); err != nil {
 		return err
-	}
-	if w.isTerminal() {
-		return NewError(ErrorCodeInvalidTransition, "cannot retire criteria on terminal work item")
 	}
 	if err := w.Criteria.Retire(id); err != nil {
 		return err
@@ -231,6 +314,9 @@ func (w *WorkItem) Activate(now time.Time) error {
 	if w.Lifecycle != WorkItemLifecycleBacklog {
 		return NewError(ErrorCodeInvalidTransition, "only backlog work item can be activated")
 	}
+	if w.LatestDeliveryWithdrawalID != nil && !w.TaskDeliveryReplanAuthorized {
+		return NewError(ErrorCodeInvalidTransition, "withdrawn Task must be explicitly deferred before it can be reactivated")
+	}
 	w.Lifecycle = WorkItemLifecycleTodo
 	return w.touch(now)
 }
@@ -240,15 +326,40 @@ func (w *WorkItem) Defer(now time.Time) error {
 		return NewError(ErrorCodeInvalidTransition, "only todo work item can be deferred")
 	}
 	w.Lifecycle = WorkItemLifecycleBacklog
+	if w.LatestDeliveryWithdrawalID != nil {
+		w.TaskDeliveryReplanAuthorized = true
+	}
 	return w.touch(now)
 }
 
 func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time) error {
+	return w.claim(claimID, principalID, actor, ttl, now, nil)
+}
+
+// ClaimForCredential creates a legacy-protocol lease bound to the trusted
+// credential identity resolved by Application. sessionCredentialID records
+// optional authenticated-session provenance; it is not the lease holder.
+func (w *WorkItem) ClaimForCredential(claimID ID, principalID string, holderCredentialID ID, sessionCredentialID *ID, actor ActorRef, ttl time.Duration, now time.Time) error {
+	binding := WorkLease{
+		CredentialBindingVersion: WorkLeaseCredentialBindingV1,
+		HolderCredentialID:       holderCredentialID,
+		SessionCredentialID:      cloneID(sessionCredentialID),
+	}
+	if err := binding.validateCredentialBinding(); err != nil {
+		return err
+	}
+	return w.claim(claimID, principalID, actor, ttl, now, &binding)
+}
+
+func (w *WorkItem) claim(claimID ID, principalID string, actor ActorRef, ttl time.Duration, now time.Time, binding *WorkLease) error {
 	if w.ContractsEnabled {
 		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
 	}
 	if w.Lifecycle != WorkItemLifecycleTodo {
 		return NewError(ErrorCodeInvalidTransition, "only todo work item can be claimed")
+	}
+	if w.LatestDeliveryWithdrawalID != nil && !w.TaskDeliveryReplanAuthorized {
+		return NewError(ErrorCodeInvalidTransition, "withdrawn Task must be explicitly deferred before it can be claimed again")
 	}
 	if err := claimID.Validate(); err != nil {
 		return WrapError(ErrorCodeLease, "claim id is invalid", err)
@@ -269,7 +380,7 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 		return NewError(ErrorCodeLease, "fencing token is exhausted")
 	}
 	w.LastFencingToken++
-	w.CurrentLease = &WorkLease{
+	lease := &WorkLease{
 		ClaimID:      claimID,
 		PrincipalID:  principalID,
 		Actor:        actor,
@@ -277,6 +388,12 @@ func (w *WorkItem) Claim(claimID ID, principalID string, actor ActorRef, ttl tim
 		AcquiredAt:   now.UTC(),
 		ExpiresAt:    now.UTC().Add(ttl),
 	}
+	if binding != nil {
+		lease.CredentialBindingVersion = binding.CredentialBindingVersion
+		lease.HolderCredentialID = binding.HolderCredentialID
+		lease.SessionCredentialID = cloneID(binding.SessionCredentialID)
+	}
+	w.CurrentLease = lease
 	w.Lifecycle = WorkItemLifecycleInProgress
 	return w.touch(now)
 }
@@ -296,20 +413,41 @@ func (w *WorkItem) Release(principalID string, claimID ID, fencingToken uint64, 
 	return w.touch(now)
 }
 
-func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
+// ReleaseForCredential releases a bound lease only for the credential that
+// acquired it. The caller must provide authenticated identity, never payload
+// data selected by the lease holder.
+func (w *WorkItem) ReleaseForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, now time.Time) error {
 	if w.ContractsEnabled {
 		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
 	}
 	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
-		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
+		return NewError(ErrorCodeInvalidTransition, "work item is not currently claimed")
 	}
-	if err := w.validateLeaseOwnership(principalID, claimID, fencingToken); err != nil {
+	if err := w.validateLeaseCredentialOwnership(principalID, credentialID, claimID, fencingToken); err != nil {
 		return err
 	}
-	if !w.CurrentLease.ValidAt(now.UTC()) {
-		return NewError(ErrorCodeLease, "lease has expired")
-	}
+	w.CurrentLease = nil
+	w.Lifecycle = WorkItemLifecycleTodo
+	return w.touch(now)
+}
 
+func (w *WorkItem) Complete(principalID string, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
+	if err := w.CheckCompletionAuthority(principalID, claimID, fencingToken, now); err != nil {
+		return err
+	}
+	return w.complete(resultSummary, conclusion, now)
+}
+
+// CompleteForCredential completes work only when the authenticated credential
+// matches the holder bound to the current lease.
+func (w *WorkItem) CompleteForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, resultSummary string, conclusion Conclusion, now time.Time) error {
+	if err := w.CheckCompletionAuthorityForCredential(principalID, credentialID, claimID, fencingToken, now); err != nil {
+		return err
+	}
+	return w.complete(resultSummary, conclusion, now)
+}
+
+func (w *WorkItem) complete(resultSummary string, conclusion Conclusion, now time.Time) error {
 	var refs []CriterionAssessmentRef
 	var err error
 	if w.Criteria.HasRequiredActive() {
@@ -447,8 +585,33 @@ func (w WorkItem) validateLeaseOwnership(principalID string, claimID ID, fencing
 	if w.CurrentLease == nil {
 		return NewError(ErrorCodeLease, "work item has no active lease")
 	}
+	if err := w.CurrentLease.Validate(); err != nil {
+		return err
+	}
+	if w.CurrentLease.CredentialBindingVersion != 0 {
+		return NewError(ErrorCodeLease, "credential-bound lease requires credential identity")
+	}
 	if w.CurrentLease.PrincipalID != principalID || w.CurrentLease.ClaimID != claimID || w.CurrentLease.FencingToken != fencingToken {
 		return NewError(ErrorCodeLease, "lease ownership or fencing token does not match")
+	}
+	return nil
+}
+
+func (w WorkItem) validateLeaseCredentialOwnership(principalID string, credentialID ID, claimID ID, fencingToken uint64) error {
+	if w.CurrentLease == nil {
+		return NewError(ErrorCodeLease, "work item has no active lease")
+	}
+	if err := w.CurrentLease.Validate(); err != nil {
+		return err
+	}
+	if w.CurrentLease.CredentialBindingVersion != WorkLeaseCredentialBindingV1 {
+		return NewError(ErrorCodeLease, "lease is not bound to a credential")
+	}
+	if err := credentialID.Validate(); err != nil {
+		return WrapError(ErrorCodeLease, "credential id is invalid", err)
+	}
+	if w.CurrentLease.PrincipalID != principalID || w.CurrentLease.HolderCredentialID != credentialID || w.CurrentLease.ClaimID != claimID || w.CurrentLease.FencingToken != fencingToken {
+		return NewError(ErrorCodeLease, "lease credential, principal, claim, or fencing token does not match")
 	}
 	return nil
 }
@@ -460,5 +623,41 @@ func (w *WorkItem) touch(now time.Time) error {
 	}
 	w.Version = next
 	w.UpdatedAt = now.UTC()
+	return nil
+}
+
+// CheckCompletionAuthority checks the same legacy authority used by Complete.
+func (w WorkItem) CheckCompletionAuthority(principalID string, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
+	}
+	if err := w.validateLeaseOwnership(principalID, claimID, fencingToken); err != nil {
+		return err
+	}
+	if !w.CurrentLease.ValidAt(now.UTC()) {
+		return NewError(ErrorCodeLease, "lease has expired")
+	}
+
+	return nil
+}
+
+// CheckCompletionAuthorityForCredential checks lifecycle, bound identity,
+// claim, fencing token, and expiry before a credential-aware completion.
+func (w WorkItem) CheckCompletionAuthorityForCredential(principalID string, credentialID ID, claimID ID, fencingToken uint64, now time.Time) error {
+	if w.ContractsEnabled {
+		return NewError(ErrorCodeContractProtocolRequired, "use contract protocol")
+	}
+	if w.Lifecycle != WorkItemLifecycleInProgress || w.CurrentLease == nil {
+		return NewError(ErrorCodeInvalidTransition, "work item is not in progress")
+	}
+	if err := w.validateLeaseCredentialOwnership(principalID, credentialID, claimID, fencingToken); err != nil {
+		return err
+	}
+	if !w.CurrentLease.ValidAt(now.UTC()) {
+		return NewError(ErrorCodeLease, "lease has expired")
+	}
 	return nil
 }

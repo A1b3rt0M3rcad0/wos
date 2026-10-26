@@ -56,14 +56,22 @@ func (a Authorizer) Authorize(_ context.Context, request ports.AuthorizationRequ
 		return domain.NewError(domain.ErrorCodeForbidden, "local principal does not match authorization principal")
 	}
 	switch request.Permission {
-	case ports.PermissionWorkContractAcquire, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite:
+	case ports.PermissionWorkContractAcquire, ports.PermissionStateRead, ports.PermissionOutcomeWrite, ports.PermissionPlanningWrite, ports.PermissionWorkWrite, ports.PermissionRecordsWrite, ports.PermissionAssessmentWrite, ports.PermissionConclusionWrite,
+		ports.PermissionObjectiveCreate, ports.PermissionObjectiveUpdate, ports.PermissionObjectiveStart, ports.PermissionObjectiveConclude, ports.PermissionObjectiveReopen, ports.PermissionObjectiveCancel,
+		ports.PermissionTaskCreate, ports.PermissionTaskUpdateDefinition, ports.PermissionTaskActivate, ports.PermissionTaskDefer, ports.PermissionTaskAssign, ports.PermissionTaskClaim, ports.PermissionTaskRenew, ports.PermissionTaskRelease, ports.PermissionTaskDeliver, ports.PermissionTaskReview, ports.PermissionTaskAccept, ports.PermissionTaskRequestChanges, ports.PermissionTaskWithdrawDelivery, ports.PermissionTaskCancel, ports.PermissionTaskReopen,
+		ports.PermissionCriterionDefine, ports.PermissionCriterionAssess, ports.PermissionDependencyWrite,
+		ports.PermissionIssueCreate, ports.PermissionIssueUpdate, ports.PermissionIssueAssign, ports.PermissionIssueInvestigate, ports.PermissionIssueResolve, ports.PermissionIssueReopen,
+		ports.PermissionBlockerCreate, ports.PermissionBlockerRelease, ports.PermissionBlockerCancel:
 		return nil
 	}
 	if !a.AllowAdministrativeOverrides {
 		return domain.NewError(domain.ErrorCodeForbidden, "local administrative overrides are disabled")
 	}
 	switch request.Permission {
-	case ports.PermissionWorkContractRevoke, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete:
+	case ports.PermissionWorkContractRevoke, ports.PermissionWorkAdminCancel, ports.PermissionWorkAdminComplete,
+		ports.PermissionObjectiveConfigureCompletion, ports.PermissionTaskIntervene, ports.PermissionCriterionWaive,
+		ports.PermissionCredentialsRead, ports.PermissionAuditRead, ports.PermissionCredentialsIssue, ports.PermissionCredentialsUpdate, ports.PermissionCredentialsRevoke, ports.PermissionCredentialsRotate,
+		ports.PermissionPermissionsManage, ports.PermissionPolicyManage:
 		return nil
 	default:
 		return domain.NewError(domain.ErrorCodeForbidden, "permission is not granted by local authorizer")

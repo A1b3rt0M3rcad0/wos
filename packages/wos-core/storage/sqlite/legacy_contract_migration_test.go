@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	a "github.com/A1b3rt0M3rcad0/wos/packages/wos-core/application"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -59,8 +61,27 @@ func testActualV010DatasetMigrations(t *testing.T) {
 	if err = os.WriteFile(path, raw, 0600); err != nil {
 		t.Fatal(err)
 	}
-	store := openTestStore(t, path)
+	store, err := Open(path, Options{MigrateOnOpen: false})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
 	ctx := context.Background()
+	migrations, err := loadMigrations()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range migrations {
+		if item.version > 34 {
+			break
+		}
+		if err := store.applyMigration(ctx, item); err != nil {
+			t.Fatalf("apply historical migration %s: %v", item.name, err)
+		}
+	}
+	if version, err := store.SchemaVersion(ctx); err != nil || version != 34 {
+		t.Fatalf("legacy fixture schema = %d, err=%v; want 34 before the ownership contract", version, err)
+	}
 	scope := d.Scope{NamespaceID: fixture.NamespaceID, OutcomeID: fixture.OutcomeID}
 	// Replay at the backup's last command, while its original receipts are retained.
 	// The bubble also controls SQLite's internal retention clock. Application Clock
@@ -76,6 +97,13 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 	}
 	// synctest advances this virtual interval immediately, without a real sleep.
 	time.Sleep(time.UnixMicro(lastCommandAt).Sub(time.Now()))
+	// The historical fixture deliberately stops before the ownership migration
+	// because it contains unmapped Tasks. E25's additive receipt column is still
+	// needed to exercise replay with the current application code; adding it here
+	// does not mark any migration complete or alter the legacy ownership state.
+	if _, err := store.db.ExecContext(ctx, `ALTER TABLE idempotency_records ADD COLUMN authority_credential_id TEXT CHECK (authority_credential_id IS NULL OR length(authority_credential_id) = 36)`); err != nil {
+		t.Fatal("prepare additive receipt column for current replay reader", err)
+	}
 	service, err := a.NewService(store, sqliteFixedClock{time.UnixMicro(lastCommandAt).UTC()}, &sqliteSequenceIDs{prefix: "0199ff91", next: 1})
 	if err != nil {
 		t.Fatal(err)
@@ -101,15 +129,39 @@ WHERE namespace_id = ?`, fixture.NamespaceID.String()).Scan(&lastCommandAt, &fir
 	if _, err = service.SetNamespaceWorkProtocol(ctx, cc, a.SetNamespaceWorkProtocolCommand{Scope: scope, ExpectedProtocolVersion: 2, Phase: d.WorkProtocolContracts, WritersDrained: true, Reason: "Validated historical backup"}); err != nil {
 		t.Fatal(err)
 	}
-	tx, _ := store.Begin(ctx)
-	work, err := tx.WorkItems().Get(ctx, scope, fixture.WorkItemID)
-	tx.Rollback()
-	if err != nil || work.ID != fixture.WorkItemID || work.Version != fixture.WorkVersion || work.Lifecycle != d.WorkItemLifecycleDone || work.CurrentConclusion == nil || work.CurrentConclusion.ID != fixture.ConclusionID || !work.ContractsEnabled || work.CurrentContractID != nil {
-		t.Fatal("historical completion was rewritten", err, work)
+	var workID, lifecycle string
+	var version int64
+	var contractsEnabled int
+	var currentContractID, conclusionID sql.NullString
+	if err := store.db.QueryRowContext(ctx, `
+SELECT w.id,w.version,w.lifecycle,w.contracts_enabled,w.current_contract_id,c.public_id
+FROM work_items w
+LEFT JOIN aggregate_current_conclusions p ON p.namespace_id=w.namespace_id AND p.outcome_id=w.outcome_id AND p.owner_id=w.id
+LEFT JOIN conclusions c ON c.namespace_id=p.namespace_id AND c.outcome_id=p.outcome_id AND c.id=p.conclusion_id
+WHERE w.namespace_id=? AND w.outcome_id=? AND w.id=?`,
+		scope.NamespaceID.String(), scope.OutcomeID.String(), fixture.WorkItemID.String(),
+	).Scan(&workID, &version, &lifecycle, &contractsEnabled, &currentContractID, &conclusionID); err != nil {
+		t.Fatal("read historical completion", err)
+	}
+	if workID != fixture.WorkItemID.String() || d.Version(version) != fixture.WorkVersion || d.WorkItemLifecycle(lifecycle) != d.WorkItemLifecycleDone || !conclusionID.Valid || conclusionID.String != fixture.ConclusionID.String() || contractsEnabled != 1 || currentContractID.Valid {
+		t.Fatal("historical completion was rewritten", workID, version, lifecycle, contractsEnabled, currentContractID, conclusionID)
 	}
 	cc.IdempotencyKey = "legacy-fixture-claim_work_item"
 	after, err := service.ClaimWorkItem(ctx, cc, claim)
 	if err != nil || !after.IdempotentReplay || after.CommandID != replay.CommandID || after.OutcomeRevision != replay.OutcomeRevision {
 		t.Fatal("old receipt not replayable after cutover", err)
+	}
+	// The historical dataset contains no Objective at all, so it has no
+	// reviewed ownership mapping. The final contract migration must stop rather
+	// than invent a parent and leave the legacy state available for remediation.
+	if err := store.Migrate(ctx); err == nil || !strings.Contains(err.Error(), "requires zero Tasks without an Objective") {
+		t.Fatalf("unmapped legacy Task did not block schema 35: %v", err)
+	}
+	if version, err := store.SchemaVersion(ctx); err != nil || version != 34 {
+		t.Fatalf("blocked migration changed schema version: version=%d err=%v", version, err)
+	}
+	var objectiveID sql.NullString
+	if err := store.db.QueryRowContext(ctx, `SELECT objective_id FROM work_items WHERE id = ?`, fixture.WorkItemID.String()).Scan(&objectiveID); err != nil || objectiveID.Valid {
+		t.Fatalf("blocked migration changed legacy ownership: objective=%v err=%v", objectiveID, err)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/A1b3rt0M3rcad0/wos/packages/wos-core/storage/memory"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 )
@@ -98,7 +99,7 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			u, e := store.Begin(ctx)
 			must(e)
 			defer u.Rollback()
-			work, e := d.NewWorkItem(portID(100), scope, "Focal work", "all fields survive", d.PriorityHigh, d.WorkItemLifecycleTodo, now)
+			work, e := d.NewWorkItem(portID(100), scope, "Focal work", "all fields survive", d.PriorityHigh, d.WorkItemLifecycleBacklog, now)
 			must(e)
 			criterion, e := d.NewSuccessCriterion(portID(101), work.Ref(), "Current attestation", "retain definition", true, d.VerificationModeAttestation)
 			must(e)
@@ -107,11 +108,12 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 				assessment := d.CriterionAssessment{ID: portID(1000 + i), CriterionID: criterion.ID, CriterionRevision: 1, Result: d.AssessmentResultMet, Rationale: "Current proof with superseded history", PrincipalID: cc.PrincipalID, Actor: cc.Actor, AssessedAt: now.Add(time.Duration(i) * time.Nanosecond)}
 				must(work.RecordCriterionAssessment(assessment, false, now))
 			}
-			must(u.WorkItems().Insert(ctx, work))
+			must(work.Activate(now))
+			must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work))
 			for i := 0; i < 101; i++ {
-				target, e := d.NewWorkItem(portID(3000+i), scope, "Target", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				target, e := d.NewWorkItem(portID(3000+i), scope, "Target", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, target))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &target))
 				strength := d.DependencyStrengthAdvisory
 				if i == 100 {
 					strength = d.DependencyStrengthHard
@@ -131,7 +133,16 @@ func TestFocalCurrentProofDenseHistoryAndHiddenDependency(t *testing.T) {
 			must(e)
 			got, e := bounded.GetWorkContext(ctx, scope, work.ID)
 			must(e)
-			assertFocalJSON(t, want, got)
+			// The operational reader adds an actual-source verification projection
+			// that the legacy hydration path cannot provide. Compare the shared
+			// context contract, then assert the new projection against this same
+			// snapshot explicitly.
+			comparable := got
+			comparable.Verification = nil
+			assertFocalJSON(t, want, comparable)
+			if got.Verification == nil || got.Verification.Ref != work.Ref() || got.Verification.TaskVersion != got.Work.Version || got.Verification.OutcomeRevision != got.OutcomeRevision || !slices.Contains(got.Verification.ReasonCodes, "hard_dependency_unsatisfied") {
+				t.Fatalf("bounded read lost current verification or its dependency reason: %+v", got.Verification)
+			}
 			if got.Operational.DisplayState != d.WorkItemDisplayStateWaitingDependencies || len(got.Dependencies) != 100 || got.Omitted["dependencies"] != 1 || got.Omitted["assessment_history"] != 1000 || len(got.Work.Criteria.Assessments) != 0 || got.Work.Criteria.CurrentAssessments[criterion.ID].ID != portID(1999) {
 				t.Fatal("current proof, counts or hidden hard dependency lost", got.Operational, got.Omitted)
 			}
@@ -170,9 +181,9 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			defer u.Rollback()
 			works := []d.WorkItem{}
 			for i := 0; i < 4; i++ {
-				w, e := d.NewWorkItem(portID(100+i), scope, "Node", "", d.PriorityNormal, d.WorkItemLifecycleTodo, now)
+				w, e := d.NewWorkItem(portID(100+i), scope, "Node", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
 				must(e)
-				must(u.WorkItems().Insert(ctx, w))
+				must(insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &w))
 				works = append(works, w)
 			}
 			// Cycles are legal for relates_to, and depth-boundary induced edges must stay.
@@ -181,7 +192,7 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 				must(rel.Validate())
 				must(u.Relations().Insert(ctx, rel))
 			}
-			issue, e := d.NewIssue(portID(300), scope, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
+			issue, e := d.NewIssueForObjective(portID(300), scope, works[0].ObjectiveID, "Cause", "observed", d.IssueSeverityMinor, []d.EntityRef{works[0].Ref()}, cc.Actor, now)
 			must(e)
 			must(u.(ports.IssueBlockerUnitOfWork).Issues().Insert(ctx, issue))
 			cause := issue.Ref()
@@ -245,12 +256,97 @@ func TestGraphAdjacencyMatchesLegacyDepthDirectionsKindsAndCursors(t *testing.T)
 			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Root: &unsupported, Depth: 1}); securityErrorCode(e) != d.ErrorCodeNotFound {
 				t.Fatal("non-node entity became a graph root", e)
 			}
-			first, e := bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1})
+			first, e := bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 2, Limit: 1})
 			must(e)
-			_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, Title: "Revision change", Priority: d.PriorityNormal})
+			if first.NextCursor == "" {
+				t.Fatal("owned Task graph did not fill a page")
+			}
+			_, e = service.CreateWorkItem(ctx, cc, a.CreateWorkItemCommand{Scope: scope, ObjectiveID: postgresObjectiveForWorkFixture(t, service, scope), Title: "Revision change", Priority: d.PriorityNormal})
 			must(e)
-			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 1, Limit: 1, Cursor: first.NextCursor}); securityErrorCode(e) != d.ErrorCodePreconditionFailed {
+			if _, e = bounded.GetOutcomeGraph(ctx, scope, a.GraphQuery{Depth: 2, Limit: 1, Cursor: first.NextCursor}); securityErrorCode(e) != d.ErrorCodePreconditionFailed {
 				t.Fatal("stale graph cursor was accepted", e)
+			}
+		})
+	}
+}
+
+func TestGraphAdjacentPreservesHardAndAdvisoryDependencyStrength(t *testing.T) {
+	requirePostgres(t)
+	for _, backend := range []string{"memory", "sql"} {
+		t.Run(backend, func(t *testing.T) {
+			var store ports.TransactionManager = memory.New()
+			if backend == "sql" {
+				store = openTestStore(t, filepath.Join(t.TempDir(), "dependency-strength.db"))
+			}
+			ctx := context.Background()
+			now := time.Date(2026, 10, 20, 12, 0, 0, 0, time.UTC)
+			service, err := a.NewService(store, portClock{now}, &portIDs{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			created, err := service.CreateOutcome(ctx, sqliteCommandContext(portID(1).String(), ""), a.CreateOutcomeCommand{
+				NamespaceID: portID(2), Title: "Dependency strengths", DesiredState: "Strength is retained in adjacency reads", Priority: d.PriorityNormal,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			scope := created.Value.Scope()
+			u, err := store.Begin(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			first, err := d.NewWorkItem(portID(100), scope, "First", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			second, err := d.NewWorkItem(portID(101), scope, "Second", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			third, err := d.NewWorkItem(portID(102), scope, "Third", "", d.PriorityNormal, d.WorkItemLifecycleBacklog, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, work := range []d.WorkItem{first, second, third} {
+				if err = insertWorkItemFixture(ctx, u.Objectives(), u.WorkItems(), &work); err != nil {
+					t.Fatal(err)
+				}
+			}
+			hard, err := d.NewDependencyRelation(portID(200), first.Ref(), second.Ref(), d.DependencyStrengthHard, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			advisory, err := d.NewDependencyRelation(portID(201), first.Ref(), third.Ref(), d.DependencyStrengthAdvisory, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, relation := range []d.Relation{hard, advisory} {
+				if err = u.Relations().Insert(ctx, relation); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err = u.Coordination().AdvanceOutcome(ctx, scope); err != nil {
+				t.Fatal(err)
+			}
+			if err = u.Commit(); err != nil {
+				t.Fatal(err)
+			}
+			read, err := store.Begin(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer read.Rollback()
+			graph := read.(ports.ContinuityReadUnitOfWork).ContinuityReads().(ports.GraphReadRepository)
+			edges, err := graph.GraphAdjacent(ctx, scope, []d.EntityRef{first.Ref()}, "out", []string{"depends_on"}, "", 10)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := map[string]d.DependencyStrength{}
+			for _, edge := range edges {
+				got[edge.ID] = edge.Strength
+			}
+			if got[hard.ID.String()] != d.DependencyStrengthHard || got[advisory.ID.String()] != d.DependencyStrengthAdvisory {
+				t.Fatalf("dependency strength lost by bounded graph adapter: %+v", edges)
 			}
 		})
 	}

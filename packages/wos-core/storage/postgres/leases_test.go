@@ -73,7 +73,7 @@ func createSQLiteClaimedWork(
 	outcome = activated.Value
 
 	createdWork, err := service.CreateWorkItem(ctx, cc, application.CreateWorkItemCommand{
-		Scope:     outcome.Scope(),
+		Scope: outcome.Scope(), ObjectiveID: postgresObjectiveForWorkFixture(t, service, outcome.Scope()),
 		Title:     "leased work",
 		Priority:  domain.PriorityNormal,
 		Lifecycle: domain.WorkItemLifecycleTodo,
@@ -94,11 +94,11 @@ func createSQLiteClaimedWork(
 	return outcome, claimed.Value
 }
 
-func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
+func TestPostgresLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -251,11 +251,11 @@ func TestSQLiteLeaseRenewAndReclaimSurviveRestart(t *testing.T) {
 	}
 }
 
-func TestSQLiteConcurrentReclaimAllowsSingleWinner(t *testing.T) {
+func TestPostgresConcurrentReclaimAllowsSingleWinner(t *testing.T) {
 	requirePostgres(t)
 	ctx := context.Background()
 	path := filepath.Join(t.TempDir(), "wos.db")
-	store, err := openTestPostgres(path, Options{BusyTimeout: 2 * time.Second, MigrateOnOpen: true})
+	store, err := openTestPostgres(t, path, Options{BusyTimeout: 2 * time.Second, MigrateOnOpen: true})
 	if err != nil {
 		t.Fatal(err)
 	}
