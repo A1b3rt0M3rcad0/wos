@@ -157,6 +157,10 @@
   overflow-wrap: anywhere;
 }
 .workspace-assessment-binding > small { line-height: 1.5; }
+.workspace-assessment-stale {
+  border-left: 2px solid var(--wos-copper);
+  padding: .35rem .65rem;
+}
 .workspace-assessment-binding details { min-width: 0; border-top: 1px solid var(--wos-border); }
 .workspace-assessment-binding summary { min-height: 44px; padding: .65rem .25rem; cursor: pointer; }
 .workspace-assessment-binding code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }

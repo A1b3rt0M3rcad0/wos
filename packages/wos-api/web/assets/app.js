@@ -3420,7 +3420,12 @@ async function loadWorkspaceFullRecord(host, ref, detailGeneration, {executionOn
     }
     if (state.workspaceView.subject.kind === "criterion") {
       const history = el("section", undefined, "workspace-history-read");
-      renderCriterionHistory(history, { owner: entity, criterionId: state.workspaceView.subject.criterion_id,
+      const criterionId = state.workspaceView.subject.criterion_id;
+      const currentCriterion = (state.workspaceView.criteria || []).find((item) => item.definition?.id === criterionId);
+      renderCriterionHistory(history, { owner: entity, criterionId,
+        currentAssessment: currentCriterion?.assessment,
+        currentAssessmentApplicable: currentCriterion?.assessment_applicable,
+        currentVerification: state.workspaceView.verification,
         ownerRef: ref,
         onReference: (ref) => showEntity(ref).catch(report),
         onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report) });

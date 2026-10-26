@@ -1,4 +1,5 @@
 import { el, button } from "./ui.js";
+import { copy, message } from "./en-US.js";
 import { display } from "./presentation.js";
 import { humanActions } from './actions.js';
 import { kanbanOperation, kanbanLane, kanbanLanes } from './kanban-operations.js';
@@ -433,6 +434,29 @@ export function createContextualKanban({
       },'quiet'); work.append(complete);
     }
     body.append(work);
+    const verification = view.verification;
+    if (verification?.pending && verification.current && verification.source_id) {
+      const source = el('section', undefined, 'workspace-proof-current-source');
+      source.append(el('h3', verification.source_kind === 'task_delivery' ? copy.text.workspaceProofCurrentDelivery : copy.text.workspaceProofCurrentSubmission));
+      if (verification.source_kind === 'task_delivery') {
+        source.append(el('p', message('workspaceProofDeliveryIdentity', verification.round, verification.source_id)));
+        if (verification.delivery_digest) {
+          const digest = el('details');
+          digest.append(el('summary', copy.text.workspaceProofShowDeliveryDigest), el('code', verification.delivery_digest));
+          source.append(digest);
+        }
+      } else {
+        source.append(el('p', message('workspaceProofReviewCase', verification.source_id)));
+        if (verification.submission_id) source.append(el('p', message('workspaceProofSubmissionIdentity', verification.submission_id)));
+        if (verification.submission_digest) {
+          const digest = el('details');
+          digest.append(el('summary', copy.text.workspaceProofShowSubmissionDigest), el('code', verification.submission_digest));
+          source.append(digest);
+        }
+      }
+      if (verification.status) source.append(el('small', display(verification.status), 'field-help'));
+      body.append(source);
+    }
     const list = el('section', undefined, 'workspace-proof-checklist');
     list.setAttribute('aria-label', 'Task criteria checklist');
     list.append(el('h3', 'Criteria & proof'), el('p', 'Link or add evidence for each criterion, then record its assessment. Evidence alone does not mark a criterion as met.', 'field-help'));
@@ -457,7 +481,8 @@ export function createContextualKanban({
       assess.setAttribute('aria-label', `${definition.title}: ${met ? 'met' : 'not verified'}. Record assessment`);
       row.append(assess,el('small',definition.required?'Required':'Optional'));
       if (definition.description) row.append(el('p',definition.description));
-      row.append(el('p', item.assessment_applicable && item.assessment ? display(item.assessment.result) : 'Not assessed', 'workspace-proof-result'));
+      row.append(el('p', item.assessment_applicable && item.assessment ? display(item.assessment.result)
+        : item.assessment ? copy.text.workspaceProofAssessmentOutdated : 'Not assessed', 'workspace-proof-result'));
       row.append(el('p', item.evidence_linked ? 'Evidence linked — review it in the assessment.' : 'No linked evidence in this snapshot.', 'field-help'));
       row.append(button('Add or link evidence',()=>actionFor(definition,'register_evidence_with_links'),'quiet'));
       const artifact=workspaceActions(view).find(cap=>workspaceCommandName(cap.action_id)==='register_artifact_in_context');
@@ -823,9 +848,13 @@ export function createContextualKanban({
       );
       aside.append(inspectorHeader);
       const available = workspaceActions(selected);
+      const pendingNativeDelivery = selected.subject.ref.kind === 'work_item'
+        && selected.verification?.pending && selected.verification.current
+        && selected.verification.source_kind === 'task_delivery';
       const primaryNames = selected.subject.kind === 'criterion' ? ['record_criterion_assessment']
         : selected.subject.ref.kind === 'work_item'
-          ? selected.header.lifecycle === 'backlog' ? ['activate_work_item']
+          ? pendingNativeDelivery ? ['accept_task_delivery']
+            : selected.header.lifecycle === 'backlog' ? ['activate_work_item']
             : selected.header.lifecycle === 'todo' ? ['claim_work_item','acquire_signed_work_contract','acquire_work_contract']
               : ['reclaim_work_item','acquire_signed_review_contract','complete_work_item']
           : selected.subject.ref.kind === 'objective' ? ['achieve_objective','start_objective']
@@ -843,7 +872,7 @@ export function createContextualKanban({
         guide.append(el('h4', 'Next operation'));
         const signed = continuation || next.transport === 'signed_host';
         const blocked = !signed && next.availability !== 'available';
-        const reviewNeeded = blocked && (next.reason_codes || []).some(reason => /criterion|assessment|proof/.test(reason));
+      const reviewNeeded = blocked && (next.reason_codes || []).some(reason => /criterion|assessment|proof|submission/.test(reason));
         guide.append(el('p', signed
           ? 'Continue acquisition, delivery or independent review in your authorized agent host. WOS records coordination; the browser does not sign or execute work.'
           : next.availability === 'available'
@@ -864,6 +893,15 @@ export function createContextualKanban({
         control.dataset.actionId = continuation ? 'inspect_execution_handoff' : blocked ? 'inspect_requirements' : workspaceCommandName(next.action_id);
         control.inert = frame.loading;
         guide.append(control); aside.append(guide);
+        if (pendingNativeDelivery) {
+          const returnForChanges = available.find((capability) => workspaceCommandName(capability.action_id) === 'request_task_delivery_changes');
+          if (returnForChanges?.availability === 'available') {
+            const correction = button(humanActions.request_task_delivery_changes.label,
+              () => act(returnForChanges.action_id, returnForChanges, selected), 'quiet');
+            correction.dataset.actionId = 'request_task_delivery_changes';
+            guide.append(correction);
+          }
+        }
       }
       const content = el("div");
       content.inert = frame.loading;

@@ -85,6 +85,20 @@ export function humanForm(
     const value = workspaceView?.entity_version ?? entity.version;
     return exactVersion(value);
   }
+  function bindPendingTaskDelivery() {
+    const verification = workspaceView?.verification;
+    if (kind !== "work_item" || !verification?.pending || !verification.current
+      || verification.source_kind !== "task_delivery" || !verification.source_id
+      || !verification.delivery_digest || !verification.round)
+      throw Error(copy.text.formNoCurrentDeliveryToReview);
+    fixed.work_item_id = entity.id;
+    fixed.expected_work_item_version = exactObservedVersion();
+    fixed.delivery_id = verification.source_id;
+    fixed.expected_delivery_digest = verification.delivery_digest;
+    fixed.expected_delivery_round = String(verification.round);
+    node.append(el("p", message("workspaceProofDeliveryIdentity", verification.round, verification.source_id), "field-context"));
+    return verification;
+  }
   function title(label = copy.text.title, value) {
     f("title", label, { required: true, value });
   }
@@ -346,6 +360,18 @@ export function humanForm(
       break;
     case "record_criterion_assessment":
     case "attest_criterion": {
+      const verification = workspaceView?.verification;
+      if (verification?.pending && verification.current && verification.source_id) {
+        if (verification.source_kind === "task_delivery" && verification.delivery_digest && verification.round) {
+          fixed.task_delivery_ref = {
+            id: verification.source_id,
+            digest: verification.delivery_digest,
+            round: String(verification.round),
+          };
+          node.append(el("p", message("formAssessmentDeliveryBinding", verification.round, verification.source_id), "field-context"));
+        }
+        if (verification.submission_id) fixed.submission_id = verification.submission_id;
+      }
       if (submission?.id) {
         fixed.submission_id = submission.id;
         node.append(
@@ -403,6 +429,38 @@ export function humanForm(
           version: version.get(),
         });
       }
+      break;
+    }
+    case "accept_task_delivery": {
+      bindPendingTaskDelivery();
+      const required = (workspaceView.criteria || []).filter((item) => item.definition?.required
+        && item.definition.status === "active");
+      if (workspaceView.coverage?.criteria?.status !== "complete"
+        || required.some((item) => !item.assessment_applicable || item.assessment?.result !== "met"))
+        throw Error(copy.text.formReviewCurrentRequirementsBeforeAccepting);
+      fixed.assessment_refs = required.map((item) => ({
+        assessment_id: item.assessment.id,
+        criterion_id: item.definition.id,
+        criterion_revision: item.definition.criterion_revision,
+        result: item.assessment.result,
+      }));
+      node.append(el("p", copy.text.formCurrentDeliveryDecision, "field-help"));
+      reason();
+      help.textContent = copy.text.formAcceptDeliveryHelp;
+      break;
+    }
+    case "request_task_delivery_changes": {
+      bindPendingTaskDelivery();
+      reason();
+      const findings = listField(copy.text.formCorrectionFinding, [""]);
+      node.append(findings.node);
+      getters.findings = () => {
+        const items = findings.get().map((item) => item.trim()).filter(Boolean);
+        if (!items.length) throw Error(copy.text.formAtLeastOneCorrectionFinding);
+        return items;
+      };
+      node.append(el("p", copy.text.formCurrentDeliveryDecision, "field-help"));
+      help.textContent = copy.text.formRequestDeliveryChangesHelp;
       break;
     }
     case "append_entity_note": {

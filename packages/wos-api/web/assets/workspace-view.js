@@ -660,7 +660,7 @@ export function renderWorkspaceView(host, {
 
 // This focused rendering consumes the authorized canonical owner returned by
 // the existing full-record read. Historical records never become current gates.
-export function renderCriterionHistory(host, { owner, ownerRef, criterionId, onReference, onSubject } = {}) {
+export function renderCriterionHistory(host, { owner, ownerRef, criterionId, currentAssessment, currentAssessmentApplicable, currentVerification, onReference, onSubject } = {}) {
   const section = el("section", undefined, "detail-section workspace-criterion-history");
   section.append(el("h3", copy.text.workspaceCriterionHistory),
     el("p", copy.text.workspaceCriterionHistoryMeaning, "field-help"));
@@ -683,6 +683,20 @@ export function renderCriterionHistory(host, { owner, ownerRef, criterionId, onR
       el("small", message("workspaceDefinitionRevision", assessment.criterion_revision)),
       el("p", assessment.rationale),
       el("small", assessment.actor_ref?.id || assessment.principal_id || ""));
+    if (assessment.id === currentAssessment?.id && currentAssessmentApplicable === false) {
+      const verification = currentVerification;
+      const reviewed = assessment.task_delivery_ref;
+      const differsFromCurrentDelivery = verification?.source_kind === "task_delivery" && verification.pending && verification.current
+        && verification.source_id && verification.delivery_digest
+        && (!reviewed || reviewed.id !== verification.source_id || reviewed.digest !== verification.delivery_digest
+          || String(reviewed.round) !== String(verification.round));
+      if (differsFromCurrentDelivery) {
+        row.append(el("p", message("workspaceLatestAssessmentForDifferentDelivery", verification.round, verification.source_id), "field-help workspace-assessment-stale"));
+        const currentDigest = details(copy.text.workspaceCurrentDeliveryDigest, false);
+        currentDigest.append(el("code", verification.delivery_digest));
+        row.append(currentDigest);
+      } else row.append(el("p", copy.text.workspaceLatestAssessmentNotApplicable, "field-help workspace-assessment-stale"));
+    }
     if (assessment.assessed_at) row.append(el("small", date(assessment.assessed_at)));
     const binding = el("div", undefined, "workspace-assessment-binding");
     const delivery = assessment.task_delivery_ref;

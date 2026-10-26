@@ -2,9 +2,9 @@
 
 **Status document:** live and mandatory  
 **Canonical design:** `docs/WOS_Design_Arquitetura_Planejamento_Atualizado.md`  
-**Last reviewed:** 2026-10-21
+**Last reviewed:** 2026-10-26
 **Current target:** Operational workspace hardening; coordinated 1.2.0 release queue (not prepared or published)
-**Current wave:** Consolidated operational plan E01–E84 in Draft PR #116; E01–E25 are verified by stage, E26 is in qualification, E27 is underway, and later stages remain planned
+**Current wave:** Consolidated operational plan E01–E84; E01–E25 are verified by stage, E26 is in qualification, E27 is underway, and later stages remain planned. The workspace implementation follow-up was merged by PR #116 on 2026-10-26; ongoing UX qualification is in Draft PR #117.
 
 **Distribution extension:** npm service/skills and automated releases requested by the owner; see D1–D4 below.
 
@@ -22,7 +22,13 @@ E01–E16 are committed in the branch history. E17 adds an exact-command, versio
 
 Current local qualification includes a complete Go run with live PostgreSQL, 83 JavaScript unit tests and 238 passing browser scenarios. CI follow-up identified unpublished local corrections, stale policy-revision fixtures, generated-source drift, a missing integration-event catalogue entry and module classification drift. The generator fixes retain the PostgreSQL test cleanup API and keep unsigned credential-binding columns out of signed-v2 storage. `go vet`, the 33 packaging/release contract tests, repeated generator stability, and the central CLI workflow on SQLite and live PostgreSQL pass. The signed transport acceptance case also passes with `-race` on Memory/SQLite; hosted native Linux/Windows and the complete CI workflow remain separate gates until the updated branch has run. Further CI reproduction corrected a concurrent test ID counter, a detached-inspector browser wait, live policy revisions in signed load, and historical/operational fixtures that now establish explicit ownership before execution. The application race suite, repeated browser relation scenarios, real v0.2/v0.4.2 upgrades on both databases and eighteen-step HTTP journey pass; the complete hosted rerun remains required. See [CI qualification](docs/implementation/operational-consolidation/ci-qualification.md). No stage is advanced solely because these checks pass.
 
-PR #116 remains open and Draft. No merge, release, tag, publication or version advancement is authorized.
+PR #116 merged on 2026-10-26 as `840292c`; this did not publish a release or advance the version. Current follow-up fixes and product evidence are tracked in Draft PR #117. No release, tag, publication or version advancement is authorized.
+
+## Continuous product UX follow-up — 2026-10-26
+
+The owner requested an evidence-led, browser-verified improvement loop for the complete human workspace. The bounded findings, captures, test results, known limits and next priorities are recorded in [`docs/ux/product-evolution/2026-10-26/`](docs/ux/product-evolution/2026-10-26/). Browser Back now restores the authenticated Outcome chooser; the focused Criterion assessment history identifies the exact TaskDelivery round and ID, reveals its digest on demand, and links assessed Evidence for direct inspection. Assessment, delivery, Evidence and acceptance semantics remain separate.
+
+The latest exact-delivery review journey passed 12/12 browser executions over three repetitions at desktop and mobile widths, and the UX unit suite passed 83/83. The journey creates delivery A, records an assessment against it, returns it for correction, submits delivery B, confirms that A's assessment cannot accept B, records a new assessment against B in the browser, and accepts B through the existing human operation. A second journey requests changes from the exact pending delivery. Scoped axe checks cover the changed review and decision forms; the mobile view also checks modal bounds and horizontal overflow. The complete 239-case browser suite and source-bound operational gallery qualify the immediately preceding source revision, not this latest change. This executor does not have a working Go toolchain (`/usr/bin/go` is an incompatible shim), so the current embedded Go binary could not be freshly built locally. CI must build the current head before this frontend change is build-qualified. Open P2 work includes preserving and safely recovering an Evidence form after a concurrent Criterion revision, and completing review-mode/waiver permission journeys; the product-wide audit is not complete.
 
 ## Drag-only card movement follow-up — 2026-10-20
 

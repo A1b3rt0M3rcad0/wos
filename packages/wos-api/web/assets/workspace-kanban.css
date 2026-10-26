@@ -140,6 +140,21 @@ dialog.workspace-kanban-operation[open] { display: flex; flex-direction: column;
 
 .workspace-proof-work, .workspace-proof-checklist { padding-block: 8px; }
 .workspace-proof-work h3, .workspace-proof-checklist h3 { font: 400 24px var(--display); margin: 0 0 12px; }
+.workspace-proof-current-source {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin-block: 8px;
+  padding: 12px;
+  border-left: 2px solid var(--wos-copper);
+  background: var(--wos-workspace);
+  overflow-wrap: anywhere;
+}
+.workspace-proof-current-source h3 { font: 600 14px var(--body); margin: 0; }
+.workspace-proof-current-source p { margin: 0; }
+.workspace-proof-current-source details { border-top: 1px solid var(--wos-border); }
+.workspace-proof-current-source summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.workspace-proof-current-source code { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
 .workspace-proof-criterion { padding: 14px 0; border-top: 1px solid var(--wos-border); }
 .workspace-proof-criterion > small { display: block; }
 .workspace-proof-check { display: flex; gap: 10px; text-align: left; white-space: normal; min-height: 44px; }
