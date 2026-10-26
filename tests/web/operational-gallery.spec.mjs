@@ -163,6 +163,10 @@ async function seed(wos) {
     data.tasks[name] = await wos.command("activate_work_item", {
       scope: data.scope, work_item_id: task.id, expected_version: task.version,
     });
+  const planningTask = await wos.command("create_work_item", {
+    scope: data.scope, title: "Keep editable planning in Backlog",
+    priority: "normal", lifecycle: "backlog", objective_id: data.child.id,
+  });
   let task = (await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${owner.id}`)).value;
   await wos.command("set_work_item_assignees", { scope: data.scope, work_item_id: task.id,
     expected_version: task.version, assignee_refs: [{ kind: "agent", provider: "gallery-fixture", id: "coding-agent" }] });
@@ -180,7 +184,10 @@ async function seed(wos) {
   });
   const roadmap = await seedCanvasRoadmap(wos, data, { published: true, active: true });
   const base = `/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}`;
-  let reviewedObjective = (await wos.api(`${base}/objectives/${data.objective.id}`)).value;
+  let reviewedObjective = await wos.command("create_objective", {
+    scope: data.scope, title: "An independently reviewed Objective", priority: "normal",
+    required_for_outcome: false,
+  });
   const objectiveOwner = data.ref("objective", reviewedObjective);
   const objectiveCriterion = await wos.command("add_criterion", { owner: objectiveOwner,
     expected_version: reviewedObjective.version, title: "The agreed handoff was independently reviewed",
@@ -190,7 +197,15 @@ async function seed(wos) {
     criterion_id: objectiveCriterion.id, criterion_revision: objectiveCriterion.criterion_revision,
     result: "met", rationale: "An authorized participant reviewed the current handoff condition. Open follow-up work remains separate." });
   reviewedObjective = (await wos.api(`${base}/objectives/${reviewedObjective.id}`)).value;
-  return { ...data, criterion, observation, roadmap, reviewedObjective };
+  const conclusionTask = await wos.command("create_work_item", {
+    scope: data.scope, title: "Keep unfinished follow-up separate from acceptance",
+    priority: "normal", lifecycle: "backlog", objective_id: reviewedObjective.id,
+  });
+  reviewedObjective = (await wos.api(`${base}/objectives/${reviewedObjective.id}`)).value;
+  reviewedObjective = await wos.command("start_objective", {
+    scope: data.scope, objective_id: reviewedObjective.id, expected_version: reviewedObjective.version,
+  });
+  return { ...data, criterion, observation, roadmap, reviewedObjective, conclusionTask, planningTask };
 }
 
 async function selectRecord(page, record, heading) {
@@ -248,8 +263,26 @@ async function mainStates(page, wos, data, metadata, label, extra = {}) {
   await expect(page.locator("#login button")).toBeFocused();
   await unobscured(page.locator("#login button"));
   await capture(page, metadata, `login-${label}`, "Credential login before any secret is entered", extra);
-  await wos.login(page);
+  await page.locator("#token").fill(wos.token);
+  await page.locator("#login").getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.locator("#workspace")).toBeVisible();
+  await expect(page.locator("#workspace-loading")).not.toBeVisible();
+  await expect(page.locator("#empty")).toBeVisible();
+  await capture(page, metadata, `outcome-chooser-${label}`, "Authenticated Outcome chooser before selecting a workspace result", extra);
   await openOutcome(page, data.outcome.title, { area: null });
+  await expect(page).toHaveURL(/outcome=/);
+  await page.goBack();
+  await expect(page).not.toHaveURL(/outcome=/);
+  await expect(page.locator("#empty")).toBeVisible();
+  await expect(page.locator("#outcome")).toBeHidden();
+  await expect(page.locator("#navigation-toggle")).toHaveAttribute("aria-expanded", "true");
+  const previousOutcome = page.locator("#outcomes button").filter({ hasText: data.outcome.title }).first();
+  await expect(previousOutcome).toHaveAttribute("aria-pressed", "false");
+  await expect(previousOutcome).toBeFocused();
+  await capture(page, metadata, `outcome-chooser-back-${label}`, "Browser Back returns focus to the deselected Outcome in the expanded chooser", extra);
+  await page.goForward();
+  await expect(page).toHaveURL(/outcome=/);
+  await expect(page.locator("#title")).toHaveText(data.outcome.title);
   const mapControl = page.getByRole("button", { name: "Map view", exact: true });
   const selectedCompactMap = await mapControl.getAttribute("aria-pressed") !== "true";
   if (selectedCompactMap) {
@@ -268,10 +301,19 @@ async function mainStates(page, wos, data, metadata, label, extra = {}) {
     : "Default structural work map; documentary records remain contextual",
     { ...extra, boardView: "map", defaultBoardView: !selectedCompactMap });
   await selectRecord(page, data.tasks.ready);
+  // The compact inspector intentionally groups secondary facets behind
+  // disclosures. Open them as a user would, verify the records are present,
+  // then restore the default compact reading state before capturing it.
+  const management = panel(page).locator("details.workspace-management");
+  await management.locator("summary").click();
+  const history = panel(page).locator("details.workspace-history");
+  await history.locator("summary").click();
   for (const facet of ["work", "people", "attention", "criteria", "activity"])
     await expect(panel(page).locator(`[data-workspace-facet="${facet}"]`)).toBeVisible();
   await expect(panel(page)).toContainText("Declared assignee");
   await expect(panel(page)).toContainText("Not assessed");
+  await history.locator("summary").click();
+  await management.locator("summary").click();
   await inspectorReady(page);
   if (!extra.nativeBrowserZoom) {
     const initial = await geometry(page), prose = initial.elements[".detail-description"];
@@ -292,9 +334,13 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.keyboard.press("Escape");
   await expect(panel(page)).toHaveAttribute("data-surface", "detail");
   await inspectorReady(page);
+  const management = panel(page).locator("details.workspace-management");
+  if (!await management.evaluate((node) => node.open)) await management.locator("summary").click();
   const criteria = panel(page).locator(`[data-criterion-id="${data.criterion.id}"]`);
   await criteria.scrollIntoViewIfNeeded();
   await capture(page, metadata, `task-proof-${label}`, "Task body scrolled naturally to current success conditions and pending assessment");
+  const history = panel(page).locator("details.workspace-history");
+  if (!await history.evaluate((node) => node.open)) await history.locator("summary").click();
   await panel(page).locator('[data-workspace-facet="activity"]').scrollIntoViewIfNeeded();
   await capture(page, metadata, `task-activity-${label}`, "Task body scrolled naturally to documentary activity, with its source and authorship");
   await criteria.locator('[data-action-id="open_criterion"]').click();
@@ -320,6 +366,9 @@ async function detailedStates(page, wos, data, metadata, label) {
   await unobscured(page.locator("#submit-command"));
   await capture(page, metadata, `quick-task-${label}`, "Unsaved quick Task draft with fixed parent and visible backlog default");
   await page.keyboard.press("Escape");
+  // The Objective used for the conclusion scenario is already in progress;
+  // open planning on its still-Planned child where creating a plan is valid.
+  await selectRecord(page, data.child);
   await openAction(page, "create_plan_items");
   await page.getByLabel("One title per line", { exact: true }).fill("Review the installation route\nRecord the verification transcript\nPrepare the customer handoff");
   await page.getByRole("button", { name: "Preview plan", exact: true }).click();
@@ -331,14 +380,14 @@ async function detailedStates(page, wos, data, metadata, label) {
   await page.getByLabel("Reason", { exact: true }).fill("The agreed condition was reviewed. The listed follow-up work retains its own lifecycle.");
   const conclusion = page.locator(".workspace-conclusion-impact");
   await expect(conclusion.getByRole("heading", { name: "Review conclusion impact", exact: true })).toBeVisible();
-  await expect(conclusion).toContainText(data.child.title);
+  await expect(conclusion).toContainText(data.conclusionTask.title);
   await expect(page.getByLabel("I understand that this open work is not completed by this conclusion", { exact: true })).not.toBeChecked();
   await page.locator("#submit-command").focus();
   await unobscured(page.locator("#submit-command"));
   await conclusion.getByRole("heading", { name: "Review conclusion impact", exact: true }).scrollIntoViewIfNeeded();
   await capture(page, metadata, `conclusion-impact-${label}`, "Unsaved parent conclusion deliberately scrolled to its open-work review; earlier Reason fields remain above, and no acceptance has been submitted");
   await page.keyboard.press("Escape");
-  await selectRecord(page, data.tasks.ready);
+  await selectRecord(page, data.planningTask);
   await openAction(page, "set_work_item_objective");
   await page.getByRole("button", { name: "Change placement", exact: true }).click();
   await pick(page, "New placement", data.objective.title);
@@ -385,8 +434,8 @@ async function detailedStates(page, wos, data, metadata, label) {
 }
 
 if (output) {
-  for (const [width, height] of [[1280, 720], [1366, 768], [1920, 1080], [2560, 1440],
-    [3840, 2160], [320, 740], [390, 844], [430, 932]]) {
+  for (const [width, height] of [[1280, 720], [1366, 768], [1440, 900], [1920, 1080], [2560, 1440],
+    [3840, 2160], [320, 740], [360, 800], [390, 844], [430, 932], [768, 1024]]) {
     test(`source-bound operational gallery at ${width} x ${height}`, async ({ page, wos }) => {
       test.setTimeout(240000);
       await page.setViewportSize({ width, height });
@@ -401,7 +450,7 @@ if (output) {
       });
       const label = `${width}x${height}`;
       await mainStates(page, wos, data, metadata, label);
-      if (width === 2560 || width === 390) await detailedStates(page, wos, data, metadata, label);
+      if (width === 2560 || width === 390 || width === 360) await detailedStates(page, wos, data, metadata, label);
       expect(errors).toEqual([]);
       expect(mutations, "Inspecting and previewing the workspace never writes domain state").toEqual([]);
     });

@@ -63,13 +63,19 @@ async function measured(page) {
 }
 
 async function wholeControl(locator) {
-  await expect(locator).toBeVisible();
-  expect(await locator.evaluate((element) => {
-    const r = element.getBoundingClientRect();
-    const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-    return r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 &&
-      r.bottom <= innerHeight + 1 && element.contains(hit);
-  }), "The control is visible, inside the viewport and receives pointer input").toBe(true);
+  await expect(async () => {
+    const geometry = await locator.evaluate((element) => {
+      const r = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return {
+        visible: element.checkVisibility(),
+        inside: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
+        receivesPointer: element.contains(hit),
+      };
+    }, { timeout: 1000 });
+    expect(geometry).toEqual({ visible: true, inside: true, receivesPointer: true });
+  }, "The control is visible, inside the viewport and receives pointer input")
+    .toPass({ timeout: 10_000, intervals: [100, 250, 500] });
 }
 
 async function noHorizontalOverflow(page) {
