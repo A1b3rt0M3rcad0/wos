@@ -3419,10 +3419,14 @@ async function loadWorkspaceFullRecord(host, ref, detailGeneration, {executionOn
       return;
     }
     if (state.workspaceView.subject.kind === "criterion") {
-      const history = el("section", undefined, "workspace-criterion-history");
+      const history = el("section", undefined, "workspace-history-read");
       renderCriterionHistory(history, { owner: entity, criterionId: state.workspaceView.subject.criterion_id,
-        onReference: (ref) => showEntity(ref).catch(report) });
+        ownerRef: ref,
+        onReference: (ref) => showEntity(ref).catch(report),
+        onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report) });
       host.append(history);
+      if (detailGeneration === state.detailGeneration) { history.tabIndex = -1; history.focus(); }
+      return;
     }
     const section = el("details", undefined, "technical workspace-full-record"); section.open = true;
     section.append(el("summary", copy.text.workspaceFullRecord), readable(entity)); host.append(section);
