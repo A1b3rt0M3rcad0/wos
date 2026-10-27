@@ -1113,6 +1113,8 @@ export const copy = Object.freeze({
     fencingProtection: "Fencing protection",
     successCriterion: "Success criterion",
     evidenceUsed: "Evidence used",
+    evidenceReviewRequiredMessage: "Select at least one Evidence record.",
+    evidenceReviewRequiresEvidence: "If no Evidence is available, record Evidence first and return here. Evidence supports the review; it does not by itself mark the Criterion as met.",
     externalEvaluator: "External evaluator",
     relatedItem: "Related item",
     relationSource: "Relation source",

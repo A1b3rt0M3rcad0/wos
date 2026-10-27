@@ -1,5 +1,5 @@
 import { test as base, expect } from "playwright/test";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
@@ -126,6 +126,38 @@ export const test = base.extend({
         scope: { namespace_id: namespace, outcome_id: value.id },
       };
     }
+    function markLegacyPermissionCompatibility(principalID, credentialID) {
+      const script = `
+import json, sqlite3, sys
+path, namespace_id, principal_id, credential_id = sys.argv[1:]
+connection = sqlite3.connect(path)
+grant = connection.execute(
+    "UPDATE namespace_grants SET permission_compatibility_version=1 WHERE namespace_id=? AND principal_id=?",
+    (namespace_id, principal_id),
+)
+if grant.rowcount != 1:
+    raise SystemExit("expected exactly one namespace grant")
+row = connection.execute(
+    "SELECT state_json FROM credential_policies WHERE namespace_id=? AND credential_id=? AND principal_id=?",
+    (namespace_id, credential_id, principal_id),
+).fetchone()
+if row is None:
+    raise SystemExit("credential policy is missing")
+policy = json.loads(row[0])
+policy["permission_compatibility_version"] = 1
+connection.execute(
+    "UPDATE credential_policies SET state_json=? WHERE namespace_id=? AND credential_id=? AND principal_id=?",
+    (json.dumps(policy, separators=(",", ":")), namespace_id, credential_id, principal_id),
+)
+connection.commit()
+connection.close()
+`;
+      execFileSync(
+        process.env.WOS_TEST_PYTHON || "python3",
+        ["-c", script, join(directory, "wos.db"), namespace, principalID, credentialID],
+        { stdio: "pipe" },
+      );
+    }
     try {
       let ready = false;
       for (let i = 0; i < 100; i++) {
@@ -138,7 +170,7 @@ export const test = base.extend({
         await new Promise((done) => setTimeout(done, 50));
       }
       if (!ready) throw Error(logs);
-      await use({ url, namespace, token, api, command, login, outcome });
+      await use({ url, namespace, token, api, command, login, outcome, markLegacyPermissionCompatibility });
     } finally {
       if (child.exitCode === null) {
         const done = once(child, "exit");

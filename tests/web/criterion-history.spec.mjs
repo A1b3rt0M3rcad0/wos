@@ -47,7 +47,7 @@ async function capture(page, name) {
     source,
     apiServer,
     apiServerSha256,
-    frontendDelivery: 'Playwright routes the checkout app.js, actions.js, en-US.js, human-forms.js, workspace-kanban.js, workspace-kanban.css, workspace-view.js and workspace-view.css to Chromium; HTTP API and isolated SQLite state use bin/wos.',
+    frontendDelivery: 'Playwright routes checkout app.js, actions.js, en-US.js, human-forms.js, workspace-evidence-form.js, workspace-kanban.js, workspace-kanban.css, workspace-view.js, workspace-view.css and workspace-dialogs.css to Chromium; HTTP API and isolated SQLite state use bin/wos.',
     viewport: page.viewportSize(),
     browser: page.context().browser().version(),
     pngSha256: createHash('sha256').update(bytes).digest('hex'),
@@ -55,7 +55,7 @@ async function capture(page, name) {
   }, null, 2) + '\n');
 }
 
-for (const viewport of [{ width: 1440, height: 1000 }, { width: 360, height: 800 }]) {
+for (const viewport of [{ width: 1440, height: 1000 }, { width: 768, height: 1024 }, { width: 360, height: 800 }]) {
 test(`criterion history preserves the exact delivery and Evidence trace at ${viewport.width}px`, async ({ page, wos }) => {
   await page.setViewportSize(viewport);
   const { value: outcome, scope } = await wos.outcome('Traceable criterion history');
@@ -256,7 +256,7 @@ test(`criterion history preserves the exact delivery and Evidence trace at ${vie
 });
 }
 
-for (const viewport of [{ width: 1440, height: 1000 }, { width: 360, height: 800 }]) {
+for (const viewport of [{ width: 1440, height: 1000 }, { width: 768, height: 1024 }, { width: 360, height: 800 }]) {
 test(`a reviewer requests changes against the exact pending delivery at ${viewport.width}px`, async ({ page, wos }) => {
   await page.setViewportSize(viewport);
   const { value: outcome, scope } = await wos.outcome('Return the exact delivery for correction');

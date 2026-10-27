@@ -401,7 +401,7 @@ export function humanForm(
         ["inconclusive", copy.text.inconclusive],
       ];
       const result = f("result", copy.text.assessmentResult, { options: results });
-      if (permissions.includes("criterion:waive")) {
+      if (permissions.includes("criterion:waive") || permissions.includes("assessment:waive")) {
         const waiver = a("_waiver", "Record an authorized waiver instead of verification", {
           type:"checkbox", help:"An exception requires a rationale. It is not a met criterion or verified success.",
         });
@@ -409,10 +409,20 @@ export function humanForm(
         waiver.input.addEventListener("change", () => { result.node.hidden=Boolean(waiver.get()); });
       }
       f("rationale", copy.text.rationale, { type: "textarea", required: true });
-      p("evidence_ids", copy.text.evidenceUsed, ["evidence"], {
+      const evidenceRequired = criterion.verification_mode === "evidence_review";
+      const evidencePicker = p("evidence_ids", copy.text.evidenceUsed, ["evidence"], {
         multiple: true,
         ids: true,
+        required: evidenceRequired,
+        requiredMessage: evidenceRequired ? copy.text.evidenceReviewRequiredMessage : "",
       });
+      if (evidenceRequired) {
+        const evidenceInput = evidencePicker.node.querySelector("input");
+        const evidenceHelp = el("small", copy.text.evidenceReviewRequiresEvidence, "field-help");
+        evidenceHelp.id = "criterion-evidence-review-help";
+        evidenceInput.setAttribute("aria-describedby", evidenceHelp.id);
+        evidencePicker.node.append(evidenceHelp);
+      }
       if (criterion.verification_mode === "external_evaluation") {
         const provider = f("_evaluator_provider", copy.text.evaluatorProvider, {
             required: true,

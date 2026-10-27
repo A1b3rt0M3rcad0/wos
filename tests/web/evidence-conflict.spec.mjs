@@ -50,7 +50,7 @@ async function capture(page, name, state) {
   }, null, 2) + '\n');
 }
 
-for (const viewport of [{ width: 1440, height: 1000 }, { width: 360, height: 800 }]) {
+for (const viewport of [{ width: 1440, height: 1000 }, { width: 768, height: 1024 }, { width: 360, height: 800 }]) {
   test(`a stale Criterion conflict safely recovers its Evidence draft at ${viewport.width}px`, async ({ page, wos }) => {
     test.setTimeout(90000);
     await page.setViewportSize(viewport);
@@ -117,13 +117,18 @@ for (const viewport of [{ width: 1440, height: 1000 }, { width: 360, height: 800
     const conflict = page.locator('#conflict-review');
     await expect(conflict).toContainText(criterion.title);
     await expect(conflict).toContainText(revisedTitle);
-    await expect(conflict.getByRole('button', {
+    const rebind = conflict.getByRole('button', {
       name: 'Use latest criterion and keep this Evidence draft', exact: true,
-    })).toBeVisible();
+    });
+    await expect(rebind).toBeVisible();
     await expect(page.getByLabel('Description', { exact: true })).toHaveValue(observation);
     await expect(page.getByLabel('Why is this relevant?', { exact: true })).toHaveValue(rationale);
     await expectNoSeriousA11yViolations(page, '#canvas-details');
     expect(await conflict.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+    await rebind.scrollIntoViewIfNeeded();
+    const rebindBounds = await rebind.boundingBox();
+    expect(rebindBounds.y).toBeGreaterThanOrEqual(0);
+    expect(rebindBounds.y + rebindBounds.height).toBeLessThanOrEqual(viewport.height);
     await capture(page, `evidence-conflict-review-${viewport.width}`, 'The author compares the previous and current Criterion definitions while the unsaved Evidence form values remain in place.');
 
     await conflict.getByRole('button', {

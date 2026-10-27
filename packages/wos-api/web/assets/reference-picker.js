@@ -25,6 +25,7 @@ export function referencePicker({
   initial = [],
   multiple = false,
   required = false,
+  requiredMessage = "",
   lifecycle = "",
 }) {
   const root = el("div", undefined, "reference-picker"),
@@ -97,7 +98,7 @@ export function referencePicker({
     input.required = required && !values.size;
     input.setCustomValidity(
       valid
-        ? ""
+        ? (input.required ? requiredMessage : "")
         : copy.text.selectedReferencesAreUnavailableRemoveThemOrSearchAgain,
     );
   }

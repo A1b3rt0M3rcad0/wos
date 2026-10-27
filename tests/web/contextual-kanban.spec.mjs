@@ -4,6 +4,7 @@ import { mkdir, writeFile, readdir, readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
+import { captureReviewState, reviewViewports } from "./review-ux-capture.mjs";
 
 const panel = (page) => page.locator("#canvas-details");
 async function serveSourceKanban(page) {
@@ -24,6 +25,40 @@ async function select(page, title) {
   await search.fill(title);
   await page.getByRole("option").filter({ hasText: title }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
+}
+async function dragCardToColumn(page, card, column) {
+  const columns = page.locator(".workspace-kanban-columns");
+  await card.scrollIntoViewIfNeeded();
+  const container = await columns.boundingBox();
+  const cardBounds = await card.boundingBox();
+  const targetBounds = await column.boundingBox();
+  if (!container || !cardBounds || !targetBounds) throw Error("Kanban drag geometry is unavailable.");
+  const targetVisible = targetBounds.x >= container.x
+    && targetBounds.x + targetBounds.width <= container.x + container.width;
+  if (targetVisible) {
+    await card.dragTo(column);
+    return;
+  }
+
+  // On a narrow Board, start dragging the visible card and let Chromium's
+  // native scrollable-lane autoscroll reveal the next column under the pointer.
+  const start = { x: cardBounds.x + cardBounds.width / 2, y: cardBounds.y + cardBounds.height / 2 };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  const edgeX = container.x + container.width - 3;
+  let destination = await column.boundingBox();
+  for (let attempt = 0; attempt < 40 && destination
+    && destination.x + destination.width > container.x + container.width; attempt++) {
+    await page.mouse.move(edgeX, start.y, { steps: 2 });
+    await page.waitForTimeout(100);
+    destination = await column.boundingBox();
+  }
+  if (!destination || destination.x + destination.width > container.x + container.width) {
+    await page.mouse.up();
+    throw Error("Dragging at the Board edge did not reveal the next Kanban column.");
+  }
+  await page.mouse.move(destination.x + destination.width / 2, destination.y + 48, { steps: 12 });
+  await page.mouse.up();
 }
 async function setup(wos) {
   const { value: outcome, scope } = await wos.outcome("Payment integration");
@@ -518,10 +553,11 @@ test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200%
   }
 });
 
-test("an authorized waiver is an explicit exception and never completes the Task", async ({
+for (const viewport of reviewViewports) test(`a legacy-authorized waiver is visible and never completes the Task at ${viewport.width}px`, async ({
   page,
   wos,
 }) => {
+  await page.setViewportSize(viewport);
   const data = await setup(wos);
   // Criterion assessments are unavailable while a Task is still in Backlog.
   // Make the Task available and acquire it before authenticating as the
@@ -578,7 +614,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
     expected_namespace_version: snapshot.namespace_version,
     operation: "set_grant",
     principal_id: "waiver-reviewer",
-    permissions: ["state:read", "criterion:assess", "criterion:waive", "assessment:waive"],
+    permissions: ["state:read", "criterion:assess", "assessment:waive"],
   });
   const issued = await wos.api("/security/commands", {
     namespace_id: wos.namespace,
@@ -588,13 +624,25 @@ test("an authorized waiver is an explicit exception and never completes the Task
     actor_ref: { kind: "human", provider: "acceptance", id: "waiver-reviewer" },
     expires_at: new Date(Date.now() + 3600000).toISOString(),
   });
+  await wos.markLegacyPermissionCompatibility(
+    "waiver-reviewer",
+    issued.result.credential.id,
+  );
+  const permissionHints = await wos.api(
+    `/namespaces/${wos.namespace}/effective-permissions?outcome_id=${data.scope.outcome_id}`,
+    undefined,
+    issued.token,
+  );
+  expect(permissionHints.permissions).toContain("assessment:waive");
+  expect(permissionHints.permissions).not.toContain("criterion:waive");
+  await serveSourceKanban(page);
   await wos.login(page, issued.token);
   await openOutcome(page, data.outcome.title, { area: null });
   await select(page, data.objective.title);
   await panel(page).getByRole("button", { name: "Open Tasks Kanban", exact: true }).click();
   const modal = page.locator("#workspace-kanban");
   const taskCard = modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title });
-  await taskCard.dragTo(modal.locator('[data-column="verification"]'));
+  await dragCardToColumn(page, taskCard, modal.locator('[data-column="verification"]'));
   const operation = page.locator("#workspace-kanban-operation");
   await expect(operation.getByRole("heading", { name: "Review proof", exact: true })).toBeVisible();
   await operation.getByRole("checkbox", { name: /The exception requires an explicit decision/ }).click();
@@ -618,6 +666,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
     .fill(
       "Explicitly excluded this condition after reviewing the agreed scope. This is not verified success.",
     );
+  await captureReviewState(page, `waiver-legacy-permission-${viewport.width}`, "Only legacy assessment:waive is granted; the explicit waiver control is visible and the Task remains in progress.");
   const response = page.waitForResponse(
     (response) =>
       /\/commands\/(record_criterion_assessment|attest_criterion)$/.test(

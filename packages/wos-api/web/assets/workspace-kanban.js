@@ -694,6 +694,17 @@ export function createContextualKanban({
     const previousColumns = dialog.querySelector('.workspace-kanban-columns');
     const keepColumns = previousColumns?.workspaceItems === frame.items && previousColumns?.dataset.stateKey === stateKey();
     const columns = keepColumns ? previousColumns : el("div", undefined, "workspace-kanban-columns");
+    if (!keepColumns) columns.addEventListener('dragover', event => {
+      if (!event.dataTransfer?.types.includes('application/x-wos-kanban')) return;
+      const bounds = columns.getBoundingClientRect();
+      const edge = Math.min(64, bounds.width / 4);
+      const maximum = Math.max(0, columns.scrollWidth - columns.clientWidth);
+      if (event.clientX < bounds.left + edge && columns.scrollLeft > 0) {
+        columns.scrollLeft = Math.max(0, columns.scrollLeft - 48);
+      } else if (event.clientX > bounds.right - edge && columns.scrollLeft < maximum) {
+        columns.scrollLeft = Math.min(maximum, columns.scrollLeft + 48);
+      }
+    });
     body.append(columns);
     const laneKinds = kanbanLanes(frame.content === "objectives" ? "objective" : "work_item");
     function renderColumns() {
@@ -741,7 +752,7 @@ export function createContextualKanban({
           card.dataset.kanbanRef = key(item.ref);
           card.setAttribute('aria-pressed', String(frame.selected?.subject.ref.id === item.ref.id));
           card.draggable = true;
-          card.setAttribute("aria-description", "Open to inspect. Drag to another lane to prepare its operation.");
+          card.setAttribute("aria-description", "Open to inspect. Drag to another lane to prepare its operation; drag near a Board edge to reveal offscreen lanes.");
           card.append(el("span", "⠿", "workspace-drag-handle"));
           card.addEventListener('dragstart', event => {
             frame.dragged = key(item.ref);

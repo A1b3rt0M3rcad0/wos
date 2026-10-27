@@ -2,6 +2,7 @@ import { clickRecordAction } from "./workspace-action-fixture.mjs";
 import { test, expect, intent, save, pick, openOutcome, detail, clickWorkspaceTool } from "./ux-fixture.mjs";
 import assert from "node:assert/strict";
 import { seedWorkspace } from "./ux-datasets.mjs";
+import { captureReviewState, reviewViewports } from "./review-ux-capture.mjs";
 
 test("F01: save a persisted Draft without command names, UUIDs or Advanced; setup never activates it", async ({
   page,
@@ -164,10 +165,11 @@ test("F04: visual Roadmap draft, publish and activation are distinct; replan ret
     "todo",
   );
 });
-test("F05: register proof then assess its exact criterion revision; Evidence alone does not certify", async ({
+for (const viewport of reviewViewports) test(`F05: evidence review requires Evidence before assessment at ${viewport.width}px`, async ({
   page,
   wos,
 }) => {
+  await page.setViewportSize(viewport);
   await wos.outcome();
   await wos.login(page);
   await openOutcome(page);
@@ -195,11 +197,27 @@ test("F05: register proof then assess its exact criterion revision; Evidence alo
     .filter({ hasText: "Delivery independently checked" })
     .click();
   await clickRecordAction(page, "Assess criterion");
-  await pick(page, "Evidence used", "Successful test");
+  let assessmentRequests = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().endsWith("/commands/record_criterion_assessment"))
+      assessmentRequests++;
+  });
+  const evidenceInput = page.getByRole("combobox", { name: "Evidence used", exact: true });
+  await expect(evidenceInput).toHaveAttribute("required", "");
+  await expect(page.getByText(/Evidence supports the review; it does not by itself mark the Criterion as met\./)).toBeVisible();
   await page
     .getByLabel("Rationale", { exact: true })
     .fill("The observed run covers the criterion");
+  await page.locator("#submit-command").click();
+  expect(await evidenceInput.evaluate((input) => input.validity.valid)).toBe(false);
+  expect(await evidenceInput.evaluate((input) => input.validationMessage)).toContain(
+    "Select at least one Evidence record.",
+  );
+  await expect.poll(() => assessmentRequests).toBe(0);
+  await captureReviewState(page, `assessment-evidence-required-${viewport.width}`, "The required Evidence picker blocks an empty assessment and tells the reviewer how to continue.");
+  await pick(page, "Evidence used", "Successful test");
   await save(page);
+  expect(assessmentRequests).toBe(1);
   await expect(page.locator("#state")).toHaveText("Draft");
 });
 test("F06: reporting an Issue and blocking work are explicit; resolving the Issue does not release impact", async ({
