@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,7 +79,7 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b27-b82a-7408-915a-54bb435aff31"
+    "outcome_id": "01a17b2d-7cc6-7304-ab23-9a429df49f05"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "nativeBrowserZoom": 1.25,
@@ -89,14 +89,14 @@
   },
   "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
   "image": "task-native-125.png",
-  "screenshotSha256": "d8e3f11f35fd93c093d15283a0303a092a7f5979505bbe4223a0f24925c482b8",
-  "capturedAt": "2026-10-27T02:19:28.465Z",
+  "screenshotSha256": "ffa0d60600c7eb3b2ee0a4d3089801771951d0934580ddaef7572b2366eaff13",
+  "capturedAt": "2026-10-27T02:25:47.601Z",
   "captureMethod": "Chromium Page.captureScreenshot; actual visible native-zoom framebuffer; no clip or resizing",
   "pixelSize": {
     "width": 1366,
     "height": 768
   },
-  "url": "http://127.0.0.1:46657/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b27-b82a-7408-915a-54bb435aff31&area=canvas&item=work_item%2F01a17b27-b849-7d28-b727-fadd68c50025",
+  "url": "http://127.0.0.1:46871/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2d-7cc6-7304-ab23-9a429df49f05&area=canvas&item=work_item%2F01a17b2d-7ce6-7312-b6e4-b22fca309a67",
   "viewport": {
     "width": 1093,
     "height": 614,
@@ -368,7 +368,7 @@
     },
     {
       "facet": "activity",
-      "text": "Recent activityRecorded domain eventevidence link createdDocuments the participant's observation for a separate reviewer.ownerRecorded: Oct 27, 2026, 2:19 AM UTCActivity from another itemevidence linkHuman observationA participant followed the recorded handoff. Independent criterion assessment is still pending.ownerRecorded: Oct 27, 2026, 2:19 AM UTCRead full updateCorrect my updateDocumentary updateThe implementation is ready for a separate review. This participant update does not accept the result.ownerRecorded: Oct 27, 2026, 2:19 AM UTCRead full updateCorrect my updateRecorded domain eventwork item updatedownerRecorded: Oct 27, 2026, 2:19 AM UTCRecorded domain eventwork item activatedownerRecorded: Oct 27, 2026, 2:19 AM UTCLoad older activityHistory through revision 40This history page keeps its recorded boundary while you load older entries.Record an updatePartial view of this information",
+      "text": "Recent activityRecorded domain eventevidence link createdDocuments the participant's observation for a separate reviewer.ownerRecorded: Oct 27, 2026, 2:25 AM UTCActivity from another itemevidence linkHuman observationA participant followed the recorded handoff. Independent criterion assessment is still pending.ownerRecorded: Oct 27, 2026, 2:25 AM UTCRead full updateCorrect my updateDocumentary updateThe implementation is ready for a separate review. This participant update does not accept the result.ownerRecorded: Oct 27, 2026, 2:25 AM UTCRead full updateCorrect my updateRecorded domain eventwork item updatedownerRecorded: Oct 27, 2026, 2:25 AM UTCRecorded domain eventwork item activatedownerRecorded: Oct 27, 2026, 2:25 AM UTCLoad older activityHistory through revision 40This history page keeps its recorded boundary while you load older entries.Record an updatePartial view of this information",
       "visible": false
     }
   ],

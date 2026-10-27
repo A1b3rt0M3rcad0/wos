@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b26-9bb9-7ecb-a7cf-e59e61bbf6b7"
+    "outcome_id": "01a17b2c-31cf-7975-a4e0-0d98728859be"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "state": "Criterion within its owner; linked Evidence remains separate from assessment",
   "image": "criterion-2560x1440.png",
-  "screenshotSha256": "f7676b7e6e4040d49f5be44041d8c76467683fab2275020c614decd78d0c0272",
-  "capturedAt": "2026-10-27T02:18:15.998Z",
+  "screenshotSha256": "b44042e377e0c02c3c848397497d43ba46104eee7d0e2978954d3eb691a6d0b3",
+  "capturedAt": "2026-10-27T02:24:22.272Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 2560,
     "height": 1440
   },
-  "url": "http://127.0.0.1:41837/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b26-9bb9-7ecb-a7cf-e59e61bbf6b7&area=canvas&item=work_item%2F01a17b26-9be4-704e-ad84-66379623c383&subject=criterion&criterion=01a17b26-9c5b-7c67-976f-d7cb211f6df8",
+  "url": "http://127.0.0.1:43405/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2c-31cf-7975-a4e0-0d98728859be&area=canvas&item=work_item%2F01a17b2c-3216-7dfd-8baa-079135cab830&subject=criterion&criterion=01a17b2c-328b-7076-b0a5-f125bea7c87d",
   "viewport": {
     "width": 2560,
     "height": 1440,

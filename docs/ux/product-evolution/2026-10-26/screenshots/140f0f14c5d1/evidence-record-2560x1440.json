@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b26-9bb9-7ecb-a7cf-e59e61bbf6b7"
+    "outcome_id": "01a17b2c-31cf-7975-a4e0-0d98728859be"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "state": "Evidence with a recorded participant observation source; no automatic acceptance",
   "image": "evidence-record-2560x1440.png",
-  "screenshotSha256": "34cfe0375f50fcd01c6efb4fc329588ca25448d6765abc732ec876abc31ddd14",
-  "capturedAt": "2026-10-27T02:18:16.766Z",
+  "screenshotSha256": "4f5e4d6dafdddcecccc0e7763b0749c8f13cc66b0302f973417c0986b017119d",
+  "capturedAt": "2026-10-27T02:24:23.066Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 2560,
     "height": 1440
   },
-  "url": "http://127.0.0.1:41837/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b26-9bb9-7ecb-a7cf-e59e61bbf6b7&area=canvas&item=evidence%2F01a17b26-9ca6-7505-8b88-5d73feff9559",
+  "url": "http://127.0.0.1:43405/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2c-31cf-7975-a4e0-0d98728859be&area=canvas&item=evidence%2F01a17b2c-32d5-7a91-9a28-bbabdd54efe0",
   "viewport": {
     "width": 2560,
     "height": 1440,
@@ -334,7 +334,7 @@
   "inspectorFacets": [
     {
       "facet": "record",
-      "text": "SourceObservedOct 27, 2026, 2:18 AM UTCRecordedOct 27, 2026, 2:18 AM UTCSourceRecorded participant observation01a17b26-9ca6-7449-9866-6896ee54341c",
+      "text": "SourceObservedOct 27, 2026, 2:24 AM UTCRecordedOct 27, 2026, 2:24 AM UTCSourceRecorded participant observation01a17b2c-32d5-79f9-a884-ec9b758841ab",
       "visible": false
     },
     {
@@ -349,7 +349,7 @@
     },
     {
       "facet": "observation",
-      "text": "Recorded observation sourceA participant followed the recorded handoff. Independent criterion assessment is still pending.Recorded author: ownerRecorded: Oct 27, 2026, 2:18 AM UTCMap the first-time experienceRead full updateThis resolves the participant who recorded the observation. It does not establish that the server performed a test or accepted the result.",
+      "text": "Recorded observation sourceA participant followed the recorded handoff. Independent criterion assessment is still pending.Recorded author: ownerRecorded: Oct 27, 2026, 2:24 AM UTCMap the first-time experienceRead full updateThis resolves the participant who recorded the observation. It does not establish that the server performed a test or accepted the result.",
       "visible": false
     },
     {

@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b27-a96c-7b11-82d2-0617f9ca22df"
+    "outcome_id": "01a17b2d-6d26-7f23-9a0b-24a3b386b687"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "state": "Browser Back returns focus to the deselected Outcome in the expanded chooser",
   "image": "outcome-chooser-back-768x1024.png",
   "screenshotSha256": "6de2ed161854e9762b437c32716757a936a05a98e93ebb8be473de73b89eaff6",
-  "capturedAt": "2026-10-27T02:19:21.333Z",
+  "capturedAt": "2026-10-27T02:25:39.189Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 768,
     "height": 1024
   },
-  "url": "http://127.0.0.1:44907/app/",
+  "url": "http://127.0.0.1:45509/app/",
   "viewport": {
     "width": 768,
     "height": 1024,

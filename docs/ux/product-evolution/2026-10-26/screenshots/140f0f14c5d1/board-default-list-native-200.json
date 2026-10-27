@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,7 +79,7 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b27-e5de-7637-86ef-6a512283c5e3"
+    "outcome_id": "01a17b2d-bb03-7aea-b36c-d67547e7b88c"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "nativeBrowserZoom": 2,
@@ -92,13 +92,13 @@
   "state": "Default compact Outcome Board list before switching to the spatial map",
   "image": "board-default-list-native-200.png",
   "screenshotSha256": "dc3a9f9f3078e3697ff1c04529e21d43d81fb8799b1e45b1a0713cf132154064",
-  "capturedAt": "2026-10-27T02:19:39.484Z",
+  "capturedAt": "2026-10-27T02:26:01.853Z",
   "captureMethod": "Chromium Page.captureScreenshot; actual visible native-zoom framebuffer; no clip or resizing",
   "pixelSize": {
     "width": 1366,
     "height": 768
   },
-  "url": "http://127.0.0.1:40211/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b27-e5de-7637-86ef-6a512283c5e3&area=canvas",
+  "url": "http://127.0.0.1:43895/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2d-bb03-7aea-b36c-d67547e7b88c&area=canvas",
   "viewport": {
     "width": 683,
     "height": 384,

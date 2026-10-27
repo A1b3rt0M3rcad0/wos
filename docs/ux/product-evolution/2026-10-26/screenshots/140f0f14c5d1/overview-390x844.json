@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b27-4d5d-7a33-8c31-2829758ddad7"
+    "outcome_id": "01a17b2d-0fce-7af3-8b2c-8ba05813caf3"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "state": "Current overview specialist view using the retained editorial workspace",
   "image": "overview-390x844.png",
-  "screenshotSha256": "e403be9cb4895e6441ed9c3edf5c26df119354cd60e19c56f45cd6e4479c109a",
-  "capturedAt": "2026-10-27T02:19:13.290Z",
+  "screenshotSha256": "ea5fbccb44cb021ea7adf0b8cf2f4056a623c0b742d14d0e36fe1468e0982876",
+  "capturedAt": "2026-10-27T02:25:30.872Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 390,
     "height": 844
   },
-  "url": "http://127.0.0.1:37977/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b27-4d5d-7a33-8c31-2829758ddad7&area=overview",
+  "url": "http://127.0.0.1:41277/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2d-0fce-7af3-8b2c-8ba05813caf3&area=overview",
   "viewport": {
     "width": 390,
     "height": 844,
@@ -221,7 +221,7 @@
     },
     {
       "facet": "roadmap",
-      "text": "RoadmapA versioned plan that references existing work. Grouping and plan order do not create operational dependencies.Published revision 1Oct 27, 2026, 2:18 AM UTCView planInspect published revisionActive revision 1Publication and activation are separate. A published plan does not change Task ownership, dependencies or acceptance.Read full recordPartial view of this information",
+      "text": "RoadmapA versioned plan that references existing work. Grouping and plan order do not create operational dependencies.Published revision 1Oct 27, 2026, 2:25 AM UTCView planInspect published revisionActive revision 1Publication and activation are separate. A published plan does not change Task ownership, dependencies or acceptance.Read full recordPartial view of this information",
       "visible": false
     },
     {

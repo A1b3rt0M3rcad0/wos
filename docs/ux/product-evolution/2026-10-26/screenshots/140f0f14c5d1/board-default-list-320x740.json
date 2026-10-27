@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,7 +79,7 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b26-fc75-7375-ba4c-150d95a2a411"
+    "outcome_id": "01a17b2c-97fd-7ec9-9210-7f83c45c2e97"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "boardView": "list",
@@ -87,13 +87,13 @@
   "state": "Default compact Outcome Board list before switching to the spatial map",
   "image": "board-default-list-320x740.png",
   "screenshotSha256": "0e9292f3b638e353ed9a41b05dc3dd71dce27c46acea97e827efecc589b41bc5",
-  "capturedAt": "2026-10-27T02:18:37.339Z",
+  "capturedAt": "2026-10-27T02:24:45.458Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 320,
     "height": 740
   },
-  "url": "http://127.0.0.1:41187/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b26-fc75-7375-ba4c-150d95a2a411&area=canvas",
+  "url": "http://127.0.0.1:33771/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2c-97fd-7ec9-9210-7f83c45c2e97&area=canvas",
   "viewport": {
     "width": 320,
     "height": 740,

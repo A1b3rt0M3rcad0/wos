@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b26-e532-793b-98b3-840d389f7dce"
+    "outcome_id": "01a17b2c-8105-760c-8e39-81bb60ba1a6d"
   },
   "fixtureKind": "Representative records created through authenticated public commands; not a user study",
   "state": "Task inspector with requested work, participation, obligations, pending criterion and recent documentary activity",
   "image": "task-3840x2160.png",
-  "screenshotSha256": "c95cb80296535a33023f64130fd227e20efc5ad6d0e6c1cce9ea843ccb129854",
-  "capturedAt": "2026-10-27T02:18:34.171Z",
+  "screenshotSha256": "207bcd3648ff52289899ece8ef0ae3cd387a9e44b7e563c6b88da29436d00e02",
+  "capturedAt": "2026-10-27T02:24:41.591Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 3840,
     "height": 2160
   },
-  "url": "http://127.0.0.1:41921/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b26-e532-793b-98b3-840d389f7dce&area=canvas&item=work_item%2F01a17b26-e554-7079-ae93-90916f6a2941",
+  "url": "http://127.0.0.1:43049/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2c-8105-760c-8e39-81bb60ba1a6d&area=canvas&item=work_item%2F01a17b2c-8127-7fb7-9d29-feecc38e562f",
   "viewport": {
     "width": 3840,
     "height": 2160,
@@ -363,7 +363,7 @@
     },
     {
       "facet": "activity",
-      "text": "Recent activityRecorded domain eventevidence link createdDocuments the participant's observation for a separate reviewer.ownerRecorded: Oct 27, 2026, 2:18 AM UTCActivity from another itemevidence linkHuman observationA participant followed the recorded handoff. Independent criterion assessment is still pending.ownerRecorded: Oct 27, 2026, 2:18 AM UTCRead full updateCorrect my updateDocumentary updateThe implementation is ready for a separate review. This participant update does not accept the result.ownerRecorded: Oct 27, 2026, 2:18 AM UTCRead full updateCorrect my updateRecorded domain eventwork item updatedownerRecorded: Oct 27, 2026, 2:18 AM UTCRecorded domain eventwork item activatedownerRecorded: Oct 27, 2026, 2:18 AM UTCLoad older activityHistory through revision 40This history page keeps its recorded boundary while you load older entries.Record an updatePartial view of this information",
+      "text": "Recent activityRecorded domain eventevidence link createdDocuments the participant's observation for a separate reviewer.ownerRecorded: Oct 27, 2026, 2:24 AM UTCActivity from another itemevidence linkHuman observationA participant followed the recorded handoff. Independent criterion assessment is still pending.ownerRecorded: Oct 27, 2026, 2:24 AM UTCRead full updateCorrect my updateDocumentary updateThe implementation is ready for a separate review. This participant update does not accept the result.ownerRecorded: Oct 27, 2026, 2:24 AM UTCRead full updateCorrect my updateRecorded domain eventwork item updatedownerRecorded: Oct 27, 2026, 2:24 AM UTCRecorded domain eventwork item activatedownerRecorded: Oct 27, 2026, 2:24 AM UTCLoad older activityHistory through revision 40This history page keeps its recorded boundary while you load older entries.Record an updatePartial view of this information",
       "visible": false
     }
   ],

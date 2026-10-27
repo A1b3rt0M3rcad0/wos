@@ -1,7 +1,7 @@
 {
   "sourceCommit": "140f0f14c5d1a9325a868e293df191d19b076b98",
   "binary": {
-    "built_at": "2026-10-27T03:10:00Z",
+    "built_at": "2026-10-27T02:22:28Z",
     "commit": "140f0f14c5d1a9325a868e293df191d19b076b98",
     "supported_work_protocols": [
       "contracts_v1",
@@ -14,7 +14,7 @@
     "version": "dev",
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2,
-    "sha256": "e7bddb825ac34263850f69897130e65d114925221086bd70873a848369a43495"
+    "sha256": "04083150438153052f9e66b37966c0a3f64f25c3c91619e8e6c81b6c106907eb"
   },
   "browser": {
     "protocolVersion": "1.3",
@@ -79,19 +79,19 @@
   },
   "fixtureScope": {
     "namespace_id": "01a11992-0000-7000-8000-000000000001",
-    "outcome_id": "01a17b28-02bc-77a6-9c8c-b168d38fa474"
+    "outcome_id": "01a17b2d-d8a6-7190-a0df-0486f963de50"
   },
   "fixtureKind": "Native Task delivery and assessment created through authenticated public commands",
   "state": "Native delivery in Verification; the primary state is Awaiting review and the persisted lifecycle remains In progress",
   "image": "kanban-verification-1440x900.png",
   "screenshotSha256": "1c3f2c5ed1cb15d0108c92bc0b29086041ee1dc2e79d53f0eebd0fefb311cb3a",
-  "capturedAt": "2026-10-27T02:19:45.226Z",
+  "capturedAt": "2026-10-27T02:26:08.354Z",
   "captureMethod": "Playwright visible viewport; no image resizing or content masking",
   "pixelSize": {
     "width": 1440,
     "height": 900
   },
-  "url": "http://127.0.0.1:45861/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b28-02bc-77a6-9c8c-b168d38fa474&area=canvas&item=objective%2F01a17b28-02e4-78f6-a1cd-8a41ba35c098",
+  "url": "http://127.0.0.1:46453/app/?workspace=01a11992-0000-7000-8000-000000000001&outcome=01a17b2d-d8a6-7190-a0df-0486f963de50&area=canvas&item=objective%2F01a17b2d-d8ea-7f73-95ab-2c9e00cf1bce",
   "viewport": {
     "width": 1440,
     "height": 900,
