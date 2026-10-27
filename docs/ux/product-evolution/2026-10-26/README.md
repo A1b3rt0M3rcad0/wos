@@ -6,7 +6,7 @@ This is a bounded, evidence-backed product iteration, not a declaration that the
 
 ## Method and evidence
 
-The review used the installed `laws-of-ux-auditor` and `product-design-and-ux` skills, inspected client navigation/state code and domain-backed browser fixtures, and exercised WOS in Chromium against an isolated SQLite database. `agent-browser` was not available, so Playwright drove Chromium. The original gallery remains source-bound to [`be6eb6e`](https://github.com/A1b3rt0M3rcad0/wos/commit/be6eb6eebbeb4fcdec31010e9eecbd4de31621fd). The latest criterion-history and Evidence-conflict screenshots are separately bound to the checked-out frontend source commit and record the API binary hash and exact browser asset delivery mode; see their JSON sidecars.
+The review used the installed `laws-of-ux-auditor` and `product-design-and-ux` skills, inspected client navigation/state code and domain-backed browser fixtures, and exercised WOS in Chromium against an isolated SQLite database. `agent-browser` was not available, so Playwright drove Chromium. The original gallery remains source-bound to [`be6eb6e`](https://github.com/A1b3rt0M3rcad0/wos/commit/be6eb6eebbeb4fcdec31010e9eecbd4de31621fd0). The latest responsive gallery was regenerated from [`4243cfa`](https://github.com/A1b3rt0M3rcad0/wos/commit/4243cfa040434d60e659316792e4e7c675fea322), with JSON sidecars binding screenshots to the source, API binary, and served frontend assets. Criterion-history and Evidence-conflict captures remain bound to their focused source revision as recorded in their sidecars.
 
 Findings use **Observed** for behavior reproduced in the running product, **Inferred** for a risk derived from inspected code or test design, and **Not tested** where this run did not establish behavior.
 
@@ -21,16 +21,21 @@ Findings use **Observed** for behavior reproduced in the running product, **Infe
 | P2 | Observed in the form/domain contract and mobile browser | The assessment form let a reviewer submit an `evidence_review` Criterion without Evidence; the domain rejected it after submission. Native browser validation also covered the picker results with a tooltip on mobile. | The Evidence picker blocks submission until an authorized Evidence record is selected, shows a persistent inline error beside the field, and associates both the error and instructions through `aria-describedby`. The normal assessment still leaves acceptance to a separate review decision. The empty-picker attempt sends no command. |
 | P2 | Observed in permission metadata and action rendering | A reviewer with the supported legacy `assessment:waive` capability could be authorized by the backend for `RecordCriterionAssessment`, but the UI displayed the waiver control only for current `criterion:waive`. | The UI now renders the waiver choice when either the current or legacy effective capability is present. The browser test uses a legacy-compatible grant/policy, confirms the effective-permission response contains only the legacy capability, and verifies that the existing authorized command succeeds. No authorization rule was weakened. |
 | P2 | Observed during tablet/mobile drag validation and reproduced in the browser | The first edge-scroll fix competed with Chromium's native auto-scroll. At 768px the lane strip jumped from `scrollLeft=202` to `490` while the pointer moved, so a drag intended for Verification landed on Accepted and prepared the wrong operation. A second mobile test also changed the scroll position programmatically during the drag. | The Board suppresses native edge scrolling only while a card is being dragged and applies its own bounded 48px scroll at most once per 100ms. A shared browser helper now follows the visible edge-scroll gesture, remeasures the target, and drops away from the edge threshold. The real browser tests pass at 1440px, 768px and 360/390px, including the exact Review proof operation. |
+| P2 | Observed in the captured 360×800 Board and reproduced with real DOM geometry | Compact view correctly opened as a list, but choosing Map left the initial camera at its pre-fit coordinates because the first fit ran while the map viewport was hidden. All loaded cards were outside the visible map; the screenshot showed an empty grid. | The renderer now performs the initial fit when Map first becomes visible if the earlier fit could not run. A browser regression asserts that a real map card intersects the viewport after opening Map. The fix preserves the compact List default and does not change persisted Board positions. |
 | P3 | Observed in test execution | The contextual Kanban regression waited for criterion text anywhere in the inspection panel. The Task's criteria list already contained that text, so this did not prove the criterion inspector had loaded before refresh/context changes. | The test now waits for the active inspection heading to equal the criterion title, removing the race without weakening assertions. |
 | P3 | Observed in gallery qualification | A few source-bound gallery steps attempted operations that the domain correctly disallows (editing planning after activation, or concluding an Objective that had unrelated unfinished work); other assertions did not expand intentionally collapsed sections. | Updated the fixture to establish valid domain preconditions and the capture flow to expand/restore disclosures as a user would. No domain guard was relaxed. |
 
-The gallery's representative screenshots show the chooser after browser Back, the Board and a selected Task. All screenshots are under [`screenshots/`](screenshots/).
+The current responsive gallery contains 14 passing browser scenarios, with viewports from 320px mobile through 3840px 4K, plus native browser zoom states. Representative current-source captures are below; each image and its JSON sidecar are in [`screenshots/4243cfa04043/`](screenshots/4243cfa04043/).
 
-![Authenticated Outcome chooser after browser Back at 1440×900](screenshots/outcome-chooser-back-1440x900.png)
+![Outcome Board at 1440×900](screenshots/4243cfa04043/board-1440x900.png)
 
-![Outcome Board at 1440×900](screenshots/board-1440x900.png)
+![Outcome Board at 360×800 after the first Map view is fitted into the visible area](screenshots/4243cfa04043/board-360x800.png)
 
-![Task inspection at 360×800](screenshots/task-360x800.png)
+![Selected Task in the Board at 360×800](screenshots/4243cfa04043/task-360x800.png)
+
+![Login at 2560×1440](screenshots/4243cfa04043/login-2560x1440.png)
+
+The gallery also captures the chooser after browser Back at [1440×900](screenshots/4243cfa04043/outcome-chooser-back-1440x900.png). All checked-in visual evidence is under [`screenshots/`](screenshots/); each source-bound capture includes a JSON sidecar with the exact viewport and SHA-256 hashes.
 
 ### Criterion assessment and delivery provenance
 
@@ -70,10 +75,11 @@ Both states are captured at [desktop 1440px](screenshots/assessment-evidence-req
 - At source commit `96edc3e`, the inline validation refinement passed **83/83 unit tests**, the three Evidence-review browser journeys at **1440/768/360px (3/3)**, including axe checks for critical/serious WCAG 2.2 A/AA, 2.1 AA and 2.2 AA rules, and the other focused reference-picker browser cases (4/4). The generated review/conflict/waiver captures each ran successfully at **1440×1000, 768×1024 and 360×800**; their JSON sidecars bind them to this source commit and API binary hash. Hosted CI must still validate the exact pushed PR head.
 - Axe checks scoped to assessment history, Review proof, assessment, acceptance, request-changes and the Evidence conflict states found no critical or serious violations tagged through WCAG 2.2 AA. The mobile journeys also verify operation/form bounds and no horizontal overflow. This is automated evidence, not a complete accessibility certification.
 - The navigation plus Outcome-search browser suites passed **10/10**, and the contextual Kanban viewport regression passed **10/10** on the preceding iteration.
-- The source-bound operational gallery passed **14/14** at production commit `be6eb6e`. It covers login, chooser, Back/Forward, Board, Task, specialist views, forms and operational previews at 11 viewport sizes: 1280×720, 1366×768, 1440×900, 1920×1080, 2560×1440, 3840×2160, 320×740, 360×800, 390×844, 430×932 and 768×1024. It also exercises native browser zoom at 125%, 150% and 200%.
+- The source-bound operational gallery passed **14/14** at product source commit `4243cfa`. It captures login, chooser, Back/Forward, Board, selected Task, specialist views, forms and operational previews at 11 viewport sizes: 1280×720, 1366×768, 1440×900, 1920×1080, 2560×1440, 3840×2160, 320×740, 360×800, 390×844, 430×932 and 768×1024. It also exercises native browser zoom at 125%, 150% and 200%. The gallery verifies source and running-binary identity and records delivered-asset hashes in each sidecar.
+- The compact Board camera regression passed **2/2** real-browser cases at 320×740 and 390×844; both require at least one work card to intersect the Map viewport after switching from the compact List view. The refreshed gallery then passed **14/14** on the exact Board-fix commit, including new source-bound 360px captures with the card visible.
 - Existing Playwright coverage includes axe checks, keyboard-only reference selection and confirmation, 200%/400% reflow equivalents, authenticated permission states, real command journeys, and Board movement. Passing axe tests are useful automated evidence, not a claim of full WCAG 2.2 AA conformance.
 
-The full suite is green on the Board-scroll source; the final inline-validation refinement has focused green coverage and is waiting for hosted CI on the exact pushed PR head. This remains a bounded product iteration: open audit items below are not represented as verified or fixed by those checks.
+The full suite is green on the Board-scroll source; the final inline-validation refinement and current-source gallery have focused green browser coverage. Hosted CI for the pushed PR head was still running when this note was prepared; recheck the PR checks before treating the head as fully verified. This remains a bounded product iteration: open audit items below are not represented as verified or fixed by those checks.
 
 ## Scope that remains open
 
@@ -88,7 +94,7 @@ This pass concentrates on navigation restoration, source-bound visual evidence, 
 An independent source-level human-flow review also identified these next items; they are coverage or communication risks, not browser-reproduced defects:
 
 1. **P2 — Complete browser coverage for review modes and waiver permissions.** Existing domain checks and an authorized waiver journey exist, but the complete attestation, evidence-review and external-evaluation paths and the unauthorized waiver experience have not all been verified end to end.
-2. **Not yet repeated on the current source:** the full source-bound operational gallery. Its 14/14 result belongs to production commit `be6eb6e`; the current full Playwright suite validates the viewport and interaction contracts but does not regenerate that opt-in gallery.
+2. **Inferred follow-up:** inspect additional specialist and operational states at intermediate viewport widths. The current gallery covers representative flows and does not establish exhaustive coverage of every state or entity.
 
 ## Current build limitation
 
