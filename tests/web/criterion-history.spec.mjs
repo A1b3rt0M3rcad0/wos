@@ -212,6 +212,9 @@ test(`criterion history preserves the exact delivery and Evidence trace at ${vie
   expect(rect.x + rect.width).toBeLessThanOrEqual(viewport.width);
   expect(rect.y + rect.height).toBeLessThanOrEqual(viewport.height);
   expect(await operation.evaluate((node) => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+  const staleNotice = row.locator('.workspace-assessment-stale');
+  await staleNotice.scrollIntoViewIfNeeded();
+  await expect(staleNotice).toBeInViewport();
   await capture(page, `criterion-history-delivery-${viewport.width}`);
   await expect(row.getByRole('button', { name: 'Inspect linked Evidence', exact: true })).toBeVisible();
   await operation.getByRole('button', { name: 'Back to item', exact: true }).click();
