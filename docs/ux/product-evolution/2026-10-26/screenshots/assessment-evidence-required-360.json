@@ -1,0 +1,27 @@
+{
+  "source": "96edc3e7fba9ecbb24d66d5df1174e89bdd04439",
+  "apiServer": {
+    "built_at": "unknown",
+    "commit": "unknown",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2
+  },
+  "apiServerSha256": "bbbe1bb3d32331ecdf95ba2856fa8c3db3b507181d63fb018adc4710d6db5c4e",
+  "frontendDelivery": "bin/wos embeds the checked-out frontend; HTTP API and isolated SQLite state use the same binary.",
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "browser": "154.0.8037.57",
+  "pngSha256": "62072beb70b424003c10a4c7ef862e19a2d33045f4add4966a0d56efeb8b6b86",
+  "state": "The required Evidence picker blocks an empty assessment and tells the reviewer how to continue."
+}

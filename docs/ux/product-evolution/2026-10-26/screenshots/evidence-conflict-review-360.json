@@ -1,0 +1,27 @@
+{
+  "source": "96edc3e7fba9ecbb24d66d5df1174e89bdd04439",
+  "apiServer": {
+    "built_at": "unknown",
+    "commit": "unknown",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2
+  },
+  "apiServerSha256": "bbbe1bb3d32331ecdf95ba2856fa8c3db3b507181d63fb018adc4710d6db5c4e",
+  "frontendDelivery": "Playwright routes the checkout app.js, actions.js, en-US.js, human-forms.js, workspace-evidence-form.js, workspace-view.js, workspace-kanban.js, workspace-view.css, workspace-kanban.css and workspace-dialogs.css to Chromium; HTTP API and isolated SQLite state use bin/wos.",
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "browser": "154.0.8037.57",
+  "pngSha256": "cc343f51397cd4a99b9bc453f526bcb96a954b37a41f2118774031ad74fe800a",
+  "state": "The author compares the previous and current Criterion definitions while the unsaved Evidence form values remain in place."
+}

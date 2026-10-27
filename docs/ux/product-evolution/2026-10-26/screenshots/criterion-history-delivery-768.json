@@ -1,0 +1,27 @@
+{
+  "source": "96edc3e7fba9ecbb24d66d5df1174e89bdd04439",
+  "apiServer": {
+    "built_at": "unknown",
+    "commit": "unknown",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2
+  },
+  "apiServerSha256": "bbbe1bb3d32331ecdf95ba2856fa8c3db3b507181d63fb018adc4710d6db5c4e",
+  "frontendDelivery": "Playwright routes checkout app.js, actions.js, en-US.js, human-forms.js, workspace-evidence-form.js, workspace-kanban.js, workspace-kanban.css, workspace-view.js, workspace-view.css and workspace-dialogs.css to Chromium; HTTP API and isolated SQLite state use bin/wos.",
+  "viewport": {
+    "width": 768,
+    "height": 1024
+  },
+  "browser": "154.0.8037.57",
+  "pngSha256": "9474bc73bf1c9736dc42b23494ee4d74ae855b0e9643688bee6d1ff8a535eee5",
+  "state": "The latest recorded assessment is bound to delivery round 1; round 2 is pending and the earlier assessment is explicitly marked inapplicable."
+}

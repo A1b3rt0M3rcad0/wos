@@ -1,8 +1,8 @@
 {
-  "source": "a07e8aff4040422df7bae3a832d54574dff51a17",
+  "source": "96edc3e7fba9ecbb24d66d5df1174e89bdd04439",
   "apiServer": {
     "built_at": "unknown",
-    "commit": "be6eb6eebbeb4fcdec31010e9eecbd4de31621fd",
+    "commit": "unknown",
     "supported_work_protocols": [
       "contracts_v1",
       "signed_contracts_v2"
@@ -15,13 +15,13 @@
     "work_protocol": "signed_contracts_v2",
     "workspace_schema": 2
   },
-  "apiServerSha256": "3a7d2a1e74b44b1685bfa8bd6cf9bcaaca107529a7c7d8c25ef36143bc49d766",
-  "frontendDelivery": "Playwright routes the checkout app.js, actions.js, en-US.js, human-forms.js, workspace-kanban.js, workspace-kanban.css, workspace-view.js and workspace-view.css to Chromium; HTTP API and isolated SQLite state use bin/wos.",
+  "apiServerSha256": "bbbe1bb3d32331ecdf95ba2856fa8c3db3b507181d63fb018adc4710d6db5c4e",
+  "frontendDelivery": "Playwright routes checkout app.js, actions.js, en-US.js, human-forms.js, workspace-evidence-form.js, workspace-kanban.js, workspace-kanban.css, workspace-view.js, workspace-view.css and workspace-dialogs.css to Chromium; HTTP API and isolated SQLite state use bin/wos.",
   "viewport": {
     "width": 1440,
     "height": 1000
   },
   "browser": "154.0.8037.57",
-  "pngSha256": "bb439748b6f2b28a51dee50160fc7782e020d333ccb1249c48821a178b51c737",
+  "pngSha256": "641e61ff5c6272f9faac26039c10a65d36bc8c01a9b621938aefb1c615ab9cad",
   "state": "The latest recorded assessment is bound to delivery round 1; round 2 is pending and the earlier assessment is explicitly marked inapplicable."
 }
