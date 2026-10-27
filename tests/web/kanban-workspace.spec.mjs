@@ -19,7 +19,7 @@ async function setup(wos){
 }
 async function move(page,title,lane){
  const card=board(page).locator('.workspace-kanban-card-shell').filter({has:page.getByRole('button',{name:new RegExp(title)})});
- const stage={'To do':'todo','In progress':'in_progress','Verification':'verification','Achieved':'accepted'}[lane];
+ const stage={'To do':'todo','In progress':'in_progress','Verification':'verification','Accepted':'accepted','Achieved':'accepted'}[lane];
  const source=card.locator('.workspace-kanban-card'),target=board(page).locator(`[data-column="${stage}"]`);
  await dragKanbanCardToLane(page,source,target);
  await expect(operation(page)).toBeVisible();
@@ -150,6 +150,55 @@ test('a contract v1 submission does not invent a signed review fact or a Verific
  await board(page).locator('.workspace-kanban-card').filter({hasText:task.title}).click();
  await expect(board(page).locator('.workspace-kanban-columns')).toBeVisible();expect(writes).toEqual([]);
 });
+for(const size of [{width:1440,height:1000},{width:390,height:844}]){
+test(`a native Task delivery is accepted from Verification by its exact operation at ${size.width}px`,async({page,wos})=>{
+ await page.setViewportSize(size);
+ const {outcome,scope,objective,task}=await setup(wos);
+ const owner={...scope,kind:'work_item',id:task.id};
+ const criterion=await wos.command('add_criterion',{owner,expected_version:task.version,title:'The current delivery was reviewed',required:true,verification_mode:'attestation'});
+ const activated=await wos.command('activate_work_item',{scope,work_item_id:task.id,expected_version:task.version+1});
+ const claimed=await wos.command('claim_work_item',{scope,work_item_id:task.id,expected_version:activated.version,ttl_seconds:900});
+ const submitted=await wos.command('submit_task_for_review',{scope,work_item_id:task.id,
+  expected_work_item_version:String(claimed.version),claim_id:claimed.current_lease.claim_id,
+  fencing_token:String(claimed.current_lease.fencing_token),
+  legacy_material:{summary:'The reviewed change is ready for an independent decision.',artifacts:[],evidence_ids:[],criterion_evidence:[]}});
+ const delivery=submitted.delivery;
+ const assessment=await wos.command('record_criterion_assessment',{owner,criterion_id:criterion.id,
+  criterion_revision:criterion.criterion_revision,expected_version:submitted.work_item.version,
+  result:'met',rationale:'The current delivery satisfies the recorded condition.',evidence_ids:[],
+  task_delivery_ref:{id:delivery.id,digest:delivery.delivery_digest,round:String(delivery.round)}});
+
+ await open(page,wos,outcome,objective.title);
+ const kanbanCard=board(page).locator('.workspace-kanban-card').filter({hasText:task.title});
+ await expect(board(page).locator('[data-column=verification]')).toContainText(task.title);
+ await expect(kanbanCard).toContainText('Awaiting review');
+ await expect(kanbanCard).toContainText('Lifecycle: In progress');
+ const writes=[];
+ page.on('request',request=>{if(request.method()==='POST'&&request.url().includes('/commands/'))writes.push(request.url().split('/').at(-1));});
+
+ await move(page,task.title,'Accepted');
+ await expect(operation(page).locator('#command-select')).toHaveValue('accept_task_delivery');
+ await expect(operation(page)).toContainText(`Requested: Verification → Accepted.`);
+ await expect(operation(page)).toContainText(`Delivery round ${delivery.round} · ID ${delivery.id}`);
+ await expect(operation(page)).toContainText('The current delivery was reviewed');
+ expect(writes).toEqual([]);
+ await operation(page).getByLabel('Reason',{exact:true}).fill('Accept the reviewed delivery from the Kanban operation.');
+ const requestPromise=page.waitForRequest(request=>request.method()==='POST'&&request.url().endsWith('/commands/accept_task_delivery'));
+ const responsePromise=page.waitForResponse(response=>response.request().method()==='POST'&&response.url().endsWith('/commands/accept_task_delivery'));
+ await operation(page).locator('#submit-command').click();
+ const [request,response]=await Promise.all([requestPromise,responsePromise]);
+ expect(response.ok(),await response.text()).toBe(true);
+ const command=request.postDataJSON().command;
+ expect(command).toMatchObject({work_item_id:task.id,delivery_id:delivery.id,
+  expected_delivery_digest:delivery.delivery_digest,expected_delivery_round:String(delivery.round),
+  assessment_refs:[{assessment_id:assessment.id,criterion_id:criterion.id,
+   criterion_revision:criterion.criterion_revision,result:'met'}]});
+ expect(writes).toEqual(['accept_task_delivery']);
+ await expect(operation(page)).not.toBeVisible();
+ await expect(board(page).locator('[data-column=accepted]')).toContainText(task.title);
+ expect((await wos.api(`/namespaces/${wos.namespace}/outcomes/${outcome.id}/work-items/${task.id}`)).value.lifecycle).toBe('done');
+});
+}
 test('blocked achievement can add its criterion and assessment in context before explicit acceptance',async({page,wos})=>{
  const {outcome,objective}=await setup(wos);await open(page,wos,outcome,outcome.title);
  const writes=[];page.on('request',r=>{if(r.url().includes('/commands/'))writes.push(r.url().split('/').at(-1));});

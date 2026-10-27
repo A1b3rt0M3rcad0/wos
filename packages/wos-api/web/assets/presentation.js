@@ -64,6 +64,7 @@ export const names = {
   blocked: copy.text.blocked,
   waiting_scope: copy.text.waitingForActivation,
   waiting_dependencies: copy.text.waitingForDependencies,
+  awaiting_review: "Awaiting review",
   scheduled: copy.text.scheduled,
   attention_needed: copy.text.needsAttention,
   open: copy.text.open,

@@ -25,7 +25,13 @@ export function kanbanOperation(view, stage) {
   if (kind === 'work_item' && stage === 'verification') return {kind:'inspection', review:true,
     message:'Review the current criteria and delivery. Opening review does not submit work, create a verification state or accept the result.'};
   let capability, message, sequential = false;
-  if (stage === 'accepted') capability = find(kind === 'objective' ? 'achieve_objective' : 'complete_work_item');
+  if (stage === 'accepted') {
+    const pendingNativeDelivery = kind === 'work_item' && view.verification?.pending
+      && view.verification.current && view.verification.source_kind === 'task_delivery'
+      && view.verification.source_id && view.verification.delivery_digest && view.verification.round;
+    capability = kind === 'objective' ? find('achieve_objective')
+      : pendingNativeDelivery ? find('accept_task_delivery') : find('complete_work_item');
+  }
   else if (stage === 'in_progress') {
     if (kind === 'work_item' && view.header.lifecycle === 'backlog') {
       capability = find('activate_work_item'); sequential = true;
@@ -44,7 +50,7 @@ export function kanbanOperation(view, stage) {
 export function operationGroup(action) {
   const name = workspaceCommandName(action.action_id);
   if (/claim|acquire|renew_work|activate_work|start_objective|release_work|complete_work|achieve_/.test(name)) return 'Execute and conclude';
-  if (/criterion|assessment|attest|evidence|artifact/.test(name)) return 'Prove and verify';
+  if (/criterion|assessment|attest|evidence|artifact|task_delivery/.test(name)) return 'Prove and verify';
   if (/owner|assignee/.test(name)) return 'Responsibility';
   if (/issue|blocker|dependency/.test(name)) return 'Resolve impediments';
   return 'Plan and document';

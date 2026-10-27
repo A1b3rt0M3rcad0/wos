@@ -1,6 +1,7 @@
 import { test, expect, openOutcome, chooseArea, pick } from "./ux-fixture.mjs";
 import { revealMenuAction } from "./workspace-action-fixture.mjs";
 import { seedCanvas, seedCanvasRoadmap } from "./canvas-fixture.mjs";
+import { dragKanbanCardToLane } from "./kanban-drag.mjs";
 import { nativeZoomBrowser } from "./native-browser-zoom.mjs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
@@ -47,7 +48,7 @@ async function qualification(page, wos) {
     servedAssets[name] = actual;
   }));
   const fixtureSources = {};
-  for (const name of ["operational-gallery.spec.mjs", "ux-fixture.mjs", "workspace-action-fixture.mjs", "canvas-fixture.mjs", "native-browser-zoom.mjs"])
+  for (const name of ["operational-gallery.spec.mjs", "ux-fixture.mjs", "workspace-action-fixture.mjs", "canvas-fixture.mjs", "kanban-drag.mjs", "native-browser-zoom.mjs"])
     fixtureSources[`tests/web/${name}`] = hash(await readFile(new URL(name, import.meta.url)));
   const session = await page.context().newCDPSession(page);
   let browser;
@@ -478,6 +479,58 @@ if (output) {
           nativeBrowserZoom: factor, framebuffer: { width: 1366, height: 768 },
         });
       } finally { await native.close(); }
+    });
+  }
+  for (const [width,height] of [[1440,900],[390,844]]) {
+    test(`source-bound Kanban delivery review at ${width} x ${height}`, async ({page,wos}) => {
+      test.setTimeout(240000);
+      await page.setViewportSize({width,height});
+      await page.emulateMedia({reducedMotion:"reduce"});
+      const data=await seed(wos), metadata={...await qualification(page,wos),fixtureScope:data.scope,
+        fixtureKind:"Native Task delivery and assessment created through authenticated public commands"};
+      let task=await wos.command("create_work_item",{scope:data.scope,objective_id:data.objective.id,
+        title:"Accept a verified delivery from the Kanban",priority:"normal",lifecycle:"backlog",
+        execution_spec:{instructions:["Produce the scoped work"],deliverables:["A reviewable result"]}});
+      const owner=data.ref("work_item",task);
+      const criterion=await wos.command("add_criterion",{owner,expected_version:task.version,
+        title:"The current delivery has been reviewed",required:true,verification_mode:"attestation"});
+      task=(await wos.api(`/namespaces/${data.scope.namespace_id}/outcomes/${data.scope.outcome_id}/work-items/${task.id}`)).value;
+      task=await wos.command("activate_work_item",{scope:data.scope,work_item_id:task.id,expected_version:task.version});
+      const claim=await wos.command("claim_work_item",{scope:data.scope,work_item_id:task.id,
+        expected_version:task.version,ttl_seconds:900});
+      const delivery=await wos.command("submit_task_for_review",{scope:data.scope,work_item_id:task.id,
+        expected_work_item_version:String(claim.version),claim_id:claim.current_lease.claim_id,
+        fencing_token:String(claim.current_lease.fencing_token),
+        legacy_material:{summary:"A result for the independent reviewer.",artifacts:[],evidence_ids:[],criterion_evidence:[]}});
+      await wos.command("record_criterion_assessment",{owner,criterion_id:criterion.id,
+        criterion_revision:criterion.criterion_revision,expected_version:delivery.work_item.version,
+        result:"met",rationale:"The exact current delivery meets the criterion.",evidence_ids:[],
+        task_delivery_ref:{id:delivery.delivery.id,digest:delivery.delivery.delivery_digest,round:String(delivery.delivery.round)}});
+
+      await wos.login(page);
+      await openOutcome(page,data.outcome.title,{area:null});
+      const search=page.getByRole("combobox",{name:"Search Outcome Board",exact:true});
+      await search.fill(data.objective.title);
+      await page.getByRole("option").filter({hasText:data.objective.title}).first().click();
+      await page.locator("#canvas-details").getByRole("button",{name:"Open Tasks Kanban",exact:true}).click();
+      const kanban=page.locator("#workspace-kanban");
+      await expect(kanban.locator(".workspace-kanban-status")).not.toHaveText("Loading work…");
+      const card=kanban.locator(".workspace-kanban-card").filter({hasText:task.title});
+      await expect(kanban.locator('[data-column="verification"]')).toContainText(task.title);
+      await expect(card).toContainText("Awaiting review");
+      await expect(card).toContainText("Lifecycle: In progress");
+      const mutations=[];
+      page.on("request",request=>{if(request.method()==="POST"&&request.url().includes("/commands/"))mutations.push(request.url());});
+      const label=`${width}x${height}`;
+      await capture(page,metadata,`kanban-verification-${label}`,
+        "Native delivery in Verification; the primary state is Awaiting review and the persisted lifecycle remains In progress");
+      await dragKanbanCardToLane(page,card,kanban.locator('[data-column="accepted"]'));
+      const operation=page.locator("#workspace-kanban-operation");
+      await expect(operation.locator("#command-select")).toHaveValue("accept_task_delivery");
+      await expect(operation).toContainText(`Delivery round ${delivery.delivery.round} · ID ${delivery.delivery.id}`);
+      await capture(page,metadata,`kanban-accept-delivery-${label}`,
+        "Kanban drag prepares the exact current delivery acceptance; no command is sent until the reviewer confirms the form");
+      expect(mutations).toEqual([]);
     });
   }
 }

@@ -806,11 +806,11 @@ export function createContextualKanban({
           });
           card.append(
             el("strong", item.title),
-            el("small", display(item.lifecycle)),
+            el("small", display(item.display_state || item.lifecycle)),
           );
           if (['high','critical'].includes(item.priority)) card.append(el('small', `${display(item.priority)} priority`));
-          if (item.display_state !== item.lifecycle)
-            card.append(el("span", display(item.display_state)));
+          if (item.display_state && item.display_state !== item.lifecycle)
+            card.append(el("small", `Lifecycle: ${display(item.lifecycle)}`, "field-help"));
           if (item.ref.kind === "objective")
             card.append(
               el(
