@@ -220,6 +220,14 @@ async function selectRecord(page, record, heading) {
 async function boardReady(page) {
   await expect(map(page)).toBeVisible();
   await expect.poll(() => page.locator("[data-canvas-node]").count()).toBeGreaterThan(0);
+  await expect.poll(() => page.locator("[data-canvas-node]").evaluateAll((nodes) => {
+    const viewport = document.querySelector(".canvas-viewport").getBoundingClientRect();
+    return nodes.filter((node) => {
+      const box = node.getBoundingClientRect();
+      return box.width > 0 && box.height > 0 && box.right > viewport.left &&
+        box.left < viewport.right && box.bottom > viewport.top && box.top < viewport.bottom;
+    }).length;
+  }), "The initial map view shows at least one work item").toBeGreaterThan(0);
   await unobscured(page.getByRole("combobox", { name: "Search Outcome Board", exact: true }));
   const value = await geometry(page);
   expect(value.document.height).toBeLessThanOrEqual(value.viewport.height);
