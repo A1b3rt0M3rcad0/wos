@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { captureReviewState, reviewViewports } from "./review-ux-capture.mjs";
+import { dragKanbanCardToLane } from "./kanban-drag.mjs";
 
 const panel = (page) => page.locator("#canvas-details");
 async function serveSourceKanban(page) {
@@ -25,40 +26,6 @@ async function select(page, title) {
   await search.fill(title);
   await page.getByRole("option").filter({ hasText: title }).first().click();
   await expect(panel(page).locator("#detail-title")).toHaveText(title);
-}
-async function dragCardToColumn(page, card, column) {
-  const columns = page.locator(".workspace-kanban-columns");
-  await card.scrollIntoViewIfNeeded();
-  const container = await columns.boundingBox();
-  const cardBounds = await card.boundingBox();
-  const targetBounds = await column.boundingBox();
-  if (!container || !cardBounds || !targetBounds) throw Error("Kanban drag geometry is unavailable.");
-  const targetVisible = targetBounds.x >= container.x
-    && targetBounds.x + targetBounds.width <= container.x + container.width;
-  if (targetVisible) {
-    await card.dragTo(column);
-    return;
-  }
-
-  // On a narrow Board, start dragging the visible card and let Chromium's
-  // native scrollable-lane autoscroll reveal the next column under the pointer.
-  const start = { x: cardBounds.x + cardBounds.width / 2, y: cardBounds.y + cardBounds.height / 2 };
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
-  const edgeX = container.x + container.width - 3;
-  let destination = await column.boundingBox();
-  for (let attempt = 0; attempt < 40 && destination
-    && destination.x + destination.width > container.x + container.width; attempt++) {
-    await page.mouse.move(edgeX, start.y, { steps: 2 });
-    await page.waitForTimeout(100);
-    destination = await column.boundingBox();
-  }
-  if (!destination || destination.x + destination.width > container.x + container.width) {
-    await page.mouse.up();
-    throw Error("Dragging at the Board edge did not reveal the next Kanban column.");
-  }
-  await page.mouse.move(destination.x + destination.width / 2, destination.y + 48, { steps: 12 });
-  await page.mouse.up();
 }
 async function setup(wos) {
   const { value: outcome, scope } = await wos.outcome("Payment integration");
@@ -642,7 +609,7 @@ for (const viewport of reviewViewports) test(`a legacy-authorized waiver is visi
   await panel(page).getByRole("button", { name: "Open Tasks Kanban", exact: true }).click();
   const modal = page.locator("#workspace-kanban");
   const taskCard = modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title });
-  await dragCardToColumn(page, taskCard, modal.locator('[data-column="verification"]'));
+  await dragKanbanCardToLane(page, taskCard, modal.locator('[data-column="verification"]'));
   const operation = page.locator("#workspace-kanban-operation");
   await expect(operation.getByRole("heading", { name: "Review proof", exact: true })).toBeVisible();
   await operation.getByRole("checkbox", { name: /The exception requires an explicit decision/ }).click();

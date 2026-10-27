@@ -1,4 +1,5 @@
 import {test,expect,openOutcome} from './ux-fixture.mjs';
+import {dragKanbanCardToLane} from './kanban-drag.mjs';
 const board=page=>page.locator('#workspace-kanban');
 const operation=page=>page.locator('#workspace-kanban-operation');
 async function open(page,wos,outcome,title){
@@ -20,17 +21,7 @@ async function move(page,title,lane){
  const card=board(page).locator('.workspace-kanban-card-shell').filter({has:page.getByRole('button',{name:new RegExp(title)})});
  const stage={'To do':'todo','In progress':'in_progress','Verification':'verification','Achieved':'accepted'}[lane];
  const source=card.locator('.workspace-kanban-card'),target=board(page).locator(`[data-column="${stage}"]`);
- await source.scrollIntoViewIfNeeded();
- const start=await source.boundingBox();
- await page.mouse.move(start.x+20,start.y+20);await page.mouse.down();
- await page.mouse.move(start.x+30,start.y+30,{steps:5});
- // Reveal an offscreen lane after starting the native drag, rather than
- // scrolling the source away before pointerdown on a narrow viewport.
- await target.evaluate(node=>node.scrollIntoView({block:'nearest',inline:'center'}));
- const end=await target.boundingBox();
- await page.mouse.move(end.x+20,end.y+60,{steps:8});
- await page.mouse.move(end.x+20,end.y+60);
- await page.mouse.up();
+ await dragKanbanCardToLane(page,source,target);
  await expect(operation(page)).toBeVisible();
 }
 for(const size of [{width:1280,height:720},{width:2560,height:1440},{width:390,height:844}]){

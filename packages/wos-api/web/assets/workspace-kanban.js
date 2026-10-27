@@ -694,15 +694,20 @@ export function createContextualKanban({
     const previousColumns = dialog.querySelector('.workspace-kanban-columns');
     const keepColumns = previousColumns?.workspaceItems === frame.items && previousColumns?.dataset.stateKey === stateKey();
     const columns = keepColumns ? previousColumns : el("div", undefined, "workspace-kanban-columns");
+    let lastEdgeScrollAt = 0;
     if (!keepColumns) columns.addEventListener('dragover', event => {
       if (!event.dataTransfer?.types.includes('application/x-wos-kanban')) return;
       const bounds = columns.getBoundingClientRect();
       const edge = Math.min(64, bounds.width / 4);
       const maximum = Math.max(0, columns.scrollWidth - columns.clientWidth);
+      const now = performance.now();
+      if (now - lastEdgeScrollAt < 100) return;
       if (event.clientX < bounds.left + edge && columns.scrollLeft > 0) {
         columns.scrollLeft = Math.max(0, columns.scrollLeft - 48);
+        lastEdgeScrollAt = now;
       } else if (event.clientX > bounds.right - edge && columns.scrollLeft < maximum) {
         columns.scrollLeft = Math.min(maximum, columns.scrollLeft + 48);
+        lastEdgeScrollAt = now;
       }
     });
     body.append(columns);
@@ -756,6 +761,11 @@ export function createContextualKanban({
           card.append(el("span", "⠿", "workspace-drag-handle"));
           card.addEventListener('dragstart', event => {
             frame.dragged = key(item.ref);
+            // Keep drag scrolling under our control. Browsers also auto-scroll
+            // native drags at an overflow edge; combining that with the Board's
+            // bounded lane scrolling can carry the target past the intended lane.
+            columns.dataset.dragging = 'true';
+            lastEdgeScrollAt = 0;
             event.dataTransfer.setData('application/x-wos-kanban', key(item.ref));
             event.dataTransfer.effectAllowed = 'move';
             const setHint = (column, state, message) => {
@@ -782,6 +792,7 @@ export function createContextualKanban({
           card.addEventListener('click', event => { if (dragged && event.detail) { event.preventDefault(); event.stopImmediatePropagation(); } }, true);
           card.addEventListener('dragend', () => {
             frame.dragged = null;
+            delete columns.dataset.dragging;
             for (const column of columns.querySelectorAll('[data-column]')) {
               delete column.dataset.dropIntent;
               column.querySelector('.workspace-drop-meaning').hidden = true;

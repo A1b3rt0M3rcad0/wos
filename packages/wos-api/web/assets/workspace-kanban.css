@@ -30,6 +30,7 @@ html[data-kanban-active="true"] :is(#actions, #outcome-tools, #canvas-context) {
 .workspace-kanban-status { flex-shrink: 0; font-size: 12px; margin: 0; padding: 6px 12px; }
 .workspace-kanban-body { display: flex; flex: 1; min-width: 0; min-height: 150px; position: relative; overflow: hidden; }
 .workspace-kanban-columns { flex: 1; display: flex; gap: 10px; padding: 8px 12px; overflow-x: auto; min-width: 0; min-height: 0; }
+.workspace-kanban-columns[data-dragging="true"] { overflow-x: hidden; }
 .workspace-kanban-column { position: relative; flex: 1 0 245px; min-width: 245px; max-width: 420px; padding: 10px; overflow-y: auto; border: 1px solid var(--wos-border); background: var(--wos-workspace); }
 .workspace-kanban h3 { font: 400 21px var(--display); margin: 0 0 10px; overflow-wrap: anywhere; }
 .workspace-kanban-card-shell { position: relative; margin-bottom: 10px; }
