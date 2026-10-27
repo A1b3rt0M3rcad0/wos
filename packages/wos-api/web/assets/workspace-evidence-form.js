@@ -1,4 +1,4 @@
-import { copy } from "./en-US.js";
+import { copy, message } from "./en-US.js";
 import { el, inputField, details } from "./ui.js";
 import { referencePicker } from "./reference-picker.js";
 import { localDateTime } from "./workspace-form-fields.js";
@@ -15,10 +15,15 @@ function exactVersion(value) {
 export function contextualEvidenceForm({ scope, entity, criterion, request, contextTitle, eligibility }) {
   const node = el("section", undefined, "workspace-evidence-form");
   const target = { ...scope, kind: entity._kind || "outcome", id: entity.id || scope.outcome_id };
+  let boundEntity = entity, boundCriterion = criterion, boundContextTitle = contextTitle;
   const context = el("p", undefined, "field-context");
-  context.append(el("small", copy.text.formEvidenceTarget),
-    el("strong", contextTitle || entity.title || entity.name || copy.text.outcome));
-  if (criterion) context.append(el("span", criterion.title));
+  function renderContext() {
+    context.replaceChildren(el("small", copy.text.formEvidenceTarget),
+      el("strong", boundContextTitle || boundEntity.title || boundEntity.name || copy.text.outcome));
+    if (boundCriterion) context.append(el("small", copy.text.formEvidenceReviewDefinition), el("span", boundCriterion.title),
+      el("small", message("workspaceDefinitionRevision", boundCriterion.criterion_revision), "field-help"));
+  }
+  renderContext();
   node.append(context);
   const origin = inputField(copy.text.formEvidenceOrigin, { options: [
     ["external", copy.text.formEvidenceExternal], ["artifact", copy.text.formEvidenceArtifact],
@@ -79,14 +84,24 @@ export function contextualEvidenceForm({ scope, entity, criterion, request, cont
   sync();
   return {
     node,
+    updateBinding({ entity: latestEntity, criterion: latestCriterion, contextTitle: latestContextTitle }) {
+      if (!latestEntity || latestEntity.id !== target.id || (latestEntity._kind && latestEntity._kind !== target.kind))
+        throw Error(copy.text.formEvidenceOwnerChanged);
+      if (!latestCriterion || latestCriterion.id !== boundCriterion?.id || latestCriterion.status === "retired")
+        throw Error(copy.text.formEvidenceCriterionUnavailable);
+      boundEntity = { ...latestEntity, _kind: target.kind };
+      boundCriterion = latestCriterion;
+      if (latestContextTitle) boundContextTitle = latestContextTitle;
+      renderContext();
+    },
     async get() {
       if (!eligibility?.evidence_link_target_kinds?.includes(target.kind))
         throw Error(copy.text.formEvidenceTargetsUnavailable);
       const link = { target_ref: target, stance: stance.get(), rationale: rationale.get() };
-      if (criterion) {
-        link.criterion_id = criterion.id;
-        link.criterion_revision = exactVersion(criterion.criterion_revision);
-        link.target_expected_version = exactVersion(entity.version);
+      if (boundCriterion) {
+        link.criterion_id = boundCriterion.id;
+        link.criterion_revision = exactVersion(boundCriterion.criterion_revision);
+        link.target_expected_version = exactVersion(boundEntity.version);
       }
       const result = { scope: { ...scope }, links: [link] };
       const selected = origin.get();
@@ -116,7 +131,7 @@ export function contextualEvidenceForm({ scope, entity, criterion, request, cont
       } else if (selected === "observation") {
         result.observation = {
           subject_ref: target, body: description.get(), occurred_at: capturedAt,
-          ...(criterion ? { criterion_id: criterion.id } : {}),
+          ...(boundCriterion ? { criterion_id: boundCriterion.id } : {}),
         };
       } else throw Error(copy.text.formEvidenceOriginMissing);
       if (selected !== "observation" && type.get() === "measurement")

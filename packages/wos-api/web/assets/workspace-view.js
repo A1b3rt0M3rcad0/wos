@@ -660,7 +660,7 @@ export function renderWorkspaceView(host, {
 
 // This focused rendering consumes the authorized canonical owner returned by
 // the existing full-record read. Historical records never become current gates.
-export function renderCriterionHistory(host, { owner, criterionId, onReference } = {}) {
+export function renderCriterionHistory(host, { owner, ownerRef, criterionId, currentAssessment, currentAssessmentApplicable, currentVerification, onReference, onSubject } = {}) {
   const section = el("section", undefined, "detail-section workspace-criterion-history");
   section.append(el("h3", copy.text.workspaceCriterionHistory),
     el("p", copy.text.workspaceCriterionHistoryMeaning, "field-help"));
@@ -678,14 +678,54 @@ export function renderCriterionHistory(host, { owner, criterionId, onReference }
   }
   for (const assessment of assessments) {
     const row = el("article", undefined, "workspace-criterion");
+    row.dataset.assessmentId = assessment.id;
     row.append(el("strong", display(assessment.result)),
       el("small", message("workspaceDefinitionRevision", assessment.criterion_revision)),
       el("p", assessment.rationale),
       el("small", assessment.actor_ref?.id || assessment.principal_id || ""));
+    if (assessment.id === currentAssessment?.id && currentAssessmentApplicable === false) {
+      const verification = currentVerification;
+      const reviewed = assessment.task_delivery_ref;
+      const differsFromCurrentDelivery = verification?.source_kind === "task_delivery" && verification.pending && verification.current
+        && verification.source_id && verification.delivery_digest
+        && (!reviewed || reviewed.id !== verification.source_id || reviewed.digest !== verification.delivery_digest
+          || String(reviewed.round) !== String(verification.round));
+      if (differsFromCurrentDelivery) {
+        row.append(el("p", message("workspaceLatestAssessmentForDifferentDelivery", verification.round, verification.source_id), "field-help workspace-assessment-stale"));
+        const currentDigest = details(copy.text.workspaceCurrentDeliveryDigest, false);
+        currentDigest.append(el("code", verification.delivery_digest));
+        row.append(currentDigest);
+      } else row.append(el("p", copy.text.workspaceLatestAssessmentNotApplicable, "field-help workspace-assessment-stale"));
+    }
     if (assessment.assessed_at) row.append(el("small", date(assessment.assessed_at)));
-    if (onReference && assessment.owner_ref)
-      for (const id of assessment.evidence_ids || []) row.append(actionButton(copy.text.evidence,
-        () => onReference({ ...assessment.owner_ref, kind: "evidence", id }), "open_reference"));
+    const binding = el("div", undefined, "workspace-assessment-binding");
+    const delivery = assessment.task_delivery_ref;
+    if (delivery) {
+      binding.append(el("small", message("workspaceAssessmentDeliveryRound", delivery.round)),
+        el("small", message("workspaceAssessmentDeliveryId", delivery.id)));
+      if (delivery.digest) {
+        const digest = details(copy.text.workspaceAssessmentDeliveryDigest, false);
+        digest.append(el("code", delivery.digest));
+        binding.append(digest);
+      }
+    }
+    if (assessment.submission_id) {
+      binding.append(el("small", message("workspaceAssessmentSubmissionId", assessment.submission_id)));
+      if (assessment.submission_digest) {
+        const digest = details(copy.text.workspaceAssessmentSubmissionDigest, false);
+        digest.append(el("code", assessment.submission_digest));
+        binding.append(digest);
+      }
+      if (onSubject && ownerRef?.kind === "work_item") binding.append(actionButton(copy.text.workspaceReviewedSubmission,
+        () => onSubject({ kind: "execution_record", ref: ownerRef,
+          record_kind: "submission", record_id: assessment.submission_id }), "open_submission"));
+    }
+    if (delivery || assessment.submission_id) row.append(binding);
+    else row.append(el("small", copy.text.workspaceAssessmentWithoutDelivery, "field-help"));
+    const evidenceOwner = assessment.owner_ref || ownerRef;
+    if (onReference && evidenceOwner)
+      for (const id of assessment.evidence_ids || []) row.append(actionButton(copy.text.workspaceAssessmentEvidence,
+        () => onReference({ ...evidenceOwner, kind: "evidence", id }), "open_reference"));
     section.append(row);
   }
   if (!definitions.length && !assessments.length)

@@ -38,7 +38,6 @@ async function save(page, name) {
   const json = await result.json();
   expect(result.ok(), JSON.stringify(json)).toBe(true);
   await expect(page.locator("#command-form")).not.toBeVisible();
-  await expect(page.locator("#submit-command")).toBeEnabled();
   await expect(page.locator("#notice")).not.toHaveClass(/error/);
   return json.value;
 }

@@ -54,6 +54,16 @@ export const humanActions = Object.freeze({
     label: copy.text.assessCriterion,
     contexts: ["criterion"],
   },
+  accept_task_delivery: {
+    label: copy.text.acceptTaskDelivery,
+    contexts: ["work_item"],
+    states: ["in_progress"],
+  },
+  request_task_delivery_changes: {
+    label: copy.text.requestTaskDeliveryChanges,
+    contexts: ["work_item"],
+    states: ["in_progress"],
+  },
   revise_criterion: {
     label: copy.text.reviseCriterion,
     contexts: ["criterion"],

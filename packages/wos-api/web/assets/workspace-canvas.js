@@ -527,6 +527,7 @@ export function mountWorkspaceCanvas(host, options) {
     queued = null;
   let disposed = false,
     first = true,
+    cameraInitialized = false,
     lastError = "",
     ignoreClickUntil = 0;
   let searchTimer = null,
@@ -719,11 +720,19 @@ export function mountWorkspaceCanvas(host, options) {
           (anchor.y + anchor.height / 2) * scale * camera.zoom;
       }
     }
+    cameraInitialized = true;
     cameraPaint();
   }
   function changeView(next) {
     userView = next;
     paintView();
+    // Compact workspaces begin in List view, which keeps the map viewport at
+    // zero size during the first render. If the initial fit ran while hidden,
+    // fit as soon as the user opens Map so the first cards are in view.
+    if (next === "map" && !cameraInitialized)
+      requestAnimationFrame(() => {
+        if (!disposed && !viewport.hidden && !cameraInitialized) fit(true);
+      });
     if (next === "map" && selectedKey) reveal(selectedKey);
     invoke(options.onViewChange, next);
   }
@@ -1669,6 +1678,7 @@ export function mountWorkspaceCanvas(host, options) {
       layer = options.initialLayer === "records" ? "records" : "work";
       layerSelect.value = layer;
       camera = { x: 24, y: 24, zoom: 1 };
+      cameraInitialized = false;
       selectedEdgeKey = null;
       connectionDescription = "";
       first = true;

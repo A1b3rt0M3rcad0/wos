@@ -1,0 +1,27 @@
+{
+  "source": "96edc3e7fba9ecbb24d66d5df1174e89bdd04439",
+  "apiServer": {
+    "built_at": "unknown",
+    "commit": "unknown",
+    "supported_work_protocols": [
+      "contracts_v1",
+      "signed_contracts_v2"
+    ],
+    "supported_workspace_schemas": [
+      1,
+      2
+    ],
+    "version": "dev",
+    "work_protocol": "signed_contracts_v2",
+    "workspace_schema": 2
+  },
+  "apiServerSha256": "bbbe1bb3d32331ecdf95ba2856fa8c3db3b507181d63fb018adc4710d6db5c4e",
+  "frontendDelivery": "bin/wos embeds the checked-out frontend; HTTP API and isolated SQLite state use the same binary.",
+  "viewport": {
+    "width": 360,
+    "height": 800
+  },
+  "browser": "154.0.8037.57",
+  "pngSha256": "12f3f04d8faf1ed51b4216b8839a0523ec4584d1ef0b9eec046dd28892f7c966",
+  "state": "Only legacy assessment:waive is granted; the explicit waiver control is visible and the Task remains in progress."
+}

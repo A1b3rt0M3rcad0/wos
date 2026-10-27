@@ -4,6 +4,8 @@ import { mkdir, writeFile, readdir, readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
+import { captureReviewState, reviewViewports } from "./review-ux-capture.mjs";
+import { dragKanbanCardToLane } from "./kanban-drag.mjs";
 
 const panel = (page) => page.locator("#canvas-details");
 async function serveSourceKanban(page) {
@@ -240,16 +242,16 @@ for (const [width, height] of [
     await expect(modal.locator(".workspace-kanban-inspection")).toContainText(data.task.title);
     await modal.locator("[data-operational-group=criteria] > summary").click();
     await modal.getByRole("button", { name: "Payment endpoint handles partial refunds", exact: true }).click();
-    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    await expect(modal.locator(".workspace-kanban-inspection-header > h3")).toHaveText("Payment endpoint handles partial refunds");
     await modal.getByRole("button", { name: "Refresh", exact: true }).click();
-    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    await expect(modal.locator(".workspace-kanban-inspection-header > h3")).toHaveText("Payment endpoint handles partial refunds");
     const cameraWhileInspecting = await page.locator(".canvas-world").getAttribute("style");
     const collection = modal.getByRole("combobox", { name: "Kanban context", exact: true });
     await collection.selectOption("objectives");
     await expect(modal.locator(".workspace-kanban-inspection")).toHaveCount(0);
     expect(await page.locator(".canvas-world").getAttribute("style")).toBe(cameraWhileInspecting);
     await collection.selectOption("tasks");
-    await expect(modal.locator(".workspace-kanban-inspection")).toContainText("Payment endpoint handles partial refunds");
+    await expect(modal.locator(".workspace-kanban-inspection-header > h3")).toHaveText("Payment endpoint handles partial refunds");
     const returnPrevious = modal.getByRole("button", { name: "Back to previous item", exact: true });
     await expect(returnPrevious).toBeVisible();
     await expect(modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title })).toHaveAttribute("aria-pressed", "true");
@@ -518,10 +520,11 @@ test("contextual Kanban remains operable at native browser zoom 125%, 150%, 200%
   }
 });
 
-test("an authorized waiver is an explicit exception and never completes the Task", async ({
+for (const viewport of reviewViewports) test(`a legacy-authorized waiver is visible and never completes the Task at ${viewport.width}px`, async ({
   page,
   wos,
 }) => {
+  await page.setViewportSize(viewport);
   const data = await setup(wos);
   // Criterion assessments are unavailable while a Task is still in Backlog.
   // Make the Task available and acquire it before authenticating as the
@@ -578,7 +581,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
     expected_namespace_version: snapshot.namespace_version,
     operation: "set_grant",
     principal_id: "waiver-reviewer",
-    permissions: ["state:read", "criterion:assess", "criterion:waive", "assessment:waive"],
+    permissions: ["state:read", "criterion:assess", "assessment:waive"],
   });
   const issued = await wos.api("/security/commands", {
     namespace_id: wos.namespace,
@@ -588,13 +591,25 @@ test("an authorized waiver is an explicit exception and never completes the Task
     actor_ref: { kind: "human", provider: "acceptance", id: "waiver-reviewer" },
     expires_at: new Date(Date.now() + 3600000).toISOString(),
   });
+  await wos.markLegacyPermissionCompatibility(
+    "waiver-reviewer",
+    issued.result.credential.id,
+  );
+  const permissionHints = await wos.api(
+    `/namespaces/${wos.namespace}/effective-permissions?outcome_id=${data.scope.outcome_id}`,
+    undefined,
+    issued.token,
+  );
+  expect(permissionHints.permissions).toContain("assessment:waive");
+  expect(permissionHints.permissions).not.toContain("criterion:waive");
+  await serveSourceKanban(page);
   await wos.login(page, issued.token);
   await openOutcome(page, data.outcome.title, { area: null });
   await select(page, data.objective.title);
   await panel(page).getByRole("button", { name: "Open Tasks Kanban", exact: true }).click();
   const modal = page.locator("#workspace-kanban");
   const taskCard = modal.locator(".workspace-kanban-card").filter({ hasText: data.task.title });
-  await taskCard.dragTo(modal.locator('[data-column="verification"]'));
+  await dragKanbanCardToLane(page, taskCard, modal.locator('[data-column="verification"]'));
   const operation = page.locator("#workspace-kanban-operation");
   await expect(operation.getByRole("heading", { name: "Review proof", exact: true })).toBeVisible();
   await operation.getByRole("checkbox", { name: /The exception requires an explicit decision/ }).click();
@@ -618,6 +633,7 @@ test("an authorized waiver is an explicit exception and never completes the Task
     .fill(
       "Explicitly excluded this condition after reviewing the agreed scope. This is not verified success.",
     );
+  await captureReviewState(page, `waiver-legacy-permission-${viewport.width}`, "Only legacy assessment:waive is granted; the explicit waiver control is visible and the Task remains in progress.");
   const response = page.waitForResponse(
     (response) =>
       /\/commands\/(record_criterion_assessment|attest_criterion)$/.test(

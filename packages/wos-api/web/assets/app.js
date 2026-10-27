@@ -1527,13 +1527,62 @@ function writeRoute(item = undefined, replace = false, { allowDuringRestore = fa
   history[replace ? "replaceState" : "pushState"]({}, "", target);
 }
 async function restoreRoute(route) {
-  if (!route) return;
   if (!allowCanvasNavigation()) {
     writeRoute(undefined, true);
     return;
   }
   state.restoringRoute = true;
   try {
+    if (!route) {
+      // Browser Back from an Outcome must restore the same chooser shown before
+      // it was opened. Invalidate pending reads before clearing their scope,
+      // and keep the authenticated Workspace and its discovered Outcome list.
+      if (contextualKanban.isOpen) {
+        contextualKanban.close();
+        if (contextualKanban.isOpen) {
+          writeRoute(undefined, true);
+          return;
+        }
+      }
+      const previousOutcomeId = state.outcome?.id;
+      resetCanvas();
+      contextualKanban.reset();
+      workspaceDisclosures.clear();
+      state.generation++;
+      state.renderId++;
+      state.refreshGeneration++;
+      state.outcome = null;
+      state.snapshot = null;
+      state.selected = null;
+      state.criterion = null;
+      state.contractView = null;
+      state.submission = null;
+      state.workspaceView = null;
+      state.entities.clear();
+      state.loaded.clear();
+      state.boardLoaded.clear();
+      state.area = "canvas";
+      state.section = "work_items";
+      state.view = "canvas";
+      for (const button of $("outcomes").children) {
+        button.classList.remove("selected");
+        button.setAttribute("aria-pressed", "false");
+      }
+      const sidebar = document.querySelector(".sidebar");
+      sidebar.classList.remove("navigation-collapsed");
+      $("navigation-toggle").setAttribute("aria-expanded", "true");
+      $("detail-dialog").close();
+      $("command-dialog").close();
+      $("action-dialog").close();
+      $("workspace-loading").hidden = true;
+      $("outcome").hidden = true;
+      $("empty").hidden = false;
+      const previous = [...$("outcomes").children].find(
+        (button) => button.dataset.outcomeId === previousOutcomeId,
+      );
+      (previous || $("text")).focus({ preventScroll: true });
+      return;
+    }
     if (state.namespace !== route.namespace) {
       const option = [...$("namespace").options].find(
         (n) => n.value === route.namespace,
@@ -1560,14 +1609,14 @@ async function restoreRoute(route) {
     else closeDetail();
   } finally {
     state.restoringRoute = false;
-    if (state.area === "work" && state.section !== route.section)
+    if (route && state.area === "work" && state.section !== route.section)
       writeRoute(route.item, true);
   }
 }
 window.addEventListener("popstate", () => {
   try {
     const route = readRoute(location.search);
-    if (route) restoreRoute(route).catch(report);
+    restoreRoute(route).catch(report);
   } catch (error) {
     report(error);
   }
@@ -3370,10 +3419,19 @@ async function loadWorkspaceFullRecord(host, ref, detailGeneration, {executionOn
       return;
     }
     if (state.workspaceView.subject.kind === "criterion") {
-      const history = el("section", undefined, "workspace-criterion-history");
-      renderCriterionHistory(history, { owner: entity, criterionId: state.workspaceView.subject.criterion_id,
-        onReference: (ref) => showEntity(ref).catch(report) });
+      const history = el("section", undefined, "workspace-history-read");
+      const criterionId = state.workspaceView.subject.criterion_id;
+      const currentCriterion = (state.workspaceView.criteria || []).find((item) => item.definition?.id === criterionId);
+      renderCriterionHistory(history, { owner: entity, criterionId,
+        currentAssessment: currentCriterion?.assessment,
+        currentAssessmentApplicable: currentCriterion?.assessment_applicable,
+        currentVerification: state.workspaceView.verification,
+        ownerRef: ref,
+        onReference: (ref) => showEntity(ref).catch(report),
+        onSubject: (subject) => showEntity(subject.ref, { subject, preserveCamera: true }).catch(report) });
       host.append(history);
+      if (detailGeneration === state.detailGeneration) { history.tabIndex = -1; history.focus(); }
+      return;
     }
     const section = el("details", undefined, "technical workspace-full-record"); section.open = true;
     section.append(el("summary", copy.text.workspaceFullRecord), readable(entity)); host.append(section);
@@ -4570,6 +4628,88 @@ function offerConflict(pending) {
     closeForm();
     refresh().catch(report);
   };
+  let evidenceLink;
+  if (pending.name === "register_evidence_with_links") {
+    try {
+      const command = JSON.parse(pending.body).command;
+      evidenceLink = command.links?.find((link) => link.criterion_id
+        && link.target_ref?.id === target?.id
+        && link.target_ref?.kind === (target?._kind || "outcome"));
+    } catch {}
+  }
+  if (evidenceLink && state.humanForm?.updateEvidenceBinding) {
+    const reviewLatest = actionButton(copy.text.workspaceReviewLatestCriterionAndKeepEvidenceDraft, async () => {
+      if (!current()) return;
+      reviewLatest.disabled = true;
+      try {
+        const view = await workspaceQuery({ kind: "criterion", ref: evidenceLink.target_ref,
+          criterion_id: evidenceLink.criterion_id });
+        if (!current()) return;
+        const ownerPath = evidenceLink.target_ref.kind === "outcome" ? outcomeBase()
+          : `${outcomeBase()}/${plurals[evidenceLink.target_ref.kind]}/${evidenceLink.target_ref.id}`;
+        const ownerResult = await request(ownerPath);
+        if (!current()) return;
+        if (canvasRevision(ownerResult.outcome_revision) !== canvasRevision(view.outcome_revision))
+          throw Error(copy.text.workspaceEvidenceConflictChangedAgain);
+        const ownerEntity = ownerResult.value || ownerResult;
+        if (String(ownerEntity.version) !== String(view.entity_version))
+          throw Error(copy.text.workspaceEvidenceConflictChangedAgain);
+        const latest = view.criteria?.find((item) => item.definition?.id === evidenceLink.criterion_id)?.definition;
+        const previous = state.criterion?.id === evidenceLink.criterion_id ? state.criterion : null;
+        const comparison = conflictComparison();
+        const definition = (label, value) => {
+          const section = el("section");
+          section.append(el("h4", label), el("p", value?.title || evidenceLink.criterion_id),
+            el("p", value?.description || copy.text.notProvided),
+            el("small", value ? message("workspaceDefinitionRevision", value.criterion_revision) : copy.text.notProvided));
+          if (value) section.append(el("p", `${value.required ? copy.text.workspaceRequired : copy.text.workspaceOptional} · ${display(value.verification_mode)}`));
+          return section;
+        };
+        root.replaceChildren(el("h3", copy.text.workspaceReviewLatestCriterionAndKeepEvidenceDraft),
+          el("p", copy.text.workspaceCriterionEvidenceConflictHelp));
+        comparison.append(definition(copy.text.workspacePreviousCriterion, previous),
+          definition(copy.text.workspaceCurrentCriterion, latest));
+        root.append(comparison);
+        if (!latest || latest.status === "retired") {
+          root.append(el("p", copy.text.workspaceCriterionEvidenceUnavailable, "field-help"));
+          root.tabIndex = -1; root.focus({ preventScroll: true });
+          return;
+        }
+        root.append(actionButton(copy.text.workspaceUseLatestCriterionKeepEvidence, () => {
+          if (!current()) return;
+          try {
+            const entity = { ...ownerEntity, _kind: evidenceLink.target_ref.kind };
+            state.humanForm.updateEvidenceBinding({ entity, criterion: latest, contextTitle: ownerEntity.title });
+            state.workspaceView = view;
+            state.detailRevision = view.outcome_revision;
+            state.selected = entity;
+            state.formTarget = entity;
+            state.formSubject = view.subject;
+            state.criterion = latest;
+            $("command-error").textContent = "";
+            $("command-help").textContent = copy.text.reviewYourIntentBeforeSavingTheServerChecksPermissions;
+            root.replaceChildren(el("h3", copy.text.workspaceEvidenceDraftRetained),
+              el("p", message("workspaceEvidenceDraftRebound", latest.criterion_revision), "field-help"));
+            root.tabIndex = -1; root.focus({ preventScroll: true });
+          } catch (error) {
+            const alert = el("p", error.message || copy.text.formEvidenceRecoveryUnavailable, "error");
+            alert.setAttribute("role", "alert"); root.append(alert);
+          }
+        }, "quiet"));
+        root.tabIndex = -1; root.focus({ preventScroll: true });
+      } catch (error) {
+        if (!current()) return;
+        const alert = el("p", error.message || copy.text.formEvidenceRecoveryUnavailable, "error");
+        alert.setAttribute("role", "alert"); root.append(alert);
+      } finally {
+        reviewLatest.disabled = false;
+      }
+    }, "quiet");
+    root.replaceChildren(el("h3", copy.text.thisItemChangedWhileYouWereEditing),
+      el("p", copy.text.workspaceCriterionEvidenceConflictHelp), discard, reviewLatest);
+    root.tabIndex = -1; root.focus({ preventScroll: true });
+    return;
+  }
   root.replaceChildren(
     el("h3", copy.text.thisItemChangedWhileYouWereEditing),
     el("p", copy.text.yourLocalDraftIsRetainedLoadingTheLatestState),

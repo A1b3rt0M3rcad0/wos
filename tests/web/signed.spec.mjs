@@ -1,6 +1,7 @@
 import { expandWorkspaceDetails } from './workspace-action-fixture.mjs';
 import { chooseArea, clickWorkspaceTool } from "./ux-fixture.mjs";
 import { test, expect } from "playwright/test";
+import { dragKanbanCardToLane } from "./kanban-drag.mjs";
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import {
@@ -699,10 +700,17 @@ for (const decision of ["approved", "changes_requested"])
       const kanban = page.locator("#workspace-kanban");
       await expect(kanban.locator("[data-column=verification]")).toContainText(work.title);
       await expect(kanban.locator("[data-column=accepted]")).not.toContainText(work.title);
-      await kanban.locator(".workspace-kanban-card").filter({hasText:work.title}).click();
+      const kanbanCard=kanban.locator(".workspace-kanban-card").filter({hasText:work.title});
+      await kanbanCard.click();
       await expect(kanban.locator(".workspace-kanban-columns")).toBeVisible();
       await expect(page.locator("dialog[open]")).toHaveCount(1);
       assert.equal(mutations.length,beforeKanbanWrites,"Inspection does not acquire review authority or sign a delivery");
+      await kanban.getByRole("button",{name:"Back to Kanban",exact:true}).click();
+      await dragKanbanCardToLane(page,kanban.locator(".workspace-kanban-card").filter({hasText:work.title}),kanban.locator('[data-column="accepted"]'));
+      const unsupportedMove=page.locator("#workspace-kanban-operation");
+      await expect(unsupportedMove).toContainText("No state changed");
+      assert.equal(mutations.length,beforeKanbanWrites,"A signed submission cannot be accepted by a browser-only drag");
+      await unsupportedMove.getByRole("button",{name:"Back to item",exact:true}).click();
       await kanban.getByRole("button",{name:"Back to Canvas",exact:true}).click();
       await expect(kanban).not.toBeVisible();
       await chooseArea(page, "work");

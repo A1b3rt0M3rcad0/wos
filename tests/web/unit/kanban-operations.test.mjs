@@ -39,3 +39,23 @@ test('two-step acquisition is explicit, Objective achievement needs no artificia
  assert.equal(kanbanOperation(objective,'verification').kind,'unsupported');
  assert.equal(kanbanOperation(view([{action_id:'ClaimWorkItem'}],'done'),'in_progress').kind,'unsupported');
 });
+
+test('a pending native delivery moves to acceptance only through its exact review capability',()=>{
+ const delivery={id:'delivery-1',digest:'sha256:current',round:'2'};
+ const taskSubject={kind:'entity',ref:{...subject.ref}};
+ const pending={subject:taskSubject,header:{lifecycle:'in_progress',display_state:'awaiting_review'},
+  verification:{pending:true,current:delivery,source_kind:'task_delivery',source_id:delivery.id,
+   delivery_digest:delivery.digest,round:delivery.round},
+  capabilities:[{subject:taskSubject,action_id:'AcceptTaskDelivery',transport:'browser_command',availability:'available'}]};
+ const intent=kanbanOperation(pending,'accepted');
+ assert.equal(intent.kind,'command');
+ assert.equal(intent.capability.action_id,'AcceptTaskDelivery');
+ const blocked={...pending,capabilities:[{subject:taskSubject,action_id:'CompleteWorkItem',transport:'browser_command',availability:'available'},
+  {subject:taskSubject,action_id:'AcceptTaskDelivery',transport:'browser_command',availability:'blocked',reason_codes:['criterion_not_met']}]};
+ const blockedIntent=kanbanOperation(blocked,'accepted');
+ assert.equal(blockedIntent.kind,'needs_preparation');
+ assert.equal(blockedIntent.capability.action_id,'AcceptTaskDelivery');
+ assert.deepEqual(blockedIntent.reasons,['criterion_not_met']);
+ const signed={...pending,verification:{...pending.verification,source_kind:'signed_submission'},capabilities:[]};
+ assert.equal(kanbanOperation(signed,'accepted').kind,'unsupported');
+});

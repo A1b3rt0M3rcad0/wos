@@ -475,6 +475,15 @@ for (const [width, height] of [[320, 740], [390, 844]]) {
     await workspaceBounds(page);
     await canvas(page).getByRole("button", { name: "Map view", exact: true }).click();
     await controls(page);
+    const visibleMapItems = await canvas(page).locator("[data-canvas-node]").evaluateAll((nodes) => {
+      const viewport = document.querySelector(".canvas-viewport").getBoundingClientRect();
+      return nodes.filter((node) => {
+        const box = node.getBoundingClientRect();
+        return box.width > 0 && box.height > 0 && box.right > viewport.left &&
+          box.left < viewport.right && box.bottom > viewport.top && box.top < viewport.bottom;
+      }).length;
+    });
+    expect(visibleMapItems, "Opening the compact Map starts with a visible work item").toBeGreaterThan(0);
     await workspaceBounds(page);
     await capture(page, `canvas-${width}x${height}-map`, { state: "explicit Map alternative" });
     if (width === 320) {
