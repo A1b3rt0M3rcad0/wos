@@ -3,6 +3,14 @@ import { test, expect, intent, save, pick, openOutcome, detail, clickWorkspaceTo
 import assert from "node:assert/strict";
 import { seedWorkspace } from "./ux-datasets.mjs";
 import { captureReviewState, reviewViewports } from "./review-ux-capture.mjs";
+import AxeBuilder from "@axe-core/playwright";
+
+async function expectNoSeriousA11yViolations(page, scope) {
+  const result = await new AxeBuilder({ page }).include(scope)
+    .withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
+  expect(result.violations.filter((violation) => ["critical", "serious"].includes(violation.impact)),
+    JSON.stringify(result.violations)).toEqual([]);
+}
 
 test("F01: save a persisted Draft without command names, UUIDs or Advanced; setup never activates it", async ({
   page,
@@ -220,6 +228,7 @@ for (const viewport of reviewViewports) test(`F05: evidence review requires Evid
   const describedBy = await evidenceInput.getAttribute("aria-describedby");
   expect(describedBy).toContain("criterion-evidence-review-help");
   expect(describedBy).toContain(await page.locator(".reference-picker > .field-error").getAttribute("id"));
+  await expectNoSeriousA11yViolations(page, "#command-form");
   await expect.poll(() => assessmentRequests).toBe(0);
   await captureReviewState(page, `assessment-evidence-required-${viewport.width}`, "The required Evidence picker blocks an empty assessment and tells the reviewer how to continue.");
   await pick(page, "Evidence used", "Successful test");
