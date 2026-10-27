@@ -318,6 +318,9 @@ export const copy = Object.freeze({
     "formIssueTerminalHelp": "Reporting is documentary. Creating an active Blocker may require the affected work to be reopened.",
     "formPropagationUnavailable": "Valid blocking scope is not loaded. Refresh this item before reporting a blocking impact.",
     "formEvidenceTargetsUnavailable": "Permitted Evidence targets are not loaded. Refresh this item before linking Evidence.",
+    "formEvidenceOwnerChanged": "The related item changed. Reopen the Evidence form in its current context.",
+    "formEvidenceCriterionUnavailable": "This Criterion is no longer active. Keep the draft and choose an active Criterion before linking it.",
+    "formEvidenceRecoveryUnavailable": "Refresh this Evidence form in its current context before saving.",
     "formBatchTitles": "One title per line",
     "formBatchPreview": "Preview plan",
     "formBatchPreviewHelp": "Only new items are created. Tasks remain in backlog; existing work is not moved.",
@@ -355,6 +358,7 @@ export const copy = Object.freeze({
     "formEvidenceReuse": "Existing Evidence",
     "formEvidenceObservationHelp": "Record your observation with real authorship. The system does not claim it ran a test or verified the result.",
     "formEvidenceTarget": "Related item",
+    "formEvidenceReviewDefinition": "Linked Criterion",
     "formEvidenceRelevance": "Why is this relevant?",
     "formEvidenceNoAcceptance": "Evidence and its relationship are saved together. Criterion assessment remains a separate decision.",
     "formEvidenceCriterion": "Success condition",
@@ -987,6 +991,21 @@ export const copy = Object.freeze({
       "Your local draft is retained. Loading the latest state does not save anything.",
     thisTransitionOrAssessmentNeedsAFreshStateDefinition:
       "This transition or assessment needs a fresh state/definition review. Reopen the item to make a new decision; your entries remain visible here.",
+    workspaceReviewLatestCriterionAndKeepEvidenceDraft:
+      "Review latest Criterion and keep this draft",
+    workspaceCriterionEvidenceConflictHelp:
+      "The Criterion or its owner changed after this form opened. Your Evidence draft is still here. Compare the current definition; no data is saved or linked until you choose how to continue.",
+    workspacePreviousCriterion: "Definition used when this form opened",
+    workspaceCurrentCriterion: "Current saved definition",
+    workspaceCriterionEvidenceUnavailable:
+      "This Criterion is no longer active. Your Evidence draft is retained, but it cannot be linked to this retired definition. Reopen the current item and choose an active Criterion.",
+    workspaceEvidenceConflictChangedAgain:
+      "The item changed again while its current definition was being read. Your Evidence draft is retained; refresh and review the current item before continuing.",
+    workspaceUseLatestCriterionKeepEvidence:
+      "Use latest criterion and keep this Evidence draft",
+    workspaceEvidenceDraftRetained: "Evidence draft retained",
+    workspaceEvidenceDraftRebound:
+      "The draft now references Criterion revision {0}. Review the form, then save again; nothing has been written yet.",
     compareWithLatestState: "Compare with latest state",
     reviewLatestStateAndYourLocalDraft:
       "Review latest state and your local draft",

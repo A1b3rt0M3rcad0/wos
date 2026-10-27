@@ -4628,6 +4628,88 @@ function offerConflict(pending) {
     closeForm();
     refresh().catch(report);
   };
+  let evidenceLink;
+  if (pending.name === "register_evidence_with_links") {
+    try {
+      const command = JSON.parse(pending.body).command;
+      evidenceLink = command.links?.find((link) => link.criterion_id
+        && link.target_ref?.id === target?.id
+        && link.target_ref?.kind === (target?._kind || "outcome"));
+    } catch {}
+  }
+  if (evidenceLink && state.humanForm?.updateEvidenceBinding) {
+    const reviewLatest = actionButton(copy.text.workspaceReviewLatestCriterionAndKeepEvidenceDraft, async () => {
+      if (!current()) return;
+      reviewLatest.disabled = true;
+      try {
+        const view = await workspaceQuery({ kind: "criterion", ref: evidenceLink.target_ref,
+          criterion_id: evidenceLink.criterion_id });
+        if (!current()) return;
+        const ownerPath = evidenceLink.target_ref.kind === "outcome" ? outcomeBase()
+          : `${outcomeBase()}/${plurals[evidenceLink.target_ref.kind]}/${evidenceLink.target_ref.id}`;
+        const ownerResult = await request(ownerPath);
+        if (!current()) return;
+        if (canvasRevision(ownerResult.outcome_revision) !== canvasRevision(view.outcome_revision))
+          throw Error(copy.text.workspaceEvidenceConflictChangedAgain);
+        const ownerEntity = ownerResult.value || ownerResult;
+        if (String(ownerEntity.version) !== String(view.entity_version))
+          throw Error(copy.text.workspaceEvidenceConflictChangedAgain);
+        const latest = view.criteria?.find((item) => item.definition?.id === evidenceLink.criterion_id)?.definition;
+        const previous = state.criterion?.id === evidenceLink.criterion_id ? state.criterion : null;
+        const comparison = conflictComparison();
+        const definition = (label, value) => {
+          const section = el("section");
+          section.append(el("h4", label), el("p", value?.title || evidenceLink.criterion_id),
+            el("p", value?.description || copy.text.notProvided),
+            el("small", value ? message("workspaceDefinitionRevision", value.criterion_revision) : copy.text.notProvided));
+          if (value) section.append(el("p", `${value.required ? copy.text.workspaceRequired : copy.text.workspaceOptional} · ${display(value.verification_mode)}`));
+          return section;
+        };
+        root.replaceChildren(el("h3", copy.text.workspaceReviewLatestCriterionAndKeepEvidenceDraft),
+          el("p", copy.text.workspaceCriterionEvidenceConflictHelp));
+        comparison.append(definition(copy.text.workspacePreviousCriterion, previous),
+          definition(copy.text.workspaceCurrentCriterion, latest));
+        root.append(comparison);
+        if (!latest || latest.status === "retired") {
+          root.append(el("p", copy.text.workspaceCriterionEvidenceUnavailable, "field-help"));
+          root.tabIndex = -1; root.focus({ preventScroll: true });
+          return;
+        }
+        root.append(actionButton(copy.text.workspaceUseLatestCriterionKeepEvidence, () => {
+          if (!current()) return;
+          try {
+            const entity = { ...ownerEntity, _kind: evidenceLink.target_ref.kind };
+            state.humanForm.updateEvidenceBinding({ entity, criterion: latest, contextTitle: ownerEntity.title });
+            state.workspaceView = view;
+            state.detailRevision = view.outcome_revision;
+            state.selected = entity;
+            state.formTarget = entity;
+            state.formSubject = view.subject;
+            state.criterion = latest;
+            $("command-error").textContent = "";
+            $("command-help").textContent = copy.text.reviewYourIntentBeforeSavingTheServerChecksPermissions;
+            root.replaceChildren(el("h3", copy.text.workspaceEvidenceDraftRetained),
+              el("p", message("workspaceEvidenceDraftRebound", latest.criterion_revision), "field-help"));
+            root.tabIndex = -1; root.focus({ preventScroll: true });
+          } catch (error) {
+            const alert = el("p", error.message || copy.text.formEvidenceRecoveryUnavailable, "error");
+            alert.setAttribute("role", "alert"); root.append(alert);
+          }
+        }, "quiet"));
+        root.tabIndex = -1; root.focus({ preventScroll: true });
+      } catch (error) {
+        if (!current()) return;
+        const alert = el("p", error.message || copy.text.formEvidenceRecoveryUnavailable, "error");
+        alert.setAttribute("role", "alert"); root.append(alert);
+      } finally {
+        reviewLatest.disabled = false;
+      }
+    }, "quiet");
+    root.replaceChildren(el("h3", copy.text.thisItemChangedWhileYouWereEditing),
+      el("p", copy.text.workspaceCriterionEvidenceConflictHelp), discard, reviewLatest);
+    root.tabIndex = -1; root.focus({ preventScroll: true });
+    return;
+  }
   root.replaceChildren(
     el("h3", copy.text.thisItemChangedWhileYouWereEditing),
     el("p", copy.text.yourLocalDraftIsRetainedLoadingTheLatestState),

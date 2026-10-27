@@ -49,7 +49,7 @@ export function humanForm(
   const kind = entity._kind || "outcome";
   const ref = { ...scope, kind, id: entity.id || scope.outcome_id };
   let commandName = () => name;
-  let conclusionEditor;
+  let conclusionEditor, evidenceEditor;
   function f(key, label, options = {}) {
     const field = inputField(label, options);
     node.append(field.node);
@@ -562,6 +562,7 @@ export function humanForm(
     case "register_evidence_with_links": {
       const editor = contextualEvidenceForm({ scope, entity, criterion, request,
         contextTitle, eligibility: eligibility || workspaceView?.eligibility });
+      evidenceEditor = editor;
       node.append(editor.node);
       getters._editor = editor.get;
       disposers.push(editor.dispose);
@@ -1087,6 +1088,10 @@ export function humanForm(
     node,
     commandName: () => commandName(),
     updateConclusionImpact(view) { conclusionEditor?.update(view); },
+    updateEvidenceBinding(binding) {
+      if (!evidenceEditor) throw Error(copy.text.formEvidenceRecoveryUnavailable);
+      evidenceEditor.updateBinding(binding);
+    },
     async get() {
       const result = { ...fixed };
       for (const [key, get] of Object.entries(getters)) {
