@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0 — prepared for release
+
+- Explain each selected record's role and actual relationships, group contextual actions, keep Board feedback in flow, and allow free local card placement and wheel navigation in every direction.
+- Add outcome-scoped operational workspace views, shared inspection, contextual editing and append-only participant notes, atomic planning and evidence linking, and explicit criterion assessment and acceptance guidance across the browser, CLI, HTTP and MCP.
+- Keep workspace typography, controls and sidebars at stable operational sizes across screen widths, and show untitled record descriptions once in readable inspection text.
+
 ## 1.1.0 — prepared for release
 
 - Make Outcome Board fill the available workspace without a sidebar, with compact Views navigation, progressive context, responsive inspection and factual relationship indicators. Keep general Outcome menus on the Board, retain local actions and Refresh in specialist views, and compact their sidebar around one live search field and original artwork. Distinguish the Task Board in Work. Fit the default login on compact screens, keep inspection below a stable Board toolbar, and expose persistent zoom, centering and whole-map fit controls.
