@@ -420,7 +420,7 @@ export function humanForm(
         const evidenceInput = evidencePicker.node.querySelector("input");
         const evidenceHelp = el("small", copy.text.evidenceReviewRequiresEvidence, "field-help");
         evidenceHelp.id = "criterion-evidence-review-help";
-        evidenceInput.setAttribute("aria-describedby", evidenceHelp.id);
+        evidenceInput.setAttribute("aria-describedby", `${evidenceHelp.id} ${evidencePicker.validationId}`);
         evidencePicker.node.append(evidenceHelp);
       }
       if (criterion.verification_mode === "external_evaluation") {

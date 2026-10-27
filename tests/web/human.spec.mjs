@@ -213,6 +213,13 @@ for (const viewport of reviewViewports) test(`F05: evidence review requires Evid
   expect(await evidenceInput.evaluate((input) => input.validationMessage)).toContain(
     "Select at least one Evidence record.",
   );
+  await expect(evidenceInput).toHaveAttribute("aria-invalid", "true");
+  await expect(page.locator(".reference-picker > .field-error")).toHaveText(
+    "Select at least one Evidence record.",
+  );
+  const describedBy = await evidenceInput.getAttribute("aria-describedby");
+  expect(describedBy).toContain("criterion-evidence-review-help");
+  expect(describedBy).toContain(await page.locator(".reference-picker > .field-error").getAttribute("id"));
   await expect.poll(() => assessmentRequests).toBe(0);
   await captureReviewState(page, `assessment-evidence-required-${viewport.width}`, "The required Evidence picker blocks an empty assessment and tells the reviewer how to continue.");
   await pick(page, "Evidence used", "Successful test");

@@ -1329,6 +1329,12 @@ dialog::backdrop {
 .reference-picker > .field-help:empty {
   display: none;
 }
+.reference-picker > .field-error {
+  margin: calc(6 * var(--wos-unit, 1px)) 0 0;
+  padding: calc(6 * var(--wos-unit, 1px)) calc(8 * var(--wos-unit, 1px));
+  border-left: calc(2 * var(--wos-unit, 1px)) solid var(--danger);
+  color: var(--danger);
+}
 .flow-help,
 .field-help {
   font-size: 0.85714rem;

@@ -49,6 +49,21 @@ export function referencePicker({
   const selected = el("div", undefined, "reference-selections"),
     status = el("p", undefined, "field-help");
   status.setAttribute("role", "status");
+  const validation = el("p", "", "field-error");
+  validation.id = `${id}-validation`;
+  validation.setAttribute("role", "alert");
+  validation.hidden = true;
+  if (requiredMessage) {
+    input.setAttribute("aria-describedby", validation.id);
+    input.addEventListener("invalid", (event) => {
+      // Keep native constraint validation, but put its feedback beside this
+      // picker instead of covering the result list with a browser tooltip.
+      event.preventDefault();
+      validation.textContent = input.validationMessage || requiredMessage;
+      validation.hidden = false;
+      input.setAttribute("aria-invalid", "true");
+    });
+  }
   const more = button(copy.text.moreResults, () => search(true), "quiet");
   more.hidden = true;
   const reload = button(
@@ -109,6 +124,9 @@ export function referencePicker({
     cursor = "";
     items = [];
     status.textContent = "";
+    validation.textContent = "";
+    validation.hidden = true;
+    input.removeAttribute("aria-invalid");
     valid = true;
     if (!multiple) values.clear();
     values.set(key(candidate.ref), candidate);
@@ -275,9 +293,10 @@ export function referencePicker({
       }
     }),
   );
-  root.append(heading, input, selected, results, more, reload, status);
+  root.append(heading, input, selected, results, more, reload, status, validation);
   return {
     node: root,
+    validationId: validation.id,
     getCandidates: () => [...values.values()].map((x) => structuredClone(x)),
     get() {
       if (!valid)
